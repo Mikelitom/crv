@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/login_responsive_layout.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -6,9 +7,7 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(
-        child: Text('Login Page'),
-      ),
+      body: LoginResponsiveLayout(),
     );
   }
 }
