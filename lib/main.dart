@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'features/dev/presentation/pages/dev_role_selector_page.dart';
 import 'core/router/app_router.dart';
 
 void main() {
@@ -11,9 +12,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    // return MaterialApp.router(
+    //   debugShowCheckedModeBanner: false,
+    //   // routerConfig: appRouter,
+    // );
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      routerConfig: appRouter,
+      home: const DevRoleSelectorPage(),
     );
   }
 }

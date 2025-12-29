@@ -11,7 +11,7 @@ class SidebarItem extends StatelessWidget {
     required this.icon,
     required this.label,
     this.onTap,
-    this.badgeCount
+    this.badgeCount,
   });
 
   @override
@@ -19,34 +19,30 @@ class SidebarItem extends StatelessWidget {
     return ListTile(
       leading: Icon(icon),
       title: Text(label),
-      trailing: _buildBadge(),
+      trailing: badgeCount != null && badgeCount! > 0
+          ? SizedBox(
+              width: 28,
+              height: 28,
+              child: _buildBadge(),
+            )
+          : null,
       onTap: onTap,
     );
   }
 
-  Widget? _buildBadge() {
-    if (badgeCount == null || badgeCount! <= 0) {
-      return null;
-    }
-
+  Widget _buildBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      constraints: const BoxConstraints(
-        minWidth: 20,
-        minHeight: 20
-      ),
       decoration: BoxDecoration(
         color: Colors.red,
-        borderRadius: BorderRadius.circular(10)
+        shape: BoxShape.circle,
       ),
-      child: Center(
-        child: Text(
-          badgeCount! > 99 ? '99+' : badgeCount.toString(),
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold
-          ),
+      alignment: Alignment.center,
+      child: Text(
+        badgeCount! > 99 ? '99+' : badgeCount.toString(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );

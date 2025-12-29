@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'sidebar_item.dart';
 
-class SidebarAdmin extends StatelessWidget {
-  const SidebarAdmin({ super.key });
-
+class SidebarTechnician extends StatelessWidget {
+  const SidebarTechnician({ super.key });
+  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -17,7 +17,7 @@ class SidebarAdmin extends StatelessWidget {
             label: 'Dashboard',
           ),
           SidebarItem(
-            icon: Icons.report, 
+            icon: Icons.search, 
             label: 'Inspecciones',
             badgeCount: 3,
           ),
@@ -36,3 +36,4 @@ class SidebarAdmin extends StatelessWidget {
     );
   }
 }
+
