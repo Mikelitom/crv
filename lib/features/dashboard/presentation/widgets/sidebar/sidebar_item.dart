@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class SidebarItem extends StatelessWidget {
   final IconData icon;
   final String label;
+  final bool isActive;
   final VoidCallback? onTap;
   final int? badgeCount;
 
@@ -10,41 +11,30 @@ class SidebarItem extends StatelessWidget {
     super.key,
     required this.icon,
     required this.label,
+    this.isActive = false,
     this.onTap,
     this.badgeCount,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(label),
-      trailing: badgeCount != null && badgeCount! > 0
-          ? SizedBox(
-              width: 28,
-              height: 28,
-              child: _buildBadge(),
-            )
-          : null,
-      onTap: onTap,
-    );
-  }
+    final theme = Theme.of(context);
 
-  Widget _buildBadge() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.red,
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        badgeCount! > 99 ? '99+' : badgeCount.toString(),
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive
+            ? theme.colorScheme.primary.withValues()
+            : Colors.transparent,
+          borderRadius: BorderRadius.circular(8)
         ),
       ),
-    );
+    )
   }
+
+  
 }
