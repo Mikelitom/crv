@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../layout/responsive_dashboard_layout.dart';
 import '../../widgets/sidebar/sidebar_technician.dart';
-import '../../widgets/header.dart';
+// Asegúrate de que las rutas de tus componentes sean las correctas
+import '../../widgets/header.dart'; 
 import '../../widgets/quick_action_card.dart';
 import '../../widgets/notification_item.dart';
 import '../../widgets/notification_panel.dart';
-
-// ... tus imports anteriores e imports de los nuevos widgets
 
 class TechnicianDashboardPage extends StatelessWidget {
   const TechnicianDashboardPage({super.key});
@@ -15,42 +14,48 @@ class TechnicianDashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ResponsiveDashboardLayout(
       sidebar: const SidebarTechnician(),
-      content: SingleChildScrollView( // Cambiamos Padding por Scroll para que quepa todo
+      content: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // WIDGET 1: HEADER
-            DynamicHeader(
-              title: "Bienvenido, Juan",
-              icon: Icons.insights,
-              onIconTap: () => print("Dashboard click"),
+            // --- WIDGET 1: HEADER DINÁMICO ---
+            // En esta página pasamos 'userName' para que active el saludo.
+            // En otras páginas, simplemente no pases ese parámetro.
+            const CustomHeader(
+              title: "Dashboard", 
+              userName: "Juan", 
+              actionIcon: Icons.insights,
+              onActionTap: null, // Puedes pasar una función aquí
             ),
             
             const SizedBox(height: 32),
-            const Text('Acciones Principales', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Acciones Principales', 
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+            ),
             const SizedBox(height: 16),
 
-            // WIDGET 2: QUICK ACTIONS (SLIDER)
+            // --- WIDGET 2: QUICK ACTIONS (SLIDER) ---
             SizedBox(
-              height: 160,
+              height: 170, // Ajustado para dar espacio al botón
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
                   QuickActionCard(
                     title: "Inspección de Prensas",
                     description: "Realizar checklist de prensa industrial",
-                    onTap: () {},
+                    onTap: () => print("Navegando a Prensas"),
                   ),
                   QuickActionCard(
                     title: "Inspección de Unidades",
                     description: "Realizar checklist de vehículos",
-                    onTap: () {},
+                    onTap: () => print("Navegando a Unidades"),
                   ),
                   QuickActionCard(
                     title: "Bandas Transportadoras",
                     description: "Revisión de motores y bandas",
-                    onTap: () {},
+                    onTap: () => print("Navegando a Bandas"),
                   ),
                 ],
               ),
@@ -58,8 +63,8 @@ class TechnicianDashboardPage extends StatelessWidget {
 
             const SizedBox(height: 32),
 
-            // WIDGETS 3 y 4: PANEL DE NOTIFICACIONES E ITEMS
-            NotificationPanel(
+            // --- WIDGETS 3 y 4: PANEL DE NOTIFICACIONES E ITEMS ---
+            const NotificationPanel(
               children: [
                 NotificationItem(
                   title: "Checklist P-001 completado",
