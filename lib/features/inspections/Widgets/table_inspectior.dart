@@ -1,29 +1,47 @@
 import 'package:flutter/material.dart';
 class TableInspector extends StatelessWidget {
-  final List<Map<String, String>> data;
-  const TableInspector({super.key, required this.data});
+  final List<String> columnHeaders;
+  final List<List<String>> rows;
+  final Function(String) onSearch;
+
+  const TableInspector({
+    super.key, 
+    required this.columnHeaders, 
+    required this.rows,
+    required this.onSearch,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-      child: Column(children: [
-        const ListTile(title: Text("Buscar"), subtitle: TextField(decoration: InputDecoration(hintText: "Search here...", prefixIcon: Icon(Icons.search)))),
-        Table(
-          children: [
-            TableRow(decoration: BoxDecoration(color: Colors.grey.shade100), children: [
-              const Padding(padding: EdgeInsets.all(12), child: Text("Inspección", style: TextStyle(fontWeight: FontWeight.bold))),
-              const Padding(padding: EdgeInsets.all(12), child: Text("Nombre", style: TextStyle(fontWeight: FontWeight.bold))),
-              const Padding(padding: EdgeInsets.all(12), child: Text("Acciones", style: TextStyle(fontWeight: FontWeight.bold))),
-            ]),
-            ...data.map((item) => TableRow(children: [
-              Padding(padding: const EdgeInsets.all(12), child: Text(item['inspeccion']!)),
-              Padding(padding: const EdgeInsets.all(12), child: Text(item['nombre']!)),
-              Padding(padding: const EdgeInsets.all(12), child: Text(item['acciones']!, style: const TextStyle(color: Colors.grey))),
-            ])),
-          ],
-        ),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              onChanged: onSearch,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: "Search here...",
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(Colors.grey[100]),
+              columns: columnHeaders.map((header) => DataColumn(label: Text(header, style: const TextStyle(fontWeight: FontWeight.bold)))).toList(),
+              rows: rows.map((row) => DataRow(
+                cells: row.map((cell) => DataCell(Text(cell))).toList(),
+              )).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
