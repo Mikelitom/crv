@@ -2,11 +2,23 @@ import 'package:flutter/material.dart';
 // Rutas según tu estructura
 import '../Widgets/dynamic_stats_row.dart';
 import '../Widgets/table_inspectior.dart';
+import '../../../core/models/inspection_models.dart';
 import '../../dashboard/presentation/widgets/header.dart';
 import '../../dashboard/presentation/widgets/quick_action_card.dart';
 
 class InspectionPage extends StatelessWidget {
-  const InspectionPage({super.key});
+  final List<StatModel> stats;
+  final List<ActionCardModel> actions;
+  final List<String> tableHeaders;
+  final List<List<String>> tableData;
+
+  const InspectionPage({
+    super.key,
+    required this.stats,
+    required this.actions,
+    required this.tableHeaders,
+    required this.tableData,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,43 +29,41 @@ class InspectionPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Header Dinámico (Sin nombre, solo título)
             const CustomHeader(title: "Inspecciones", actionIcon: Icons.print_rounded),
-
             const SizedBox(height: 24),
-
-            // 2. Fila de Contadores Dinámica
-            DynamicStatsRow(stats: [
-              StatModel(value: "15", label: "Total"),
-              StatModel(value: "10", label: "Aprobados"),
-              StatModel(value: "3", label: "Pendientes"),
-              StatModel(value: "2", label: "Con observaciones"),
-            ]),
-
+            
+            // Stats dinámicos
+            DynamicStatsRow(stats: stats),
+            
             const SizedBox(height: 32),
             const Text("Realizar Una Inspección", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
 
-            // 3. QuickActions (Tarjetas de Inicio)
-            const SingleChildScrollView(
+            // Acciones dinámicas
+            SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Row(children: [
-                QuickActionCard(title: "Inspección de Prensas", description: "Realizar checklist", onTap: ),
-                SizedBox(width: 16),
-                QuickActionCard(title: "Inspección de Vehículos", description: "Realizar checklist", onTap: null),
-                SizedBox(width: 16),
-                QuickActionCard(title: "Inspección de Bandas", description: "Realizar checklist", onTap: null),
-              ]),
+              child: Row(
+                children: actions.map((action) => Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: QuickActionCard(
+                    title: action.title,
+                    description: action.description,
+                    onTap: action.onTap, // Aquí pasas la función del modelo
+                  ),
+                )).toList(),
+              ),
             ),
 
             const SizedBox(height: 32),
             const Text("Mis Inspecciones", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
 
-            // 4. Tabla Inspector
-            const TableInspector(data: [
-              {"inspeccion": "Edit Column 1", "nombre": "Edit Column 2", "acciones": "Edit Column 3"},
-            ]),
+            // Tabla dinámica
+            TableInspector(
+              columnHeaders: tableHeaders,
+              rows: tableData,
+              onSearch: (val) => print("Buscando: $val"),
+            ),
           ],
         ),
       ),
