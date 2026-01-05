@@ -4,7 +4,19 @@ import '../widgets/General_vehicle_info.dart';
 import '../widgets/Vehicle_inspection_section.dart';
 import '../../dashboard/presentation/widgets/header.dart';
 class VehicleInspectionPage extends StatelessWidget {
-  const VehicleInspectionPage({super.key});
+  // Simulación de datos que vendrían de una Base de Datos/API
+  final List<InspectionItemModel> motorItems = [
+    InspectionItemModel(description: "CABLES DE BUJIAS"),
+    InspectionItemModel(description: "NIVEL DE ANTICONGELANTE"),
+    InspectionItemModel(description: "NIVEL DE LIQUIDO PARA FRENOS"),
+  ];
+
+  final List<InspectionItemModel> exteriorItems = [
+    InspectionItemModel(description: "LUCES DELANTERAS"),
+    InspectionItemModel(description: "ESTADO DE LLANTAS"),
+  ];
+
+  VehicleInspectionPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,35 +26,23 @@ class VehicleInspectionPage extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            // Header Reutilizado
-            const CustomHeader(title: "Inspección de Unidades Móviles", actionIcon: Icons.build),
-            
+            const CustomHeader(title: "Inspección de Unidades Móviles", actionIcon: Icons.directions_car),
             const SizedBox(height: 24),
+            
             CaptureMethodSelector(onManualFill: () {}, onScan: () {}),
-            
             const SizedBox(height: 24),
+            
             const GeneralVehicleInfo(),
-            
             const SizedBox(height: 24),
-            // SECCIÓN 1: MOTOR
-            VehicleInspectionSection(
-              title: "MOTOR",
-              items: [
-                VehicleInspectionItem(description: "CABLES DE BUJIAS"),
-                VehicleInspectionItem(description: "NIVEL DE ANTICONGELANTE"),
-                VehicleInspectionItem(description: "NIVEL DE LIQUIDO PARA FRENOS"),
-              ],
-            ),
             
-            const SizedBox(height: 24),
-            // SECCIÓN 2: EXTERIOR (Ejemplo de reutilización)
-            VehicleInspectionSection(
-              title: "EXTERIOR",
-              items: [
-                VehicleInspectionItem(description: "LUCES DELANTERAS"),
-                VehicleInspectionItem(description: "ESTADO DE LLANTAS"),
-              ],
-            ),
+            // SECCIÓN MOTOR (Dinámica)
+            VehicleInspectionSection(title: "MOTOR", items: motorItems),
+            
+            // SECCIÓN EXTERIOR (Dinámica)
+            VehicleInspectionSection(title: "EXTERIOR", items: exteriorItems),
+            
+            // FOOTER DE ACCIONES (Préstamo / Firma / Guardar)
+            const LoanAndInspectorSection(), // El que hicimos para Prensas es compatible aquí
           ],
         ),
       ),
