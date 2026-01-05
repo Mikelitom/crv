@@ -4,7 +4,14 @@ import 'sidebar_header.dart';
 import 'sidebar_item.dart';
 
 class SidebarAdmin extends StatelessWidget {
-  const SidebarAdmin({ super.key });
+  final int selectedIndex;
+  final ValueChanged<int> onItemSelected;
+
+  const SidebarAdmin({
+    super.key,
+    required this.selectedIndex,
+    required this.onItemSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,29 +23,40 @@ class SidebarAdmin extends StatelessWidget {
           const SizedBox(height: 8),
 
           SidebarItem(
-            icon: Icons.dashboard_outlined, 
+            icon: Icons.dashboard_outlined,
             label: 'Dashboard',
-            isActive: true
+            isActive: selectedIndex == 0,
+            onTap: () => onItemSelected(0),
           ),
+
           SidebarItem(
-            icon: Icons.people, 
+            icon: Icons.people,
             label: 'Usuarios',
             badgeCount: 3,
+            isActive: selectedIndex == 1,
+            onTap: () => onItemSelected(1),
           ),
+
           SidebarItem(
-            icon: Icons.bar_chart_outlined, 
-            label: 'Reportes'
+            icon: Icons.bar_chart_outlined,
+            label: 'Reportes',
+            isActive: selectedIndex == 2,
+            onTap: () => onItemSelected(2),
           ),
 
           const Spacer(),
 
           SidebarItem(
-            icon: Icons.logout, 
-            label: 'Cerrar Sesion'
+            icon: Icons.logout,
+            label: 'Cerrar Sesión',
+            onTap: () {
+              // aquí luego conectas auth / logout
+            },
           ),
-          const SizedBox(height: 12)
+
+          const SizedBox(height: 12),
         ],
-      )
+      ),
     );
   }
 }
