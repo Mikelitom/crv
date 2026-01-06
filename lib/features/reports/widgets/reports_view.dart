@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/core/models/inspection_models.dart';
 import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dart';
 import 'package:crv_reprosisa/features/inspections/Widgets/dynamic_stats_row.dart';
 import 'package:crv_reprosisa/features/reports/widgets/Report_filters.dart';
@@ -29,13 +30,13 @@ class ReportsView extends StatelessWidget {
 
             DynamicStatsRow(
               stats: [
-                StatModel(value: isAdmin ? "120" : "15", label: "Total"),
-                StatModel(
+                StatsModel(value: isAdmin ? "120" : "15", label: "Total"),
+                StatsModel(
                   value: isAdmin ? "100" : "12",
                   label: "Aprobados",
                   color: Colors.green,
                 ),
-                StatModel(
+                StatsModel(
                   value: isAdmin ? "20" : "3",
                   label: "Pendientes",
                   color: Colors.orange,

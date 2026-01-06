@@ -31,7 +31,7 @@ class SidebarAdmin extends StatelessWidget {
 
           SidebarItem(
             icon: Icons.people,
-            label: 'Usuarios',
+            label: 'Reportes',
             badgeCount: 3,
             isActive: selectedIndex == 1,
             onTap: () => onItemSelected(1),
@@ -39,8 +39,22 @@ class SidebarAdmin extends StatelessWidget {
 
           SidebarItem(
             icon: Icons.bar_chart_outlined,
-            label: 'Reportes',
+            label: 'Inspecciones',
             isActive: selectedIndex == 2,
+            onTap: () => onItemSelected(2),
+          ),
+
+          SidebarItem(
+            icon: Icons.bar_chart_outlined,
+            label: 'Usuarios',
+            isActive: selectedIndex == 3,
+            onTap: () => onItemSelected(2),
+          ),
+
+          SidebarItem(
+            icon: Icons.bar_chart_outlined,
+            label: 'Activos',
+            isActive: selectedIndex == 4,
             onTap: () => onItemSelected(2),
           ),
 
