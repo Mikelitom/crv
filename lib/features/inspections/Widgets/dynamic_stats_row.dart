@@ -1,12 +1,9 @@
+import 'package:crv_reprosisa/core/models/inspection_models.dart';
 import 'package:flutter/material.dart';
-class StatModel {
-  final String value, label;
-  final Color color;
-  StatModel({required this.value, required this.label, this.color = Colors.red});
-}
+
 
 class DynamicStatsRow extends StatelessWidget {
-  final List<StatModel> stats;
+  final List<StatsModel> stats;
 
   const DynamicStatsRow({super.key, required this.stats});
 

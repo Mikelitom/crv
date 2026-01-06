@@ -24,7 +24,7 @@ class QuickActionCard extends StatelessWidget {
           Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 8),
           Text(description, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-          const Spacer(),
+          // const Spacer(),
           ElevatedButton(
             onPressed: onTap,
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),

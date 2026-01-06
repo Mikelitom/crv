@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../dashboard/presentation/pages/dashboard_entry_page.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/session/auth_session.dart';
+import '../../../../core/router/app_routes.dart';
 
 class DevRoleSelectorPage extends StatelessWidget {
   const DevRoleSelectorPage({super.key});
@@ -14,28 +16,16 @@ class DevRoleSelectorPage extends StatelessWidget {
           children: [
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const DashboardEntryPage(
-                      role: UserRole.admin,
-                    ),
-                  ),
-                );
+                authSession.setRole(UserRole.admin);
+                context.go(AppRoutes.dashboard);
               },
               child: const Text('Entrar como ADMIN'),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const DashboardEntryPage(
-                      role: UserRole.technician,
-                    ),
-                  ),
-                );
+                authSession.setRole(UserRole.technician);
+                context.go(AppRoutes.dashboard);
               },
               child: const Text('Entrar como TÉCNICO'),
             ),
