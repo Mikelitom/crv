@@ -7,6 +7,32 @@ import '../../widgets/quick_action_card.dart';
 import '../../widgets/notification_item.dart';
 import '../../widgets/notification_panel.dart';
 
+class TechnicianDashboardPage extends StatefulWidget {
+  const TechnicianDashboardPage({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _TechnicianDashboardPageState();
+}
+
+class _TechnicianDashboardPageState extends State<TechnicianDashboardPage> {
+  int selectedIndex = 0;
+
+  final pages = [
+
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ResponsiveDashboardLayout(
+      sidebar: SidebarTechnician(
+        selectedIndex: selectedIndex,
+        
+      ), 
+      content: content
+    );
+  }
+}
+
 class TechnicianDashboardPage extends StatelessWidget {
   const TechnicianDashboardPage({super.key});
 

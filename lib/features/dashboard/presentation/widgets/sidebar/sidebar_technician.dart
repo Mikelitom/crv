@@ -4,7 +4,14 @@ import 'sidebar_header.dart';
 import 'sidebar_item.dart';
 
 class SidebarTechnician extends StatelessWidget {
-  const SidebarTechnician({ super.key });
+  final int selectedIndex;
+  final ValueChanged<int> onItemSelected;
+
+  const SidebarTechnician({ 
+    super.key,
+    required this.selectedIndex,
+    required this.onItemSelected 
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -18,13 +25,18 @@ class SidebarTechnician extends StatelessWidget {
           SidebarItem(
             icon: Icons.dashboard_outlined, 
             label: 'Dashboard',
-            isActive: true
+            isActive: selectedIndex == 0,
+            onTap: () => onItemSelected(0)
           ),
+
           SidebarItem(
-            icon: Icons.people, 
-            label: 'Usuarios',
+            icon: Icons.report, 
+            label: 'Reportes',
             badgeCount: 3,
+            isActive: selectedIndex == 1,
+            onTap: () => onItemSelected(1),
           ),
+
           SidebarItem(
             icon: Icons.bar_chart_outlined, 
             label: 'Reportes'
