@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/bandas_transportadoras/model/banda_inspection_model.dart';
 import 'package:flutter/material.dart';
 
 class BandaSectionTable extends StatelessWidget {

@@ -6,7 +6,7 @@ class NotificationItem extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
 
-  const NotificationItem({required this.title, required this.subtitle, required this.icon, required this.iconColor});
+  const NotificationItem({super.key, required this.title, required this.subtitle, required this.icon, required this.iconColor});
 
   @override
   Widget build(BuildContext context) {

@@ -5,7 +5,7 @@ class QuickActionCard extends StatelessWidget {
   final String description;
   final VoidCallback onTap;
 
-  const QuickActionCard({required this.title, required this.description, required this.onTap});
+  const QuickActionCard({super.key, required this.title, required this.description, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

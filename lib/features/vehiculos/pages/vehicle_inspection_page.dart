@@ -1,3 +1,5 @@
+import 'package:crv_reprosisa/features/prensas_industriales/widgets/prestamo_devolucion.dart';
+import 'package:crv_reprosisa/features/vehiculos/models/inspection_vehicle_model.dart';
 import 'package:flutter/material.dart';
 import '../widgets/Capture_metho_selector.dart';
 import '../widgets/General_vehicle_info.dart';

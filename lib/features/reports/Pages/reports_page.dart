@@ -1,10 +1,6 @@
 import 'package:crv_reprosisa/core/session/auth_session.dart';
 import 'package:crv_reprosisa/features/reports/widgets/reports_view.dart';
 import 'package:flutter/material.dart';
-import '../widgets/Report_filters.dart';
-import '../widgets/Report_table.dart';
-import '../../dashboard/presentation/widgets/header.dart';
-import '../../inspections/Widgets/dynamic_stats_row.dart';
 class ReportsPage extends StatelessWidget {
   const ReportsPage({super.key});
 
