@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 class ReportsView extends StatelessWidget {
   final bool isAdmin;
 
-  const ReportsView({required this.isAdmin});
+  const ReportsView({super.key, required this.isAdmin});
 
   @override
   Widget build(BuildContext context) {

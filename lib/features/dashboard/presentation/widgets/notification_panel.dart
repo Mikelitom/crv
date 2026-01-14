@@ -4,7 +4,7 @@ import 'notification_item.dart';
 class NotificationPanel extends StatelessWidget {
   final List<NotificationItem> children;
 
-  const NotificationPanel({required this.children});
+  const NotificationPanel({super.key, required this.children});
 
   @override
   Widget build(BuildContext context) {

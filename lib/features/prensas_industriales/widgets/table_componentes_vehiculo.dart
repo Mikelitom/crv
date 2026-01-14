@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/prensas_industriales/Models/prensa_inspection_model.dart';
 import 'package:flutter/material.dart';
 class PrensaInspectionTable extends StatelessWidget {
   final List<PrensaComponentItem> items;
