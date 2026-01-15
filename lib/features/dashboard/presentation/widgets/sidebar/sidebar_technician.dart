@@ -39,7 +39,9 @@ class SidebarTechnician extends StatelessWidget {
 
           SidebarItem(
             icon: Icons.bar_chart_outlined, 
-            label: 'Reportes'
+            label: 'Inspecciones',
+            isActive: selectedIndex == 2,
+            onTap: () => onItemSelected(2),
           ),
 
           const Spacer(),
