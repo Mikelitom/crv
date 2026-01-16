@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/dialog_crear_usuario.dart';
 import '../widgets/user_stats_card.dart';
+
 class UsersAdminPage extends StatelessWidget {
+  const UsersAdminPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

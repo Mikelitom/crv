@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/action_card_activo.dart';
 import '../widgets/dialog_crear_cliente.dart';
+
 class AssetsAdminPage extends StatelessWidget {
+  const AssetsAdminPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -1,4 +1,6 @@
 import 'package:crv_reprosisa/core/models/inspection_models.dart';
+import 'package:crv_reprosisa/features/activos/page/assets_admin_page.dart';
+import 'package:crv_reprosisa/features/gesti%C3%B3n_usuarios/pages/users_admin_page.dart';
 import 'package:flutter/material.dart';
 import '../../layout/responsive_dashboard_layout.dart';
 import '../../widgets/sidebar/sidebar_admin.dart';
@@ -17,8 +19,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   final pages = [
     const _AdminHomePage(),
+    InspectionPage(stats: _adminStats, actions: _adminActions, tableHeaders: _inspectionHeaders, tableData: _inspectionData),
     const ReportsPage(),
-    InspectionPage(stats: _adminStats, actions: _adminActions, tableHeaders: _inspectionHeaders, tableData: _inspectionData)
+    const AssetsAdminPage(),
+    const UsersAdminPage()
   ];
 
   @override
