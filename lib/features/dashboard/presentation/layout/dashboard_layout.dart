@@ -4,27 +4,35 @@ import '../widgets/navbar/dashboard_navbar.dart';
 class DashboardLayout extends StatelessWidget {
   final Widget sidebar;
   final Widget content;
+  final bool isDesktop; // Recibimos el estado desde el ResponsiveLayout
 
   const DashboardLayout({
     super.key,
     required this.sidebar,
     required this.content,
+    required this.isDesktop,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
+      // Si NO es desktop, la sidebar se va al Drawer (el menú lateral oculto)
+      drawer: !isDesktop ? Drawer(child: sidebar) : null,
       body: Row(
         children: [
-          // Sidebar
-          sidebar,
+          // La Sidebar solo aparece fija si es Desktop
+          if (isDesktop) sidebar,
 
-          // Main content
           Expanded(
             child: Column(
               children: [
-                const DashboardNavbar(),
+                // AQUÍ CORREGIMOS EL ERROR: Pasamos todos los parámetros requeridos
+                DashboardNavbar(
+                  userName: "Juan Soto", 
+                  userRole: "Empleado",
+                  isDesktop: isDesktop, 
+                ),
                 Expanded(
                   child: content,
                 ),
