@@ -19,56 +19,63 @@ class SidebarAdmin extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SidebarHeader(),
+          const SidebarHeader(),
           const SizedBox(height: 8),
 
           SidebarItem(
-            icon: Icons.dashboard_outlined,
+            icon: Icons.home_outlined,
             label: 'Dashboard',
             isActive: selectedIndex == 0,
             onTap: () => onItemSelected(0),
           ),
 
           SidebarItem(
-            icon: Icons.people,
-            label: 'Reportes',
-            badgeCount: 3,
+            icon: Icons.assignment_outlined,
+            label: 'Inspecciones',
             isActive: selectedIndex == 1,
             onTap: () => onItemSelected(1),
           ),
 
           SidebarItem(
-            icon: Icons.bar_chart_outlined,
-            label: 'Inspecciones',
+            icon: Icons.folder_open_outlined,
+            label: 'Reportes',
             isActive: selectedIndex == 2,
             onTap: () => onItemSelected(2),
           ),
 
           SidebarItem(
-            icon: Icons.bar_chart_outlined,
-            label: 'Usuarios',
+            icon: Icons.inventory_2_outlined,
+            label: 'Activos',
             isActive: selectedIndex == 3,
-            onTap: () => onItemSelected(2),
+            onTap: () => onItemSelected(3),
           ),
 
           SidebarItem(
-            icon: Icons.bar_chart_outlined,
-            label: 'Activos',
+            icon: Icons.person_add_alt_outlined,
+            label: 'Gestión de Usuarios',
             isActive: selectedIndex == 4,
-            onTap: () => onItemSelected(2),
+            onTap: () => onItemSelected(4),
+          ),
+
+          SidebarItem(
+            icon: Icons.notifications_none_outlined,
+            label: 'Notificaciones',
+            isActive: selectedIndex == 5,
+            onTap: () => onItemSelected(5),
           ),
 
           const Spacer(),
+          const Divider(indent: 20, endIndent: 20),
 
           SidebarItem(
             icon: Icons.logout,
             label: 'Cerrar Sesión',
             onTap: () {
-              // aquí luego conectas auth / logout
+              // Lógica de logout
             },
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
         ],
       ),
     );

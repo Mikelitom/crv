@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'sidebar_badge.dart';
+
 
 class SidebarItem extends StatelessWidget {
   final IconData icon;
@@ -19,48 +19,71 @@ class SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // Definimos los colores institucionales
+    const Color primaryRed = Color(0xFFC62828);
+    const Color activeBackground = Color(0xFFFDECEA); // Rojo muy tenue
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: isActive
-            ? theme.colorScheme.primary.withValues(alpha: 0.08)
-            : Colors.transparent,
-          borderRadius: BorderRadius.circular(8)
+    return Padding(
+      padding: const EdgeInsets.only(right: 12), // Margen para que no toque el borde derecho
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: const BorderRadius.only(
+          topRight: Radius.circular(12),
+          bottomRight: Radius.circular(12),
         ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isActive ? theme.colorScheme.primary : Colors.grey.shade600
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isActive ? activeBackground : Colors.transparent,
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(12),
+              bottomRight: Radius.circular(12),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: 
-                    isActive ? FontWeight.w600 : FontWeight.w400,
-                  color: isActive
-                    ? theme.colorScheme.primary
-                    : Colors.grey.shade800
-                )
-              )
+            // Borde lateral rojo indicador que se ve en la imagen
+            border: Border(
+              left: BorderSide(
+                color: isActive ? primaryRed : Colors.transparent,
+                width: 4,
+              ),
             ),
-            if (badgeCount != null && badgeCount! > 0)
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: SidebarBadge(count: badgeCount!)
-              )
-          ],
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: isActive ? primaryRed : Colors.grey.shade600,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: isActive ? primaryRed : Colors.grey.shade700,
+                  ),
+                ),
+              ),
+              if (badgeCount != null && badgeCount! > 0)
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: primaryRed,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    badgeCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

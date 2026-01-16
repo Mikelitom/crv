@@ -15,25 +15,15 @@ class ResponsiveDashboardLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
+    final double width = MediaQuery.of(context).size.width;
+    final bool isDesktop = width >= desktopBreakpoint;
 
-    // 📱 Mobile / Tablet
-    if (width < desktopBreakpoint) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Dashboard'),
-        ),
-        drawer: Drawer(
-          child: sidebar,
-        ),
-        body: content,
-      );
-    }
-
-    // 🖥 Desktop
+    // Ya no usamos un IF con dos retornos diferentes. 
+    // Usamos el DashboardLayout y le pasamos el estado 'isDesktop'.
     return DashboardLayout(
       sidebar: sidebar,
       content: content,
+      isDesktop: isDesktop,
     );
   }
 }
