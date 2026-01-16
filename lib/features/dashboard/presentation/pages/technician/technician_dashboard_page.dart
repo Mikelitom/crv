@@ -17,7 +17,9 @@ class TechnicianDashboardPage extends StatefulWidget {
 class _TechnicianDashboardPageState extends State<TechnicianDashboardPage> {
   int selectedIndex = 0;
 
-  final pages = [const _TechnicianDashboardPage()];
+  final pages = [
+    const _TechnicianDashboardPage()
+  ];
 
   @override
   Widget build(BuildContext context) {
