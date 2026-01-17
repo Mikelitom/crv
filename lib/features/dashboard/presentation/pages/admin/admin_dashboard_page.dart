@@ -1,6 +1,7 @@
 import 'package:crv_reprosisa/core/models/inspection_models.dart';
 import 'package:crv_reprosisa/features/activos/page/assets_admin_page.dart';
 import 'package:crv_reprosisa/features/gesti%C3%B3n_usuarios/pages/users_admin_page.dart';
+import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
 import 'package:flutter/material.dart';
 import '../../layout/responsive_dashboard_layout.dart';
 import '../../widgets/sidebar/sidebar_admin.dart';
@@ -19,7 +20,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   final pages = [
     const _AdminHomePage(),
-    InspectionPage(stats: _adminStats, actions: _adminActions, tableHeaders: _inspectionHeaders, tableData: _inspectionData),
+    InspectionPage(stats: _adminStats, actions: _adminActions, inspections: _adminInspections),
     const ReportsPage(),
     const AssetsAdminPage(),
     const UsersAdminPage()
@@ -84,14 +85,17 @@ final _adminActions = [
   ),
 ];
 
-final _inspectionHeaders = [
-  "ID",
-  "Equipo",
-  "Fecha",
-  "Estado",
-];
-
-final _inspectionData = [
-  ["001", "Banda A", "01/09/2025", "Completada"],
-  ["002", "Prensa B", "02/09/2025", "Pendiente"],
+final List<InspectionRowUI> _adminInspections = [
+  InspectionRowUI(
+    id: '001',
+    equipment: 'Banda A',
+    date: '01/09/2025',
+    state: 'Completada',
+  ),
+  InspectionRowUI(
+    id: '002',
+    equipment: 'Prensa B',
+    date: '02/09/2025',
+    state: 'Pendiente',
+  ),
 ];

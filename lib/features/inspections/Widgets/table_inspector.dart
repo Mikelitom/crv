@@ -1,13 +1,15 @@
+import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
 import 'package:flutter/material.dart';
+import '../../../core/widgets/table/app_table.dart';
+import '../../../core/widgets/table/app_table_column.dart';
+
 class TableInspector extends StatelessWidget {
-  final List<String> columnHeaders;
-  final List<List<String>> rows;
-  final Function(String) onSearch;
+  final List<InspectionRowUI> items;
+  final ValueChanged<String> onSearch;
 
   const TableInspector({
-    super.key, 
-    required this.columnHeaders, 
-    required this.rows,
+    super.key,
+    required this.items,
     required this.onSearch,
   });
 
@@ -15,7 +17,10 @@ class TableInspector extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -25,21 +30,34 @@ class TableInspector extends StatelessWidget {
               onChanged: onSearch,
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: "Search here...",
-                border: InputBorder.none,
-              ),
-            ),
+                hintText: 'Search here...',
+                border: InputBorder.none, 
+              )  
+            )
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(Colors.grey[100]),
-              columns: columnHeaders.map((header) => DataColumn(label: Text(header, style: const TextStyle(fontWeight: FontWeight.bold)))).toList(),
-              rows: rows.map((row) => DataRow(
-                cells: row.map((cell) => DataCell(Text(cell))).toList(),
-              )).toList(),
-            ),
-          ),
+          AppTable<InspectionRowUI>(
+            columns: const [
+              AppTableColumn(label: 'ID'),
+              AppTableColumn(label: 'Equipo'),
+              AppTableColumn(label: 'Fecha'),
+              AppTableColumn(label: 'Estado'),
+            ],
+            data: items,
+            cellBuilder: (item, column) {
+              switch (column.label) {
+                case 'ID':
+                  return Text(item.id);
+                case 'Equipo':
+                  return Text(item.equipment);
+                case 'Fecha':
+                  return Text(item.date);
+                case 'Estado':
+                  return Text(item.state);
+                default:
+                  return const SizedBox.shrink();
+              }
+            },
+          )
         ],
       ),
     );
