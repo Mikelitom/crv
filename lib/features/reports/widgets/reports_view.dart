@@ -1,13 +1,10 @@
-import 'package:crv_reprosisa/core/models/inspection_models.dart';
-import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dart';
-import 'package:crv_reprosisa/features/inspections/Widgets/dynamic_stats_row.dart';
-import 'package:crv_reprosisa/features/reports/widgets/Report_filters.dart';
-import 'package:crv_reprosisa/features/reports/widgets/Report_table.dart';
 import 'package:flutter/material.dart';
+import 'quick_report_card.dart';
+import '../widgets/Report_table.dart';
+import '../../dashboard/presentation/widgets/header.dart';
 
 class ReportsView extends StatelessWidget {
   final bool isAdmin;
-
   const ReportsView({super.key, required this.isAdmin});
 
   @override
@@ -17,61 +14,48 @@ class ReportsView extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CustomHeader(
-              title: isAdmin
-                  ? "Reportes Administrativos"
-                  : "Mis Reportes",
-              actionIcon: Icons.file_download,
+            const CustomHeader(
+              title: "Reportes Aprobados", 
+              actionIcon: Icons.description_rounded
             ),
-
             const SizedBox(height: 24),
 
-            DynamicStatsRow(
-              stats: [
-                StatsModel(value: isAdmin ? "120" : "15", label: "Total"),
-                StatsModel(
-                  value: isAdmin ? "100" : "12",
-                  label: "Aprobados",
-                  color: Colors.green,
-                ),
-                StatsModel(
-                  value: isAdmin ? "20" : "3",
-                  label: "Pendientes",
-                  color: Colors.orange,
-                ),
-              ],
-            ),
+            // Sección de Tarjetas Superiores
+            LayoutBuilder(builder: (context, constraints) {
+              double width = constraints.maxWidth;
+              return Wrap(
+                spacing: 20,
+                runSpacing: 20,
+                children: [
+                  _responsiveBox(width, "Mis Reportes", "24 reportes", Icons.article_outlined),
+                  _responsiveBox(width, "Reportes Generales", "156 reportes", Icons.people_outline),
+                  _responsiveBox(width, "Estadísticas", "12 gráficos", Icons.bar_chart_rounded),
+                ],
+              );
+            }),
 
             const SizedBox(height: 32),
-
-            ReportFilters(
-              isAdmin: isAdmin,
-              onSearch: (v) => print("Buscando: $v"),
-              onStatusFilter: (v) => print("Filtrando: $v"),
-            ),
-
-            const SizedBox(height: 24),
-
-            ReportTable(
-              data: const [
-                {
-                  "tipo": "Prensa",
-                  "titulo": "Reporte de Fallas P-01",
-                  "fecha": "2024-05-10",
-                  "estado": "Aprobado"
-                },
-                {
-                  "tipo": "Vehículo",
-                  "titulo": "Mantenimiento V-02",
-                  "fecha": "2024-05-11",
-                  "estado": "Pendiente"
-                },
-              ],
-            ),
+            
+            // Tabla y Filtros Combinados (Sin filtro de empleado)
+            const ReportTableCombined(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _responsiveBox(double w, String t, String c, IconData i) {
+    // Ajuste dinámico de columnas (3 en PC, 1 en Móvil)
+    double cardWidth = w > 900 ? (w / 3) - 14 : w;
+    return SizedBox(
+      width: cardWidth,
+      child: QuickReportCard(
+        title: t,
+        subtitle: "Visualiza la información detallada",
+        countText: c,
+        icon: i,
+        onTap: () {},
       ),
     );
   }
