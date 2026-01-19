@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../Widgets/dynamic_stats_row.dart';
@@ -9,15 +10,13 @@ import '../../../core/models/inspection_models.dart';
 class InspectionPage extends StatelessWidget {
   final List<StatsModel> stats;
   final List<ActionCardModel> actions;
-  final List<String> tableHeaders;
-  final List<List<String>> tableData;
+  final List<InspectionRowUI> inspections;
 
   const InspectionPage({
     super.key,
     required this.stats,
     required this.actions,
-    required this.tableHeaders,
-    required this.tableData,
+    required this.inspections
   });
 
   @override
@@ -75,10 +74,8 @@ class InspectionPage extends StatelessWidget {
           const SizedBox(height: 16),
 
           TableInspector(
-            columnHeaders: tableHeaders,
-            rows: tableData,
+            items: inspections,
             onSearch: (value) {
-              // temporal / dev
               debugPrint('Buscar: $value');
             },
           ),
