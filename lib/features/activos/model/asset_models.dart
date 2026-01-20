@@ -7,7 +7,7 @@ class ClienteModel {
   final String telefono;
   final String email;
   final String direccion;
-  final List<String> minasRelacionadas; // Relación dinámica con minas
+  final List<String> minasRelacionadas;
 
   ClienteModel({
     required this.id,
@@ -25,7 +25,9 @@ class ActivoModel {
   final String marca;
   final String modelo;
   final String serie;
-  final String capacidad; // Solo para prensas
+  final String capacidad; 
+  final String placa;     
+  final String ano;       
   final AssetType tipo;
   final String idClienteOwner;
   final String minaUbicacion;
@@ -36,6 +38,8 @@ class ActivoModel {
     required this.modelo,
     required this.serie,
     this.capacidad = '',
+    this.placa = '',
+    this.ano = '',
     required this.tipo,
     required this.idClienteOwner,
     required this.minaUbicacion,
