@@ -1,12 +1,26 @@
+import 'package:crv_reprosisa/features/reports/models/report_row_ui.dart';
 import 'package:flutter/material.dart';
+import '../../../core/widgets/table/app_table.dart';
+import '../../../core/widgets/table/app_table_column.dart';
+import '../../../core/widgets/table/app_table_cell.dart';
 
-class ReportTableCombined extends StatelessWidget {
-  const ReportTableCombined({super.key});
+class ReportTable extends StatelessWidget {
+  const ReportTable({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final columns = <AppTableColumn<ReportRowUI>>[
+      const AppTableColumn(label: 'Tipo'),
+      const AppTableColumn(label: 'Título'),
+      const AppTableColumn(label: 'Fecha'),
+      const AppTableColumn(label: 'Estado'),
+      const AppTableColumn(label: 'Acciones'),
+    ];
+
+    final data = _sampleData();
+
     return Container(
-      width: double.infinity, // La tabla abarca todo el tamaño disponible
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -14,33 +28,29 @@ class ReportTableCombined extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
             blurRadius: 20,
-            offset: const Offset(0, 8)
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // SECCIÓN FILTROS (Sin empleado)
+          // Filtros
           Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Filtros de Búsqueda", 
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  "Filtros de Búsqueda",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    Expanded(
-                      flex: 3,
-                      child: _buildSearchField(),
-                    ),
+                    Expanded(flex: 3, child: _buildSearchField()),
                     const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: _buildDropdown("Tipo de Reporte"),
-                    ),
+                    Expanded(flex: 2, child: _buildDropdown("Tipo de Reporte")),
                     const SizedBox(width: 16),
                     _buildApplyButton(),
                   ],
@@ -48,37 +58,74 @@ class ReportTableCombined extends StatelessWidget {
               ],
             ),
           ),
-          
+
           const Divider(height: 1),
 
-          // SECCIÓN TABLA
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Text("Lista de Reportes Aprobados", 
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          ),
-          
-          // DataTable que abarca el ancho total
-          SizedBox(
-            width: double.infinity,
-            child: DataTable(
-              headingRowColor: MaterialStateProperty.all(Colors.grey.shade50),
-              columnSpacing: 20,
-              columns: const [
-                DataColumn(label: Text('Tipo')),
-                DataColumn(label: Text('Título')),
-                DataColumn(label: Text('Fecha')),
-                DataColumn(label: Text('Estado')),
-                DataColumn(label: Text('Acciones')),
-              ],
-              rows: _generateSampleRows(),
+            child: Text(
+              "Lista de Reportes Aprobados",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: AppTable<ReportRowUI>(
+              columns: columns,
+              data: data,
+              cellBuilder: (item, column) {
+                switch (column.label) {
+                  case 'Tipo':
+                    return Text(item.tipo);
+
+                  case 'Título':
+                    return Text(
+                      item.titulo,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    );
+
+                  case 'Fecha':
+                    return Text(item.fecha);
+
+                  case 'Estado':
+                    return _buildBadge();
+
+                  case 'Acciones':
+                    return Row(
+                      children: [
+                        AppTableCell(
+                          onTap: () {},
+                          child: const Icon(
+                            Icons.visibility,
+                            color: Color(0xFFC62828),
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        AppTableCell(
+                          onTap: () {},
+                          child: const Icon(
+                            Icons.file_download,
+                            color: Color(0xFFC62828),
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+
           const SizedBox(height: 20),
         ],
       ),
     );
   }
+
+  // --- Widgets auxiliares ---
 
   Widget _buildSearchField() {
     return TextField(
@@ -89,7 +136,7 @@ class ReportTableCombined extends StatelessWidget {
         fillColor: Colors.grey.shade50,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none
+          borderSide: BorderSide.none,
         ),
       ),
     );
@@ -103,11 +150,11 @@ class ReportTableCombined extends StatelessWidget {
         fillColor: Colors.grey.shade50,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none
+          borderSide: BorderSide.none,
         ),
       ),
       items: const [],
-      onChanged: (v) {},
+      onChanged: (_) {},
     );
   }
 
@@ -120,32 +167,11 @@ class ReportTableCombined extends StatelessWidget {
         foregroundColor: const Color(0xFFC62828),
         side: const BorderSide(color: Color(0xFFFDECEA)),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
-  }
-
-  List<DataRow> _generateSampleRows() {
-    return [
-      _rowItem("Vehículo", "Inspección V-008", "2024-05-15"),
-      _rowItem("Prensa", "Inspección P-002", "2024-05-12"),
-    ];
-  }
-
-  DataRow _rowItem(String tipo, String titulo, String fecha) {
-    return DataRow(cells: [
-      DataCell(Text(tipo)),
-      DataCell(Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold))),
-      DataCell(Text(fecha)),
-      DataCell(_buildBadge()),
-      DataCell(Row(
-        children: const [
-          Icon(Icons.visibility, color: Color(0xFFC62828), size: 20),
-          SizedBox(width: 12),
-          Icon(Icons.file_download, color: Color(0xFFC62828), size: 20),
-        ],
-      )),
-    ]);
   }
 
   Widget _buildBadge() {
@@ -155,8 +181,29 @@ class ReportTableCombined extends StatelessWidget {
         color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Text("Aprobado", 
-        style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
+      child: const Text(
+        "Aprobado",
+        style: TextStyle(
+          color: Colors.green,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
+  }
+
+  List<ReportRowUI> _sampleData() {
+    return const [
+      ReportRowUI(
+        tipo: 'Vehículo',
+        titulo: 'Inspección V-008',
+        fecha: '2024-05-15',
+      ),
+      ReportRowUI(
+        tipo: 'Prensa',
+        titulo: 'Inspección P-002',
+        fecha: '2024-05-12',
+      ),
+    ];
   }
 }
