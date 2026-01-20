@@ -35,23 +35,23 @@ class DashboardNavbar extends StatelessWidget {
           if (!isDesktop) const SizedBox(width: 8),
 
           // TÍTULO (Ocultar subtítulo en pantallas muy pequeñas)
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Panel de Control',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              if (width > 500)
-                const Text(
-                  'Sistema CRV - Gestión Industrial',
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
-                ),
-            ],
-          ),
+          // Column(
+          //   mainAxisAlignment: MainAxisAlignment.center,
+          //   crossAxisAlignment: CrossAxisAlignment.start,
+          //   children: [
+          //     const Text(
+          //       'Panel de Control',
+          //       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          //     ),
+          //     if (width > 500)
+          //       const Text(
+          //         'Sistema CRV - Gestión Industrial',
+          //         style: TextStyle(fontSize: 11, color: Colors.grey),
+          //       ),
+          //   ],
+          // ),
 
-          const Spacer(),
+          // const Spacer(),
 
           // BUSCADOR: Solo se muestra si hay espacio suficiente (> 700px)
           if (width > 700)
