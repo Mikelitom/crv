@@ -28,7 +28,6 @@ class _QuickActionCardState extends State<QuickActionCard> {
       onExit: (_) => setState(() => isHovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        width: 320,
         curve: Curves.easeInOut,
         transform: Matrix4.translationValues(0, isHovered ? -8 : 0, 0),
         padding: const EdgeInsets.all(24),

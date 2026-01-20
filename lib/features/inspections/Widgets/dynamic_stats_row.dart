@@ -9,7 +9,7 @@ class DynamicStatsRow extends StatelessWidget {
     return LayoutBuilder(builder: (context, constraints) {
       double width = constraints.maxWidth;
       // 4 columnas en PC para que aparezcan seguidas
-      int crossAxisCount = width > 1200 ? 4 : (width > 800 ? 2 : 1);
+      int crossAxisCount = width > 1200 ? 3 : (width > 800 ? 2 : 1);
       double spacing = 20.0;
       double itemWidth = (width - (spacing * (crossAxisCount - 1))) / crossAxisCount;
 

@@ -1,3 +1,5 @@
+import 'package:crv_reprosisa/core/models/inspection_models.dart';
+import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
 import 'package:flutter/material.dart';
 import '../Widgets/dynamic_stats_row.dart';
 import '../Widgets/quick_actions_i.dart';
@@ -6,9 +8,9 @@ import '../../dashboard/presentation/widgets/header.dart';
 
 class InspectionPage extends StatelessWidget {
   // Se deben declarar estas variables exactamente así para que el Dashboard no de error
-  final List<dynamic> stats;
+  final List<StatsModel> stats;
   final List<dynamic> actions;
-  final List<dynamic> inspections;
+  final List<InspectionRowUI> inspections;
 
   const InspectionPage({
     super.key,
@@ -38,30 +40,45 @@ class InspectionPage extends StatelessWidget {
             const SizedBox(height: 20),
             
             // TARJETAS SIN AMARILLO Y SIN TEXTOS DE EQUIPOS
-            Wrap(
-              spacing: 20,
-              runSpacing: 20,
-              children: [
-                QuickActionCard(
-                  title: "Inspección de Prensas",
-                  description: "Realizar checklist de prensa industrial",
-                  icon: Icons.build_circle_outlined,
-                  onTap: () {},
-                ),
-                QuickActionCard(
-                  title: "Inspección de Vehículos",
-                  description: "Realizar checklist de flota vehicular",
-                  icon: Icons.local_shipping_outlined,
-                  onTap: () {},
-                ),
-                QuickActionCard(
-                  title: "Inspección de Bandas",
-                  description: "Realizar checklist de bandas transportadoras",
-                  icon: Icons.camera_alt_outlined,
-                  onTap: () {},
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isMobile = constraints.maxWidth < 700;
+                final columns = isMobile ? 1 : 3;
+                final spacing = 20.0;
+
+                final itemWidth =
+                    (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: [
+                    for (final card in [
+                      QuickActionCard(
+                        title: "Inspección de Prensas",
+                        description: "Realizar checklist de prensa industrial",
+                        icon: Icons.build_circle_outlined,
+                        onTap: () {},
+                      ),
+                      QuickActionCard(
+                        title: "Inspección de Vehículos",
+                        description: "Realizar checklist de flota vehicular",
+                        icon: Icons.local_shipping_outlined,
+                        onTap: () {},
+                      ),
+                      QuickActionCard(
+                        title: "Inspección de Bandas",
+                        description: "Realizar checklist de bandas transportadoras",
+                        icon: Icons.camera_alt_outlined,
+                        onTap: () {},
+                      ),
+                    ])
+                      SizedBox(width: itemWidth, child: card),
+                  ],
+                );
+              }
             ),
+
 
             const SizedBox(height: 48),
             const Text('Mis inspecciones', 
