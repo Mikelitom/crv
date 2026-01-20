@@ -38,7 +38,7 @@ class ReportsView extends StatelessWidget {
             const SizedBox(height: 32),
             
             // Tabla y Filtros Combinados (Sin filtro de empleado)
-            const ReportTableCombined(),
+            const ReportTable(),
           ],
         ),
       ),
