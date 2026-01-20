@@ -12,7 +12,7 @@ class AppTable<T> extends StatelessWidget {
     required this.columns,
     required this.data,
     required this.cellBuilder,
-    this.emptyState
+    this.emptyState,
   });
 
   @override
@@ -21,27 +21,45 @@ class AppTable<T> extends StatelessWidget {
       return emptyState ?? const Center(child: Text('Sin datos'));
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columns: columns
-          .map(
-            (c) => DataColumn(
-              label: Text(c.label),
-              numeric: c.isNumeric
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: constraints.maxWidth,
             ),
-          )
-          .toList(),
-        rows: data.map((item) {
-          return DataRow(
-            cells: columns
-              .map((col) => DataCell(
-                cellBuilder(item, col)
-              ))
-              .toList(),
-          );
-        }).toList()
-      )
+            child: DataTable(
+              columnSpacing: 24,
+              headingRowHeight: 48,
+              dataRowMinHeight: 48,
+              dataRowMaxHeight: 56,
+              columns: columns
+                  .map(
+                    (c) => DataColumn(
+                      label: Text(
+                        c.label,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      numeric: c.isNumeric,
+                    ),
+                  )
+                  .toList(),
+              rows: data.map((item) {
+                return DataRow(
+                  cells: columns
+                      .map(
+                        (col) => DataCell(
+                          cellBuilder(item, col),
+                        ),
+                      )
+                      .toList(),
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
     );
   }
 }
