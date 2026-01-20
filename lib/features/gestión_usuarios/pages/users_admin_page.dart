@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../dashboard/presentation/widgets/header.dart';
 import '../widgets/dialog_crear_usuario.dart';
 import '../widgets/user_stats_card.dart';
 
@@ -8,108 +9,152 @@ class UsersAdminPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8F9FA),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          children: [
-            _buildHeader(),
-            SizedBox(height: 24),
-            _buildStatsGrid(),
-            SizedBox(height: 24),
-            _buildActionBanner(context),
-            SizedBox(height: 24),
-            _buildUserTableContainer(),
-          ],
-        ),
-      ),
-    );
-  }
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: LayoutBuilder(builder: (context, constraints) {
+        double maxWidth = constraints.maxWidth;
+        
+        // Configuración de grid responsivo para estadísticas
+        int statColumns = maxWidth > 1200 ? 4 : (maxWidth > 700 ? 2 : 1);
+        double spacing = 20.0;
+        double statWidth = (maxWidth - (spacing * (statColumns - 1)) - 48) / statColumns;
 
-  Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Row(
-        children: [
-          Column(
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Gestión de Usuarios", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-              Text("Control y administración de usuarios del sistema", style: TextStyle(color: Colors.grey.shade600)),
+              // Header compartido con icono profesional
+              const CustomHeader(
+                title: "Gestión de Usuarios",
+                actionIcon: Icons.settings_rounded,
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Grid de Estadísticas con Sombreado
+              Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  _buildStat(statWidth, "Total Usuarios", "3", Icons.group),
+                  _buildStat(statWidth, "Activos", "3", Icons.check_circle_outline),
+                  _buildStat(statWidth, "Administradores", "1", Icons.security),
+                  _buildStat(statWidth, "Empleados", "1", Icons.person_outline),
+                ],
+              ),
+
+              const SizedBox(height: 32),
+
+              // Banner de Acción "Crear Usuario" con Sombreado
+              _buildActionBanner(context),
+
+              const SizedBox(height: 32),
+
+              // Buscador y Tabla con Sombreado Profundo
+              _buildUserTableContainer(maxWidth),
             ],
           ),
-          Spacer(),
-          CircleAvatar(backgroundColor: Color(0xFFD32F2F), child: Icon(Icons.settings, color: Colors.white)),
-        ],
-      ),
+        );
+      }),
     );
   }
 
-  Widget _buildStatsGrid() {
-    return LayoutBuilder(builder: (context, constraints) {
-      double width = constraints.maxWidth;
-      return Wrap(
-        spacing: 20,
-        runSpacing: 20,
-        children: [
-          SizedBox(width: width > 1200 ? (width/4)-20 : (width/2)-10, child: UserStatsCard(label: "Total Usuarios", value: "3", icon: Icons.group)),
-          SizedBox(width: width > 1200 ? (width/4)-20 : (width/2)-10, child: UserStatsCard(label: "Activos", value: "3", icon: Icons.check_circle_outline)),
-          SizedBox(width: width > 1200 ? (width/4)-20 : (width/2)-10, child: UserStatsCard(label: "Administradores", value: "1", icon: Icons.security)),
-          SizedBox(width: width > 1200 ? (width/4)-20 : (width/2)-10, child: UserStatsCard(label: "Empleados", value: "1", icon: Icons.person_outline)),
-        ],
-      );
-    });
+  Widget _buildStat(double width, String label, String value, IconData icon) {
+    return SizedBox(
+      width: width,
+      child: UserStatsCard(label: label, value: value, icon: icon),
+    );
   }
 
   Widget _buildActionBanner(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.shade50),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10), // Sombra hacia abajo para dar profundidad
+          )
+        ],
       ),
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Color(0xFFD32F2F), borderRadius: BorderRadius.circular(12)),
-            child: Icon(Icons.person_add, color: Colors.white),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDECEA),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.person_add_rounded, color: Color(0xFFD32F2F), size: 30),
           ),
-          SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Crear Nuevo Usuario", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text("Registrar un nuevo usuario en el sistema", style: TextStyle(color: Colors.grey, fontSize: 13)),
-            ],
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text("Crear Nuevo Usuario", 
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1A1C1E))),
+                Text("Registra y asigna roles a nuevos miembros del equipo", 
+                  style: TextStyle(color: Colors.grey, fontSize: 14)),
+              ],
+            ),
           ),
-          Spacer(),
           ElevatedButton(
             onPressed: () => showDialog(context: context, builder: (c) => DialogCrearUsuario()),
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFD32F2F), padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16)),
-            child: Text("Crear Usuario", style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD32F2F),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            child: const Text("Crear Usuario", 
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           )
         ],
       ),
     );
   }
 
-  Widget _buildUserTableContainer() {
+  Widget _buildUserTableContainer(double availableWidth) {
     return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 25,
+            offset: const Offset(0, 12),
+          )
+        ],
+      ),
       child: Column(
         children: [
+          // Barra de Búsqueda y Filtros
           Padding(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Row(
               children: [
-                Expanded(child: TextField(decoration: InputDecoration(hintText: "Buscar por nombre o email...", prefixIcon: Icon(Icons.search)))),
-                SizedBox(width: 16),
-                _buildSmallDropdown("Todos los tipos"),
-                SizedBox(width: 16),
-                _buildSmallDropdown("Todos"),
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: "Buscar por nombre o email...",
+                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12), 
+                        borderSide: BorderSide.none
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                _buildFilterDropdown("Tipo de Usuario"),
               ],
             ),
           ),
@@ -122,43 +167,70 @@ class UsersAdminPage extends StatelessWidget {
   Widget _buildDataTable() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: DataTable(
-        headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
-        columns: const [
-          DataColumn(label: Text('Nombre')),
-          DataColumn(label: Text('Email / Teléfono')),
-          DataColumn(label: Text('Tipo')),
-          DataColumn(label: Text('Área')),
-          DataColumn(label: Text('Estado')),
-          DataColumn(label: Text('Acciones')),
-        ],
-        rows: [
-          _userRow("Carlos Ramírez", "ID: 1", "carlos.ramirez@reprosisa.com", "+52 444 123 4567", "Administrador", "Todos"),
-          _userRow("María González", "ID: 2", "maria.gonzalez@reprosisa.com", "+52 444 234 5678", "Admin Área", "Vehículos"),
-        ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 1000),
+        child: DataTable(
+          headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
+          columns: const [
+            DataColumn(label: Text('Nombre')),
+            DataColumn(label: Text('Contacto')),
+            DataColumn(label: Text('Tipo')),
+            DataColumn(label: Text('Área')),
+            DataColumn(label: Text('Estado')),
+            DataColumn(label: Text('Acciones')),
+          ],
+          rows: [
+            _userRow("Carlos Ramírez", "ID: 1", "carlos.ramirez@reprosisa.com", "Administrador", "Todos"),
+            _userRow("María González", "ID: 2", "maria.gonzalez@reprosisa.com", "Admin Área", "Vehículos"),
+          ],
+        ),
       ),
     );
   }
 
-  DataRow _userRow(String name, String id, String email, String phone, String type, String area) {
+  DataRow _userRow(String name, String id, String email, String type, String area) {
     return DataRow(cells: [
-      DataCell(Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [Text(name, style: TextStyle(fontWeight: FontWeight.bold)), Text(id, style: TextStyle(fontSize: 12, color: Colors.grey))])),
-      DataCell(Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [Row(children: [Icon(Icons.email_outlined, size: 14, color: Colors.grey), SizedBox(width: 4), Text(email)]), Row(children: [Icon(Icons.phone_outlined, size: 14, color: Colors.grey), SizedBox(width: 4), Text(phone)])])),
-      DataCell(Chip(label: Text(type), backgroundColor: Colors.red.shade50, labelStyle: TextStyle(color: Color(0xFFD32F2F), fontSize: 12))),
+      DataCell(Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(id, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        ],
+      )),
+      DataCell(Text(email)),
+      DataCell(_buildRoleBadge(type)),
       DataCell(Text(area)),
-      DataCell(Chip(label: Text("Activo"), backgroundColor: Colors.green.shade50, labelStyle: TextStyle(color: Colors.green, fontSize: 12))),
-      DataCell(Icon(Icons.more_vert, color: Colors.grey)),
+      DataCell(_buildStatusBadge("Activo")),
+      DataCell(IconButton(icon: const Icon(Icons.more_horiz, color: Colors.grey), onPressed: () {})),
     ]);
   }
 
-  Widget _buildSmallDropdown(String label) {
+  // Estilo de Badges de la tabla
+  Widget _buildRoleBadge(String label) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(8)),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: const Color(0xFFFDECEA), borderRadius: BorderRadius.circular(20)),
+      child: Text(label, style: const TextStyle(color: Color(0xFFD32F2F), fontSize: 11, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildStatusBadge(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(20)),
+      child: Text(label, style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildFilterDropdown(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12)),
       child: DropdownButton<String>(
-        value: label,
-        underline: SizedBox(),
-        items: [DropdownMenuItem(value: label, child: Text(label, style: TextStyle(fontSize: 14)))],
+        hint: Text(label, style: const TextStyle(fontSize: 14)),
+        underline: const SizedBox(),
+        items: const [],
         onChanged: (v) {},
       ),
     );
