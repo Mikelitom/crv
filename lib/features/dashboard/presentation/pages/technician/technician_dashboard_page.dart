@@ -38,7 +38,7 @@ class _TechnicianDashboardPageState extends State<TechnicianDashboardPage> {
         padding: const EdgeInsets.all(24),
         child: pages[selectedIndex],
       ),
-    );
+    );  
   }
 }
 
