@@ -1,3 +1,7 @@
+import 'package:crv_reprosisa/core/models/inspection_models.dart';
+import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
+import 'package:crv_reprosisa/features/inspections/pages/inspections_page.dart';
+import 'package:crv_reprosisa/features/reports/Pages/reports_page.dart';
 import 'package:flutter/material.dart';
 import '../../layout/responsive_dashboard_layout.dart';
 import '../../widgets/sidebar/sidebar_technician.dart';
@@ -18,7 +22,9 @@ class _TechnicianDashboardPageState extends State<TechnicianDashboardPage> {
   int selectedIndex = 0;
 
   final pages = [
-    const _TechnicianDashboardPage()
+    const _TechnicianDashboardPage(),
+    InspectionPage(stats: _adminStats, actions: _adminActions, inspections: _adminInspections),
+    const ReportsPage(),
   ];
 
   @override
@@ -115,3 +121,41 @@ class _TechnicianDashboardPage extends StatelessWidget {
     );
   }
 }
+
+final _adminStats = [
+  StatsModel(value: "24", label: "Totales", color: Colors.blue),
+  StatsModel(value: "5", label: "Pendientes", color: Colors.orange),
+  StatsModel(value: "19", label: "Completadas", color: Colors.green),
+];
+
+final _adminActions = [
+  ActionCardModel(
+    title: "Nueva inspección",
+    description: "Crear inspección completa",
+    icon: Icons.add_circle_outline,
+    onTap: () {
+      // navegación a formulario admin
+    },
+  ),
+  ActionCardModel(
+    title: "Asignar técnico",
+    description: "Asignar inspección",
+    icon: Icons.person_add_alt,
+    onTap: () {},
+  ),
+];
+
+final List<InspectionRowUI> _adminInspections = [
+  InspectionRowUI(
+    id: '001',
+    equipment: 'Banda A',
+    date: '01/09/2025',
+    state: 'Completada',
+  ),
+  InspectionRowUI(
+    id: '002',
+    equipment: 'Prensa B',
+    date: '02/09/2025',
+    state: 'Pendiente',
+  ),
+];
