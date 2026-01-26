@@ -1,15 +1,15 @@
 import 'package:crv_reprosisa/core/models/inspection_models.dart';
+import 'package:crv_reprosisa/features/dashboard/presentation/layout/responsive_dashboard_layout.dart';
+import 'package:crv_reprosisa/features/dashboard/presentation/widgets/sidebar/sidebar_technician.dart';
 import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/inspections/pages/inspections_page.dart';
 import 'package:crv_reprosisa/features/reports/Pages/reports_page.dart';
 import 'package:flutter/material.dart';
-import '../../layout/responsive_dashboard_layout.dart';
-import '../../widgets/sidebar/sidebar_technician.dart';
-// Asegúrate de que las rutas de tus componentes sean las correctas
 import '../../widgets/header.dart';
-import '../../widgets/quick_action_card.dart';
-import '../../widgets/notification_item.dart';
+import '../../widgets/stats_card_dash_e.dart';
 import '../../widgets/notification_panel.dart';
+import '../../widgets/notification_item.dart';
+import '../../../../inspections/Widgets/quick_actions_i.dart';
 
 class TechnicianDashboardPage extends StatefulWidget {
   const TechnicianDashboardPage({super.key});
@@ -23,7 +23,7 @@ class _TechnicianDashboardPageState extends State<TechnicianDashboardPage> {
 
   final pages = [
     const _TechnicianDashboardPage(),
-    InspectionPage(stats: _adminStats, actions: _adminActions, inspections: _adminInspections),
+    InspectionPage(stats: _testStats, actions: _testActions, inspections: _testInspections),
     const ReportsPage(),
   ];
 
@@ -31,104 +31,130 @@ class _TechnicianDashboardPageState extends State<TechnicianDashboardPage> {
   Widget build(BuildContext context) {
     return ResponsiveDashboardLayout(
       sidebar: SidebarTechnician(
-        selectedIndex: selectedIndex,
+        selectedIndex: selectedIndex, 
         onItemSelected: (i) => setState(() => selectedIndex = i),
-      ),
+      ), 
       content: Padding(
         padding: const EdgeInsets.all(24),
         child: pages[selectedIndex],
-      ),
+      )
     );
   }
 }
 
 class _TechnicianDashboardPage extends StatelessWidget {
+  // ignore: unused_element_parameter
   const _TechnicianDashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // --- WIDGET 1: HEADER DINÁMICO ---
-        // En esta página pasamos 'userName' para que active el saludo.
-        // En otras páginas, simplemente no pases ese parámetro.
-        const CustomHeader(
-          title: "Dashboard",
-          userName: "Juan",
-          actionIcon: Icons.insights,
-          onActionTap: null, // Puedes pasar una función aquí
-        ),
-
-        const SizedBox(height: 32),
-        const Text(
-          'Acciones Principales',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-
-        // --- WIDGET 2: QUICK ACTIONS (SLIDER) ---
-        SizedBox(
-          height: 170, // Ajustado para dar espacio al botón
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              QuickActionCard(
-                title: "Inspección de Prensas",
-                description: "Realizar checklist de prensa industrial",
-                onTap: () => print("Navegando a Prensas"),
-              ),
-              QuickActionCard(
-                title: "Inspección de Unidades",
-                description: "Realizar checklist de vehículos",
-                onTap: () => print("Navegando a Unidades"),
-              ),
-              QuickActionCard(
-                title: "Bandas Transportadoras",
-                description: "Revisión de motores y bandas",
-                onTap: () => print("Navegando a Bandas"),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 32),
-
-        // --- WIDGETS 3 y 4: PANEL DE NOTIFICACIONES E ITEMS ---
-        const NotificationPanel(
+    return Material( // Solución global al error "No Material widget found"
+      color: const Color(0xFFF8F9FA),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            NotificationItem(
-              title: "Checklist P-001 completado",
-              subtitle: "Sistema • Hace 15 min",
-              icon: Icons.camera_alt_outlined,
-              iconColor: Colors.blue,
+            // 1. HEADER DINÁMICO CON SALUDO
+            const CustomHeader(
+              title: "Dashboard",
+              userName: "Juan",
+              actionIcon: Icons.insights_rounded,
             ),
-            NotificationItem(
-              title: "Vehículo V-001 requiere correcciones",
-              subtitle: "Supervisor • Hace 40 min",
-              icon: Icons.local_shipping_outlined,
-              iconColor: Colors.orange,
+
+            const SizedBox(height: 32),
+
+            // 2. ESTADÍSTICAS SEGUIDAS
+            const Text("Estadísticas", 
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
+            const SizedBox(height: 16),
+            LayoutBuilder(builder: (context, constraints) {
+              double spacing = 20.0;
+              // Divide el ancho entre 3 restando los espacios para que queden seguidas
+              double cardWidth = (constraints.maxWidth - (spacing * 2)) / 3;
+              
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  SizedBox(width: cardWidth, child: const DashboardStatsCard(
+                    value: "8", sublabel: "Este mes", label: "Mis Reportes", icon: Icons.bar_chart_rounded)),
+                  SizedBox(width: cardWidth, child: const DashboardStatsCard(
+                    value: "2", sublabel: "Por completar", label: "Pendientes", icon: Icons.access_time_rounded)),
+                  SizedBox(width: cardWidth, child: const DashboardStatsCard(
+                    value: "6", sublabel: "Este mes", label: "Aprobados", icon: Icons.check_box_outlined)),
+                ],
+              );
+            }),
+
+            const SizedBox(height: 40),
+
+            // 3. ACCIONES PRINCIPALES (LIMPIAS, SIN AMARILLO)
+            const Text("Acciones Principales", 
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
+            const SizedBox(height: 16),
+            
+            LayoutBuilder(builder: (context, constraints) {
+              double width = constraints.maxWidth;
+              return Wrap(
+              
+                spacing: 20,
+                runSpacing: 20,
+                children: [
+                  _buildActionCard(width, "Inspección de Prensas", "Realizar checklist de prensa industrial", Icons.build_circle_outlined),
+                  _buildActionCard(width, "Inspección de Vehículos", "Realizar checklist de flota vehicular", Icons.local_shipping_outlined),
+                  _buildActionCard(width, "Inspección de Bandas", "Realizar checklist de bandas transportadoras", Icons.camera_alt_outlined),
+                ],
+              );
+
+            } 
             ),
-            NotificationItem(
-              title: "Checklist B-002 rechazado",
-              subtitle: "Alfredo Olivas • Hace 3 hr",
-              icon: Icons.build_circle_outlined,
-              iconColor: Colors.red,
+
+            const SizedBox(height: 40),
+
+            // 4. PANEL DE NOTIFICACIONES
+            const NotificationPanel(
+              children: [
+                NotificationItem(
+                  title: "Checklist P-001 completado", 
+                  subtitle: "Sistema • Hace 15 min", 
+                  icon: Icons.camera_alt_outlined, 
+                  iconColor: Colors.blue
+                ),
+                NotificationItem(
+                  title: "Vehículo V-001 requiere correcciones", 
+                  subtitle: "Supervisor • Hace 40 min", 
+                  icon: Icons.local_shipping_outlined, 
+                  iconColor: Colors.orange
+                ),
+              ],
             ),
           ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildActionCard(double w, String title, String desc, IconData icon) {
+    double cardWidth = w > 900 ? (w / 3) - 14 : w;
+    return SizedBox(
+      width: cardWidth,
+      child: QuickActionCard(
+        title: title,
+        description: desc,
+        icon: icon,
+        onTap: () {},
+      ),
     );
   }
 }
 
-final _adminStats = [
+final _testStats = [
   StatsModel(value: "24", label: "Totales", color: Colors.blue),
   StatsModel(value: "5", label: "Pendientes", color: Colors.orange),
   StatsModel(value: "19", label: "Completadas", color: Colors.green),
 ];
 
-final _adminActions = [
+final _testActions = [
   ActionCardModel(
     title: "Nueva inspección",
     description: "Crear inspección completa",
@@ -145,7 +171,7 @@ final _adminActions = [
   ),
 ];
 
-final List<InspectionRowUI> _adminInspections = [
+final List<InspectionRowUI> _testInspections = [
   InspectionRowUI(
     id: '001',
     equipment: 'Banda A',
