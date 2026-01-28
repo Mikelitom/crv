@@ -58,10 +58,23 @@ class SidebarAdmin extends StatelessWidget {
           ),
 
           SidebarItem(
-            icon: Icons.notifications_none_outlined,
-            label: 'Notificaciones',
+            icon: Icons.book,
+            label: 'Catalogo',
             isActive: selectedIndex == 5,
             onTap: () => onItemSelected(5),
+          ),
+         SidebarItem(
+            icon: Icons.book,
+            label: 'Servicios',
+            isActive: selectedIndex == 6,
+            onTap: () => onItemSelected(6),
+          ),
+
+          SidebarItem(
+            icon: Icons.notifications_none_outlined,
+            label: 'Perfil',
+            isActive: selectedIndex == 7,
+            onTap: () => onItemSelected(7),
           ),
 
           const Spacer(),

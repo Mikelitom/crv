@@ -1,5 +1,10 @@
 import 'package:crv_reprosisa/core/models/inspection_models.dart';
+import 'package:crv_reprosisa/features/activos/page/assets_admin_page.dart';
+import 'package:crv_reprosisa/features/catalogo/page/vehiculo/catalogo_vehicle_page.dart';
+import 'package:crv_reprosisa/features/gesti%C3%B3n_usuarios/pages/users_admin_page.dart';
 import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
+import 'package:crv_reprosisa/features/perfil/page/profile_page.dart';
+import 'package:crv_reprosisa/features/servicios/page/vehiculos/vehicle_service_page.dart';
 import 'package:flutter/material.dart';
 import '../../layout/responsive_dashboard_layout.dart';
 import '../../widgets/sidebar/sidebar_admin.dart';
@@ -23,6 +28,17 @@ class AdminDashboardPage extends StatefulWidget {
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int selectedIndex = 0;
+
+  final pages = [
+    const _AdminHomePage(),
+    InspectionPage(stats: _adminStats, actions: _adminActions, inspections: _adminInspections),
+    const ReportsPage(),
+    const AssetsAdminPage(),
+    const UsersAdminPage(),
+    const VehicleCatalogPage(),
+    const VehicleServicesPage(),
+    const ProfilePage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
