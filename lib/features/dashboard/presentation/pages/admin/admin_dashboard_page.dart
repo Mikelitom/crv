@@ -15,8 +15,6 @@ import '../../widgets/notification_item.dart';
 import '../../widgets/stats_card_dash_e.dart';
 import '../../../../reports/Pages/reports_page.dart';
 import '../../../../inspections/pages/inspections_page.dart';
-import '../../../../activos/page/assets_admin_page.dart';
-import '../../../../gestión_usuarios/pages/users_admin_page.dart';
 
 
 class AdminDashboardPage extends StatefulWidget {
@@ -48,7 +46,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       InspectionPage(stats: _adminStats, actions: _adminActions, inspections: _adminInspections),
       const ReportsPage(),
       const AssetsAdminPage(),
-      const UsersAdminPage()
+      const UsersAdminPage(),
+      const VehicleCatalogPage(),
+      const VehicleServicesPage(),
+      const ProfilePage(),
     ];
 
     return ResponsiveDashboardLayout(
