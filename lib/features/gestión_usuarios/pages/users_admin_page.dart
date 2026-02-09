@@ -13,7 +13,7 @@ class UsersAdminPage extends StatelessWidget {
       body: LayoutBuilder(builder: (context, constraints) {
         double maxWidth = constraints.maxWidth;
         
-        // Configuración de grid responsivo para estadísticas
+        // Grid responsivo: 4 columnas en web, 2 en tablet, 1 en móvil
         int statColumns = maxWidth > 1200 ? 4 : (maxWidth > 700 ? 2 : 1);
         double spacing = 20.0;
         double statWidth = (maxWidth - (spacing * (statColumns - 1)) - 48) / statColumns;
@@ -23,15 +23,13 @@ class UsersAdminPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header compartido con icono profesional
               const CustomHeader(
                 title: "Gestión de Usuarios",
                 actionIcon: Icons.settings_rounded,
               ),
-              
               const SizedBox(height: 32),
               
-              // Grid de Estadísticas con Sombreado
+              // Estadísticas con ancho dinámico
               Wrap(
                 spacing: spacing,
                 runSpacing: spacing,
@@ -45,12 +43,12 @@ class UsersAdminPage extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // Banner de Acción "Crear Usuario" con Sombreado
-              _buildActionBanner(context),
+              // Banner de Acción Adaptable
+              _buildActionBanner(context, maxWidth),
 
               const SizedBox(height: 32),
 
-              // Buscador y Tabla con Sombreado Profundo
+              // Contenedor de Tabla con Sombra Profunda
               _buildUserTableContainer(maxWidth),
             ],
           ),
@@ -66,8 +64,12 @@ class UsersAdminPage extends StatelessWidget {
     );
   }
 
-  Widget _buildActionBanner(BuildContext context) {
+  Widget _buildActionBanner(BuildContext context, double maxWidth) {
+    // Si la pantalla es pequeña (<700px), cambiamos a columna para evitar desbordamiento
+    bool isCompact = maxWidth < 700;
+
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -76,37 +78,47 @@ class UsersAdminPage extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 20,
-            offset: const Offset(0, 10), // Sombra hacia abajo para dar profundidad
+            offset: const Offset(0, 10),
           )
         ],
       ),
-      child: Row(
+      child: Flex(
+        direction: isCompact ? Axis.vertical : Axis.horizontal,
+        crossAxisAlignment: isCompact ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFDECEA),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.person_add_rounded, color: Color(0xFFD32F2F), size: 30),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDECEA),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.person_add_rounded, color: Color(0xFFD32F2F), size: 30),
+              ),
+              if (isCompact) const SizedBox(width: 16),
+              if (isCompact) const Text("Nuevo Usuario", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            ],
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 24, height: 16),
           Expanded(
+            flex: isCompact ? 0 : 1,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text("Crear Nuevo Usuario", 
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1A1C1E))),
-                Text("Registra y asigna roles a nuevos miembros del equipo", 
+              children: [
+                if (!isCompact) const Text("Crear Nuevo Usuario", 
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF1A1C1E))),
+                const Text("Registra y asigna roles a nuevos miembros del equipo", 
                   style: TextStyle(color: Colors.grey, fontSize: 14)),
               ],
             ),
           ),
+          const SizedBox(height: 20),
           ElevatedButton(
             onPressed: () => showDialog(context: context, builder: (c) => DialogCrearUsuario()),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD32F2F),
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 0,
             ),
@@ -118,23 +130,18 @@ class UsersAdminPage extends StatelessWidget {
     );
   }
 
-  Widget _buildUserTableContainer(double availableWidth) {
+  Widget _buildUserTableContainer(double maxWidth) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 25,
-            offset: const Offset(0, 12),
-          )
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 25, offset: const Offset(0, 12))
         ],
       ),
       child: Column(
         children: [
-          // Barra de Búsqueda y Filtros
           Padding(
             padding: const EdgeInsets.all(24),
             child: Row(
@@ -146,15 +153,12 @@ class UsersAdminPage extends StatelessWidget {
                       prefixIcon: const Icon(Icons.search, color: Colors.grey),
                       filled: true,
                       fillColor: Colors.grey.shade50,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12), 
-                        borderSide: BorderSide.none
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     ),
                   ),
                 ),
                 const SizedBox(width: 16),
-                _buildFilterDropdown("Tipo de Usuario"),
+                if (maxWidth > 650) _buildFilterDropdown("Tipo de Usuario"),
               ],
             ),
           ),
@@ -206,7 +210,6 @@ class UsersAdminPage extends StatelessWidget {
     ]);
   }
 
-  // Estilo de Badges de la tabla
   Widget _buildRoleBadge(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

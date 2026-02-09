@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../dashboard/presentation/widgets/header.dart';
 import '../../widgets/vehiculos/catalag_stats.dart';
 
-
 class VehicleCatalogPage extends StatelessWidget {
   const VehicleCatalogPage({super.key});
 
@@ -15,34 +14,28 @@ class VehicleCatalogPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header institucional
             const CustomHeader(
               title: "Gestión de Vehículos",
               actionIcon: Icons.refresh_rounded,
             ),
-
             const SizedBox(height: 32),
             const CatalogStats(),
             const SizedBox(height: 40),
 
-            // Contenedor de Tabla de Ancho Completo
+            // Contenedor de Tabla Adaptable
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 25,
-                    offset: const Offset(0, 12), // Sombra gris premium
-                  )
+                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 25, offset: const Offset(0, 12))
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSearchHeader(),
+                  _buildSearchHeader(context),
                   _buildFullWidthTable(),
                 ],
               ),
@@ -53,39 +46,45 @@ class VehicleCatalogPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text("Monitoreo de Unidades", 
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          SizedBox(
-            width: 350,
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Buscar unidad, responsable o ubicación...",
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12), 
-                  borderSide: BorderSide.none
+  Widget _buildSearchHeader(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      bool isMobile = constraints.maxWidth < 600;
+
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Flex(
+          direction: isMobile ? Axis.vertical : Axis.horizontal,
+          crossAxisAlignment: isMobile ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+          children: [
+            const Text("Monitoreo de Unidades", 
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16, width: 16),
+            // El buscador ahora se expande o tiene un ancho máximo responsivo
+            Flexible(
+              child: SizedBox(
+                width: isMobile ? double.infinity : 350,
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: "Buscar unidad...",
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildFullWidthTable() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 1200),
+        constraints: const BoxConstraints(minWidth: 1000), // Ancho mínimo para mantener legibilidad
         child: DataTable(
           horizontalMargin: 24,
           columnSpacing: 30,
@@ -95,7 +94,7 @@ class VehicleCatalogPage extends StatelessWidget {
             DataColumn(label: Text('UNIDAD')),
             DataColumn(label: Text('ESTADO')),
             DataColumn(label: Text('RESPONSABLE')),
-            DataColumn(label: Text('UBICACIÓN')), // Nueva columna
+            DataColumn(label: Text('UBICACIÓN')),
             DataColumn(label: Text('SALIDA / REGRESO')),
             DataColumn(label: Text('ODÓMETRO')),
             DataColumn(label: Text('ACCIONES')),
@@ -113,6 +112,7 @@ class VehicleCatalogPage extends StatelessWidget {
   DataRow _buildRow(String id, String model, String status, String user, String loc, String time, String km, bool alert) {
     return DataRow(cells: [
       DataCell(Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           if (alert) const Icon(Icons.error_outline, color: Colors.red, size: 18),
           const SizedBox(width: 8),
@@ -128,15 +128,7 @@ class VehicleCatalogPage extends StatelessWidget {
       )),
       DataCell(_buildStatusBadge(status)),
       DataCell(Text(user)),
-      // Ubicación con estilo de etiqueta
-      DataCell(Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(loc, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-      )),
+      DataCell(Text(loc)),
       DataCell(Text(time, style: const TextStyle(fontSize: 12))),
       DataCell(Text(km)),
       DataCell(Row(
