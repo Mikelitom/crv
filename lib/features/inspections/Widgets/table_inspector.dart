@@ -38,20 +38,23 @@ class TableInspector extends StatelessWidget {
           AppTable<InspectionRowUI>(
             columns: const [
               AppTableColumn(label: 'ID'),
-              AppTableColumn(label: 'Equipo'),
+              AppTableColumn(label: 'Tipo'),
               AppTableColumn(label: 'Fecha'),
               AppTableColumn(label: 'Estado'),
+               AppTableColumn(label: 'Acciones'),
             ],
             data: items,
             cellBuilder: (item, column) {
               switch (column.label) {
                 case 'ID':
                   return Text(item.id);
-                case 'Equipo':
+                case 'Tipo':
                   return Text(item.equipment);
                 case 'Fecha':
                   return Text(item.date);
                 case 'Estado':
+                  return Text(item.state);
+                case 'Acciones':
                   return Text(item.state);
                 default:
                   return const SizedBox.shrink();

@@ -17,5 +17,5 @@ class VehicleMonitor {
     required this.odometer,
     required this.location,
     this.hasAlert = false,
-  });
+  });  
 }

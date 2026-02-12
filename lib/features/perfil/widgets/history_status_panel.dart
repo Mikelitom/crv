@@ -23,9 +23,7 @@ class HistoryStatusPanel extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _miniStat("12", "Servicios"),
-              _miniStat("04", "Pendientes"),
-              _miniStat("98%", "Eficiencia"),
+             
             ],
           )
         ],
@@ -54,13 +52,4 @@ class HistoryStatusPanel extends StatelessWidget {
       ],
     );
   }
-
-  Widget _miniStat(String value, String label) {
-    return Column(
-      children: [
-        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFFC62828))),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-}
+} 
