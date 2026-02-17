@@ -1,209 +1,130 @@
 import 'package:crv_reprosisa/features/reports/models/report_row_ui.dart';
 import 'package:flutter/material.dart';
-import '../../../core/widgets/table/app_table.dart';
-import '../../../core/widgets/table/app_table_column.dart';
-import '../../../core/widgets/table/app_table_cell.dart';
 
 class ReportTable extends StatelessWidget {
-  const ReportTable({super.key});
+  final List<ReportRowUI> items;
+
+  const ReportTable({super.key, required this.items});
 
   @override
   Widget build(BuildContext context) {
-    final columns = <AppTableColumn<ReportRowUI>>[
-      const AppTableColumn(label: 'Tipo'),
-      const AppTableColumn(label: 'Título'),
-      const AppTableColumn(label: 'Fecha'),
-      const AppTableColumn(label: 'Estado'),
-      const AppTableColumn(label: 'Acciones'),
-    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Breakpoint para detectar pantallas pequeñas (Móvil)
+        bool isCompact = constraints.maxWidth < 900;
 
-    final data = _sampleData();
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Filtros
-          Padding(
-            padding: const EdgeInsets.all(24),
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1600),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Filtros de Búsqueda",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                // --- ENCABEZADO DINÁMICO ---
+                // Si es pequeño usa Column, si hay espacio usa Row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 24.0),
+                  child: isCompact 
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Lista de Reportes Aprobados",
+                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E)),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildSearchField(double.infinity), // Ancho completo en móvil
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Lista de Reportes Aprobados",
+                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E)),
+                          ),
+                          _buildSearchField(380), // Ancho fijo en escritorio
+                        ],
+                      ),
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(flex: 3, child: _buildSearchField()),
-                    const SizedBox(width: 16),
-                    Expanded(flex: 2, child: _buildDropdown("Tipo de Reporte")),
-                    const SizedBox(width: 16),
-                    _buildApplyButton(),
-                  ],
+
+                const SizedBox(height: 16),
+
+                // --- TABLA CON SCROLL HORIZONTAL ---
+                // El Scroll horizontal evita que la tabla se corte en pantallas pequeñas
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 25, offset: const Offset(0, 12)),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minWidth: isCompact ? 800 : constraints.maxWidth),
+                        child: DataTable(
+                          headingRowHeight: 68,
+                          dataRowMaxHeight: 85,
+                          horizontalMargin: 32,
+                          headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F9FA)),
+                          columns: const [
+                            DataColumn(label: Text('ID', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13))),
+                            DataColumn(label: Text('TIPO', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13))),
+                            DataColumn(label: Text('FECHA', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13))),
+                            DataColumn(label: Text('ACCIONES', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13))),
+                          ],
+                          rows: items.map((item) => _buildDataRow(item)).toList(),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
+        );
+      },
+    );
+  }
 
-          const Divider(height: 1),
-
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Text(
-              "Lista de Reportes Aprobados",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
+  Widget _buildSearchField(double width) {
+    return SizedBox(
+      width: width,
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: "Buscar reportes...",
+          prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFD32F2F)),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.grey.shade200),
           ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: AppTable<ReportRowUI>(
-              columns: columns,
-              data: data,
-              cellBuilder: (item, column) {
-                switch (column.label) {
-                  case 'Tipo':
-                    return Text(item.tipo);
-
-                  case 'Título':
-                    return Text(
-                      item.titulo,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    );
-
-                  case 'Fecha':
-                    return Text(item.fecha);
-
-                  case 'Estado':
-                    return _buildBadge();
-
-                  case 'Acciones':
-                    return Row(
-                      children: [
-                        AppTableCell(
-                          onTap: () {},
-                          child: const Icon(
-                            Icons.visibility,
-                            color: Color(0xFFC62828),
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        AppTableCell(
-                          onTap: () {},
-                          child: const Icon(
-                            Icons.file_download,
-                            color: Color(0xFFC62828),
-                            size: 20,
-                          ),
-                        ),
-                      ],
-                    );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFD32F2F), width: 1.5),
           ),
+        ),
+      ),
+    );
+  }
 
-          const SizedBox(height: 20),
+  DataRow _buildDataRow(ReportRowUI item) {
+    return DataRow(cells: [
+      DataCell(Text(item.titulo.split(' ').last, style: const TextStyle(fontWeight: FontWeight.bold))),
+      DataCell(Text(item.tipo)),
+      DataCell(Text(item.fecha, style: const TextStyle(color: Color(0xFF546E7A), fontWeight: FontWeight.bold))),
+      DataCell(Row(
+        children: [
+          IconButton(icon: const Icon(Icons.visibility_rounded, color: Colors.blue, size: 22), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.print_rounded, color: Color(0xFFC62828), size: 20), onPressed: () {}),
         ],
-      ),
-    );
-  }
-
-  // --- Widgets auxiliares ---
-
-  Widget _buildSearchField() {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: "Buscar reportes...",
-        prefixIcon: const Icon(Icons.search, size: 20),
-        filled: true,
-        fillColor: Colors.grey.shade50,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdown(String label) {
-    return DropdownButtonFormField<String>(
-      decoration: InputDecoration(
-        hintText: label,
-        filled: true,
-        fillColor: Colors.grey.shade50,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-      ),
-      items: const [],
-      onChanged: (_) {},
-    );
-  }
-
-  Widget _buildApplyButton() {
-    return OutlinedButton.icon(
-      onPressed: () {},
-      icon: const Icon(Icons.filter_list, size: 18),
-      label: const Text("Aplicar Filtros"),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFFC62828),
-        side: const BorderSide(color: Color(0xFFFDECEA)),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Text(
-        "Aprobado",
-        style: TextStyle(
-          color: Colors.green,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  List<ReportRowUI> _sampleData() {
-    return const [
-      ReportRowUI(
-        tipo: 'Vehículo',
-        titulo: 'Inspección V-008',
-        fecha: '2024-05-15',
-      ),
-      ReportRowUI(
-        tipo: 'Prensa',
-        titulo: 'Inspección P-002',
-        fecha: '2024-05-12',
-      ),
-    ];
+      )),
+    ]);
   }
 }

@@ -14,7 +14,6 @@ class AssetsAdminPage extends StatelessWidget {
         builder: (context, constraints) {
           double maxWidth = constraints.maxWidth;
           
-          // Configuración de columnas responsivas
           int crossAxisCount = maxWidth > 1200 ? 3 : (maxWidth > 800 ? 2 : 1);
           double spacing = 20.0;
           double cardWidth = (maxWidth - (spacing * (crossAxisCount - 1)) - 48) / crossAxisCount;
@@ -36,7 +35,6 @@ class AssetsAdminPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Sección de Tarjetas de Acción
                 Wrap(
                   spacing: spacing,
                   runSpacing: spacing,
@@ -55,8 +53,8 @@ class AssetsAdminPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 
-                // Contenedor de Tabla con Diseño Premium
-                _buildTabbedContainer(context),
+                // CONTENEDOR DE TABLA CENTRADO CON BUSCADOR
+                _buildCenteredTableContainer(context),
               ],
             ),
           );
@@ -77,44 +75,56 @@ class AssetsAdminPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTabbedContainer(BuildContext context) {
-    return Container(
-      width: double.infinity, 
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 25,
-            offset: const Offset(0, 12),
-          )
-        ],
-      ),
-      child: DefaultTabController(
-        length: 3,
+  Widget _buildCenteredTableContainer(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1600),
         child: Column(
           children: [
-            const TabBar(
-              labelColor: Color(0xFFD32F2F),
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: Color(0xFFD32F2F),
-              indicatorWeight: 3,
-              labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              tabs: [
-                Tab(icon: Icon(Icons.people_alt_rounded), text: "Clientes"),
-                Tab(icon: Icon(Icons.local_shipping_rounded), text: "Vehículos"),
-                Tab(icon: Icon(Icons.settings_suggest_rounded), text: "Prensas"),
-              ],
-            ),
-            SizedBox(
-              height: 550, // Altura incrementada para mejor visualización
-              child: TabBarView(
-                children: [
-                  _buildScrollableTable(context, clientCols, []), // [] son filas vacías de ejemplo
-                  _buildScrollableTable(context, vehicleCols, []),
-                  _buildScrollableTable(context, pressCols, []),
+            // BARRA DE BÚSQUEDA INTEGRADA
+            _buildSearchBar(),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity, 
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 25,
+                    offset: const Offset(0, 12),
+                  )
                 ],
+              ),
+              child: DefaultTabController(
+                length: 3,
+                child: Column(
+                  children: [
+                    const TabBar(
+                      labelColor: Color(0xFFD32F2F),
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor: Color(0xFFD32F2F),
+                      indicatorWeight: 3,
+                      labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      tabs: [
+                        Tab(icon: Icon(Icons.people_alt_rounded), text: "Clientes"),
+                        Tab(icon: Icon(Icons.local_shipping_rounded), text: "Vehículos"),
+                        Tab(icon: Icon(Icons.settings_suggest_rounded), text: "Prensas"),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 600, 
+                      child: TabBarView(
+                        children: [
+                          _buildResponsiveTable(context, clientCols),
+                          _buildResponsiveTable(context, vehicleCols),
+                          _buildResponsiveTable(context, pressCols),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -123,17 +133,38 @@ class AssetsAdminPage extends StatelessWidget {
     );
   }
 
-  Widget _buildScrollableTable(BuildContext context, List<DataColumn> cols, List<DataRow> rows) {
+  Widget _buildSearchBar() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: const TextField(
+        decoration: InputDecoration(
+          hintText: "Buscar por ID, nombre o placa...",
+          hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+          prefixIcon: Icon(Icons.search_rounded, color: Color(0xFFD32F2F)),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(vertical: 15),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResponsiveTable(BuildContext context, List<DataColumn> cols) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 1100),
+        constraints: const BoxConstraints(minWidth: 1200),
         child: DataTable(
           headingRowHeight: 60,
-          dataRowMaxHeight: 75, // Espacio extra para evitar amontonamiento
+          dataRowMaxHeight: 70,
           horizontalMargin: 24,
-          columnSpacing: 40,
+          columnSpacing: 35,
           headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
           columns: cols.map((c) => DataColumn(
             label: DefaultTextStyle.merge(
@@ -141,50 +172,59 @@ class AssetsAdminPage extends StatelessWidget {
                 fontWeight: FontWeight.w900,
                 color: Color(0xFF454B4E),
                 fontSize: 13,
-                letterSpacing: 0.3,
               ),
               child: c.label,
             ),
           )).toList(),
-          // Se muestran filas de ejemplo o las que pases por parámetro
-          rows: rows.isEmpty ? _buildPlaceholderRows() : rows, 
+          rows: _buildPlaceholderRows(cols.length), 
         ),
       ),
     );
   }
 
-  // Columnas exactas solicitadas con diseño limpio
   List<DataColumn> get clientCols => const [
-    DataColumn(label: Text('ID')), DataColumn(label: Text('Nombre Completo')), 
-    DataColumn(label: Text('Empresa')), DataColumn(label: Text('Teléfono')), 
-    DataColumn(label: Text('Email')), DataColumn(label: Text('Dirección')),
+    DataColumn(label: Text('ID')), 
+    DataColumn(label: Text('Nombre')), 
+    DataColumn(label: Text('Compañía')), 
+    DataColumn(label: Text('Teléfono')), 
+    DataColumn(label: Text('Dirección')),
+    DataColumn(label: Text('Email')),
     DataColumn(label: Text('Acciones')),
   ];
 
   List<DataColumn> get vehicleCols => const [
-    DataColumn(label: Text('ID')), DataColumn(label: Text('Tipo')), DataColumn(label: Text('Marca')),
-    DataColumn(label: Text('Modelo')), DataColumn(label: Text('Año')), DataColumn(label: Text('Placa')),
+    DataColumn(label: Text('ID')), 
+    DataColumn(label: Text('Tipo ID')), 
+    DataColumn(label: Text('Marca')),
+    DataColumn(label: Text('Modelo')), 
+    DataColumn(label: Text('Año')), 
+    DataColumn(label: Text('Placas')),
+    DataColumn(label: Text('Fecha Creación')),
     DataColumn(label: Text('Acciones')),
   ];
 
   List<DataColumn> get pressCols => const [
-    DataColumn(label: Text('ID')), DataColumn(label: Text('Tipo')), DataColumn(label: Text('Modelo')),
-    DataColumn(label: Text('N° Serie')), DataColumn(label: Text('Voltz')), DataColumn(label: Text('Tamaño')),
+    DataColumn(label: Text('ID')), 
+    DataColumn(label: Text('Tipo')), 
+    DataColumn(label: Text('Modelo')),
+    DataColumn(label: Text('Voltz')), 
+    DataColumn(label: Text('Serie')), 
+    DataColumn(label: Text('Tamaño')),
+    DataColumn(label: Text('Fecha Creación')),
     DataColumn(label: Text('Acciones')),
   ];
 
-  // Placeholder para visualizar el diseño de las filas
-  List<DataRow> _buildPlaceholderRows() {
-    return List.generate(2, (index) => DataRow(
-      cells: List.generate(7, (i) => DataCell(
-        i == 6 
+  List<DataRow> _buildPlaceholderRows(int colCount) {
+    return List.generate(3, (index) => DataRow(
+      cells: List.generate(colCount, (i) => DataCell(
+        i == colCount - 1 
           ? Row(
               children: [
-                IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20), onPressed: () {}),
-                IconButton(icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFD32F2F), size: 20), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.edit_note_rounded, color: Colors.blue), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.delete_sweep_rounded, color: Color(0xFFD32F2F)), onPressed: () {}),
               ],
             )
-          : const Text("---", style: TextStyle(color: Colors.grey, fontSize: 13))
+          : const Text("---", style: TextStyle(fontSize: 13, color: Colors.grey))
       )),
     ));
   }

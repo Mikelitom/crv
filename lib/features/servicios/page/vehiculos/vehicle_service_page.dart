@@ -25,7 +25,43 @@ class VehicleServicesPage extends StatelessWidget {
             const ServiceStatsGrid(),
 
             const SizedBox(height: 40),
-
+ Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 24.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Centro de Control de Servicios",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF1A1C1E),
+                    ),
+                  ),
+                  // Buscador independiente con diseño de cápsula
+                  SizedBox(
+                    width: 380,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: "Buscar servicio o unidad...",
+                        prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFD32F2F)),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(color: Color(0xFFD32F2F), width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // Contenedor de la tabla de ancho completo
             Container(
               width: double.infinity,
