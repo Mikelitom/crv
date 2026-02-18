@@ -5,6 +5,9 @@ import '../Widgets/dynamic_stats_row.dart';
 import '../Widgets/quick_actions_i.dart';
 import '../Widgets/table_inspector.dart';
 import '../../dashboard/presentation/widgets/header.dart';
+import '../../bandas_transportadoras/pages/banda_inspection_page.dart';
+import '../../prensas_industriales/Pages/prensa_inspection.dart';
+import '../../vehiculos/pages/vehicle_inspection_page.dart';
 
 class InspectionPage extends StatelessWidget {
   final List<StatsModel> stats;
@@ -26,7 +29,6 @@ class InspectionPage extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Center(
           child: ConstrainedBox(
-            // ANCHO UNIFICADO: 1600px para simetría total
             constraints: const BoxConstraints(maxWidth: 1600),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,7 +36,6 @@ class InspectionPage extends StatelessWidget {
                 const CustomHeader(title: 'Inspecciones', actionIcon: Icons.print_rounded),
                 const SizedBox(height: 32),
                 
-                // Estadísticas (Conteo estilo Gestión de Usuarios)
                 DynamicStatsRow(stats: stats),
                 
                 const SizedBox(height: 48),
@@ -42,19 +43,14 @@ class InspectionPage extends StatelessWidget {
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
                 const SizedBox(height: 24),
                 
-                // Tarjetas de Acciones Rápidas
-                _buildQuickActionGrid(),
+                _buildQuickActionGrid(context),
 
                 const SizedBox(height: 56),
 
-                // --- ENCABEZADO INDEPENDIENTE (TÍTULO Y BUSCADOR FUERA) ---
-                // Se eliminó el duplicado y se dejó solo uno con el buscador alineado
                 _buildTableTopActions(),
 
                 const SizedBox(height: 16),
 
-                // --- CONTENEDOR DE TABLA (Abarca todo el ancho) ---
-                // Siguiendo la estética de image_f43d45 y image_ea4478
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -80,70 +76,60 @@ class InspectionPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTableTopActions() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          'Mis inspecciones', 
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E)),
-        ),
-        // Buscador independiente (Fuera de la tabla)
-        SizedBox(
-          width: 380,
-          child: TextField(
-            onChanged: (v) {},
-            decoration: InputDecoration(
-              hintText: "Buscar inspección...",
-              prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFD32F2F)),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFFD32F2F), width: 1.5),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickActionGrid() {
+  Widget _buildQuickActionGrid(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 700;
         final columns = isMobile ? 1 : 3;
         final spacing = 24.0;
+        final itemWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
 
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
           children: [
-            _buildActionItem(constraints.maxWidth, spacing, columns, "Inspección de Prensas", "Checklist de prensa industrial", Icons.build_circle_outlined),
-            _buildActionItem(constraints.maxWidth, spacing, columns, "Inspección de Vehículos", "Checklist de flota vehicular", Icons.local_shipping_outlined),
-            _buildActionItem(constraints.maxWidth, spacing, columns, "Inspección de Bandas", "Checklist de bandas transportadoras", Icons.camera_alt_outlined),
+            _buildActionItem(context, itemWidth, "Inspección de Prensas", "Checklist de prensa industrial", Icons.build_circle_outlined, const PrensaInspectionPage()),
+            _buildActionItem(context, itemWidth, "Inspección de Vehículos", "Checklist de flota vehicular", Icons.local_shipping_outlined,  VehicleInspectionPage()),
+            _buildActionItem(context, itemWidth, "Inspección de Bandas", "Checklist de bandas transportadoras", Icons.camera_alt_outlined, const BandaInspectionPage()),
           ],
         );
       }
     );
   }
 
-  Widget _buildActionItem(double maxWidth, double spacing, int columns, String title, String desc, IconData icon) {
-    final itemWidth = (maxWidth - spacing * (columns - 1)) / columns;
+  Widget _buildActionItem(BuildContext context, double width, String title, String desc, IconData icon, Widget target) {
     return SizedBox(
-      width: itemWidth,
+      width: width,
       child: QuickActionCard(
         title: title,
         description: desc,
         icon: icon,
-        onTap: () {},
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => target)),
       ),
+    );
+  }
+
+  Widget _buildTableTopActions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text('Mis inspecciones', 
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
+        SizedBox(
+          width: 380,
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: "Buscar inspección...",
+              prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFD32F2F)),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade200)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFD32F2F), width: 1.5)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

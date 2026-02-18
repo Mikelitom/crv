@@ -1,33 +1,40 @@
 import 'package:flutter/material.dart';
+
 class GeneralVehicleInfo extends StatelessWidget {
   const GeneralVehicleInfo({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Informacion General la Unidad Móvil", style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          LayoutBuilder(builder: (context, constraints) {
-            double fieldWidth = constraints.maxWidth > 800 ? (constraints.maxWidth / 4) - 12 : (constraints.maxWidth / 2) - 12;
-            return Wrap(
-              spacing: 12,
-              runSpacing: 16,
+    return LayoutBuilder(builder: (context, constraints) {
+      bool isMobile = constraints.maxWidth < 600;
+
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Información General la Unidad Móvil", 
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 20,
+              runSpacing: 20,
               children: [
-                _buildField("Unidad", fieldWidth),
-                _buildField("Placas", fieldWidth),
-                _buildField("Fecha", fieldWidth),
-                _buildField("Kilometraje", fieldWidth),
+                _buildField("Unidad", isMobile ? constraints.maxWidth : 200),
+                _buildField("Placas", isMobile ? constraints.maxWidth : 200),
+                _buildField("Fecha", isMobile ? constraints.maxWidth : 200),
+                _buildField("Kilometraje", isMobile ? constraints.maxWidth : 200),
               ],
-            );
-          }),
-        ],
-      ),
-    );
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildField(String label, double width) {
@@ -36,9 +43,19 @@ class GeneralVehicleInfo extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          const SizedBox(height: 4),
-          TextField(decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))),
+          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
+          const SizedBox(height: 8),
+          TextField(
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: const Color(0xFFF8F9FA),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFDDE1E6)),
+              ),
+            ),
+          ),
         ],
       ),
     );
