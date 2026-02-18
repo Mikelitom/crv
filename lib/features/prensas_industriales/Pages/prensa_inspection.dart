@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '..//Models/prensa_inspection_model.dart';
-import '..//widgets/information_general_equipo.dart';
+import '../Models/prensa_inspection_model.dart';
+import '../widgets/information_general_equipo.dart';
 import '../widgets/prestamo_devolucion.dart';
 import '../widgets/table_componentes_press.dart';
 import '../../dashboard/presentation/widgets/header.dart';
-import '../../prensas_industriales/widgets/Capture_method_selector.dart';
+import '../widgets/capture_method_selector.dart';
 
 class PrensaInspectionPage extends StatefulWidget {
   const PrensaInspectionPage({super.key});
@@ -19,8 +19,16 @@ class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
   @override
   Widget build(BuildContext context) {
     final List<PrensaComponentItem> dataFromDB = [
-      PrensaComponentItem(unidad: "ML", descripcion: "NIVELES DE ACEITE", estado: 0),
-      PrensaComponentItem(unidad: "PZA", descripcion: "MANOMETRO EN CERO", estado: 1),
+      PrensaComponentItem(
+        unidad: "ML",
+        descripcion: "NIVELES DE ACEITE",
+        estado: 0,
+      ),
+      PrensaComponentItem(
+        unidad: "PZA",
+        descripcion: "MANOMETRO EN CERO",
+        estado: 1,
+      ),
     ];
 
     return Scaffold(
@@ -32,22 +40,25 @@ class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
             constraints: const BoxConstraints(maxWidth: 1600),
             child: Column(
               children: [
-                const CustomHeader(title: "Inspección de Prensas", actionIcon: Icons.build_rounded),
+                const CustomHeader(
+                  title: "Inspección de Prensas",
+                  actionIcon: Icons.build_rounded,
+                ),
                 const SizedBox(height: 32),
-                
+
                 // SELECTOR CON SOMBREADO Y TEXTO COMPLETO
                 CaptureMethodSelector(
                   onManualFill: () => setState(() => isScanning = false),
                   onScan: () => setState(() => isScanning = true),
                 ),
-                
+
                 const SizedBox(height: 32),
 
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 400),
-                  child: isScanning 
-                    ? _buildScannerView() 
-                    : _buildFormView(dataFromDB),
+                  child: isScanning
+                      ? _buildScannerView()
+                      : _buildFormView(dataFromDB),
                 ),
               ],
             ),
@@ -68,11 +79,16 @@ class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
       ),
       child: Stack(
         // CORRECCIÓN DE ERROR
-        alignment: Alignment.center, 
+        alignment: Alignment.center,
         children: [
-          const Icon(Icons.videocam_off_rounded, color: Colors.white24, size: 80),
+          const Icon(
+            Icons.videocam_off_rounded,
+            color: Colors.white24,
+            size: 80,
+          ),
           Container(
-            width: 300, height: 300,
+            width: 300,
+            height: 300,
             decoration: BoxDecoration(
               border: Border.all(color: Colors.white, width: 2),
               borderRadius: BorderRadius.circular(24),
@@ -82,7 +98,10 @@ class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
             bottom: 40,
             child: Text(
               "POSICIONE EL CÓDIGO QR DENTRO DEL RECUADRO",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
