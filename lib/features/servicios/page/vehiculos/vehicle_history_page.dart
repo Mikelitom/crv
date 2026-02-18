@@ -1,8 +1,8 @@
-import 'package:crv_reprosisa/features/servicios/widgets/vehiculos/history_inspections_feed.dart';
 import 'package:flutter/material.dart';
 import '../../../dashboard/presentation/widgets/header.dart';
+import '../../widgets/vehiculos/document_vault_panel.dart';
+import '../../widgets/vehiculos/history_inspections_feed.dart';
 import '../../widgets/vehiculos/history_tech_info.dart';
-import '../../widgets/vehiculos/history_payment_vault.dart';
 
 class VehicleHistoryPage extends StatelessWidget {
   final String vehicleId;
@@ -14,15 +14,24 @@ class VehicleHistoryPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF4F7FA),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          bool isDesktop = constraints.maxWidth > 1000;
+          bool isDesktop = constraints.maxWidth > 1200;
           return SingleChildScrollView(
             padding: const EdgeInsets.all(32),
-            child: Column(
-              children: [
-                CustomHeader(title: "Expediente: $vehicleId", actionIcon: Icons.arrow_back_ios_new),
-                const SizedBox(height: 32),
-                if (isDesktop) _desktopView() else _mobileView(),
-              ],
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1600),
+                child: Column(
+                  children: [
+                    CustomHeader(
+                      title: "Expediente Digital: $vehicleId", 
+                      actionIcon: Icons.arrow_back_ios_new,
+                      onActionTap: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(height: 32),
+                    if (isDesktop) _desktopView() else _mobileView(),
+                  ],
+                ),
+              ),
             ),
           );
         },
@@ -31,17 +40,34 @@ class VehicleHistoryPage extends StatelessWidget {
   }
 
   Widget _desktopView() {
-    return const Row(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(flex: 3, child: HistoryInspectionsFeed()),
-        SizedBox(width: 32),
-        Expanded(flex: 2, child: Column(children: [HistoryTechInfo(), SizedBox(height: 24), HistoryPaymentVault()])),
+        // SECCIÓN IZQUIERDA: Tus Reportes de Inspección (Área principal)
+        const Expanded(flex: 3, child: HistoryInspectionsFeed()),
+        const SizedBox(width: 32),
+        // SECCIÓN DERECHA: Info técnica y Carpetas de documentos
+        Expanded(
+          flex: 2, 
+          child: Column(
+            children: const [
+              HistoryTechInfo(), 
+              SizedBox(height: 24), 
+              HistoryDocumentsPanel(),
+            ]
+          )
+        ),
       ],
     );
   }
 
   Widget _mobileView() {
-    return const Column(children: [HistoryTechInfo(), SizedBox(height: 24), HistoryPaymentVault(), SizedBox(height: 32), HistoryInspectionsFeed()]);
+    return Column(children: const [
+      HistoryTechInfo(), 
+      SizedBox(height: 24), 
+      HistoryDocumentsPanel(), 
+      SizedBox(height: 32), 
+      HistoryInspectionsFeed()
+    ]);
   }
 }

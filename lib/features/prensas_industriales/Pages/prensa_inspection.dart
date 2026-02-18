@@ -2,39 +2,104 @@ import 'package:flutter/material.dart';
 import '..//Models/prensa_inspection_model.dart';
 import '..//widgets/information_general_equipo.dart';
 import '../widgets/prestamo_devolucion.dart';
-import '..//widgets/table_componentes_vehiculo.dart';
+import '../widgets/table_componentes_press.dart';
 import '../../dashboard/presentation/widgets/header.dart';
-import '../../vehiculos/widgets/Capture_metho_selector.dart';
-class PrensaInspectionPage extends StatelessWidget {
+import '../../prensas_industriales/widgets/Capture_method_selector.dart';
+
+class PrensaInspectionPage extends StatefulWidget {
   const PrensaInspectionPage({super.key});
 
   @override
+  State<PrensaInspectionPage> createState() => _PrensaInspectionPageState();
+}
+
+class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
+  bool isScanning = false;
+
+  @override
   Widget build(BuildContext context) {
-    // Ejemplo de lista que vendría de tu Base de Datos
     final List<PrensaComponentItem> dataFromDB = [
-      PrensaComponentItem(unidad: "ML", descripcion: "NIVELES DE ACEITE"),
-      PrensaComponentItem(unidad: "PZA", descripcion: "MANOMETRO EN CERO"),
-      PrensaComponentItem(unidad: "PZA", descripcion: "PRENSA EN MODO MANUAL"),
+      PrensaComponentItem(unidad: "ML", descripcion: "NIVELES DE ACEITE", estado: 0),
+      PrensaComponentItem(unidad: "PZA", descripcion: "MANOMETRO EN CERO", estado: 1),
     ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const CustomHeader(title: "Inspección de Prensas Industriales", actionIcon: Icons.build),
-            const SizedBox(height: 20),
-            CaptureMethodSelector(onManualFill: () {}, onScan: () {}),
-            const SizedBox(height: 24),
-            const GeneralEquipmentInfo(equipmentData: {}),
-            const SizedBox(height: 24),
-            PrensaInspectionTable(items: dataFromDB), // Aquí pasas la lista dinámica
-            const SizedBox(height: 24),
-            const LoanAndInspectorSection(),
-          ],
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1600),
+            child: Column(
+              children: [
+                const CustomHeader(title: "Inspección de Prensas", actionIcon: Icons.build_rounded),
+                const SizedBox(height: 32),
+                
+                // SELECTOR CON SOMBREADO Y TEXTO COMPLETO
+                CaptureMethodSelector(
+                  onManualFill: () => setState(() => isScanning = false),
+                  onScan: () => setState(() => isScanning = true),
+                ),
+                
+                const SizedBox(height: 32),
+
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  child: isScanning 
+                    ? _buildScannerView() 
+                    : _buildFormView(dataFromDB),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildScannerView() {
+    return Container(
+      key: const ValueKey(1),
+      width: double.infinity,
+      height: 500,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(32),
+      ),
+      child: Stack(
+        // CORRECCIÓN DE ERROR
+        alignment: Alignment.center, 
+        children: [
+          const Icon(Icons.videocam_off_rounded, color: Colors.white24, size: 80),
+          Container(
+            width: 300, height: 300,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white, width: 2),
+              borderRadius: BorderRadius.circular(24),
+            ),
+          ),
+          const Positioned(
+            bottom: 40,
+            child: Text(
+              "POSICIONE EL CÓDIGO QR DENTRO DEL RECUADRO",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormView(List<PrensaComponentItem> data) {
+    return Column(
+      key: const ValueKey(2),
+      children: [
+        const GeneralEquipmentInfo(equipmentData: {}),
+        const SizedBox(height: 24),
+        PrensaInspectionTable(items: data),
+        const SizedBox(height: 24),
+        const LoanAndInspectorSection(),
+      ],
     );
   }
 }

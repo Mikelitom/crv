@@ -83,7 +83,6 @@ class ProfilePage extends StatelessWidget {
           ProfileFormField(label: "Correo Institucional", initialValue: "j.perez@empresa.com", icon: Icons.email_outlined),
           ProfileFormField(label: "Teléfono", initialValue: "+52 662 123 4567", icon: Icons.phone_android_outlined),
           ProfileFormField(label: "Departamento", initialValue: "Sistemas / Flota", icon: Icons.business_outlined),
-          ProfileFormField(label: "Ubicación", initialValue: "Planta Hermosillo", icon: Icons.location_on_outlined),
           SizedBox(height: 12),
           _HoverButton(
             label: "GUARDAR CAMBIOS",

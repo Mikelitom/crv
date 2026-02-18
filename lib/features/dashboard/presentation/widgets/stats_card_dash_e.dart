@@ -26,11 +26,12 @@ class _DashboardStatsCardState extends State<DashboardStatsCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
-      child: Material( // Agregado para evitar el error "No Material widget found"
+      child: Material(
         color: Colors.transparent,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(20),
+          // Se redujo un poco el padding para ganar espacio interno
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -43,34 +44,65 @@ class _DashboardStatsCardState extends State<DashboardStatsCard> {
             ],
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min, // Ajusta al contenido
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(widget.value, 
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
-                      const SizedBox(width: 8),
-                      Text(widget.sublabel, 
-                        style: const TextStyle(color: Color(0xFFC62828), fontSize: 12, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(widget.label, 
-                    style: const TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w500)),
-                ],
+              // Expanded permite que el contenido de texto no empuje el icono fuera de la vista
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Wrap permite que el sublabel baje de línea si el valor es muy grande
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          widget.value, 
+                          style: const TextStyle(
+                            fontSize: 22, // Tamaño ligeramente reducido para prevenir overflow
+                            fontWeight: FontWeight.bold, 
+                            color: Color(0xFF1A1C1E)
+                          )
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          widget.sublabel, 
+                          style: const TextStyle(
+                            color: Color(0xFFC62828), 
+                            fontSize: 11, 
+                            fontWeight: FontWeight.w600
+                          )
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.label, 
+                      maxLines: 1, // Limita a una línea
+                      overflow: TextOverflow.ellipsis, // Pone "..." si no cabe
+                      style: const TextStyle(
+                        color: Colors.grey, 
+                        fontSize: 13, 
+                        fontWeight: FontWeight.w500
+                      )
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
+              // Icono con tamaño fijo para que no se deforme
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: isHovered ? const Color(0xFFC62828) : const Color(0xFFFDECEA),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(widget.icon, 
-                  color: isHovered ? Colors.white : const Color(0xFFC62828), size: 24),
+                child: Icon(
+                  widget.icon, 
+                  color: isHovered ? Colors.white : const Color(0xFFC62828), 
+                  size: 20 // Tamaño ajustado
+                ),
               )
             ],
           ),

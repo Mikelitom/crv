@@ -1,47 +1,56 @@
 enum AssetType { vehicle, press }
 
-class ClienteModel {
+class ClienteModelActivo {
   final String id;
   final String nombreCompleto;
   final String empresa;
   final String telefono;
   final String email;
   final String direccion;
-  final List<String> minasRelacionadas;
 
-  ClienteModel({
+  ClienteModelActivo({
     required this.id,
     required this.nombreCompleto,
     required this.empresa,
     required this.telefono,
     required this.email,
     required this.direccion,
-    this.minasRelacionadas = const [],
   });
 }
 
-class ActivoModel {
+class VehiculoModelActivo {
   final String id;
-  final String marca;
+  final String tipo;
   final String modelo;
-  final String serie;
-  final String capacidad; 
+  final String marca;
   final String placa;     
   final String ano;       
-  final AssetType tipo;
-  final String idClienteOwner;
-  final String minaUbicacion;
 
-  ActivoModel({
+
+  VehiculoModelActivo({
     required this.id,
-    required this.marca,
-    required this.modelo,
-    required this.serie,
-    this.capacidad = '',
-    this.placa = '',
-    this.ano = '',
     required this.tipo,
-    required this.idClienteOwner,
-    required this.minaUbicacion,
+    required this.modelo,
+    required this.marca,
+    this.placa = '',
+    this.ano = '',   
+  });
+}
+
+class PrensaModelActivo{
+  final String id;
+  final String tipo;
+  final String modelo;
+  final String volts;
+  final String serie;
+  final String size;
+
+  PrensaModelActivo({
+    required this.id,
+    required this.tipo,
+    required this.modelo,
+    required this.volts,
+    required this.serie,
+    required this.size,
   });
 }
