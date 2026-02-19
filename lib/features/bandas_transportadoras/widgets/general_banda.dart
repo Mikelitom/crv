@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 
-class GeneralVehicleInfo extends StatelessWidget {
-  const GeneralVehicleInfo({super.key});
+class GeneralBandaInfo extends StatelessWidget {
+  const GeneralBandaInfo({super.key});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      // Determinamos si es modo móvil o laptop/desktop
+      // Determinamos si es modo móvil según el ancho disponible
       bool isMobile = constraints.maxWidth < 800;
 
       return Container(
-        // El contenedor ahora ocupa todo el ancho disponible
-        width: double.infinity,
+        width: double.infinity, // Abarca todo el ancho
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -28,7 +27,7 @@ class GeneralVehicleInfo extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Información General la Unidad Móvil",
+              "Información General del Reporte",
               style: TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 18,
@@ -37,55 +36,48 @@ class GeneralVehicleInfo extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             const Text(
-              "Complete los datos técnicos de la unidad móvil",
+              "Complete los datos",
               style: TextStyle(color: Color(0xFF757575), fontSize: 13),
             ),
             const SizedBox(height: 24),
             
-            // Usamos un Row para Laptop (una sola fila) y un Column para Móvil
-            if (isMobile)
-              Column(
-                children: [
-                  _buildField("Unidad", double.infinity),
-                  const SizedBox(height: 16),
-                  _buildField("Placas", double.infinity),
-                  const SizedBox(height: 16),
-                  _buildField("Fecha", double.infinity),
-                  const SizedBox(height: 16),
-                  _buildField("Kilometraje", double.infinity),
-                ],
-              )
-            else
-              Row(
-                children: [
-                  // Cada campo se expande proporcionalmente para llenar la fila
-                  Expanded(child: _buildField("Unidad", double.infinity)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildField("Placas", double.infinity)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildField("Fecha", double.infinity)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildField("Kilometraje", double.infinity)),
-                ],
-              ),
+            // Lógica responsiva: Column para móvil, Wrap para Laptop
+            Wrap(
+              spacing: 20,
+              runSpacing: 20,
+              children: [
+                _buildField("PLANTA", isMobile, constraints.maxWidth),
+                _buildField("AREA", isMobile, constraints.maxWidth),
+                _buildField("RESPONSABLE", isMobile, constraints.maxWidth),
+                _buildField("SECCION", isMobile, constraints.maxWidth),
+                _buildField("FECHA", isMobile, constraints.maxWidth),
+                _buildField("TRANSPORTADOR", isMobile, constraints.maxWidth),
+                _buildField("BANDA RECOMENDADA", isMobile, constraints.maxWidth),
+                _buildField("MATERIAL Y GRANULOMETRIA", isMobile, constraints.maxWidth),
+                _buildField("ELABORO", isMobile, constraints.maxWidth),
+                _buildField("PRESENTAR", isMobile, constraints.maxWidth),
+              ],
+            ),
           ],
         ),
       );
     });
   }
 
-  Widget _buildField(String label, double width) {
+  Widget _buildField(String label, bool isMobile, double maxWidth) {
+    // En laptop dividimos el ancho entre 2 menos el espacio del 'spacing'
+    double fieldWidth = isMobile ? maxWidth : (maxWidth / 2) - 52;
+
     return SizedBox(
-      width: width,
+      width: fieldWidth,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Etiqueta arriba del input como en la imagen de referencia
           Text(
             label,
             style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
               color: Color(0xFF1A1C1E),
             ),
           ),
@@ -93,7 +85,7 @@ class GeneralVehicleInfo extends StatelessWidget {
           TextField(
             decoration: InputDecoration(
               filled: true,
-              fillColor: const Color(0xFFF8F9FA), // Gris sutil para el fondo
+              fillColor: const Color(0xFFF8F9FA),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -101,7 +93,7 @@ class GeneralVehicleInfo extends StatelessWidget {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.5), // Borde rojo al seleccionar
+                borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.5),
               ),
             ),
           ),
