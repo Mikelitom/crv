@@ -1,15 +1,25 @@
-class SectionsConveyorModel {
-  final String id;
-  final String name;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final bool? is_active;
+import 'package:crv_reprosisa/domain/entities/conveyors/sections_conveyor.dart';
+
+class SectionsConveyorModel extends SectionsConveyor{
+  
 
    SectionsConveyorModel({
-    required this.id,
-    required this.name,
-    required this.createdAt,
-    required this.updatedAt,
-    this.is_active,
+    required super.id,
+    required super.name,
+    required super.createdAt,
+    required super.updatedAt,
+    super.is_active,
    });
+   factory SectionsConveyorModel.fromJson(Map<String, dynamic> json) {
+    return SectionsConveyorModel(
+      id: json['id'],
+      name: json['name'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      is_active: json['is_active'],
+     
+
+
+    );
+  }
 }

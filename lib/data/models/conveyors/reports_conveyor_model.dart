@@ -1,33 +1,40 @@
-class ReportsConveyorModel{
-  final String id;
-  final String conveyor_id;
-  final DateTime inspection_id;
-  final String inspector_id;
-  final String? conveyot_responsible;
-  final String? recommended_balt;
-  final String? material;
-  final String? granulometry;
-  final String? present_to;
-  final String state;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final bool is_active;
-  final String folio;
+import 'package:crv_reprosisa/domain/entities/conveyors/reports_conveyor.dart';
+
+class ReportsConveyorModel extends ReportsConveyor{
 
   ReportsConveyorModel({
-    required this.id,
-    required this.conveyor_id,
-    required this.inspection_id,
-    required this.inspector_id,
-    this.conveyot_responsible,
-    this.recommended_balt,
-    this.material,
-    this.granulometry,
-    this.present_to,
-    required this.state,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.is_active,
-    required this.folio,
+    required super.id,
+    required super.conveyor_id,
+    required super.inspection_date,
+    required super.inspector_id,
+    super.conveyor_responsible,
+    super.recommended_balt,
+    super.material,
+    super.granulometry,
+    super.present_to,
+    required super.state,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.is_active,
+    required super.folio,
   });
+    factory ReportsConveyorModel.fromJson(Map<String, dynamic> json) {
+    return ReportsConveyorModel(
+      id: json['id'],
+      conveyor_id: json['conveyor_id'],
+      inspection_date: DateTime.parse(json['inspection_date']),
+      inspector_id: json['inspector_id'],
+      conveyor_responsible: json['conveyor_responsible'],
+      recommended_balt: json['recommended_balt'],
+      material: json['material'],
+      granulometry: json['granulometry'],
+      present_to: json['present_to'],
+      state: json['state'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      is_active: json['is_active'],
+      folio: json['folio'],
+
+    );
+  }
 }

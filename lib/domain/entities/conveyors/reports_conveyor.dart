@@ -1,9 +1,9 @@
 class ReportsConveyor{
   final String id;
   final String conveyor_id;
-  final DateTime inspection_id;
+  final DateTime inspection_date;
   final String inspector_id;
-  final String? conveyot_responsible;
+  final String? conveyor_responsible;
   final String? recommended_balt;
   final String? material;
   final String? granulometry;
@@ -17,9 +17,9 @@ class ReportsConveyor{
   ReportsConveyor({
     required this.id,
     required this.conveyor_id,
-    required this.inspection_id,
+    required this.inspection_date,
     required this.inspector_id,
-    this.conveyot_responsible,
+    this.conveyor_responsible,
     this.recommended_balt,
     this.material,
     this.granulometry,

@@ -1,17 +1,24 @@
-class ReportAnswersVehicleModel {
-  final String id;
-  final String report_id;
-  final String componenet_id;
-  final String option_id;
-  final String? observations;
-  final DateTime createdAt;
+import 'package:crv_reprosisa/domain/entities/vehicle/report_answers.dart';
+
+class ReportAnswersVehicleModel extends ReportAnswersVehicle{
 
   ReportAnswersVehicleModel({
-    required this.id,
-    required this.report_id,
-    required this.componenet_id,
-    required this.option_id,
-    this.observations,
-    required this.createdAt,
+    required super.id,
+    required super.report_id,
+    required super.component_id,
+    required super.option_id,
+    super.observations,
+    required super.createdAt,
   });
+  factory ReportAnswersVehicleModel.fromJson(Map<String, dynamic> json) {
+    return ReportAnswersVehicleModel(
+      id: json['id'],
+      report_id: json['report_id'],
+      component_id: json['component_id'],
+      option_id: json['option_id'],
+      observations: json['observations'],
+      createdAt: DateTime.parse(json['created_at']),
+     
+    );
+  }
 }

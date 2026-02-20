@@ -1,21 +1,28 @@
-class VehicleServiceModel {
-  final String id;
-  final String vehicle_id;
-  final String description;
-  final String observation;
-  final DateTime date;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final bool is_active; 
+import 'package:crv_reprosisa/domain/entities/vehicle/vehicle_service.dart';
+
+class VehicleServiceModel extends VehicleService{
 
   VehicleServiceModel({
-    required this.id,
-    required this.vehicle_id,
-    required this.description,
-    required this.observation,
-    required this.date,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.is_active,
+    required super.id,
+    required super.vehicle_id,
+    required super.description,
+    required super.observation,
+    required super.date,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.is_active,
   });
+  factory VehicleServiceModel.fromJson(Map<String, dynamic> json) {
+    return VehicleServiceModel(
+      id: json['id'],
+      vehicle_id: json['user_id'],
+      description: json['desciption'],
+      observation: json['observation'],
+      date: DateTime.parse(json['date']),
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      is_active: json['is_active'],
+    );
+
+  }
 }

@@ -1,25 +1,32 @@
-class PressReportsModel {
-  final String id;
-  final String press_id;
-  final String reponsible_id;
-  final DateTime inspection_date;
-  final String area;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final bool is_active;
-  final String state;
-  final String folio;
+import 'package:crv_reprosisa/domain/entities/press/press_reports.dart';
+
+class PressReportsModel extends PressReports {
 
   PressReportsModel({
-    required this.id,
-    required this.press_id,
-    required this.reponsible_id,
-    required this.inspection_date,
-    required this.area,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.is_active,
-    required this. state,
-    required this.folio,
+    required super.id,
+    required super.press_id,
+    required super.reponsible_id,
+    required super.inspection_date,
+    required super.area,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.is_active,
+    required super. state,
+    required super.folio,
   });
+  factory PressReportsModel.fromJson(Map<String, dynamic> json) {
+    return PressReportsModel(
+      id: json['id'],
+      press_id: json['press_id'],
+      reponsible_id: json['responsible_id'],
+      inspection_date: DateTime.parse(json['inspection_date']),
+      area: json['area'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      is_active: json['is_active'],
+      folio: json['folio'],
+      state: json['state'],
+
+    );
+  }
 }

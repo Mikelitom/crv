@@ -1,21 +1,30 @@
-class ServicePressModel {
-  final String id;
-  final String press_id;
-  final String description;
-  final String observation;
-  final DateTime date;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final bool is_active; 
+import 'package:crv_reprosisa/domain/entities/press/service_press.dart';
+
+class ServicePressModel extends ServicePress {
+
 
   ServicePressModel({
-    required this.id,
-    required this.press_id,
-    required this.description,
-    required this.observation,
-    required this.date,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.is_active,
+    required super.id,
+    required super.press_id,
+    required super.description,
+    required super.observation,
+    required super.date,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.is_active,
   });
+  factory ServicePressModel.fromJson(Map<String, dynamic> json) {
+    return ServicePressModel(
+      id: json['id'],
+      press_id: json['press_id'],
+      description: json['desciption'],
+      observation: json['observation'],
+      date: DateTime.parse(json['date']),
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      is_active: json['is_active'],
+
+    );
+
+  }
 }

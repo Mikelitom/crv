@@ -7,7 +7,7 @@ class PressLoans {
   final String solicitants_name;
   final String? observations;
   final DateTime loan_date;
-  final DateTime? expected_retunr_date;
+  final DateTime? expected_return_date;
   final DateTime? actual_return_date;
   final String status;
   final DateTime createdAt;
@@ -23,7 +23,7 @@ class PressLoans {
     required this.solicitants_name,
     this.observations,
     required this.loan_date,
-    this.expected_retunr_date,
+    this.expected_return_date,
     this.actual_return_date,
     required this.status,
     required this.createdAt,

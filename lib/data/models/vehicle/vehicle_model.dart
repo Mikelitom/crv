@@ -1,23 +1,30 @@
-class VehicleModel {
-  final String id;
-  final String type_id;
-  final String brand;
-  final String model;
-  final String year;
-  final String license_plate;
-  final DateTime createdA;
-  final DateTime updatedAT;
-  final bool is_active;
+import 'package:crv_reprosisa/domain/entities/vehicle/vehicle.dart';
+
+class VehicleModel extends Vehicle{
 
   VehicleModel ({
-    required this.id,
-    required this.type_id,
-    required this.brand,
-    required this.model,
-    required this.year,
-    required this.license_plate,
-    required this.createdA,
-    required this.updatedAT,
-    required this.is_active,
+    required super.id,
+    required super.type_id,
+    required super.brand,
+    required super.model,
+    required super.year,
+    required super.license_plate,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.is_active,
   });
+  factory VehicleModel.fromJson(Map<String, dynamic> json) {
+    return VehicleModel(
+      id: json['id'],
+      type_id: json['type_id'],
+      brand: json['brand'],
+      model: json['model'],
+      year: json['year'],
+      license_plate: json['license_plate'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      is_active: json['is_active'],
+    );
+
+  }
 }

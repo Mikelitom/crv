@@ -1,29 +1,37 @@
-class ReportsVehicleModel {
-  final String id;
-  final String vehicle_id;
-  final String reponsible_id;
-  final DateTime inspection_date;
-  final String mileage;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final bool is_active;
-  final bool requires_service;
-  final String? observations;
-  final String folio;
-  final String state;
+import 'package:crv_reprosisa/domain/entities/vehicle/reports_vehicle.dart';
+
+class ReportsVehicleModel extends ReportsVehicle{
 
   ReportsVehicleModel({
-    required this.id,
-    required this.vehicle_id,
-    required this.reponsible_id,
-    required this.inspection_date,
-    required this.mileage,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.is_active,
-    required this.requires_service,
-    this.observations,
-    required this.folio,
-    required this.state,
+    required super.id,
+    required super.vehicle_id,
+    required super.responsible_id,
+    required super.inspection_date,
+    required super.mileage,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.is_active,
+    required super.requires_service,
+    super.observations,
+    required super.folio,
+    required super.state,
   });
+  factory ReportsVehicleModel.fromJson(Map<String, dynamic> json) {
+    return ReportsVehicleModel(
+      id: json['id'],
+      vehicle_id: json['vehicle_id'],
+      responsible_id: json['responsible_id'],
+      inspection_date: DateTime.parse(json['inspection_date']),
+      mileage: json['mileage'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      is_active: json['is_active'],
+      requires_service: json['requires_service'],
+      observations: json['observations'],
+      folio: json['folio'],
+      state: json['state'],
+
+
+    );
+  }
 }

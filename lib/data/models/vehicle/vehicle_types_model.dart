@@ -1,18 +1,26 @@
-class VehicleTypesModel {
-  final String id;
-  final String code;
-  final String name;
-  final String? description;
-  final DateTime createdAt;
-  final bool is_active;
+import 'package:crv_reprosisa/domain/entities/vehicle/vehicle_type.dart';
+
+class VehicleTypesModel extends VehicleTypes{
+  
 
   VehicleTypesModel({
-    required this.id,
-    required this.code,
-    required this.name,
-    this.description,
-    required this.createdAt,
-    required this.is_active,
+    required super.id,
+    required super.code,
+    required super.name,
+    super.description,
+    required super.createdAt,
+    required super.is_active,
 
   });
+   factory VehicleTypesModel.fromJson(Map<String, dynamic> json) {
+    return VehicleTypesModel(
+      id: json['id'],
+      code: json['code'],
+      name: json['name'],
+      description: json['desciption'],
+      createdAt: DateTime.parse(json['created_at']),
+      is_active: json['is_active'],
+    );
+
+  }
 }

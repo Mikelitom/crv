@@ -1,7 +1,7 @@
 class ReportsVehicle{
   final String id;
   final String vehicle_id;
-  final String reponsible_id;
+  final String responsible_id;
   final DateTime inspection_date;
   final String mileage;
   final DateTime createdAt;
@@ -15,7 +15,7 @@ class ReportsVehicle{
   ReportsVehicle({
     required this.id,
     required this.vehicle_id,
-    required this.reponsible_id,
+    required this.responsible_id,
     required this.inspection_date,
     required this.mileage,
     required this.createdAt,
