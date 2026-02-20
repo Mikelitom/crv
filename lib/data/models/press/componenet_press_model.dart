@@ -1,19 +1,27 @@
-class ComponenetPressModel {
-  final String id;
-  final String name;
-  final String meassure_unit;
-  final String? description;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final bool is_active;
+import 'package:crv_reprosisa/domain/entities/press/componenet_press.dart';
+
+class ComponenetPressModel extends ComponenetPress{
 
   ComponenetPressModel({
-    required this.id,
-    required this.name,
-    required this.meassure_unit,
-    this.description,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.is_active,
+    required super.id,
+    required super.name,
+    required super.measure_unit,
+    super.description,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.is_active,
   });
+
+   factory ComponenetPressModel.fromJson(Map<String, dynamic> json) {
+    return ComponenetPressModel(
+      id: json['id'],
+      name: json['name'],
+      measure_unit: json['measure_unit'],
+      description: json['description'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      is_active: json['is_active'],
+
+    );
+  }
 }

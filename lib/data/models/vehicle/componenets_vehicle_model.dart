@@ -1,17 +1,24 @@
-class ComponenetsVehicleModel {
-  final String id;
-  final String section_id;
-  final String name;
-  final DateTime createdA;
-  final DateTime updatedAT;
-  final bool is_active;
+import 'package:crv_reprosisa/domain/entities/vehicle/components_vehicle.dart';
 
+class ComponenetsVehicleModel extends ComponenetsVehicle{
+ 
   ComponenetsVehicleModel({
-    required this.id,
-    required this.section_id,
-    required this.name,
-    required this.createdA,
-    required this.updatedAT,
-    required this.is_active,
+    required super.id,
+    required super.section_id,
+    required super.name,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.is_active,
   });
+   factory ComponenetsVehicleModel.fromJson(Map<String, dynamic> json) {
+    return ComponenetsVehicleModel(
+      id: json['id'],
+      section_id: json['section_id'],
+      name: json['name'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      is_active: json['is_active'],
+
+    );
+  }
 }

@@ -1,6 +1,6 @@
 class AccesoryOptionsConveyor {
   final String id;
-  final String accedory_id;
+  final String accesory_id;
   final String label;
   final String value;
   final DateTime createdAt;
@@ -9,7 +9,7 @@ class AccesoryOptionsConveyor {
 
   AccesoryOptionsConveyor({
     required this.id,
-    required this.accedory_id,
+    required this.accesory_id,
     required this.label,
     required this.value,
     required this.createdAt,

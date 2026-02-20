@@ -1,17 +1,24 @@
-class AreaModel {
-  final String id;
-  final String client_id;
-  final String name;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final bool is_active;
+import 'package:crv_reprosisa/domain/entities/conveyors/area.dart';
 
+class AreaModel extends Area{
   AreaModel({
-    required this.id,
-    required this.client_id,
-    required this.name,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.is_active
+    required super.id,
+    required super.client_id,
+    required super.name,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.is_active
   });
+  factory AreaModel.fromJson(Map<String, dynamic> json) {
+    return AreaModel(
+      id: json['id'],
+      client_id: json['client_id'],
+      name: json['name'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      is_active: json['is_active'],
+
+
+    );
+  }
 }

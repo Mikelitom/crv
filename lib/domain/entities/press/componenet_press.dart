@@ -1,7 +1,7 @@
 class ComponenetPress {
   final String id;
   final String name;
-  final String meassure_unit;
+  final String measure_unit;
   final String? description;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -10,7 +10,7 @@ class ComponenetPress {
   ComponenetPress({
     required this.id,
     required this.name,
-    required this.meassure_unit,
+    required this.measure_unit,
     this.description,
     required this.createdAt,
     required this.updatedAt,

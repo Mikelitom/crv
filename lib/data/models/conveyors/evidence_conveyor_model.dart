@@ -1,12 +1,7 @@
-class EvidenceConveyorModel {
-  final String id;
-  final String answer_id;
-  final String file_url;
-  final String file_type;
-  final String mime_type;
-  final String? file_size;
-  final DateTime createdAt;
+import 'package:crv_reprosisa/domain/entities/conveyors/evidence_conveyor.dart';
 
+class EvidenceConveyorModel extends EvidenceConveyor{
+  
   EvidenceConveyorModel({
     required this.id,
     required this.answer_id,

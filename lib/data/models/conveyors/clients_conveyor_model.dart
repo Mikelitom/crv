@@ -1,23 +1,29 @@
-class ClientsConveyorModel {
-  final String id;
-  final String name;
-  final String company;
-  final String phone;
-  final String email;
-  final String address;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final String is_active;
+import 'package:crv_reprosisa/domain/entities/conveyors/clients_conveyor.dart';
 
+class ClientsConveyorModel extends ClientsConveyor{
   ClientsConveyorModel({
-    required this.id,
-    required this.name,
-    required this.company,
-    required this.phone,
-    required this.email,
-    required this.address,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.is_active,
+    required super.id,
+    required super.name,
+    required super.company,
+    required super.phone,
+    required super.email,
+    required super.address,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.is_active,
   });
+   factory ClientsConveyorModel.fromJson(Map<String, dynamic> json) {
+    return ClientsConveyorModel(
+      id: json['id'],
+      name: json['name'],
+      company: json['company'],
+      phone: json['phone'],
+      email: json['email'],
+      address: json['address'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      is_active: json['is_active'],
+
+    );
+  }
 }
