@@ -1,62 +1,29 @@
+import 'package:crv_reprosisa/features/auth/domain/usecases/login_use_case.dart';
+import 'package:crv_reprosisa/features/auth/presentation/providers/auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/repositories/auth_repository.dart';
-import 'auth_state.dart';
+import '../../domain/entities/user.dart';
 
-class AuthNotifier extends Notifier<AuthState> {
-  late final AuthRepository repository;
+class AuthNotifier extends AsyncNotifier<User?> {
+  late final LoginUseCase _loginUseCase;
 
   @override
-  AuthState build() {
-    repository = ref.read(authRepositoryProvider);
-
-    _checkAuth();
-    return AuthState.initial();
-  }
-
-  Future<void> _checkAuth() async {
-    try {
-      final user = await repository.getMe();
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: true,
-        user: user,
-      );
-    } catch (_) {
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: false,
-        user: null,
-      );
-    }
+  Future<User?> build() async {
+    _loginUseCase = ref.read(loginUseCaseProvider);
+    return null;
   }
 
   Future<void> login(String email, String password) async {
-    state = state.copyWith(isLoading: true);
+    state = const AsyncLoading();
 
-    try {
-      await repository.login(email, password);
-      final user = await repository.getMe();
+    final result = await _loginUseCase(email, password);
 
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: true,
-        user: user,
-      );
-    } catch (_) {
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: false,
-      );
-      rethrow;
-    }
-  }
-
-  Future<void> logout() async {
-    await repository.logout();
-
-    state = const AuthState(
-      isLoading: false,
-      isAuthenticated: false,
+    result.fold(
+      (failure) {
+        state = AsyncError(failure.message, StackTrace.current);
+      },
+      (user) {
+        state = AsyncData(user);
+      },
     );
   }
 }
