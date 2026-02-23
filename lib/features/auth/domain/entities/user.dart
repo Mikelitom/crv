@@ -15,7 +15,7 @@ class User {
     required this.email,
     required this.phone,
     required this.isActive,
-    required this.lastLogin,
+    this.lastLogin,
     required this.createdAt,
     required this.roles,
     required this.permissions,

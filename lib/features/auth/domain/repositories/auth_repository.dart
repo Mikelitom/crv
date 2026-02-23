@@ -1,29 +1,28 @@
 import '../entities/user.dart';
 import '../entities/auth_tokens.dart';
+import 'package:crv_reprosisa/core/error/failure.dart';
+import 'package:dartz/dartz.dart';
 
 abstract class AuthRepository {
-  Future<User> register({
+  Future<Either<Failure, User>> register({
     required String name,
     required String phone,
     required String email,
     required String password,
   });
 
-  Future<AuthTokens> login({
-    required String email,
-    required String password,
-  });
+  Future<Either<Failure, AuthTokens>> login({required String email, required String password});
 
-  Future<AuthTokens> refreshToken();
+  Future<Either<Failure, AuthTokens>> refreshToken();
 
-  Future<User> getMe();
+  Future<Either<Failure, User>> getMe();
 
-  Future<void> logout();
+  Future<Either<Failure, void>> logout();
 
-  Future<void> changePassword({
+  Future<Either<Failure, void>> changePassword({
     required String oldPassword,
     required String newPassword,
   });
 
-  Future<bool> validateToken();
+  Future<Either<Failure, bool>> validateToken();
 }
