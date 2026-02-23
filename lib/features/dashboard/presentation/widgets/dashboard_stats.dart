@@ -41,24 +41,44 @@ class _DashboardStatsCardState extends State<DashboardStatsCard> {
           ],
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min, // Ajuste para evitar overflow vertical
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(widget.value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 8),
-                    // Texto pequeño en rojo (ej: "Este mes" o "+12%")
-                    Text(widget.sublabel, style: const TextStyle(color: Color(0xFFC62828), fontSize: 12, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(widget.label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-              ],
+            Flexible( // Permite que el contenido se ajuste al ancho disponible
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: FittedBox( // Escala el texto si es muy grande
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            widget.value, 
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.sublabel, 
+                        style: const TextStyle(color: Color(0xFFC62828), fontSize: 12, fontWeight: FontWeight.w600)
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.label, 
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.grey, fontSize: 14)
+                  ),
+                ],
+              ),
             ),
-            const Spacer(),
-            // Círculo del icono que cambia de color en hover
+            const SizedBox(width: 8),
+            // Círculo del icono
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.all(12),

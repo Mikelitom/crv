@@ -48,7 +48,7 @@ class _DialogCrearUsuarioState extends State<DialogCrearUsuario> with SingleTick
                   _animatedItem(2, _buildInput("Teléfono", "+52 444...", inputWidth, Icons.phone_android_outlined)),
                   _animatedItem(3, _buildInput("Contraseña Temporal *", "••••••••", inputWidth, Icons.lock_outline, obscure: true)),
                   _animatedItem(4, _buildDropdown("Rol del Sistema", ["Administrador", "Empleado"], inputWidth, Icons.admin_panel_settings_outlined)),
-                  _animatedItem(5, _buildDropdown("Área Asignada", ["Vehículos", "Prensas", "Bandas"], inputWidth, Icons.category_outlined)),
+                  _animatedItem(5, _buildDropdown("Área Asignada", ["General,Vehículos", "Prensas", "Bandas"], inputWidth, Icons.category_outlined)),
                 ],
               ),
             );

@@ -12,7 +12,7 @@ import '../../widgets/header.dart';
 import '../../../../inspections/Widgets/quick_actions_i.dart';
 import '../../widgets/notification_panel.dart';
 import '../../widgets/notification_item.dart';
-import '../../widgets/stats_card_dash_e.dart'; // Tu DashboardStatsCard corregido
+import '../../widgets/stats_card_dash_e.dart'; 
 import '../../../../reports/Pages/reports_page.dart';
 import '../../../../inspections/pages/inspections_page.dart';
 
@@ -73,12 +73,10 @@ class _AdminHomePage extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
           const SizedBox(height: 16),
           
-          // GRID RESPONSIVO DE ESTADÍSTICAS
           _buildStatsGrid(context),
 
           const SizedBox(height: 32),
 
-          // GRÁFICOS RESPONSIVOS (Cambian de Row a Column en móvil)
           LayoutBuilder(
             builder: (context, constraints) {
               if (constraints.maxWidth < 900) {
@@ -112,23 +110,18 @@ class _AdminHomePage extends StatelessWidget {
           const SizedBox(height: 40),
 
           const NotificationPanel(
-            children: [
-              NotificationItem(title: "Nueva inspección asignada", subtitle: "Hace 10 min", icon: Icons.person_pin_circle_outlined, iconColor: Colors.blue),
-              NotificationItem(title: "Alerta: Vehículo V-001 retrasado", subtitle: "Hace 1 hora", icon: Icons.warning_amber_rounded, iconColor: Colors.red),
-            ],
+            children: [],
           ),
         ],
       ),
     );
   }
 
-  // MÉTODO CORREGIDO: GRID DE ESTADÍSTICAS
   Widget _buildStatsGrid(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      // 2 columnas en móvil, 4 en escritorio
       int crossAxisCount = constraints.maxWidth < 750 ? 2 : 4;
-      // Proporción para evitar el overflow interno
-      double aspectRatio = constraints.maxWidth < 750 ? 1.6 : 2.1;
+      // Proporción ajustada para dar más espacio vertical
+      double aspectRatio = constraints.maxWidth < 750 ? 1.5 : 2.0;
 
       return GridView.count(
         shrinkWrap: true,
@@ -138,10 +131,10 @@ class _AdminHomePage extends StatelessWidget {
         mainAxisSpacing: 20,
         childAspectRatio: aspectRatio,
         children: const [
-          DashboardStatsCard(value: "24", sublabel: "+12%", label: "Inspecciones Hoy", icon: Icons.assignment_outlined),
-          DashboardStatsCard(value: "12/15", sublabel: "80%", label: "Prensas Activas", icon: Icons.settings_input_component_rounded),
-          DashboardStatsCard(value: "8/10", sublabel: "80%", label: "Vehículos OK", icon: Icons.check_circle_outline_rounded),
-          DashboardStatsCard(value: "3", sublabel: "-2", label: "Reportes Pendientes", icon: Icons.error_outline_rounded),
+          DashboardStatsCard(value: "0", sublabel: "0%", label: "Inspecciones Hoy", icon: Icons.assignment_outlined),
+          DashboardStatsCard(value: "0/0", sublabel: "0%", label: "Prensas Activas", icon: Icons.settings_input_component_rounded),
+          DashboardStatsCard(value: "0/0", sublabel: "0%", label: "Vehículos OK", icon: Icons.check_circle_outline_rounded),
+          DashboardStatsCard(value: "0", sublabel: "0", label: "Reportes Pendientes", icon: Icons.error_outline_rounded),
         ],
       );
     });
@@ -165,7 +158,6 @@ class _AdminHomePage extends StatelessWidget {
   }
 
   Widget _buildAction(double w, String title, String desc, IconData icon) {
-    // Ajuste de ancho para que las acciones también sean responsivas
     double cardWidth = w > 900 ? (w / 3) - 14 : (w > 600 ? (w / 2) - 10 : w);
     return SizedBox(width: cardWidth, child: QuickActionCard(title: title, description: desc, icon: icon, onTap: () {}));
   }
@@ -190,19 +182,7 @@ class _AdminHomePage extends StatelessWidget {
   }
 }
 
-// Datos funcionales
-final _adminStats = [
-  StatsModel(value: "24", label: "Totales", color: Colors.blue),
-  StatsModel(value: "5", label: "Pendientes", color: Colors.orange),
-  StatsModel(value: "19", label: "Completadas", color: Colors.green),
-];
-
-final _adminActions = [
-  ActionCardModel(title: "Nueva inspección", description: "Crear inspección completa", icon: Icons.add_circle_outline, onTap: () {}),
-  ActionCardModel(title: "Asignar técnico", description: "Asignar inspección", icon: Icons.person_add_alt, onTap: () {}),
-];
-
-final List<InspectionRowUI> _adminInspections = [
-  InspectionRowUI(id: '001', equipment: 'Banda A', date: '01/09/2025', state: 'Completada'),
-  InspectionRowUI(id: '002', equipment: 'Prensa B', date: '02/09/2025', state: 'Pendiente'),
-];
+// Listas con tipos explícitos para evitar errores en InspectionPage
+final List<StatsModel> _adminStats = []; 
+final List<ActionCardModel> _adminActions = [];
+final List<InspectionRowUI> _adminInspections = [];

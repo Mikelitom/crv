@@ -7,8 +7,9 @@ import '../widgets/Vehicle_inspection_section.dart';
 import '../widgets/Service_Vehicle_required.dart';
 import '../widgets/Inspector.dart';
 import '../../dashboard/presentation/widgets/header.dart';
+
 class VehicleInspectionPage extends StatelessWidget {
-  // Define tus listas aquí
+  // Definición de listas de inspección
   final List<InspectionItemModel> motorItems = [
     InspectionItemModel(description: "Cables de Bujias"),
     InspectionItemModel(description: "Nivel de Anticongelante"),
@@ -25,16 +26,34 @@ class VehicleInspectionPage extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const CustomHeader(title: "Inspección de Unidades Móviles", actionIcon: Icons.directions_car),
+            // HEADER CON FUNCIÓN DE REGRESO EN EL ICONO
+            CustomHeader(
+              title: "Inspección de Unidades Móviles", 
+              actionIcon: Icons.directions_car, // Icono del coche
+              onActionTap: () => Navigator.of(context).pop(), // Regresa al Dashboard
+            ),
+            
             const SizedBox(height: 24),
+            
+            // INFORMACIÓN GENERAL DEL VEHÍCULO
             const GeneralVehicleInfo(), 
+            
             const SizedBox(height: 24),
-            // QUITA EL 'CONST' DE AQUÍ PARA SOLUCIONAR EL ERROR
+            
+            // SECCIÓN DE INSPECCIÓN TÉCNICA (MOTOR)
             VehicleInspectionSection(title: "MOTOR", items: motorItems),
+            
             const SizedBox(height: 24),
+            
+            // SERVICIOS REQUERIDOS
             const VehicleServiceRequired(), 
+            
             const SizedBox(height: 24),
+            
+            // FOOTER CON FIRMA DEL INSPECTOR Y ACCIONES
             _buildInspectorFooter(),
+            
+            const SizedBox(height: 50),
           ],
         ),
       ),
@@ -42,6 +61,6 @@ class VehicleInspectionPage extends StatelessWidget {
   }
   
   Widget _buildInspectorFooter() {
-    return const InspectorAndActionsFooter(); // Tu widget de inspector
+    return const InspectorAndActionsFooter();
   }
 }

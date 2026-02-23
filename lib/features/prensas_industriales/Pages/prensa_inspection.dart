@@ -18,6 +18,7 @@ class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
 
   @override
   Widget build(BuildContext context) {
+    // DATOS ESTÁTICOS PARA LA TABLA DE COMPONENTES
     final List<PrensaComponentItem> dataFromDB = [
       PrensaComponentItem(
         unidad: "ML",
@@ -28,6 +29,11 @@ class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
         unidad: "PZA",
         descripcion: "MANOMETRO EN CERO",
         estado: 1,
+      ),
+      PrensaComponentItem(
+        unidad: "PZA",
+        descripcion: "CONEXIONES ELÉCTRICAS",
+        estado: 0,
       ),
     ];
 
@@ -40,13 +46,15 @@ class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
             constraints: const BoxConstraints(maxWidth: 1600),
             child: Column(
               children: [
-                const CustomHeader(
+                // HEADER CON FUNCIÓN DE REGRESO EN EL ICONO
+                CustomHeader(
                   title: "Inspección de Prensas",
-                  actionIcon: Icons.build_rounded,
+                  actionIcon: Icons.build_rounded, // Icono de llave inglesa
+                  onActionTap: () => Navigator.of(context).pop(), // Regresa al Dashboard
                 ),
                 const SizedBox(height: 32),
 
-                // SELECTOR CON SOMBREADO Y TEXTO COMPLETO
+                // SELECTOR DE MÉTODO DE CAPTURA
                 CaptureMethodSelector(
                   onManualFill: () => setState(() => isScanning = false),
                   onScan: () => setState(() => isScanning = true),
@@ -54,12 +62,15 @@ class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
 
                 const SizedBox(height: 32),
 
+                // CAMBIO DINÁMICO ENTRE ESCÁNER Y FORMULARIO
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 400),
                   child: isScanning
                       ? _buildScannerView()
                       : _buildFormView(dataFromDB),
                 ),
+                
+                const SizedBox(height: 50),
               ],
             ),
           ),
@@ -68,6 +79,7 @@ class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
     );
   }
 
+  // VISTA DE ESCÁNER QR
   Widget _buildScannerView() {
     return Container(
       key: const ValueKey(1),
@@ -78,7 +90,6 @@ class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
         borderRadius: BorderRadius.circular(32),
       ),
       child: Stack(
-        // CORRECCIÓN DE ERROR
         alignment: Alignment.center,
         children: [
           const Icon(
@@ -109,14 +120,20 @@ class _PrensaInspectionPageState extends State<PrensaInspectionPage> {
     );
   }
 
+  // VISTA DEL FORMULARIO TÉCNICO
   Widget _buildFormView(List<PrensaComponentItem> data) {
     return Column(
       key: const ValueKey(2),
       children: [
+        // Información general del equipo (Prensa)
         const GeneralEquipmentInfo(equipmentData: {}),
         const SizedBox(height: 24),
+        
+        // Tabla de componentes técnicos
         PrensaInspectionTable(items: data),
         const SizedBox(height: 24),
+        
+        // Sección de préstamo e inspector
         const LoanAndInspectorSection(),
       ],
     );

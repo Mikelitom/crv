@@ -40,8 +40,8 @@ class AssetsAdminPage extends StatelessWidget {
                   runSpacing: spacing,
                   children: [
                     _buildAdaptedCard(context, cardWidth, "Nuevo Cliente", Icons.group_add_rounded, const DialogCrearCliente()),
-                    _buildAdaptedCard(context, cardWidth, "Nuevo Vehículo", Icons.directions_car_filled_rounded, const DialogCrearVehiculo()),
-                    _buildAdaptedCard(context, cardWidth, "Nueva Prensa", Icons.precision_manufacturing_rounded, const DialogCrearPrensa()),
+                    _buildAdaptedCard(context, cardWidth, "Nuevo Vehículo", Icons.directions_car_filled_rounded, const Placeholder()), // Reemplaza con tu DialogCrearVehiculo
+                    _buildAdaptedCard(context, cardWidth, "Nueva Prensa", Icons.precision_manufacturing_rounded, const Placeholder()), // Reemplaza con tu DialogCrearPrensa
                   ],
                 ),
                 
@@ -53,7 +53,6 @@ class AssetsAdminPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 
-                // CONTENEDOR DE TABLA CENTRADO CON BUSCADOR
                 _buildCenteredTableContainer(context),
               ],
             ),
@@ -81,7 +80,6 @@ class AssetsAdminPage extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 1600),
         child: Column(
           children: [
-            // BARRA DE BÚSQUEDA INTEGRADA
             _buildSearchBar(),
             const SizedBox(height: 16),
             Container(
@@ -117,9 +115,9 @@ class AssetsAdminPage extends StatelessWidget {
                       height: 600, 
                       child: TabBarView(
                         children: [
-                          _buildResponsiveTable(context, clientCols),
-                          _buildResponsiveTable(context, vehicleCols),
-                          _buildResponsiveTable(context, pressCols),
+                          _buildResponsiveTable(context, clientCols, _buildClientRows()),
+                          _buildResponsiveTable(context, vehicleCols, _buildVehicleRows()),
+                          _buildResponsiveTable(context, pressCols, _buildPressRows()),
                         ],
                       ),
                     ),
@@ -154,7 +152,7 @@ class AssetsAdminPage extends StatelessWidget {
     );
   }
 
-  Widget _buildResponsiveTable(BuildContext context, List<DataColumn> cols) {
+  Widget _buildResponsiveTable(BuildContext context, List<DataColumn> cols, List<DataRow> rows) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
@@ -176,11 +174,82 @@ class AssetsAdminPage extends StatelessWidget {
               child: c.label,
             ),
           )).toList(),
-          rows: _buildPlaceholderRows(cols.length), 
+          rows: rows,
         ),
       ),
     );
   }
+
+  // --- DATOS ESTÁTICOS PARA LA DEMO ---
+
+  List<DataRow> _buildClientRows() {
+    final clients = [
+      ["CLI-001", "Miguel Fajardo", "Reprosisa", "662-368-3723", "Hermosillo, Sonora", "majfe202@hotmail.com"],
+      ["CLI-002", "Juan Soto", "Minería del Norte", "662-123-4567", "Cananea, Sonora", "jsoto@mineria.com"],
+      ["CLI-003", "Empresa ABC", "Logística Express", "800-999-0000", "CDMX, México", "contacto@abc.mx"],
+    ];
+
+    return clients.map((c) => DataRow(cells: [
+      DataCell(Text(c[0], style: const TextStyle(fontWeight: FontWeight.bold))),
+      DataCell(Text(c[1])),
+      DataCell(Text(c[2])),
+      DataCell(Text(c[3])),
+      DataCell(Text(c[4])),
+      DataCell(Text(c[5])),
+      _buildActionCell(),
+    ])).toList();
+  }
+
+  List<DataRow> _buildVehicleRows() {
+    final vehicles = [
+      ["VEH-01", "Pickup", "Toyota", "Hilux", "2023", "V-3305-SON", "20/02/2026"],
+      ["VEH-02", "Camioneta", "Nissan", "NP300", "2022", "AB-123-CD", "15/01/2026"],
+      ["VEH-03", "Sedán", "Honda", "Civic", "2024", "XY-987-ZZ", "01/02/2026"],
+    ];
+
+    return vehicles.map((v) => DataRow(cells: [
+      DataCell(Text(v[0], style: const TextStyle(fontWeight: FontWeight.bold))),
+      DataCell(Text(v[1])),
+      DataCell(Text(v[2])),
+      DataCell(Text(v[3])),
+      DataCell(Text(v[4])),
+      DataCell(Text(v[5])),
+      DataCell(Text(v[6])),
+      _buildActionCell(),
+    ])).toList();
+  }
+
+  List<DataRow> _buildPressRows() {
+    final presses = [
+      ["PRN-8821", "Hidráulica", "PH-2000", "440V", "SN-8821-2026", "24x24", "19/02/2026"],
+      ["PRN-8822", "Térmica", "T-100", "220V", "SN-8822-2025", "12x12", "18/02/2026"],
+      ["PRN-8823", "Manual", "M-50", "N/A", "SN-8823-2024", "10x10", "10/12/2025"],
+    ];
+
+    return presses.map((p) => DataRow(cells: [
+      DataCell(Text(p[0], style: const TextStyle(fontWeight: FontWeight.bold))),
+      DataCell(Text(p[1])),
+      DataCell(Text(p[2])),
+      DataCell(Text(p[3])),
+      DataCell(Text(p[4])),
+      DataCell(Text(p[5])),
+      DataCell(Text(p[6])),
+      _buildActionCell(),
+    ])).toList();
+  }
+
+  DataCell _buildActionCell() {
+    return DataCell(
+      Row(
+        children: [
+          IconButton(icon: const Icon(Icons.edit_note_rounded, color: Colors.blue), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.delete_sweep_rounded, color: Color(0xFFD32F2F)), onPressed: () {}),
+        ],
+      ),
+    );
+  }
+
+  // --- COLUMNAS (MANTENIDAS) ---
 
   List<DataColumn> get clientCols => const [
     DataColumn(label: Text('ID')), 
@@ -194,7 +263,7 @@ class AssetsAdminPage extends StatelessWidget {
 
   List<DataColumn> get vehicleCols => const [
     DataColumn(label: Text('ID')), 
-    DataColumn(label: Text('Tipo ID')), 
+    DataColumn(label: Text('Tipo')), 
     DataColumn(label: Text('Marca')),
     DataColumn(label: Text('Modelo')), 
     DataColumn(label: Text('Año')), 
@@ -213,19 +282,4 @@ class AssetsAdminPage extends StatelessWidget {
     DataColumn(label: Text('Fecha Creación')),
     DataColumn(label: Text('Acciones')),
   ];
-
-  List<DataRow> _buildPlaceholderRows(int colCount) {
-    return List.generate(3, (index) => DataRow(
-      cells: List.generate(colCount, (i) => DataCell(
-        i == colCount - 1 
-          ? Row(
-              children: [
-                IconButton(icon: const Icon(Icons.edit_note_rounded, color: Colors.blue), onPressed: () {}),
-                IconButton(icon: const Icon(Icons.delete_sweep_rounded, color: Color(0xFFD32F2F)), onPressed: () {}),
-              ],
-            )
-          : const Text("---", style: TextStyle(fontSize: 13, color: Colors.grey))
-      )),
-    ));
-  }
 }

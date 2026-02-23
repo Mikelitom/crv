@@ -6,6 +6,7 @@ import '../widgets/customer_section.dart';
 import '../../prensas_industriales/widgets/capture_method_selector.dart';
 import '../widgets/general_banda.dart';
 import '../widgets/rodilleria_section.dart';
+
 class BandaInspectionPage extends StatefulWidget {
   const BandaInspectionPage({super.key});
 
@@ -46,22 +47,22 @@ class _BandaInspectionPageState extends State<BandaInspectionPage> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            // Header institucional
-            const CustomHeader(title: "Inspección de Bandas", actionIcon: Icons.build),
+            // HEADER INSTITUCIONAL CON BOTÓN DE REGRESO
+            CustomHeader(
+              title: "Inspección de Bandas", 
+              actionIcon: Icons.build, // El icono de la llave inglesa
+              onActionTap: () => Navigator.of(context).pop(), // Acción de regresar
+            ),
             const SizedBox(height: 24),
 
             // SECCIÓN CLIENTE
             const CustomerSection(),
             const SizedBox(height: 24),
 
-            // MÉTODO DE CAPTURA (Corrección de error de parámetros requeridos)
+            // MÉTODO DE CAPTURA
             CaptureMethodSelector(
-              onManualFill: () {
-                debugPrint("Llenado manual activado");
-              },
-              onScan: () {
-                debugPrint("Escaneo de código activado");
-              },
+              onManualFill: () => debugPrint("Llenado manual activado"),
+              onScan: () => debugPrint("Escaneo de código activado"),
             ),
             const SizedBox(height: 24),
 
@@ -75,7 +76,7 @@ class _BandaInspectionPageState extends State<BandaInspectionPage> {
 
             // CONTENEDOR DINÁMICO DE SECCIONES (PAGEVIEW)
             SizedBox(
-              height: 950, // Altura ajustada para evitar desbordamientos
+              height: 950, 
               child: PageView.builder(
                 controller: _pageController,
                 physics: const NeverScrollableScrollPhysics(),
@@ -84,12 +85,10 @@ class _BandaInspectionPageState extends State<BandaInspectionPage> {
                 itemBuilder: (context, index) {
                   String nombreSeccion = _nombresPasos[index];
                   
-                  // Si el paso es Rodillería, cargar el widget especializado
                   if (nombreSeccion == "Rodillería") {
                     return const RodilleriaSection(); 
                   }
                   
-                  // Secciones técnicas estándar
                   return BandaSectionTable(
                     sectionNumber: index + 1,
                     sectionTitle: nombreSeccion,
@@ -165,7 +164,7 @@ class _BandaInspectionPageState extends State<BandaInspectionPage> {
             if (!esPasoFinal) {
               _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.ease);
             } else {
-              // Lógica para finalizar y guardar reporte
+              // Lógica para finalizar
             }
           },
           style: ElevatedButton.styleFrom(
@@ -180,7 +179,6 @@ class _BandaInspectionPageState extends State<BandaInspectionPage> {
     );
   }
 
-  // Datos simulados para las tablas
   List<BandaComponentItem> _obtenerDataSeccion(String seccion) {
     if (seccion == "Cola") {
       return [
@@ -193,7 +191,6 @@ class _BandaInspectionPageState extends State<BandaInspectionPage> {
   }
 }
 
-// Clipper para el diseño de flechas
 class ArrowClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
