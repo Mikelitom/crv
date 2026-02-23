@@ -37,7 +37,7 @@ class InspectionPage extends StatelessWidget {
                   const CustomHeader(title: 'Inspecciones', actionIcon: Icons.print_rounded),
                   const SizedBox(height: 32),
                   
-                  // Fila de estadísticas (Contadores restaurados)
+                  // Contadores animados seguidos
                   DynamicStatsRow(stats: stats),
                   
                   const SizedBox(height: 48),
@@ -45,17 +45,17 @@ class InspectionPage extends StatelessWidget {
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
                   const SizedBox(height: 24),
                   
-                  // GRID DE ACCIONES EN FILA ÚNICA
+                  // Grid responsivo forzado a fila única en PC
                   _buildQuickActionGrid(context),
 
                   const SizedBox(height: 56),
 
-                  // BUSCADOR RESTAURADO
+                  // Buscador y título de tabla
                   _buildTableTopActions(),
 
                   const SizedBox(height: 16),
 
-                  // TABLA DE INSPECCIONES
+                  // Tabla de inspecciones
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -85,11 +85,9 @@ class InspectionPage extends StatelessWidget {
   Widget _buildQuickActionGrid(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Modo Computadora: Las 3 tarjetas seguidas una al lado de la otra
         if (constraints.maxWidth > 900) {
           return IntrinsicHeight(
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(child: _buildActionItem(context, "Inspección de Prensas", "Administrar checklists industriales", Icons.build_circle_outlined, const PrensaInspectionPage())),
                 const SizedBox(width: 24),
@@ -101,7 +99,6 @@ class InspectionPage extends StatelessWidget {
           );
         }
 
-        // Modo Móvil: Apiladas
         return Column(
           children: [
             _buildActionItem(context, "Inspección de Prensas", "Administrar checklists", Icons.build_circle_outlined, const PrensaInspectionPage()),

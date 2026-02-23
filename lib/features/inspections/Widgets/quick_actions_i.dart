@@ -29,10 +29,11 @@ class _QuickActionCardState extends State<QuickActionCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
+        // Animación de elevación original al hacer hover
         transform: Matrix4.translationValues(0, isHovered ? -8 : 0, 0),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white, // Cero amarillo
+          color: Colors.white,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -43,6 +44,7 @@ class _QuickActionCardState extends State<QuickActionCard> {
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 250),
@@ -59,9 +61,10 @@ class _QuickActionCardState extends State<QuickActionCard> {
             ),
             const SizedBox(height: 20),
             Text(widget.title,
+              textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
             const SizedBox(height: 8),
-            Text(widget.description, // Sin conteos de equipos
+            Text(widget.description,
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.grey, fontSize: 13, height: 1.4)),
             const SizedBox(height: 24),

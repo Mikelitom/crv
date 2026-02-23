@@ -1,66 +1,53 @@
 import 'package:flutter/material.dart';
-import '../../../dashboard/presentation/widgets/dashboard_stats.dart';
 
 class ServiceStatsGrid extends StatelessWidget {
   const ServiceStatsGrid({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        double maxWidth = constraints.maxWidth;
+    return LayoutBuilder(builder: (context, constraints) {
+      double width = constraints.maxWidth;
+      // En móvil las ponemos una debajo de otra; en laptop seguidas
+      bool isMobile = width < 700;
 
-        int crossAxisCount;
-        double aspectRatio;
+      return Wrap(
+        spacing: 16,
+        runSpacing: 16,
+        children: [
+          _buildStatCard("Operativos", "0", "En Uso (OK)", Icons.check_circle_outline, width, isMobile),
+          _buildStatCard("En Reparación", "0", "En Taller", Icons.build_circle_outlined, width, isMobile),
+          _buildStatCard("Paro Total", "0", "Críticos", Icons.error_outline, width, isMobile),
+        ],
+      );
+    });
+  }
 
-        // Configuramos 3 estados de tamaño para evitar errores
-        if (maxWidth > 1200) {
-          // Escritorio: 3 columnas muy delgadas
-          crossAxisCount = 3;
-          aspectRatio = 3.5; 
-        } else if (maxWidth > 750) {
-          // Tablet: 3 columnas con un poco más de altura
-          crossAxisCount = 3;
-          aspectRatio = 2.4; 
-        } else if (maxWidth > 500) {
-          // Móvil Grande: 2 columnas para que el texto respire
-          crossAxisCount = 2;
-          aspectRatio = 2.0; 
-        } else {
-          // Móvil Pequeño: 1 columna, pero muy bajita
-          crossAxisCount = 1;
-          aspectRatio = 4.0; 
-        }
-
-        return GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: aspectRatio, // <--- Este valor evita el Bottom Overflow
-          children: const [
-            DashboardStatsCard(
-              label: "En Uso (OK)", 
-              value: "12", 
-              sublabel: "Operativos", 
-              icon: Icons.check_circle_outline_rounded
+  Widget _buildStatCard(String label, String value, String sub, IconData icon, double totalWidth, bool isMobile) {
+    return Container(
+      // Cálculo dinámico del ancho para que siempre quepan
+      width: isMobile ? totalWidth : (totalWidth - 32) / 3,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, // Evita Bottom Overflow
+              children: [
+                Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text(label, style: const TextStyle(color: Color(0xFFC62828), fontSize: 12, fontWeight: FontWeight.bold)),
+                Text(sub, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+              ],
             ),
-            DashboardStatsCard(
-              label: "En Taller", 
-              value: "5", 
-              sublabel: "En Reparación", 
-              icon: Icons.build_circle_outlined
-            ),
-            DashboardStatsCard(
-              label: "Críticos", 
-              value: "2", 
-              sublabel: "Paro Total", 
-              icon: Icons.error_outline_rounded
-            ),
-          ],
-        );
-      },
+          ),
+          Icon(icon, color: const Color(0xFFC62828).withOpacity(0.2), size: 32),
+        ],
+      ),
     );
   }
 }

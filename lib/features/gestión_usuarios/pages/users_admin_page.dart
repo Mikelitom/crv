@@ -9,7 +9,6 @@ class UsersAdminPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // FONDO RESTAURADO: Se vuelve al gris suave original
       backgroundColor: const Color(0xFFF8F9FA), 
       body: LayoutBuilder(builder: (context, constraints) {
         double maxWidth = constraints.maxWidth;
@@ -21,7 +20,6 @@ class UsersAdminPage extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           child: Center(
             child: ConstrainedBox(
-              // ANCHO MAXIMIZADO: 1600px para abarcar todo el sistema
               constraints: const BoxConstraints(maxWidth: 1600), 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,22 +30,19 @@ class UsersAdminPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
                   
-                  // Estadísticas dinámicas
                   _buildResponsiveStats(maxWidth, statColumns, spacing),
 
                   const SizedBox(height: 32),
 
-                  // Banner de Acción (Blanco sobre fondo gris)
                   _buildActionBanner(context),
 
                   const SizedBox(height: 48),
 
-                  // --- ENCABEZADO INDEPENDIENTE (Abarca todo el ancho) ---
+                  // Arreglo de Overflow en el encabezado de la tabla
                   _buildTableTopActions(maxWidth),
 
                   const SizedBox(height: 16),
 
-                  // --- CONTENEDOR DE TABLA (Blanco puro para resaltar) ---
                   _buildUserTableContainer(),
                 ],
               ),
@@ -59,23 +54,30 @@ class UsersAdminPage extends StatelessWidget {
   }
 
   Widget _buildTableTopActions(double maxWidth) {
-    return Row(
+    bool isSmallScreen = maxWidth < 900;
+
+    return Flex(
+      direction: isSmallScreen ? Axis.vertical : Axis.horizontal,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: isSmallScreen ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       children: [
         const Text(
           "Listado de Personal",
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E)),
         ),
+        if (isSmallScreen) const SizedBox(height: 16),
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: 380,
+              // Ancho dinámico para evitar overflow
+              width: isSmallScreen ? (maxWidth - 48) : 380,
               child: TextField(
                 decoration: InputDecoration(
                   hintText: "Buscar por nombre o email...",
                   prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFD32F2F)),
                   filled: true,
-                  fillColor: Colors.white, // Buscador blanco para resaltar del fondo gris
+                  fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -88,8 +90,10 @@ class UsersAdminPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 16),
-            if (maxWidth > 850) _buildFilterDropdown("Tipo de Usuario"),
+            if (!isSmallScreen) ...[
+              const SizedBox(width: 16),
+              _buildFilterDropdown("Tipo"),
+            ],
           ],
         ),
       ],
@@ -100,7 +104,7 @@ class UsersAdminPage extends StatelessWidget {
     return Container(
       width: double.infinity, 
       decoration: BoxDecoration(
-        color: Colors.white, // La tabla permanece en blanco para legibilidad
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 25, offset: const Offset(0, 12))
@@ -114,11 +118,29 @@ class UsersAdminPage extends StatelessWidget {
   }
 
   Widget _buildDataTable() {
+    // Lista de filas vacía para eliminar datos estáticos
+    final List<DataRow> rows = []; 
+
+    if (rows.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(60),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.person_search_rounded, size: 64, color: Colors.grey),
+              SizedBox(height: 16),
+              Text("No hay usuarios registrados", style: TextStyle(color: Colors.grey, fontSize: 16)),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 1550), // Forzar ancho completo
+        constraints: const BoxConstraints(minWidth: 1200),
         child: DataTable(
           headingRowHeight: 68,
           dataRowMaxHeight: 85,
@@ -126,10 +148,7 @@ class UsersAdminPage extends StatelessWidget {
           columnSpacing: 60,
           headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F9FA)),
           columns: _buildColumns(),
-          rows: [
-            _userRow("Carlos Ramírez", "ID: 1", "carlos.ramirez@reprosisa.com", "Administrador", "Todos"),
-            _userRow("María González", "ID: 2", "maria.gonzalez@reprosisa.com", "Admin Área", "Vehículos"),
-          ],
+          rows: rows,
         ),
       ),
     );
@@ -140,26 +159,8 @@ class UsersAdminPage extends StatelessWidget {
   List<DataColumn> _buildColumns() {
     const labels = ['NOMBRE', 'CONTACTO', 'TIPO', 'ÁREA', 'ESTADO', 'ACCIONES'];
     return labels.map((label) => DataColumn(
-      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
+      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
     )).toList();
-  }
-
-  DataRow _userRow(String name, String id, String email, String type, String area) {
-    return DataRow(cells: [
-      DataCell(Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          Text(id, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-        ],
-      )),
-      DataCell(Text(email, style: const TextStyle(fontSize: 13))),
-      DataCell(_buildRoleBadge(type)),
-      DataCell(Text(area, style: const TextStyle(fontSize: 13))),
-      DataCell(_buildStatusBadge("Activo")),
-      DataCell(IconButton(icon: const Icon(Icons.more_horiz_rounded, color: Colors.grey), onPressed: () {})),
-    ]);
   }
 
   Widget _buildResponsiveStats(double maxWidth, int columns, double spacing) {
@@ -168,10 +169,10 @@ class UsersAdminPage extends StatelessWidget {
       spacing: spacing,
       runSpacing: spacing,
       children: [
-        _buildStat(statWidth, "Total Usuarios", "3", Icons.group),
-        _buildStat(statWidth, "Activos", "3", Icons.check_circle_outline),
-        _buildStat(statWidth, "Administradores", "1", Icons.security),
-        _buildStat(statWidth, "Empleados", "1", Icons.person_outline),
+        _buildStat(statWidth, "Total Usuarios", "0", Icons.group),
+        _buildStat(statWidth, "Activos", "0", Icons.check_circle_outline),
+        _buildStat(statWidth, "Administradores", "0", Icons.security),
+        _buildStat(statWidth, "Empleados", "0", Icons.person_outline),
       ],
     );
   }
@@ -189,51 +190,40 @@ class UsersAdminPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10))],
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: const Color(0xFFFDECEA), borderRadius: BorderRadius.circular(16)),
-            child: const Icon(Icons.person_add_rounded, color: Color(0xFFD32F2F), size: 32),
-          ),
-          const SizedBox(width: 28),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Crear Nuevo Usuario", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
-                Text("Registra y asigna roles a nuevos miembros del equipo", style: TextStyle(color: Colors.grey, fontSize: 15)),
-              ],
+      child: LayoutBuilder(builder: (context, bConstraints) {
+        bool isCompact = bConstraints.maxWidth < 600;
+        return Flex(
+          direction: isCompact ? Axis.vertical : Axis.horizontal,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: const Color(0xFFFDECEA), borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.person_add_rounded, color: Color(0xFFD32F2F), size: 32),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () => showDialog(context: context, builder: (c) => DialogCrearUsuario()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD32F2F),
-              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 22),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              elevation: 0,
+            SizedBox(width: isCompact ? 0 : 28, height: isCompact ? 16 : 0),
+            Expanded(
+              flex: isCompact ? 0 : 1,
+              child: Column(
+                crossAxisAlignment: isCompact ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+                children: const [
+                  Text("Crear Nuevo Usuario", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+                  Text("Registra y asigna roles a miembros del equipo", style: TextStyle(color: Colors.grey, fontSize: 15)),
+                ],
+              ),
             ),
-            child: const Text("Crear Usuario", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRoleBadge(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(color: const Color(0xFFFDECEA), borderRadius: BorderRadius.circular(12)),
-      child: Text(label, style: const TextStyle(color: Color(0xFFD32F2F), fontSize: 12, fontWeight: FontWeight.bold)),
-    );
-  }
-
-  Widget _buildStatusBadge(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(12)),
-      child: Text(label, style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
+            SizedBox(width: isCompact ? 0 : 16, height: isCompact ? 24 : 0),
+            ElevatedButton(
+              onPressed: () => showDialog(context: context, builder: (c) =>  DialogCrearUsuario()),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD32F2F),
+                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 22),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Text("Crear Usuario", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            )
+          ],
+        );
+      }),
     );
   }
 

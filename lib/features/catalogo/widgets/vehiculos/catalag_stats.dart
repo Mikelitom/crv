@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../dashboard/presentation/widgets/dashboard_stats.dart';
 
 class CatalogStats extends StatelessWidget {
   const CatalogStats({super.key});
@@ -8,53 +7,55 @@ class CatalogStats extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       double maxWidth = constraints.maxWidth;
+      int columns = maxWidth > 1100 ? 3 : (maxWidth > 700 ? 2 : 1);
 
-      // DEFINICIÓN DE COLUMNAS SEGÚN TAMAÑO (Breakpoints)
-      int crossAxisCount;
-      double aspectRatio;
-
-      if (maxWidth > 1000) {
-        // Escritorio: 3 columnas, tarjetas delgadas
-        crossAxisCount = 3;
-        aspectRatio = 3.2; 
-      } else if (maxWidth > 600) {
-        // TABLET: 2 columnas, tarjetas compactas
-        crossAxisCount = 2;
-        aspectRatio = 2.8; 
-      } else {
-        // Móvil: 1 columna, proporción ajustada para no ser gigante
-        crossAxisCount = 1;
-        aspectRatio = 3.8;
-      }
-
-      return GridView.count(
+      return GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: aspectRatio, // Controla que no se vean "gigantes"
-        children: const [
-          DashboardStatsCard(
-            label: "Total Unidades", 
-            value: "12", 
-            sublabel: "Catálogo", 
-            icon: Icons.inventory_2_outlined
-          ),
-          DashboardStatsCard(
-            label: "En Operación", 
-            value: "9", 
-            sublabel: "Activos", 
-            icon: Icons.settings_remote_outlined
-          ),
-          DashboardStatsCard(
-            label: "Disponibles", 
-            value: "3", 
-            sublabel: "En Patio", 
-            icon: Icons.event_available_outlined
-          ),
-        ],
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          mainAxisExtent: 100, // Altura fija controlada para evitar desbordamiento
+        ),
+        itemCount: 3,
+        itemBuilder: (context, index) {
+          final labels = ["Catálogo", "Activos", "En Patio"];
+          final icons = [Icons.inventory_2_outlined, Icons.settings_remote_outlined, Icons.event_available_outlined];
+          return _buildStatCard(labels[index], "0", icons[index]);
+        },
       );
     });
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, // Evita Bottom Overflow
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                ),
+                Text(label, 
+                  maxLines: 1,
+                  style: const TextStyle(color: Color(0xFFD32F2F), fontSize: 12, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          Icon(icon, color: const Color(0xFFD32F2F).withOpacity(0.2), size: 30),
+        ],
+      ),
+    );
   }
 }

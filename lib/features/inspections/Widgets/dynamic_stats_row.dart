@@ -6,7 +6,7 @@ class DynamicStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Validación para evitar el error de RangeError en laptop
+    // Protección contra errores de carga en laptop
     if (stats.isEmpty) {
       return const SizedBox(
         height: 120,
@@ -15,7 +15,7 @@ class DynamicStatsRow extends StatelessWidget {
     }
 
     return LayoutBuilder(builder: (context, constraints) {
-      // Modo Computadora: Las 3 estadísticas seguidas una al lado de la otra
+      // MODO COMPUTADORA: Una sola fila simétrica
       if (constraints.maxWidth > 900) {
         return Row(
           children: [
@@ -30,7 +30,7 @@ class DynamicStatsRow extends StatelessWidget {
         );
       }
 
-      // Modo Móvil: Lista vertical
+      // MODO MÓVIL: Lista vertical
       return Column(
         children: stats.map((stat) => Padding(
           padding: const EdgeInsets.only(bottom: 12),
@@ -41,39 +41,51 @@ class DynamicStatsRow extends StatelessWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
+class _StatCard extends StatefulWidget {
   final String label;
   final String value;
-
   const _StatCard({required this.label, required this.value});
 
   @override
+  State<_StatCard> createState() => _StatCardState();
+}
+
+class _StatCardState extends State<_StatCard> {
+  bool isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 8))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label, 
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          // FittedBox previene los errores de píxeles rojos (Overflow)
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(value, 
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
-          ),
-        ],
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isHovered ? 0.08 : 0.04),
+              blurRadius: isHovered ? 20 : 12,
+              offset: Offset(0, isHovered ? 10 : 6),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(widget.label, 
+              style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            FittedBox( // Previene overflow de píxeles
+              fit: BoxFit.scaleDown,
+              child: Text(widget.value, 
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
+            ),
+          ],
+        ),
       ),
     );
   }
