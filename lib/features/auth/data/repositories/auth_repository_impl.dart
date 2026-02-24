@@ -1,9 +1,9 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:dartz/dartz.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/entities/auth_tokens.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
-import 'package:dartz/dartz.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -30,7 +30,20 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
 
-      return Right(userModel);
+      // Convertimos UserModel a User entity
+      final userEntity = User(
+        id: userModel.id,
+        name: userModel.name,
+        email: userModel.email,
+        phone: userModel.phone,
+        isActive: userModel.isActive,
+        lastLogin: userModel.lastLogin,
+        createdAt: userModel.createdAt,
+        roles: userModel.roles,
+        permissions: userModel.permissions,
+      );
+
+      return Right(userEntity);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -57,8 +70,9 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, AuthTokens>> refreshToken() async {
     try {
       final refresh = await storage.read(key: _refreshKey);
+      if (refresh == null) throw Exception('No refresh token found');
 
-      final tokens = await remote.refresh(refresh!);
+      final tokens = await remote.refresh(refresh);
 
       await storage.write(key: _accessKey, value: tokens.accessToken);
       await storage.write(key: _refreshKey, value: tokens.refreshToken);
@@ -72,8 +86,21 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, User>> getMe() async {
     try {
-      final user = await remote.getMe();
-      return Right(user);
+      final userModel = await remote.getMe();
+
+      final userEntity = User(
+        id: userModel.id,
+        name: userModel.name,
+        email: userModel.email,
+        phone: userModel.phone,
+        isActive: userModel.isActive,
+        lastLogin: userModel.lastLogin,
+        createdAt: userModel.createdAt,
+        roles: userModel.roles,
+        permissions: userModel.permissions,
+      );
+
+      return Right(userEntity);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -96,7 +123,8 @@ class AuthRepositoryImpl implements AuthRepository {
     required String newPassword,
   }) async {
     try {
-      remote.changePassword(oldPassword: oldPassword, newPassword: newPassword);
+      // Se añade await para capturar errores correctamente
+      await remote.changePassword(oldPassword: oldPassword, newPassword: newPassword);
       return Right(unit);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

@@ -17,9 +17,9 @@ abstract class AuthRepository {
 
   Future<Either<Failure, User>> getMe();
 
-  Future<Either<Failure, void>> logout();
+  Future<Either<Failure, Unit>> logout();
 
-  Future<Either<Failure, void>> changePassword({
+  Future<Either<Failure, Unit>> changePassword({
     required String oldPassword,
     required String newPassword,
   });
