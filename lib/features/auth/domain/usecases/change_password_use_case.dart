@@ -3,14 +3,14 @@ import 'package:dartz/dartz.dart';
 import '../repositories/auth_repository.dart';
 
 class ChangePasswordUseCase {
-    final AuthRepository repository;
+  final AuthRepository repository;
 
-    ChangePasswordUseCase(this.repository);
+  ChangePasswordUseCase(this.repository);
 
-    Future<Either<Failure, Unit>> call(String oldPassword, String newPassword) {
-        return repository.changePassword(oldPassword: oldPassword, newPassword: newPassword);        
-    }
+  Future<Either<Failure, Unit>> call(String oldPassword, String newPassword) {
+    return repository.changePassword(
+      oldPassword: oldPassword,
+      newPassword: newPassword,
+    );
+  }
 }
-
-
-

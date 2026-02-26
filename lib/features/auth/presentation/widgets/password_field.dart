@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 
 class PasswordField extends StatelessWidget {
-  const PasswordField({super.key});
+    final TextEditingController controller;
 
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      obscureText: true,
-      decoration: const InputDecoration(
-        labelText: 'Contraseña',
-        border: OutlineInputBorder()
-      ),
-    );
-  }
+    const PasswordField({
+        super.key,
+        required this.controller,
+    });
+
+    @override 
+    Widget build(BuildContext context) {
+        return TextField(
+            controller: controller,
+            obscureText: true,
+            decoration: const InputDecoration(
+                labelText: 'Contraseña',
+                border: OutlineInputBorder()
+            ),
+        );   
+    }
 }
+
+

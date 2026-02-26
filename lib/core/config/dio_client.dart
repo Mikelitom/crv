@@ -1,4 +1,5 @@
-import '../storage/secure_storage_provider.dart';
+import 'package:crv_reprosisa/features/auth/presentation/providers/auth_data_providers.dart';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'environment.dart';
@@ -17,13 +18,15 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await ref.read(secureStorageProvider).read(key: 'token');
+        final tokenRepository = ref.read(tokenRepositoryProvider);
 
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
+        final tokens = await tokenRepository.get();
+
+        if (tokens != null) {
+          options.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
         }
 
-        return handler.next(options);
+        handler.next(options);
       },
     ),
   );

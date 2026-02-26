@@ -5,8 +5,16 @@ import 'login_button.dart';
 import 'remember_me_checkbox.dart';
 import 'forgot_password_button.dart';
 
-class LoginForm extends StatelessWidget {
+class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
+
+  @override
+  State<LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<LoginForm> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -18,27 +26,22 @@ class LoginForm extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: const [
-              Text(
+            children: [
+              const Text(
                 'Acceso al sistema',
                 textAlign: TextAlign.left,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              Text(
+              const Text(
                 'Ingrese sus credenciales para continuar',
                 textAlign: TextAlign.left,
-                style: TextStyle(
-                  fontSize: 12,
-                ),
+                style: TextStyle(fontSize: 12),
               ),
-              SizedBox(height: 32),
-              EmailField(),
-              SizedBox(height: 16),
-              PasswordField(),
-              SizedBox(height: 24),
+              const SizedBox(height: 32),
+              EmailField(controller: emailController),
+              const SizedBox(height: 16),
+              PasswordField(controller: passwordController),
+              const SizedBox(height: 24),
               Row(
                 children: [
                   RememberMeCheckbox(),
@@ -46,8 +49,11 @@ class LoginForm extends StatelessWidget {
                   ForgotPasswordButton(),
                 ],
               ),
-              SizedBox(height: 24),
-              LoginButton(),
+              const SizedBox(height: 24),
+              LoginButton(
+                emailController: emailController,
+                passwordController: passwordController,
+              ),
             ],
           ),
         ),

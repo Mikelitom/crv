@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 
 class EmailField extends StatelessWidget {
-  const EmailField({super.key});
+    final TextEditingController controller;
 
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      keyboardType: TextInputType.emailAddress,
-      decoration: const InputDecoration(
-        labelText: 'Correo Electronico',
-        border: OutlineInputBorder(),
-      ),
-    );
-  }
+    const EmailField({
+        super.key,
+        required this.controller,
+    });
+
+    @override
+    Widget build(BuildContext context) {
+        return TextField(
+            controller: controller,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(
+                labelText: 'Correo Electronico',
+                border: OutlineInputBorder(),
+            ),
+        );
+    }
 }
+
+
