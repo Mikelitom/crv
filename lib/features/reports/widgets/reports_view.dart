@@ -46,27 +46,44 @@ class ReportsView extends StatelessWidget {
         child: Column(
           children: [
             const CustomHeader(
-              title: "Reportes Aprobados", 
-              actionIcon: Icons.description_rounded
+              title: "Reportes Aprobados",
+              actionIcon: Icons.description_rounded,
             ),
             const SizedBox(height: 24),
 
             // Sección de Tarjetas Superiores (Tu lógica original)
-            LayoutBuilder(builder: (context, constraints) {
-              double width = constraints.maxWidth;
-              return Wrap(
-                spacing: 20,
-                runSpacing: 20,
-                children: [
-                  _responsiveBox(width, "Mis Reportes", "24 reportes", Icons.article_outlined),
-                  _responsiveBox(width, "Reportes Generales", "156 reportes", Icons.people_outline),
-                  _responsiveBox(width, "Estadísticas", "12 gráficos", Icons.bar_chart_rounded),
-                ],
-              );
-            }),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                double width = constraints.maxWidth;
+                return Wrap(
+                  spacing: 20,
+                  runSpacing: 20,
+                  children: [
+                    _responsiveBox(
+                      width,
+                      "Mis Reportes",
+                      "24 reportes",
+                      Icons.article_outlined,
+                    ),
+                    _responsiveBox(
+                      width,
+                      "Reportes Generales",
+                      "156 reportes",
+                      Icons.people_outline,
+                    ),
+                    _responsiveBox(
+                      width,
+                      "Estadísticas",
+                      "12 gráficos",
+                      Icons.bar_chart_rounded,
+                    ),
+                  ],
+                );
+              },
+            ),
 
             const SizedBox(height: 32),
-            
+
             // Tabla con los datos estáticos inyectados
             ReportTable(items: _reportesEstaticos),
           ],
@@ -90,3 +107,4 @@ class ReportsView extends StatelessWidget {
     );
   }
 }
+

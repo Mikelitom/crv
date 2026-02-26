@@ -1,35 +1,36 @@
 import 'package:go_router/go_router.dart';
-
-import '../../features/dev/presentation/pages/dev_role_selector_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_entry_page.dart';
-import '../session/auth_session.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'auth_router_notifier_provider.dart';
 import 'app_routes.dart';
 
-final appRouter = GoRouter(
-  initialLocation: AppRoutes.dev,
-  refreshListenable: authSession,
-  routes: [
-    GoRoute(
-      path: AppRoutes.dev,
-      builder: (_, __) => const DevRoleSelectorPage(),
-    ),
-    GoRoute(
-      path: AppRoutes.dashboard,
-      builder: (_, __) => const DashboardEntryPage(),
-    ),
-  ],
-  redirect: (context, state) {
-    final isLoggedIn = authSession.isAuthenticated;
-    final isDev = state.matchedLocation == AppRoutes.dev;
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final authNotifier = ref.watch(authRouterNotifierProvider);
 
-    if (!isLoggedIn && !isDev) {
-      return AppRoutes.dev;
-    }
+  return GoRouter(
+    initialLocation: AppRoutes.login,
+    refreshListenable: authNotifier,
+    routes: [
+      GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginPage()),
+      GoRoute(
+        path: AppRoutes.login,
+        builder: (_, __) => const DashboardEntryPage(),
+      ),
+    ],
+    redirect: (context, state) {
+      final isLoggedIn = authNotifier.isAuthenticated;
+      final isLogin = state.matchedLocation == AppRoutes.login;
 
-    if (isLoggedIn && isDev) {
-      return AppRoutes.dashboard;
-    }
+      if (!isLoggedIn && !isLogin) {
+        return AppRoutes.login;
+      }
 
-    return null;
-  },
-);
+      if (isLoggedIn && isLogin) {
+        return AppRoutes.dashboard;
+      }
+
+      return null;
+    },
+  );
+});
