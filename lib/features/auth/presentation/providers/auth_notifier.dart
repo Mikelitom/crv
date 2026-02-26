@@ -1,47 +1,45 @@
+import 'package:crv_reprosisa/features/auth/presentation/di/auth_providers.dart';
+import 'package:crv_reprosisa/features/auth/presentation/providers/auth_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dartz/dartz.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
 import '../../domain/entities/auth_tokens.dart';
-import 'auth_providers.dart';
 
-class AuthNotifier extends AsyncNotifier<AuthTokens?> {
+class AuthNotifier extends Notifier<AuthState> {
   @override
-  AuthTokens? build() => null; // estado inicial vacío
+  AuthState build() {
+    return AuthState.initial();
+  }
 
   Future<void> login(String email, String password) async {
-    // Indica que la operación está cargando
-    state = const AsyncLoading();
+    state = state.copyWith(isLoading: true, error: null);
 
-    // Llamamos al use case directamente desde ref
-    final Either<Failure, AuthTokens> result =
-        await ref.read(loginUseCaseProvider)(email, password);
+    final Either<Failure, AuthTokens> result = await ref.read(
+      loginUseCaseProvider,
+    )(email, password);
 
-    // Hacemos fold: izquierda = failure, derecha = éxito
     result.fold(
       (failure) {
-        // Guardamos el error completo
-        state = AsyncError(failure, StackTrace.current);
+        state = state.copyWith(isLoading: false, error: failure);
       },
       (tokens) {
-        // Guardamos los tokens en el estado
-        state = AsyncData(tokens);
+        state = state.copyWith(isLoading: false, tokens: tokens, error: null);
       },
     );
   }
 
   Future<void> logout() async {
-    state = const AsyncLoading();
+    state = state.copyWith(isLoading: true);
 
-    try {
-      // Supongamos que tienes un use case de logout que devuelve Either<Failure, Unit>
-      final result = await ref.read(logoutUseCaseProvider)();
+    final result = await ref.read(logoutUseCaseProvider)();
 
-      result.fold(
-        (failure) => state = AsyncError(failure, StackTrace.current),
-        (_) => state = const AsyncData(null), // Logout = estado vacío
-      );
-    } catch (e) {
-      state = AsyncError(e, StackTrace.current);
-    }
+    result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, error: failure);
+      },
+      (_) {
+        state = AuthState.initial();
+      },
+    );
   }
 }

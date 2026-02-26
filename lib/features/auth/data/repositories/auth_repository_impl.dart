@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/auth/domain/repositories/token_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dartz/dartz.dart';
 import '../../domain/entities/user.dart';
@@ -8,12 +9,12 @@ import 'package:crv_reprosisa/core/error/failure.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remote;
-  final FlutterSecureStorage storage;
+  final TokenRepository tokenRepository;
 
   static const _accessKey = 'access_token';
   static const _refreshKey = 'refresh_token';
 
-  AuthRepositoryImpl({required this.remote, required this.storage});
+  AuthRepositoryImpl({required this.remote, required this.tokenRepository});
 
   @override
   Future<Either<Failure, User>> register({
@@ -57,8 +58,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final tokens = await remote.login(email: email, password: password);
 
-      await storage.write(key: _accessKey, value: tokens.accessToken);
-      await storage.write(key: _refreshKey, value: tokens.refreshToken);
+      await tokenRepository.save(tokens);
 
       return Right(tokens);
     } catch (e) {
@@ -74,9 +74,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final tokens = await remote.refresh(refresh);
 
-      await storage.write(key: _accessKey, value: tokens.accessToken);
-      await storage.write(key: _refreshKey, value: tokens.refreshToken);
-
+      await tokenRepository.save(tokens);
       return Right(tokens);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -124,7 +122,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       // Se añade await para capturar errores correctamente
-      await remote.changePassword(oldPassword: oldPassword, newPassword: newPassword);
+      await remote.changePassword(
+        oldPassword: oldPassword,
+        newPassword: newPassword,
+      );
       return Right(unit);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -141,3 +142,4 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 }
+
