@@ -34,7 +34,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, AuthTokens>> login({
+  Future<Either<Failure, User>> login({
     required String email,
     required String password,
   }) async {
@@ -43,8 +43,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
       await tokenRepository.save(tokens);
 
-      return Right(tokens);
+      final user = await remote.getMe();
+
+      return Right(user);
     } catch (e) {
+      await tokenRepository.clear();
       return Left(ServerFailure(e.toString()));
     }
   }

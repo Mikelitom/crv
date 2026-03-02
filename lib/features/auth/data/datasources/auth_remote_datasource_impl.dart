@@ -57,7 +57,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final response = await dio.get('/api/v1/auth/me');
     return UserModel.fromJson(response.data);
   }
-  
+
   @override
   Future<void> logout() async {
     await dio.post('/api/v1/auth/logout');

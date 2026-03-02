@@ -1,43 +1,26 @@
 import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/auth_tokens.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
+import 'package:crv_reprosisa/features/auth/presentation/providers/auth_status.dart';
 
 class AuthState {
-  final bool isLoading;
-  final AuthTokens? tokens;
+  final AuthStatus status;
   final Failure? error;
   final User? user;
 
-  const AuthState({
-    required this.isLoading,
-    this.tokens,
-    this.error,
-    this.user,
-  });
+  const AuthState({required this.status, this.error, this.user});
 
-  factory AuthState.initial() {
-    return const AuthState(
-      isLoading: false,
-      tokens: null,
-      error: null,
-      user: null,
-    );
-  }
+  const AuthState.initial()
+    : status = AuthStatus.initial,
+      user = null,
+      error = null;
 
-  bool get isAuthenticated => tokens != null;
+  bool get isAuthenticated => status == AuthStatus.authenticated;
 
-  AuthState copyWith({
-    bool? isLoading,
-    AuthTokens? tokens,
-    User? user,
-    Failure? error,
-    bool clearTokens = false,
-    bool clearUser = false,
-  }) {
+  AuthState copyWith({AuthStatus? status, User? user, Failure? error}) {
     return AuthState(
-      isLoading: isLoading ?? this.isLoading,
-      tokens: clearTokens ? null : (tokens ?? this.tokens),
-      user: clearUser ? null : (user ?? this.user),
+      status: status ?? this.status,
+      user: user ?? this.user,
       error: error,
     );
   }

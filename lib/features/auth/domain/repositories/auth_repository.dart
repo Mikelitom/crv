@@ -11,7 +11,7 @@ abstract class AuthRepository {
     required String password,
   });
 
-  Future<Either<Failure, AuthTokens>> login({
+  Future<Either<Failure, User>> login({
     required String email,
     required String password,
   });
