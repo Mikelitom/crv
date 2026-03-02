@@ -2,7 +2,7 @@ class User {
   final String id;
   final String name;
   final String email;
-  final String phone;
+  final String? phone;
   final bool isActive;
   final DateTime? lastLogin;
   final DateTime createdAt;
@@ -13,7 +13,7 @@ class User {
     required this.id,
     required this.name,
     required this.email,
-    required this.phone,
+    this.phone,
     required this.isActive,
     this.lastLogin,
     required this.createdAt,
@@ -21,4 +21,3 @@ class User {
     required this.permissions,
   });
 }
-

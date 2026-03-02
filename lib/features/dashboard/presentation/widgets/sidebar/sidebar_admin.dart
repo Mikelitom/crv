@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/dashboard/presentation/widgets/sidebar/logout_button.dart';
 import 'package:flutter/material.dart';
 import 'sidebar_container.dart';
 import 'sidebar_header.dart';
@@ -63,7 +64,7 @@ class SidebarAdmin extends StatelessWidget {
             isActive: selectedIndex == 5,
             onTap: () => onItemSelected(5),
           ),
-         SidebarItem(
+          SidebarItem(
             icon: Icons.book,
             label: 'Servicios',
             isActive: selectedIndex == 6,
@@ -80,13 +81,7 @@ class SidebarAdmin extends StatelessWidget {
           const Spacer(),
           const Divider(indent: 20, endIndent: 20),
 
-          SidebarItem(
-            icon: Icons.logout,
-            label: 'Cerrar Sesión',
-            onTap: () {
-              // Lógica de logout
-            },
-          ),
+          const LogoutButton(showLabel: true),
 
           const SizedBox(height: 20),
         ],

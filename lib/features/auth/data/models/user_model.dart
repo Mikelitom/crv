@@ -5,7 +5,7 @@ class UserModel extends User {
     required super.id,
     required super.name,
     required super.email,
-    required super.phone,
+    super.phone,
     required super.isActive,
     required super.createdAt,
     required super.role,
@@ -29,4 +29,3 @@ class UserModel extends User {
     );
   }
 }
-

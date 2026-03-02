@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class SidebarItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -24,7 +23,9 @@ class SidebarItem extends StatelessWidget {
     const Color activeBackground = Color(0xFFFDECEA); // Rojo muy tenue
 
     return Padding(
-      padding: const EdgeInsets.only(right: 12), // Margen para que no toque el borde derecho
+      padding: const EdgeInsets.only(
+        right: 12,
+      ), // Margen para que no toque el borde derecho
       child: InkWell(
         onTap: onTap,
         borderRadius: const BorderRadius.only(
@@ -89,3 +90,4 @@ class SidebarItem extends StatelessWidget {
     );
   }
 }
+

@@ -38,7 +38,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       '/api/v1/auth/login',
       data: {"email": email, "password": password},
     );
-
+    print(response.data);
     return AuthTokensModel.fromJson(response.data);
   }
 
@@ -55,6 +55,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel> getMe() async {
     final response = await dio.get('/api/v1/auth/me');
+    print(response.data);
     return UserModel.fromJson(response.data);
   }
 

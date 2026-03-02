@@ -1,6 +1,6 @@
 import 'package:crv_reprosisa/domain/entities/press/answers_press.dart';
 
-class AnswersPressModel extends AnswersPress{
+class AnswersPressModel extends AnswersPress {
   AnswersPressModel({
     required super.id,
     required super.report_id,
@@ -10,7 +10,7 @@ class AnswersPressModel extends AnswersPress{
     super.observation,
     required super.createdAt,
   });
- factory AnswersPressModel.fromJson(Map<String, dynamic> json) {
+  factory AnswersPressModel.fromJson(Map<String, dynamic> json) {
     return AnswersPressModel(
       id: json['id'],
       report_id: json['report_id'],
@@ -22,3 +22,4 @@ class AnswersPressModel extends AnswersPress{
     );
   }
 }
+
