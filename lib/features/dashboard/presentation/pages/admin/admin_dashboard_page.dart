@@ -1,6 +1,6 @@
 import 'package:crv_reprosisa/core/models/inspection_models.dart';
 import 'package:crv_reprosisa/features/activos/page/assets_admin_page.dart';
-import 'package:crv_reprosisa/features/catalogo/page/vehiculo/catalogo_vehicle_page.dart';
+import '../../../../catalogo/page/catalogo_page.dart';
 import 'package:crv_reprosisa/features/gestión_usuarios/pages/users_admin_page.dart';
 import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/perfil/page/profile_page.dart';
@@ -28,13 +28,15 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Definición de páginas con el tipo explícito para evitar errores de parámetro
     final pages = [
       const _AdminHomePage(),
+      // Se pasan las listas incluso si están vacías, la página interna debe manejarlas
       InspectionPage(stats: _adminStats, actions: _adminActions, inspections: _adminInspections),
       const ReportsPage(),
       const AssetsAdminPage(),
       const UsersAdminPage(),
-      const VehicleCatalogPage(),
+      const GenericCatalogPage(type: AssetType.vehiculo), // Tipo definido para evitar errores
       const VehicleServicesPage(),
       const ProfilePage(),
     ];
@@ -77,6 +79,7 @@ class _AdminHomePage extends StatelessWidget {
 
           const SizedBox(height: 32),
 
+          // Layout de Gráficas Responsivo
           LayoutBuilder(
             builder: (context, constraints) {
               if (constraints.maxWidth < 900) {
@@ -119,9 +122,13 @@ class _AdminHomePage extends StatelessWidget {
 
   Widget _buildStatsGrid(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      int crossAxisCount = constraints.maxWidth < 750 ? 2 : 4;
-      // Proporción ajustada para dar más espacio vertical
-      double aspectRatio = constraints.maxWidth < 750 ? 1.5 : 2.0;
+      double maxWidth = constraints.maxWidth;
+      
+      // Ajuste de columnas según el ancho disponible
+      int crossAxisCount = maxWidth < 750 ? 2 : 4;
+      
+      // ASPECT RATIO CORREGIDO: Mayor valor vertical para evitar desbordamiento inferior
+      double aspectRatio = maxWidth < 750 ? 1.4 : 1.8;
 
       return GridView.count(
         shrinkWrap: true,
@@ -148,6 +155,7 @@ class _AdminHomePage extends StatelessWidget {
           spacing: 20,
           runSpacing: 20,
           children: [
+            // Diseño seguido en computadora, apilado en móvil
             _buildAction(w, "Inspección de Prensas", "Administrar checklists industriales", Icons.build_circle_outlined),
             _buildAction(w, "Inspección de Vehículos", "Gestión de flota corporativa", Icons.local_shipping_outlined),
             _buildAction(w, "Inspección de Bandas", "Control de sistemas de transporte", Icons.camera_alt_outlined),
@@ -158,13 +166,22 @@ class _AdminHomePage extends StatelessWidget {
   }
 
   Widget _buildAction(double w, String title, String desc, IconData icon) {
-    double cardWidth = w > 900 ? (w / 3) - 14 : (w > 600 ? (w / 2) - 10 : w);
-    return SizedBox(width: cardWidth, child: QuickActionCard(title: title, description: desc, icon: icon, onTap: () {}));
+    // Cálculo de ancho dinámico para evitar desbordamientos laterales
+    double cardWidth = w > 1100 ? (w / 3) - 14 : (w > 700 ? (w / 2) - 10 : w);
+    return SizedBox(
+      width: cardWidth, 
+      child: QuickActionCard(
+        title: title, 
+        description: desc, 
+        icon: icon, 
+        onTap: () {}
+      )
+    );
   }
 
   Widget _buildChartPlaceholder(String title, IconData icon) {
     return Container(
-      height: 300,
+      height: 320, // Altura aumentada para evitar Bottom Overflow
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -182,7 +199,11 @@ class _AdminHomePage extends StatelessWidget {
   }
 }
 
-// Listas con tipos explícitos para evitar errores en InspectionPage
-final List<StatsModel> _adminStats = []; 
+// Listas inicializadas como vacías para evitar el error de RangeError
+final List<StatsModel> _adminStats = [
+  StatsModel(value: "0", label: "Totales", color: Colors.grey),
+  StatsModel(value: "0", label: "Pendientes", color: Colors.grey),
+  StatsModel(value: "0", label: "Completadas", color: Colors.grey),
+]; 
 final List<ActionCardModel> _adminActions = [];
 final List<InspectionRowUI> _adminInspections = [];

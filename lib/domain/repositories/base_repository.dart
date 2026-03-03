@@ -1,0 +1,11 @@
+import 'dart:async';
+
+abstract class BaseRepository<T> {
+  Future<List<T>> getAll();
+  Future<T> getById(String id);
+  Future<void> create(T item);
+  Future<void> update(T item);
+  Future<void> delete(String id);
+  Future<List<T>> getByAttribute(String attr, String value);
+  Future<List<T>> search(String query);
+}
