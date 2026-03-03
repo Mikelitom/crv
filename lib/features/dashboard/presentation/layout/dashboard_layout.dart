@@ -4,13 +4,18 @@ import '../widgets/navbar/dashboard_navbar.dart';
 class DashboardLayout extends StatelessWidget {
   final Widget sidebar;
   final Widget content;
-  final bool isDesktop; // Recibimos el estado desde el ResponsiveLayout
+  final bool isDesktop;
+
+  final String userName;
+  final String userRole; // Recibimos el estado desde el ResponsiveLayout
 
   const DashboardLayout({
     super.key,
     required this.sidebar,
     required this.content,
     required this.isDesktop,
+    required this.userName,
+    required this.userRole,
   });
 
   @override
@@ -29,13 +34,11 @@ class DashboardLayout extends StatelessWidget {
               children: [
                 // AQUÍ CORREGIMOS EL ERROR: Pasamos todos los parámetros requeridos
                 DashboardNavbar(
-                  userName: "Juan Soto", 
-                  userRole: "Empleado",
-                  isDesktop: isDesktop, 
+                  userName: userName,
+                  userRole: userRole,
+                  isDesktop: isDesktop,
                 ),
-                Expanded(
-                  child: content,
-                ),
+                Expanded(child: content),
               ],
             ),
           ),
@@ -44,3 +47,4 @@ class DashboardLayout extends StatelessWidget {
     );
   }
 }
+
