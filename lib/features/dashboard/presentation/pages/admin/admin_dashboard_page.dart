@@ -178,7 +178,7 @@ class _AdminHomePage extends StatelessWidget {
         int crossAxisCount = maxWidth < 750 ? 2 : 4;
 
         // ASPECT RATIO CORREGIDO: Mayor valor vertical para evitar desbordamiento inferior
-        double aspectRatio = maxWidth < 750 ? 1.4 : 1.8;
+        double aspectRatio = maxWidth < 750 ? 3.0 : 1.8;
 
         return GridView.count(
           shrinkWrap: true,
