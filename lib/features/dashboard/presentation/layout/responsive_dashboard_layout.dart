@@ -5,10 +5,15 @@ class ResponsiveDashboardLayout extends StatelessWidget {
   final Widget sidebar;
   final Widget content;
 
+  final String userName;
+  final String userRole;
+
   const ResponsiveDashboardLayout({
     super.key,
     required this.sidebar,
     required this.content,
+    required this.userName,
+    required this.userRole,
   });
 
   static const double desktopBreakpoint = 1024;
@@ -18,12 +23,15 @@ class ResponsiveDashboardLayout extends StatelessWidget {
     final double width = MediaQuery.of(context).size.width;
     final bool isDesktop = width >= desktopBreakpoint;
 
-    // Ya no usamos un IF con dos retornos diferentes. 
+    // Ya no usamos un IF con dos retornos diferentes.
     // Usamos el DashboardLayout y le pasamos el estado 'isDesktop'.
     return DashboardLayout(
       sidebar: sidebar,
       content: content,
+      userName: userName,
+      userRole: userRole,
       isDesktop: isDesktop,
     );
   }
 }
+
