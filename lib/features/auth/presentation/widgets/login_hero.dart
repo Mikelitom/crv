@@ -6,19 +6,27 @@ class LoginHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.red,
+      color: const Color(0xFFC62828), // Color rojo oficial
       child: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.apartment, size: 96, color: Colors.white),
-            SizedBox(height: 16),
-            Text(
-              'Empresa',
+          mainAxisAlignment: MainAxisAlignment.center, // Alineación vertical central
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: const Icon(Icons.print_rounded, size: 90, color: Colors.white),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'CRV Reprosisa',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 28,
+                fontSize: 38,
                 fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
               ),
             ),
           ],

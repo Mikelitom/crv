@@ -18,41 +18,89 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    // Detectamos si la pantalla es estrecha para mostrar el logo
+    final isMobile = MediaQuery.of(context).size.width < 900;
+
     return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min, // Corregido: propiedad de alineación
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // --- LOGO DE LA EMPRESA ---
+              if (isMobile) ...[
+                Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC62828),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(Icons.print_rounded, size: 60, color: Colors.white),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'CRV Reprosisa',
+                        style: TextStyle(
+                          fontSize: 22, 
+                          fontWeight: FontWeight.bold, 
+                          color: Color(0xFFC62828)
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
+
               const Text(
-                'Acceso al sistema',
-                textAlign: TextAlign.left,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                'Acceso al Sistema',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
+              const SizedBox(height: 8),
               const Text(
                 'Ingrese sus credenciales para continuar',
-                textAlign: TextAlign.left,
-                style: TextStyle(fontSize: 12),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
+              
+              const Text('Nombre de usuario', style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
               EmailField(controller: emailController),
-              const SizedBox(height: 16),
-              PasswordField(controller: passwordController),
+              
               const SizedBox(height: 24),
-              Row(
-                children: [
+              
+              const Text('Contraseña', style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              PasswordField(controller: passwordController),
+              
+              const SizedBox(height: 16),
+              
+              // --- SOLUCIÓN AL OVERFLOW: Wrap manda los elementos abajo si no caben ---
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8, // Espacio horizontal
+                runSpacing: 8, // Espacio vertical cuando se va para abajo
+                children: const [
                   RememberMeCheckbox(),
-                  Spacer(),
                   ForgotPasswordButton(),
                 ],
               ),
-              const SizedBox(height: 24),
-              LoginButton(
-                emailController: emailController,
-                passwordController: passwordController,
+              
+              const SizedBox(height: 32),
+              
+              SizedBox(
+                width: double.infinity,
+                child: LoginButton(
+                  emailController: emailController,
+                  passwordController: passwordController,
+                ),
               ),
             ],
           ),

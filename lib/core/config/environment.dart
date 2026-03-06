@@ -12,7 +12,7 @@ class EnvironmentConfig {
       case 'prod':
         return EnvironmentConfig._('https://backend-crv-refactor.onrender.com');
       default:
-        return EnvironmentConfig._('http://127.0.0.1:8000');
+        return EnvironmentConfig._('https://backend-crv-refactor.onrender.com');
     }
   }
 }

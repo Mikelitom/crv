@@ -7,21 +7,23 @@ class LoginResponsiveLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 600;
+    return Scaffold(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Si la pantalla es menor a 850px, solo mostramos el formulario
+          if (constraints.maxWidth < 850) {
+            return const LoginForm();
+          }
 
-        if (isMobile) {
-          return const LoginForm();
-        }
-
-        return Row(
-          children: const [
-            Expanded(child: LoginHero()),
-            Expanded(child: LoginForm()),
-          ],
-        );
-      },
+          // Para pantallas grandes, dividimos 50/50
+          return Row(
+            children: const [
+              Expanded(child: LoginHero()),
+              Expanded(child: LoginForm()),
+            ],
+          );
+        },
+      ),
     );
   }
 }
