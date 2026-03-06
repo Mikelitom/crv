@@ -3,6 +3,9 @@ import 'package:crv_reprosisa/features/activos/presentation/pages/assets_admin_p
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:crv_reprosisa/features/bandas_transportadoras/pages/banda_inspection_page.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/Pages/prensa_inspection.dart';
+import 'package:crv_reprosisa/features/vehiculos/pages/vehicle_inspection_page.dart';
 import '../../../../catalogo/page/catalogo_page.dart';
 import 'package:crv_reprosisa/features/gestión_usuarios/pages/users_admin_page.dart';
 import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
@@ -156,7 +159,7 @@ class _AdminHomePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildActionsWrap(),
+          _buildQuickActionGrid(context),
 
           const SizedBox(height: 40),
 
@@ -215,32 +218,71 @@ class _AdminHomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildActionsWrap() {
+  Widget _buildQuickActionGrid(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        double w = constraints.maxWidth;
-        return Wrap(
-          spacing: 20,
-          runSpacing: 20,
+        if (constraints.maxWidth > 900) {
+          return IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildActionItem(
+                    context,
+                    "Inspección de Prensas",
+                    "Administrar checklists industriales",
+                    Icons.build_circle_outlined,
+                    const PrensaInspectionPage(),
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: _buildActionItem(
+                    context,
+                    "Inspección de Vehículos",
+                    "Gestión de flota corporativa",
+                    Icons.local_shipping_outlined,
+                    VehicleInspectionPage(),
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: _buildActionItem(
+                    context,
+                    "Inspección de Bandas",
+                    "Control de sistemas de transporte",
+                    Icons.camera_alt_outlined,
+                    const BandaInspectionPage(),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Column(
           children: [
-            // Diseño seguido en computadora, apilado en móvil
-            _buildAction(
-              w,
+            _buildActionItem(
+              context,
               "Inspección de Prensas",
-              "Administrar checklists industriales",
+              "Administrar checklists",
               Icons.build_circle_outlined,
+              const PrensaInspectionPage(),
             ),
-            _buildAction(
-              w,
+            const SizedBox(height: 16),
+            _buildActionItem(
+              context,
               "Inspección de Vehículos",
-              "Gestión de flota corporativa",
+              "Gestión de flota",
               Icons.local_shipping_outlined,
+              VehicleInspectionPage(),
             ),
-            _buildAction(
-              w,
+            const SizedBox(height: 16),
+            _buildActionItem(
+              context,
               "Inspección de Bandas",
-              "Control de sistemas de transporte",
+              "Control de transporte",
               Icons.camera_alt_outlined,
+              const BandaInspectionPage(),
             ),
           ],
         );
@@ -248,16 +290,20 @@ class _AdminHomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildAction(double w, String title, String desc, IconData icon) {
-    // Cálculo de ancho dinámico para evitar desbordamientos laterales
-    double cardWidth = w > 1100 ? (w / 3) - 14 : (w > 700 ? (w / 2) - 10 : w);
-    return SizedBox(
-      width: cardWidth,
-      child: QuickActionCard(
-        title: title,
-        description: desc,
-        icon: icon,
-        onTap: () {},
+  Widget _buildActionItem(
+    BuildContext context,
+    String title,
+    String desc,
+    IconData icon,
+    Widget target,
+  ) {
+    return QuickActionCard(
+      title: title,
+      description: desc,
+      icon: icon,
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => target),
       ),
     );
   }
