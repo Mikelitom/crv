@@ -47,7 +47,7 @@ class GetEntitiesByAttributeUseCase<T> {
   final BaseRepository<T> repository;
   GetEntitiesByAttributeUseCase(this.repository);
 
-  Future<List<T>> execute(String attr, String value) async => 
+  Future<List<T>> execute(String attr, String value) async =>
       await repository.getByAttribute(attr, value);
 }
 
@@ -58,3 +58,4 @@ class SearchEntitiesUseCase<T> {
 
   Future<List<T>> execute(String query) async => await repository.search(query);
 }
+

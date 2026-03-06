@@ -9,3 +9,4 @@ abstract class BaseRepository<T> {
   Future<List<T>> getByAttribute(String attr, String value);
   Future<List<T>> search(String query);
 }
+

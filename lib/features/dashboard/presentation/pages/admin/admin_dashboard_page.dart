@@ -1,5 +1,5 @@
 import 'package:crv_reprosisa/core/models/inspection_models.dart';
-import 'package:crv_reprosisa/features/activos/page/assets_admin_page.dart';
+import 'package:crv_reprosisa/features/activos/presentation/pages/assets_admin_page.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +14,6 @@ import '../../widgets/sidebar/sidebar_admin.dart';
 import '../../widgets/header.dart';
 import '../../../../inspections/Widgets/quick_actions_i.dart';
 import '../../widgets/notification_panel.dart';
-import '../../widgets/notification_item.dart';
 import '../../widgets/stats_card_dash_e.dart';
 import '../../../../reports/Pages/reports_page.dart';
 import '../../../../inspections/pages/inspections_page.dart';
