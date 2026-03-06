@@ -1,6 +1,6 @@
-import 'package:crv_reprosisa/domain/entities/conveyors/clients_conveyor.dart';
+import '../../domain/entities/clients_conveyor.dart';
 
-class ClientsConveyorModel extends ClientsConveyor{
+class ClientsConveyorModel extends ClientsConveyor {
   ClientsConveyorModel({
     required super.id,
     required super.name,
@@ -12,7 +12,7 @@ class ClientsConveyorModel extends ClientsConveyor{
     required super.updatedAt,
     required super.is_active,
   });
-   factory ClientsConveyorModel.fromJson(Map<String, dynamic> json) {
+  factory ClientsConveyorModel.fromJson(Map<String, dynamic> json) {
     return ClientsConveyorModel(
       id: json['id'],
       name: json['name'],
@@ -23,7 +23,7 @@ class ClientsConveyorModel extends ClientsConveyor{
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
       is_active: json['is_active'],
-
     );
   }
 }
+
