@@ -26,86 +26,84 @@ class _DashboardStatsCardState extends State<DashboardStatsCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
-      child: Material(
-        color: Colors.transparent,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          // Se redujo un poco el padding para ganar espacio interno
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isHovered ? 0.08 : 0.04),
-                blurRadius: isHovered ? 20 : 12,
-                offset: Offset(0, isHovered ? 10 : 6),
-              )
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min, // Ajusta al contenido
-            children: [
-              // Expanded permite que el contenido de texto no empuje el icono fuera de la vista
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Wrap permite que el sublabel baje de línea si el valor es muy grande
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          widget.value, 
-                          style: const TextStyle(
-                            fontSize: 22, // Tamaño ligeramente reducido para prevenir overflow
-                            fontWeight: FontWeight.bold, 
-                            color: Color(0xFF1A1C1E)
-                          )
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        // --- ALTURA REDUCIDA: Padding vertical casi nulo para quitar el blanco ---
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), 
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isHovered ? 0.04 : 0.02),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            )
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Evita que la fila se estire hacia arriba o abajo
+          mainAxisSize: MainAxisSize.min, 
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                // Fuerza a la columna a usar el alto mínimo del texto
+                mainAxisSize: MainAxisSize.min, 
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        widget.value,
+                        style: const TextStyle(
+                          fontSize: 20, // Fuente ajustada para no estirar el alto
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1C1E),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          widget.sublabel, 
-                          style: const TextStyle(
-                            color: Color(0xFFC62828), 
-                            fontSize: 11, 
-                            fontWeight: FontWeight.w600
-                          )
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.sublabel,
+                        style: const TextStyle(
+                          color: Color(0xFFC62828),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  // Quitamos espacio intermedio aquí para que sea más bajo
+                  Text(
+                    widget.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 10, // Letra compacta
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.label, 
-                      maxLines: 1, // Limita a una línea
-                      overflow: TextOverflow.ellipsis, // Pone "..." si no cabe
-                      style: const TextStyle(
-                        color: Colors.grey, 
-                        fontSize: 13, 
-                        fontWeight: FontWeight.w500
-                      )
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              // Icono con tamaño fijo para que no se deforme
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: isHovered ? const Color(0xFFC62828) : const Color(0xFFFDECEA),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  widget.icon, 
-                  color: isHovered ? Colors.white : const Color(0xFFC62828), 
-                  size: 20 // Tamaño ajustado
-                ),
-              )
-            ],
-          ),
+            ),
+            // ICONO COMPACTO: El círculo pequeño impide que la tarjeta crezca
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(6), 
+              decoration: BoxDecoration(
+                color: isHovered ? const Color(0xFFC62828) : const Color(0xFFFDECEA),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                widget.icon,
+                color: isHovered ? Colors.white : const Color(0xFFC62828),
+                size: 16, // Icono pequeño para mantener la tarjeta bajita
+              ),
+            ),
+          ],
         ),
       ),
     );

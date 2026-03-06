@@ -6,36 +6,46 @@ class DynamicStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Protección contra errores de carga en laptop
     if (stats.isEmpty) {
       return const SizedBox(
-        height: 120,
+        height: 100,
         child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
       );
     }
 
     return LayoutBuilder(builder: (context, constraints) {
-      // MODO COMPUTADORA: Una sola fila simétrica
-      if (constraints.maxWidth > 900) {
-        return Row(
-          children: [
-            Expanded(child: _StatCard(label: stats[0].label, value: stats[0].value)),
-            const SizedBox(width: 20),
-            if (stats.length > 1)
-              Expanded(child: _StatCard(label: stats[1].label, value: stats[1].value)),
-            const SizedBox(width: 20),
-            if (stats.length > 2)
-              Expanded(child: _StatCard(label: stats[2].label, value: stats[2].value)),
-          ],
-        );
-      }
+      final bool isWide = constraints.maxWidth > 750;
 
-      // MODO MÓVIL: Lista vertical
-      return Column(
-        children: stats.map((stat) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _StatCard(label: stat.label, value: stat.value),
-        )).toList(),
+      return Center(
+        child: Wrap(
+          spacing: 12, // Espacio entre tarjetas para que se vean seguidas
+          runSpacing: 12,
+          alignment: WrapAlignment.center,
+          children: stats.asMap().entries.map((entry) {
+            int idx = entry.key;
+            var stat = entry.value;
+
+            // Iconos acordes a cada estadística
+            IconData getIcon() {
+              if (stat.label.toLowerCase().contains('total')) return Icons.analytics_rounded;
+              if (stat.label.toLowerCase().contains('pendiente')) return Icons.pending_actions_rounded;
+              if (stat.label.toLowerCase().contains('completa')) return Icons.check_circle_rounded;
+              return Icons.bar_chart_rounded;
+            }
+
+            return SizedBox(
+              // Ocupa todo el espacio disponible dividiendo entre 3
+              width: isWide 
+                ? (constraints.maxWidth - 32) / 3 
+                : constraints.maxWidth,
+              child: _StatCard(
+                label: stat.label, 
+                value: stat.value.toString(),
+                icon: getIcon(),
+              ),
+            );
+          }).toList(),
+        ),
       );
     });
   }
@@ -44,7 +54,9 @@ class DynamicStatsRow extends StatelessWidget {
 class _StatCard extends StatefulWidget {
   final String label;
   final String value;
-  const _StatCard({required this.label, required this.value});
+  final IconData icon;
+
+  const _StatCard({required this.label, required this.value, required this.icon});
 
   @override
   State<_StatCard> createState() => _StatCardState();
@@ -58,31 +70,65 @@ class _StatCardState extends State<_StatCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(24),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.white, // Fondo siempre blanco
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isHovered ? 0.08 : 0.04),
-              blurRadius: isHovered ? 20 : 12,
-              offset: Offset(0, isHovered ? 10 : 6),
+              color: Colors.black.withOpacity(isHovered ? 0.06 : 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             )
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(widget.label, 
-              style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
-            FittedBox( // Previene overflow de píxeles
-              fit: BoxFit.scaleDown,
-              child: Text(widget.value, 
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min, // Corregido: propiedad de Column
+                children: [
+                  Text(
+                    widget.label,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      widget.value,
+                      style: const TextStyle(
+                        fontSize: 30, // Tamaño acorde a la importancia
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1A1C1E),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Solo el círculo del icono cambia de color en hover
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                // Cambia de fondo tenue a rojo sólido
+                color: isHovered ? const Color(0xFFC62828) : const Color(0xFFFDECEA),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                widget.icon,
+                // Cambia el icono de rojo a blanco
+                color: isHovered ? Colors.white : const Color(0xFFC62828),
+                size: 26,
+              ),
             ),
           ],
         ),
