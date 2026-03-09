@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/activos/presentation/dialogs/create_client_dialog.dart';
 import 'package:flutter/material.dart';
 import '../../../dashboard/presentation/widgets/header.dart';
 import '../widgets/action_card_activo.dart';
@@ -47,7 +48,7 @@ class AssetsAdminPage extends StatelessWidget {
                                 context,
                                 "Nuevo Cliente",
                                 Icons.group_add_rounded,
-                                const DialogCrearCliente(),
+                                const CreateClientDialog(),
                               ),
                             ),
                             SizedBox(width: spacing),
@@ -276,4 +277,3 @@ class AssetsAdminPage extends StatelessWidget {
     DataColumn(label: Text('Acciones')),
   ];
 }
-

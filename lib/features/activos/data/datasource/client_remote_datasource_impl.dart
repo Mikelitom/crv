@@ -11,7 +11,7 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
   @override
   Future<ClientsConveyorModel> createClient(CreateClientParams params) async {
     final response = await dio.post(
-      '/clients',
+      '/clients/',
       data: {
         "name": params.name,
         "company": params.company,
@@ -26,7 +26,7 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
 
   @override
   Future<List<ClientsConveyorModel>> getAllClients() async {
-    final response = await dio.get("/clients");
+    final response = await dio.get("/clients/");
 
     final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(
       response.data,

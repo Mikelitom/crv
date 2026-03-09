@@ -9,6 +9,6 @@ class GetAllClients {
   GetAllClients(this.repository);
 
   Future<Either<Failure, List<ClientsConveyor>>> call() {
-    return repository.getClients();
+    return repository.getAllClients();
   }
 }

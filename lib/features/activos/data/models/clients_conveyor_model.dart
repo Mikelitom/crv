@@ -10,7 +10,7 @@ class ClientsConveyorModel extends ClientsConveyor {
     required super.address,
     required super.createdAt,
     required super.updatedAt,
-    required super.is_active,
+    required super.isActive,
   });
   factory ClientsConveyorModel.fromJson(Map<String, dynamic> json) {
     return ClientsConveyorModel(
@@ -22,8 +22,7 @@ class ClientsConveyorModel extends ClientsConveyor {
       address: json['address'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
-      is_active: json['is_active'],
+      isActive: json['is_active'],
     );
   }
 }
-
