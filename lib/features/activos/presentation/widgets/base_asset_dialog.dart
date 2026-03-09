@@ -1,73 +1,18 @@
 import 'package:flutter/material.dart';
 
-// --- DIÁLOGO CLIENTE ---
-class DialogCrearCliente extends StatelessWidget {
-  const DialogCrearCliente({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return _BaseAssetDialog(
-      title: "Registrar Nuevo Cliente",
-      children: [
-        _buildField("Nombre Completo", "Ej. Juan Pérez"),
-        _buildField("Empresa", "Minera del Norte"),
-        _buildField("Teléfono", "+52 444..."),
-        _buildField("Email", "contacto@reprosisa.com"),
-        _buildField(
-          "Dirección / Minas",
-          "Mina Santa Fe, Mina Norte",
-          maxLines: 2,
-        ),
-      ],
-    );
-  }
-}
-
-// --- DIÁLOGO VEHÍCULO ---
-class DialogCrearVehiculo extends StatelessWidget {
-  const DialogCrearVehiculo({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return _BaseAssetDialog(
-      title: "Registrar Vehículo",
-      children: [
-        _buildField("Tipo", "Pickup / Camión / Sedán"),
-        _buildField("Marca", "Toyota"),
-        _buildField("Modelo", "Hilux"),
-        Row(
-          children: [
-            Expanded(child: _buildField("Año", "2026")),
-            const SizedBox(width: 16),
-            Expanded(child: _buildField("Placa", "ABC-123")),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-// --- DIÁLOGO PRENSA ---
-class DialogCrearPrensa extends StatelessWidget {
-  const DialogCrearPrensa({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return _BaseAssetDialog(
-      title: "Registrar Prensa Industrial",
-      children: [
-        _buildField("Tipo", "Hidráulica / Mecánica"),
-        _buildField("Modelo", "HS-500"),
-        _buildField("Volts", "220V"),
-        _buildField("Número de Serie", "SN-2026-X"),
-        _buildField("Tamaño", "5 Tons"),
-      ],
-    );
-  }
-}
-
-// --- WIDGET BASE (DISEÑO MEJORADO) ---
-class _BaseAssetDialog extends StatelessWidget {
+class BaseAssetDialog extends StatelessWidget {
   final String title;
   final List<Widget> children;
-  const _BaseAssetDialog({required this.title, required this.children});
+  final VoidCallback onConfirm;
+  final bool isLoading;
+
+  const BaseAssetDialog({
+    required this.title,
+    required this.children,
+    required this.onConfirm,
+    this.isLoading = false,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +80,7 @@ class _BaseAssetDialog extends StatelessWidget {
             ],
           ),
           child: ElevatedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: isLoading ? null : onConfirm,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD32F2F),
               elevation: 0,
@@ -144,13 +89,22 @@ class _BaseAssetDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: const Text(
-              "Registrar",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    "Registrar",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
           ),
         ),
       ],
@@ -158,8 +112,12 @@ class _BaseAssetDialog extends StatelessWidget {
   }
 }
 
-// COMPONENTE DE CAMPO (INPUT) CON DISEÑO "SOFT"
-Widget _buildField(String label, String hint, {int maxLines = 1}) {
+Widget buildField(
+  TextEditingController? controller,
+  String label,
+  String hint, {
+  int maxLines = 1,
+}) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 20),
     child: Column(
@@ -177,6 +135,7 @@ Widget _buildField(String label, String hint, {int maxLines = 1}) {
           ),
         ),
         TextField(
+          controller: controller,
           maxLines: maxLines,
           style: const TextStyle(fontSize: 15),
           decoration: InputDecoration(
@@ -201,4 +160,3 @@ Widget _buildField(String label, String hint, {int maxLines = 1}) {
     ),
   );
 }
-

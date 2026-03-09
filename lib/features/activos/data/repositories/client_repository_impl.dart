@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:crv_reprosisa/features/activos/data/datasource/client_remote_datasource.dart';
 import 'package:crv_reprosisa/features/activos/domain/entities/clients_conveyor.dart';
@@ -20,9 +22,24 @@ class ClientRepositoryImpl implements ClientRepository {
       return Right(client);
     } on DioException catch (e) {
       return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<ClientsConveyor>>> getClients() {}
+  Future<Either<Failure, List<ClientsConveyor>>> getAllClients() async {
+    try {
+      final clients = await remote.getAllClients();
+      return Right(clients);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
 }
