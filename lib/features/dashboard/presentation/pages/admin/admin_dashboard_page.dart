@@ -43,7 +43,6 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
     // Definición de páginas con el tipo explícito para evitar errores de parámetro
     final pages = [
       _AdminHomePage(user: user),
-      // Se pasan las listas incluso si están vacías, la página interna debe manejarlas
       InspectionPage(
         stats: _adminStats,
         actions: _adminActions,
@@ -52,9 +51,10 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
       const ReportsPage(),
       const AssetsAdminPage(),
       const UsersAdminPage(),
-      const GenericCatalogPage(
-        type: AssetType.vehiculo,
-      ), // Tipo definido para evitar errores
+      const GenericCatalogPage(type: AssetType.vehiculo),
+      const GenericCatalogPage(type: AssetType.prensa),
+
+      // Tipo definido para evitar errores
       const VehicleServicesPage(),
       const ProfilePage(),
     ];
