@@ -1,8 +1,7 @@
-import 'package:crv_reprosisa/domain/entities/press/presses.dart';
+import '../../domain/entities/press.dart';
 
-class PressesModel extends Presses{
-
-  PressesModel({
+class PressModel extends Press {
+  PressModel({
     required super.id,
     required super.type,
     required super.model,
@@ -11,11 +10,11 @@ class PressesModel extends Presses{
     required super.size,
     required super.createdAt,
     required super.updatedAt,
-    required super.is_active,
+    required super.isActive,
   });
 
-  factory PressesModel.fromJson(Map<String, dynamic> json) {
-    return PressesModel(
+  factory PressModel.fromJson(Map<String, dynamic> json) {
+    return PressModel(
       id: json['id'],
       type: json['type'],
       model: json['model'],
@@ -24,9 +23,7 @@ class PressesModel extends Presses{
       size: json['size'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
-      is_active: json['is_active'],
-      
-
+      isActive: json['is_active'],
     );
   }
 }
