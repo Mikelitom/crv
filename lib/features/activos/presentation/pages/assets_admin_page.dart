@@ -1,4 +1,5 @@
 import 'package:crv_reprosisa/features/activos/presentation/dialogs/create_client_dialog.dart';
+import 'package:crv_reprosisa/features/activos/presentation/dialogs/create_press_dialog.dart';
 import 'package:flutter/material.dart';
 import '../../../dashboard/presentation/widgets/header.dart';
 import '../widgets/action_card_activo.dart';
@@ -66,7 +67,7 @@ class AssetsAdminPage extends StatelessWidget {
                                 context,
                                 "Nueva Prensa",
                                 Icons.precision_manufacturing_rounded,
-                                const DialogCrearPrensa(),
+                                const CreatePressDialog(),
                               ),
                             ),
                           ],

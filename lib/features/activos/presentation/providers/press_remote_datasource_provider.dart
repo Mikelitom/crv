@@ -3,7 +3,7 @@ import 'package:crv_reprosisa/features/activos/data/datasource/press_remote_data
 import 'package:crv_reprosisa/features/activos/data/datasource/press_remote_datasource_impl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final clientRemoteDatasourceProvider = Provider<PressRemoteDatasource>((ref) {
+final pressRemoteDatasourceProvider = Provider<PressRemoteDatasource>((ref) {
   final dio = ref.read(dioProvider);
 
   return PressRemoteDatasourceImpl(dio);
