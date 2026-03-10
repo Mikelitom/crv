@@ -1,4 +1,4 @@
-class Presses {
+class Press {
   final String id;
   final String type;
   final String model;
@@ -7,9 +7,9 @@ class Presses {
   final String size;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final bool is_active;
+  final bool isActive;
 
-  Presses({
+  Press({
     required this.id,
     required this.type,
     required this.model,
@@ -18,6 +18,6 @@ class Presses {
     required this.size,
     required this.createdAt,
     required this.updatedAt,
-    required this.is_active,
+    required this.isActive,
   });
 }
