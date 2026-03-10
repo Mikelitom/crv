@@ -19,8 +19,9 @@ class SidebarAdmin extends StatefulWidget {
 }
 
 class _SidebarAdminState extends State<SidebarAdmin> {
-  // Controlamos si el submenú está abierto
+  // Variables de estado declaradas para evitar errores
   bool _isCatalogExpanded = false;
+  bool _isServicesExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -43,109 +44,94 @@ class _SidebarAdminState extends State<SidebarAdmin> {
             isActive: widget.selectedIndex == 1,
             onTap: () => widget.onItemSelected(1),
           ),
-          SidebarItem(
-            icon: Icons.folder_open_outlined,
-            label: 'Reportes',
-            isActive: widget.selectedIndex == 2,
-            onTap: () => widget.onItemSelected(2),
+          
+          // --- SUBMENÚ CATÁLOGO ---
+          _buildSubMenu(
+            label: 'Catálogo',
+            icon: Icons.book_outlined,
+            isExpanded: _isCatalogExpanded,
+            onExpand: () => setState(() {
+              _isCatalogExpanded = !_isCatalogExpanded;
+              _isServicesExpanded = false;
+            }),
+            items: [
+              _SubItem(label: 'Vehículos', icon: Icons.local_shipping_outlined, index: 5),
+              _SubItem(label: 'Prensas', icon: Icons.settings_input_component_rounded, index: 6),
+            ],
           ),
-          SidebarItem(
-            icon: Icons.inventory_2_outlined,
-            label: 'Activos',
-            isActive: widget.selectedIndex == 3,
-            onTap: () => widget.onItemSelected(3),
+
+          // --- SUBMENÚ SERVICIOS ---
+          _buildSubMenu(
+            label: 'Servicios',
+            icon: Icons.build_outlined,
+            isExpanded: _isServicesExpanded,
+            onExpand: () => setState(() {
+              _isServicesExpanded = !_isServicesExpanded;
+              _isCatalogExpanded = false;
+            }),
+            items: [
+              _SubItem(label: 'Servicio Vehículos', icon: Icons.car_repair_outlined, index: 7),
+              _SubItem(label: 'Servicio Prensas', icon: Icons.precision_manufacturing_outlined, index: 8),
+            ],
           ),
+
           SidebarItem(
             icon: Icons.person_add_alt_outlined,
             label: 'Gestión de Usuarios',
             isActive: widget.selectedIndex == 4,
             onTap: () => widget.onItemSelected(4),
           ),
-
-          // --- SECCIÓN CATÁLOGO CON SUBMENÚ ---
-          Column(
-            children: [
-              SidebarItem(
-                icon: Icons.book_outlined,
-                label: 'Catálogo',
-                // Activo si está seleccionado Vehículos (5) o Prensas (8)
-                isActive: widget.selectedIndex == 5 || widget.selectedIndex == 6,
-                onTap: () {
-                  setState(() => _isCatalogExpanded = !_isCatalogExpanded);
-                },
-              ),
-              if (_isCatalogExpanded || widget.selectedIndex == 5 || widget.selectedIndex == 6)
-                Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: Column(
-                    children: [
-                      SidebarItem(
-                        icon: Icons.local_shipping_outlined,
-                        label: 'Vehículos',
-                        isActive: widget.selectedIndex == 5,
-                        onTap: () => widget.onItemSelected(5),
-                      ),
-                      SidebarItem(
-                        icon: Icons.settings_input_component_rounded,
-                        label: 'Prensas',
-                        isActive: widget.selectedIndex == 6,
-                        onTap: () => widget.onItemSelected(6),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-
-        // --- SUBMENÚ SERVICIOS ---
-          Column(
-            children: [
-              SidebarItem(
-                icon: Icons.build_outlined,
-                label: 'Servicios',
-                isActive: widget.selectedIndex == 7 || widget.selectedIndex == 9, // Ajustado para nuevo índice
-                onTap: () {
-                  setState(() {
-                    _isServicesExpanded = !_isServicesExpanded;
-                    _isCatalogExpanded = false;
-                  });
-                },
-              ),
-              if (_isServicesExpanded || widget.selectedIndex == 7 || widget.selectedIndex == 9)
-                Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: Column(
-                    children: [
-                      SidebarItem(
-                        icon: Icons.car_repair_outlined,
-                        label: 'Servicio Vehículos',
-                        isActive: widget.selectedIndex == 7,
-                        onTap: () => widget.onItemSelected(7),
-                      ),
-                      SidebarItem(
-                        icon: Icons.precision_manufacturing_outlined,
-                        label: 'Servicio Prensas',
-                        isActive: widget.selectedIndex == 9,
-                        onTap: () => widget.onItemSelected(9),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
           SidebarItem(
             icon: Icons.person_outline,
             label: 'Perfil',
-            isActive: widget.selectedIndex == 8,
-            onTap: () => widget.onItemSelected(8),
+            isActive: widget.selectedIndex == 9,
+            onTap: () => widget.onItemSelected(9),
           ),
 
           const Spacer(),
-          const Divider(indent: 20, endIndent: 20),
           const LogoutButton(showLabel: true),
           const SizedBox(height: 20),
         ],
       ),
     );
   }
+
+  Widget _buildSubMenu({
+    required String label,
+    required IconData icon,
+    required bool isExpanded,
+    required VoidCallback onExpand,
+    required List<_SubItem> items,
+  }) {
+    bool isAnyActive = items.any((item) => widget.selectedIndex == item.index);
+    return Column(
+      children: [
+        SidebarItem(
+          icon: icon,
+          label: label,
+          isActive: isAnyActive,
+          onTap: onExpand,
+        ),
+        if (isExpanded || isAnyActive)
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Column(
+              children: items.map((item) => SidebarItem(
+                icon: item.icon,
+                label: item.label,
+                isActive: widget.selectedIndex == item.index,
+                onTap: () => widget.onItemSelected(item.index),
+              )).toList(),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SubItem {
+  final String label;
+  final IconData icon;
+  final int index;
+  _SubItem({required this.label, required this.icon, required this.index});
 }

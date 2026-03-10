@@ -1,52 +1,95 @@
 import 'package:flutter/material.dart';
 
 class ServiceStatsGrid extends StatelessWidget {
-  const ServiceStatsGrid({super.key});
+  final bool isVehiculo;
+  const ServiceStatsGrid({super.key, required this.isVehiculo});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      double width = constraints.maxWidth;
-      // En móvil las ponemos una debajo de otra; en laptop seguidas
-      bool isMobile = width < 700;
+      // Cálculo para que las 3 tarjetas ocupen todo el ancho sin huecos blancos
+      final double cardWidth = (constraints.maxWidth - 24) / 3;
 
       return Wrap(
-        spacing: 16,
-        runSpacing: 16,
+        spacing: 12,
+        runSpacing: 12,
         children: [
-          _buildStatCard("Operativos", "0", "En Uso (OK)", Icons.check_circle_outline, width, isMobile),
-          _buildStatCard("En Reparación", "0", "En Taller", Icons.build_circle_outlined, width, isMobile),
-          _buildStatCard("Paro Total", "0", "Críticos", Icons.error_outline, width, isMobile),
+          _StatCard(
+            label: "Servicios Totales",
+            value: "0",
+            icon: isVehiculo ? Icons.history_edu_rounded : Icons.precision_manufacturing_rounded,
+            width: cardWidth,
+          ),
+          _StatCard(
+            label: isVehiculo ? "En Taller" : "En Reparación",
+            value: "0",
+            icon: isVehiculo ? Icons.car_repair_outlined : Icons.handyman_outlined,
+            width: cardWidth,
+          ),
+          _StatCard(
+            label: "Finalizados",
+            value: "0",
+            icon: Icons.check_circle_outline_rounded,
+            width: cardWidth,
+          ),
         ],
       );
     });
   }
+}
 
-  Widget _buildStatCard(String label, String value, String sub, IconData icon, double totalWidth, bool isMobile) {
-    return Container(
-      // Cálculo dinámico del ancho para que siempre quepan
-      width: isMobile ? totalWidth : (totalWidth - 32) / 3,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
+class _StatCard extends StatefulWidget {
+  final String label, value;
+  final IconData icon;
+  final double width;
+
+  const _StatCard({required this.label, required this.value, required this.icon, required this.width});
+
+  @override
+  State<_StatCard> createState() => _StatCardState();
+}
+
+class _StatCardState extends State<_StatCard> {
+  bool isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: widget.width,
+        height: 100, // ALTURA GRANDE: Como en Gestión de Usuarios
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(isHovered ? 0.05 : 0.02), blurRadius: 10)],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min, // Evita Bottom Overflow
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                Text(label, style: const TextStyle(color: Color(0xFFC62828), fontSize: 12, fontWeight: FontWeight.bold)),
-                Text(sub, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                Text(widget.value, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                Text(widget.label, style: const TextStyle(color: Color(0xFFC62828), fontSize: 13, fontWeight: FontWeight.bold)),
               ],
             ),
-          ),
-          Icon(icon, color: const Color(0xFFC62828).withOpacity(0.2), size: 32),
-        ],
+            // Icono sintonizado a la derecha con animación focalizada
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isHovered ? const Color(0xFFC62828) : const Color(0xFFFDECEA),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(widget.icon, color: isHovered ? Colors.white : const Color(0xFFC62828), size: 28),
+            ),
+          ],
+        ),
       ),
     );
   }

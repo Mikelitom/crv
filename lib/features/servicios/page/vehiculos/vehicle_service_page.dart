@@ -1,79 +1,77 @@
 import 'package:flutter/material.dart';
 import '../../../dashboard/presentation/widgets/header.dart';
 import '../../widgets/vehiculos/service_stats_grid.dart';
-import 'package:crv_reprosisa/features/servicios/widgets/vehiculos/service_Data_table.dart';
+import '../../widgets/vehiculos/service_Data_table.dart';
 
-class VehicleServicesPage extends StatelessWidget {
-  const VehicleServicesPage({super.key});
+
+
+class VehicleServicePage extends StatelessWidget {
+  const VehicleServicePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header adaptable para evitar Right Overflow
-              _buildResponsiveHeader("Centro de Control de Servicios"),
-              const SizedBox(height: 24),
-              
-              const ServiceStatsGrid(), // Corregido internamente contra Bottom Overflow
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // HEADER EN SINTONÍA: Blanco con icono a la derecha
+            CustomHeader(
+              title: "Control de Servicios de Flota",
+              actionIcon: Icons.car_repair_rounded,
+              onActionTap: () {},
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // STATS GRANDES: 100px de altura para llenar la pantalla
+            const ServiceStatsGrid(isVehiculo: true), 
 
-              const SizedBox(height: 32),
-              
-              // Buscador inteligente
-              _buildSearchSection(context),
+            const SizedBox(height: 40),
+            
+            const Text(
+              "Monitoreo de Unidades", 
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))
+            ),
+            const SizedBox(height: 20),
 
-              const ServiceDataTable(), // Tabla limpia sin datos estáticos
-            ],
-          ),
+            // BUSCADOR PROPORCIONAL: 56px de alto para tablets
+            _buildSearchField(),
+
+            const SizedBox(height: 24),
+
+            // TABLA DE DATOS: Sin 'const' para evitar errores de compilación
+            ServiceDataTable(isVehiculo: true),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildResponsiveHeader(String title) {
-    return Row(
-      children: [
-        Expanded( // Expanded obliga al texto a no empujar el icono fuera
-          child: Text(
-            title,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E)),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          decoration: BoxDecoration(color: const Color(0xFFC62828), borderRadius: BorderRadius.circular(10)),
-          child: IconButton(icon: const Icon(Icons.add_business, color: Colors.white, size: 20), onPressed: () {}),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchSection(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      bool isMobile = constraints.maxWidth < 600;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Monitoreo de Servicios", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          TextField( // Siempre ocupa el ancho disponible en móvil
-            decoration: InputDecoration(
-              hintText: "Buscar servicio...",
-              prefixIcon: const Icon(Icons.search, color: Color(0xFFC62828)),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            ),
-          ),
-          const SizedBox(height: 24),
+  Widget _buildSearchField() {
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02), 
+            blurRadius: 10, 
+            offset: const Offset(0, 4)
+          )
         ],
-      );
-    });
+      ),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: "Buscar unidad, placa o folio de servicio...",
+          prefixIcon: const Icon(Icons.search, color: Color(0xFFC62828), size: 24),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 18),
+        ),
+      ),
+    );
   }
 }
