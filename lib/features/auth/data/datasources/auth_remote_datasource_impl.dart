@@ -16,7 +16,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String password,
   }) async {
     final response = await dio.post(
-      '/api/v1/auth/register',
+      '/auth/register',
       data: {
         "name": name,
         "phone": phone,
@@ -35,17 +35,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String password,
   }) async {
     final response = await dio.post(
-      '/api/v1/auth/login',
+      '/auth/login',
       data: {"email": email, "password": password},
     );
-    print(response.data);
+    // print(response.data);
     return AuthTokensModel.fromJson(response.data);
   }
 
   @override
   Future<AuthTokensModel> refresh(String refreshToken) async {
     final response = await dio.post(
-      '/api/v1/auth/refresh',
+      '/auth/refresh',
       data: {"refresh_token": refreshToken},
     );
 
@@ -54,14 +54,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> getMe() async {
-    final response = await dio.get('/api/v1/auth/me');
-    print(response.data);
+    final response = await dio.get('/auth/me');
+    // print(response.data);
     return UserModel.fromJson(response.data);
   }
 
   @override
   Future<void> logout() async {
-    await dio.post('/api/v1/auth/logout');
+    await dio.post('/auth/logout');
   }
 
   @override
