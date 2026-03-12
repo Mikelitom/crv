@@ -44,7 +44,14 @@ class _SidebarAdminState extends State<SidebarAdmin> {
             isActive: widget.selectedIndex == 1,
             onTap: () => widget.onItemSelected(1),
           ),
-          
+
+          SidebarItem(
+            icon: Icons.assessment_outlined,
+            label: 'Activos',
+            isActive: widget.selectedIndex == 3,
+            onTap: () => widget.onItemSelected(3),
+          ),
+
           // --- SUBMENÚ CATÁLOGO ---
           _buildSubMenu(
             label: 'Catálogo',
@@ -55,8 +62,16 @@ class _SidebarAdminState extends State<SidebarAdmin> {
               _isServicesExpanded = false;
             }),
             items: [
-              _SubItem(label: 'Vehículos', icon: Icons.local_shipping_outlined, index: 5),
-              _SubItem(label: 'Prensas', icon: Icons.settings_input_component_rounded, index: 6),
+              _SubItem(
+                label: 'Vehículos',
+                icon: Icons.local_shipping_outlined,
+                index: 5,
+              ),
+              _SubItem(
+                label: 'Prensas',
+                icon: Icons.settings_input_component_rounded,
+                index: 6,
+              ),
             ],
           ),
 
@@ -70,8 +85,16 @@ class _SidebarAdminState extends State<SidebarAdmin> {
               _isCatalogExpanded = false;
             }),
             items: [
-              _SubItem(label: 'Servicio Vehículos', icon: Icons.car_repair_outlined, index: 7),
-              _SubItem(label: 'Servicio Prensas', icon: Icons.precision_manufacturing_outlined, index: 8),
+              _SubItem(
+                label: 'Servicio Vehículos',
+                icon: Icons.car_repair_outlined,
+                index: 7,
+              ),
+              _SubItem(
+                label: 'Servicio Prensas',
+                icon: Icons.precision_manufacturing_outlined,
+                index: 8,
+              ),
             ],
           ),
 
@@ -116,12 +139,16 @@ class _SidebarAdminState extends State<SidebarAdmin> {
           Padding(
             padding: const EdgeInsets.only(left: 16),
             child: Column(
-              children: items.map((item) => SidebarItem(
-                icon: item.icon,
-                label: item.label,
-                isActive: widget.selectedIndex == item.index,
-                onTap: () => widget.onItemSelected(item.index),
-              )).toList(),
+              children: items
+                  .map(
+                    (item) => SidebarItem(
+                      icon: item.icon,
+                      label: item.label,
+                      isActive: widget.selectedIndex == item.index,
+                      onTap: () => widget.onItemSelected(item.index),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
       ],
@@ -135,3 +162,4 @@ class _SubItem {
   final int index;
   _SubItem({required this.label, required this.icon, required this.index});
 }
+

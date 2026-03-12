@@ -1,18 +1,17 @@
-class VehicleTypes {
+class VehicleType {
   final String id;
   final String code;
   final String name;
   final String? description;
   final DateTime createdAt;
-  final bool is_active;
+  final bool isActive;
 
-  VehicleTypes({
+  VehicleType({
     required this.id,
     required this.code,
     required this.name,
     this.description,
     required this.createdAt,
-    required this.is_active,
-
+    required this.isActive,
   });
 }

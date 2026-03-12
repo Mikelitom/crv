@@ -1,8 +1,7 @@
 import '../../domain/entities/vehicle.dart';
 
-class VehicleModel extends Vehicle{
-
-  VehicleModel ({
+class VehicleModel extends Vehicle {
+  VehicleModel({
     required super.id,
     required super.typeId,
     required super.brand,
@@ -10,7 +9,6 @@ class VehicleModel extends Vehicle{
     required super.year,
     required super.licensePlate,
     required super.createdAt,
-    required super.updatedAt,
     required super.isActive,
   });
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
@@ -20,11 +18,10 @@ class VehicleModel extends Vehicle{
       brand: json['brand'],
       model: json['model'],
       year: json['year'],
-      licensePlate: json['license_plate'],
+      licensePlate: json['plate'],
       createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
       isActive: json['is_active'],
     );
-
   }
 }
+

@@ -32,7 +32,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
           company: companyController.text,
           phone: phoneController.text,
           email: emailController.text,
-          address: addressController.text,
+          address: addressControdller.text,
         );
 
         await ref.read(createClientProvider.notifier).create(client);
