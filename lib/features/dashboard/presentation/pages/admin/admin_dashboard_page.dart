@@ -11,7 +11,8 @@ import '../../../../catalogo/page/catalogo_page.dart';
 import 'package:crv_reprosisa/features/gestión_usuarios/pages/users_admin_page.dart';
 import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/perfil/page/profile_page.dart';
-import 'package:crv_reprosisa/features/servicios/page/vehiculos/vehicle_service_page.dart' hide PressServicePage;
+import 'package:crv_reprosisa/features/servicios/page/vehiculos/vehicle_service_page.dart'
+    hide PressServicePage;
 import 'package:flutter/material.dart';
 import '../../layout/responsive_dashboard_layout.dart';
 import '../../widgets/sidebar/sidebar_admin.dart';

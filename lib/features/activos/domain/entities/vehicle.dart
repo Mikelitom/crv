@@ -6,10 +6,9 @@ class Vehicle {
   final String year;
   final String licensePlate;
   final DateTime createdAt;
-  final DateTime updatedAt;
   final bool isActive;
 
-  Vehicle ({
+  Vehicle({
     required this.id,
     required this.typeId,
     required this.brand,
@@ -17,7 +16,7 @@ class Vehicle {
     required this.year,
     required this.licensePlate,
     required this.createdAt,
-    required this.updatedAt,
     required this.isActive,
   });
 }
+
