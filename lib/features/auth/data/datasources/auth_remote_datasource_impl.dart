@@ -22,7 +22,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         "phone": phone,
         "email": email,
         "password": password,
-        "role_names": ["users"],
+        "role_names": ["technician"],
       },
     );
 

@@ -3,7 +3,7 @@ class Vehicle {
   final String typeId;
   final String brand;
   final String model;
-  final String year;
+  final int year;
   final String licensePlate;
   final DateTime createdAt;
   final bool isActive;
@@ -19,4 +19,3 @@ class Vehicle {
     required this.isActive,
   });
 }
-

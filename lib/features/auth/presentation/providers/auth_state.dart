@@ -1,5 +1,4 @@
 import 'package:crv_reprosisa/core/error/failure.dart';
-import 'package:crv_reprosisa/features/auth/domain/entities/auth_tokens.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_status.dart';
 

@@ -1,7 +1,9 @@
+import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
+import 'package:crv_reprosisa/features/auth/presentation/providers/auth_status.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/email_field.dart';
 import '../widgets/password_field.dart';
-
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -15,10 +17,10 @@ class RegisterPage extends StatelessWidget {
           if (constraints.maxWidth >= 850) {
             return Row(
               children: [
-                // LADO IZQUIERDO: Idéntico al Login 
-                const Expanded(child: _RegisterHero()), 
+                // LADO IZQUIERDO: Idéntico al Login
+                const Expanded(child: _RegisterHero()),
                 // LADO DERECHO: Formulario
-                const Expanded(child: _RegisterForm()), 
+                const Expanded(child: _RegisterForm()),
               ],
             );
           }
@@ -28,6 +30,13 @@ class RegisterPage extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RegisterForm extends ConsumerStatefulWidget {
+  const _RegisterForm();
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() => _RegisterFormState();
 }
 
 // --- LADO IZQUIERDO (HERO) EXACTAMENTE IGUAL AL LOGIN ---
@@ -48,7 +57,11 @@ class _RegisterHero extends StatelessWidget {
                 color: Colors.white.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: const Icon(Icons.print_rounded, size: 90, color: Colors.white),
+              child: const Icon(
+                Icons.print_rounded,
+                size: 90,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -68,8 +81,20 @@ class _RegisterHero extends StatelessWidget {
 }
 
 // --- LADO DERECHO (FORMULARIO) ---
-class _RegisterForm extends StatelessWidget {
-  const _RegisterForm();
+class _RegisterFormState extends ConsumerState<_RegisterForm> {
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +104,20 @@ class _RegisterForm extends StatelessWidget {
       fontWeight: FontWeight.normal,
       color: Colors.black87,
     );
+
+    final authState = ref.watch(authNotifierProvider);
+
+    ref.listen(authNotifierProvider, (previous, next) {
+      if (next.status == AuthStatus.authenticated) {
+        Navigator.pop(context);
+      }
+
+      if (next.error != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.error!.message)));
+      }
+    });
 
     return Center(
       child: SingleChildScrollView(
@@ -94,28 +133,36 @@ class _RegisterForm extends StatelessWidget {
                 'Regístrese para solicitar acceso al sistema',
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
-              
+
               const SizedBox(height: 40),
 
               _label('Nombre Completo'),
-              _buildField('Ej. Carlos Ramírez', Icons.person_outline),
+              _buildField(
+                'Ej. Carlos Ramírez',
+                Icons.person_outline,
+                controller: nameController,
+              ),
 
               const SizedBox(height: 20),
 
               _label('Email Institucional'),
               // Reutilizamos tu widget EmailField
-              EmailField(controller: TextEditingController()),
+              EmailField(controller: emailController),
 
               const SizedBox(height: 20),
 
               _label('Teléfono'),
-              _buildField('+52 ...', Icons.phone_android_outlined),
+              _buildField(
+                '+52 ...',
+                Icons.phone_android_outlined,
+                controller: phoneController,
+              ),
 
               const SizedBox(height: 20),
 
               _label('Contraseña'),
               // Reutilizamos tu widget PasswordField
-              PasswordField(controller: TextEditingController()),
+              PasswordField(controller: passwordController),
 
               const SizedBox(height: 40),
 
@@ -126,17 +173,33 @@ class _RegisterForm extends StatelessWidget {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFC62828),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 0,
                   ),
-                  onPressed: () {
-                    // Al terminar, volvemos al login
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    'Registrarse', 
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
-                  ),
+                  onPressed: authState.status == AuthStatus.loading
+                      ? null
+                      : () {
+                          ref
+                              .read(authNotifierProvider.notifier)
+                              .register(
+                                name: nameController.text,
+                                phone: phoneController.text,
+                                email: emailController.text,
+                                password: passwordController.text,
+                              );
+                        },
+                  child: authState.status == AuthStatus.loading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Registrarse',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                 ),
               ),
 
@@ -146,12 +209,18 @@ class _RegisterForm extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('¿Ya tienes cuenta?', style: TextStyle(color: Colors.grey)),
+                    const Text(
+                      '¿Ya tienes cuenta?',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text(
                         'Inicia sesión',
-                        style: TextStyle(color: Color(0xFFC62828), fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Color(0xFFC62828),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -166,11 +235,19 @@ class _RegisterForm extends StatelessWidget {
 
   Widget _label(String text) => Padding(
     padding: const EdgeInsets.only(left: 4, bottom: 8),
-    child: Text(text, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+    child: Text(
+      text,
+      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+    ),
   );
 
-  Widget _buildField(String hint, IconData icon) {
+  Widget _buildField(
+    String hint,
+    IconData icon, {
+    required TextEditingController controller,
+  }) {
     return TextFormField(
+      controller: controller,
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: Colors.grey, size: 20),
         hintText: hint,

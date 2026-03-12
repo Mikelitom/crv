@@ -13,7 +13,7 @@ class VehicleListNotifier extends Notifier<VehicleListState> {
     return const VehicleListState();
   }
 
-  Future<void> loadVehicle() async {
+  Future<void> loadVehicles() async {
     state = state.copyWith(status: Status.loading);
 
     final result = await _getAllVehicle();
@@ -22,8 +22,8 @@ class VehicleListNotifier extends Notifier<VehicleListState> {
       (failure) {
         state = state.copyWith(status: Status.error, error: failure.message);
       },
-      (vehicle) {
-        state = state.copyWith(status: Status.success, vehicle: vehicle);
+      (vehicles) {
+        state = state.copyWith(status: Status.success, vehicles: vehicles);
       },
     );
   }

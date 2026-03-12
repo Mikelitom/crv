@@ -7,7 +7,7 @@ class ClientsConveyor {
   final String address;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final String isActive;
+  final bool isActive;
 
   ClientsConveyor({
     required this.id,
@@ -21,4 +21,3 @@ class ClientsConveyor {
     required this.isActive,
   });
 }
-

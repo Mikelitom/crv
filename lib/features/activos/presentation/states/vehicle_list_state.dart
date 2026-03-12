@@ -4,23 +4,23 @@ import 'status.dart';
 
 class VehicleListState {
   final Status status;
-  final List<Vehicle> vehicle;
+  final List<Vehicle> vehicles;
   final String? error;
 
   const VehicleListState({
     this.status = Status.initial,
-    this.vehicle = const [],
+    this.vehicles = const [],
     this.error,
   });
 
   VehicleListState copyWith({
     Status? status,
-    List<Vehicle>? vehicle,
+    List<Vehicle>? vehicles,
     String? error,
   }) {
     return VehicleListState(
       status: status ?? this.status,
-      vehicle: vehicle ?? this.vehicle,
+      vehicles: vehicles ?? this.vehicles,
       error: error,
     );
   }

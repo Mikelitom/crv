@@ -22,12 +22,9 @@ class AuthNotifier extends Notifier<AuthState> {
   }) async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
 
-    final Either<Failure, User> result = await ref.read(registerUseCaseProvider)(
-      name: name,
-      phone: phone,
-      email: email,
-      password: password,
-    );
+    final Either<Failure, User> result = await ref.read(
+      registerUseCaseProvider,
+    )(name: name, phone: phone, email: email, password: password);
 
     result.fold(
       (failure) {
@@ -38,7 +35,7 @@ class AuthNotifier extends Notifier<AuthState> {
       },
       (user) {
         state = state.copyWith(
-          status: AuthStatus.authenticated,
+          status: AuthStatus.unauthenticated,
           user: user,
           error: null,
         );
@@ -108,3 +105,4 @@ class AuthNotifier extends Notifier<AuthState> {
     );
   }
 }
+

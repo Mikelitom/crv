@@ -1,16 +1,43 @@
+import 'package:crv_reprosisa/features/activos/domain/entities/clients_conveyor.dart';
+import 'package:crv_reprosisa/features/activos/domain/entities/press.dart';
+import 'package:crv_reprosisa/features/activos/domain/entities/vehicle.dart';
+import 'package:crv_reprosisa/features/activos/presentation/providers/client_list_notifier_provider.dart';
+import 'package:crv_reprosisa/features/activos/presentation/providers/vehicle_list_notifier_provider.dart';
+import 'package:crv_reprosisa/features/activos/presentation/providers/press_list_notifier_provider.dart';
 import 'package:crv_reprosisa/features/activos/presentation/dialogs/create_client_dialog.dart';
-import 'package:crv_reprosisa/features/activos/presentation/dialogs/create_press_dialog.dart';
 import 'package:crv_reprosisa/features/activos/presentation/dialogs/create_vehicle_dialog.dart';
+import 'package:crv_reprosisa/features/activos/presentation/dialogs/create_press_dialog.dart';
+import 'package:crv_reprosisa/features/activos/presentation/widgets/action_card_activo.dart';
+import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dart';
+import 'package:crv_reprosisa/features/activos/presentation/states/status.dart';
 import 'package:flutter/material.dart';
-import '../../../dashboard/presentation/widgets/header.dart';
-import '../widgets/action_card_activo.dart';
-import '../widgets/dialog_crear_cliente.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AssetsAdminPage extends StatelessWidget {
+class AssetsAdminPage extends ConsumerStatefulWidget {
   const AssetsAdminPage({super.key});
 
   @override
+  ConsumerState<AssetsAdminPage> createState() => _AssetsAdminPageState();
+}
+
+class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      ref.read(clientListProvider.notifier).loadClients();
+      ref.read(vehicleListProvider.notifier).loadVehicles();
+      ref.read(pressListProvider.notifier).loadPress();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final clientState = ref.watch(clientListProvider);
+    final vehicleState = ref.watch(vehicleListProvider);
+    final pressState = ref.watch(pressListProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: LayoutBuilder(
@@ -30,6 +57,7 @@ class AssetsAdminPage extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 32),
+
                 const Text(
                   "Crear Nuevo",
                   style: TextStyle(
@@ -38,9 +66,10 @@ class AssetsAdminPage extends StatelessWidget {
                     color: Color(0xFF1A1C1E),
                   ),
                 ),
+
                 const SizedBox(height: 24),
 
-                // DISEÑO DE FILA ÚNICA PARA LAPTOP
+                /// TARJETAS
                 isDesktop
                     ? IntrinsicHeight(
                         child: Row(
@@ -53,7 +82,9 @@ class AssetsAdminPage extends StatelessWidget {
                                 const CreateClientDialog(),
                               ),
                             ),
+
                             SizedBox(width: spacing),
+
                             Expanded(
                               child: _buildAdaptedCard(
                                 context,
@@ -62,7 +93,9 @@ class AssetsAdminPage extends StatelessWidget {
                                 const CreateVehicleDialog(),
                               ),
                             ),
+
                             SizedBox(width: spacing),
+
                             Expanded(
                               child: _buildAdaptedCard(
                                 context,
@@ -82,21 +115,23 @@ class AssetsAdminPage extends StatelessWidget {
                             context,
                             "Nuevo Cliente",
                             Icons.group_add_rounded,
-                            const DialogCrearCliente(),
+                            const CreateClientDialog(),
                             customWidth: maxWidth,
                           ),
+
                           _buildAdaptedCard(
                             context,
                             "Nuevo Vehículo",
                             Icons.directions_car_filled_rounded,
-                            const DialogCrearVehiculo(),
+                            const CreateVehicleDialog(),
                             customWidth: maxWidth,
                           ),
+
                           _buildAdaptedCard(
                             context,
                             "Nueva Prensa",
                             Icons.precision_manufacturing_rounded,
-                            const DialogCrearPrensa(),
+                            const CreatePressDialog(),
                             customWidth: maxWidth,
                           ),
                         ],
@@ -112,9 +147,15 @@ class AssetsAdminPage extends StatelessWidget {
                     color: Color(0xFF1A1C1E),
                   ),
                 ),
+
                 const SizedBox(height: 20),
 
-                _buildCenteredTableContainer(context),
+                _buildCenteredTableContainer(
+                  context,
+                  clientState,
+                  vehicleState,
+                  pressState,
+                ),
               ],
             ),
           );
@@ -123,6 +164,7 @@ class AssetsAdminPage extends StatelessWidget {
     );
   }
 
+  /// TARJETA
   Widget _buildAdaptedCard(
     BuildContext context,
     String title,
@@ -141,14 +183,22 @@ class AssetsAdminPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCenteredTableContainer(BuildContext context) {
+  /// CONTENEDOR DE TABLAS
+  Widget _buildCenteredTableContainer(
+    BuildContext context,
+    dynamic clientState,
+    dynamic vehicleState,
+    dynamic pressState,
+  ) {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),
         child: Column(
           children: [
             _buildSearchBar(),
+
             const SizedBox(height: 16),
+
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -162,6 +212,7 @@ class AssetsAdminPage extends StatelessWidget {
                   ),
                 ],
               ),
+
               child: DefaultTabController(
                 length: 3,
                 child: Column(
@@ -186,25 +237,64 @@ class AssetsAdminPage extends StatelessWidget {
                         ),
                       ],
                     ),
+
                     SizedBox(
-                      height: 400, // Altura ajustada para tablas vacías
+                      height: 400,
                       child: TabBarView(
                         children: [
-                          _buildResponsiveTable(
-                            context,
-                            clientCols,
-                            [],
-                          ), // Lista vacía
-                          _buildResponsiveTable(
-                            context,
-                            vehicleCols,
-                            [],
-                          ), // Lista vacía
-                          _buildResponsiveTable(
-                            context,
-                            pressCols,
-                            [],
-                          ), // Lista vacía
+                          /// CLIENTES
+                          _buildStateTable(
+                            clientState.status,
+                            clientState.error,
+                            _buildGenericTable<ClientsConveyor>(
+                              clientCols,
+                              clientState.clients,
+                              (client) => DataRow(
+                                cells: [
+                                  DataCell(Text(client.id)),
+                                  DataCell(Text(client.name)),
+                                  DataCell(Text(client.company)),
+                                  const DataCell(Icon(Icons.more_horiz)),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          /// VEHICULOS
+                          _buildStateTable(
+                            vehicleState.status,
+                            vehicleState.error,
+                            _buildGenericTable<Vehicle>(
+                              vehicleCols,
+                              vehicleState.vehicles,
+                              (vehicle) => DataRow(
+                                cells: [
+                                  DataCell(Text(vehicle.id)),
+                                  DataCell(Text(vehicle.licensePlate)),
+                                  DataCell(Text(vehicle.model)),
+                                  const DataCell(Icon(Icons.more_horiz)),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          /// PRENSAS
+                          _buildStateTable(
+                            pressState.status,
+                            pressState.error,
+                            _buildGenericTable<Press>(
+                              pressCols,
+                              pressState.press,
+                              (press) => DataRow(
+                                cells: [
+                                  DataCell(Text(press.id)),
+                                  DataCell(Text(press.serie)),
+                                  DataCell(Text(press.type)),
+                                  const DataCell(Icon(Icons.more_horiz)),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -218,6 +308,7 @@ class AssetsAdminPage extends StatelessWidget {
     );
   }
 
+  /// SEARCH
   Widget _buildSearchBar() {
     return Container(
       width: double.infinity,
@@ -238,12 +329,13 @@ class AssetsAdminPage extends StatelessWidget {
     );
   }
 
-  Widget _buildResponsiveTable(
-    BuildContext context,
-    List<DataColumn> cols,
-    List<DataRow> rows,
+  /// TABLA GENERICA
+  Widget _buildGenericTable<T>(
+    List<DataColumn> columns,
+    List<T> items,
+    DataRow Function(T) buildRow,
   ) {
-    if (rows.isEmpty) {
+    if (items.isEmpty) {
       return const Center(
         child: Text(
           "No hay registros disponibles",
@@ -251,13 +343,27 @@ class AssetsAdminPage extends StatelessWidget {
         ),
       );
     }
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: DataTable(columns: cols, rows: rows),
+      child: DataTable(columns: columns, rows: items.map(buildRow).toList()),
     );
   }
 
-  // --- COLUMNAS (MANTENIDAS PARA LA ESTRUCTURA) ---
+  /// LOADING / ERROR
+  Widget _buildStateTable(Status status, String? error, Widget table) {
+    if (status == Status.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (status == Status.error) {
+      return Center(child: Text(error ?? "Error"));
+    }
+
+    return table;
+  }
+
+  /// COLUMNAS
   List<DataColumn> get clientCols => const [
     DataColumn(label: Text('ID')),
     DataColumn(label: Text('Nombre')),
