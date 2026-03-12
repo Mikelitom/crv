@@ -12,6 +12,7 @@ import 'package:crv_reprosisa/features/auth/domain/usecases/change_password_use_
 import 'package:crv_reprosisa/features/auth/domain/usecases/get_me_use_case.dart';
 import 'package:crv_reprosisa/features/auth/domain/usecases/save_tokens_use_case.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/usecases/register_use_case.dart';
 
 // DataSource
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
@@ -51,7 +52,11 @@ final getMeUseCaseProvider = Provider<GetMeUseCase>((ref) {
   final repository = ref.read(authRepositoryProvider);
   return GetMeUseCase(repository);
 });
-
+// UseCase para Registro
+final registerUseCaseProvider = Provider<RegisterUseCase>((ref) {
+  final repository = ref.read(authRepositoryProvider);
+  return RegisterUseCase(repository);
+});
 final saveTokensUseCaseProvider = Provider<SaveTokensUseCase>((ref) {
   final repository = ref.read(tokenRepositoryProvider);
   return SaveTokensUseCase(repository);

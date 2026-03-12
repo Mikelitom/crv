@@ -71,7 +71,7 @@ class _CreateVehicleDialogState extends ConsumerState<CreateVehicleDialog> {
             ),
           ),
 
-        buildField(typeIdController, "1", "Ej. Pickup"),
+        buildField(typeIdController, "Tipo", "Ej. Pickup"),
         buildField(brandController, "Marca", "Toyota"),
         buildField(modelController, "Modelo", "Corolla"),
         buildField(yearController, "Año", "2025"),

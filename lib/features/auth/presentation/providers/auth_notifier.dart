@@ -13,6 +13,40 @@ class AuthNotifier extends Notifier<AuthState> {
     return AuthState.initial();
   }
 
+  // --- MÉTODO AGREGADO: REGISTER ---
+  Future<void> register({
+    required String name,
+    required String phone,
+    required String email,
+    required String password,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading, error: null);
+
+    final Either<Failure, User> result = await ref.read(registerUseCaseProvider)(
+      name: name,
+      phone: phone,
+      email: email,
+      password: password,
+    );
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          error: failure,
+        );
+      },
+      (user) {
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          user: user,
+          error: null,
+        );
+      },
+    );
+  }
+
+  // --- MÉTODOS EXISTENTES (SIN MODIFICACIONES) ---
   Future<void> login(String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
 

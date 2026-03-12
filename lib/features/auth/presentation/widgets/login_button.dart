@@ -22,14 +22,15 @@ class LoginButton extends ConsumerWidget {
     return SizedBox(
       height: 48,
       child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFC62828), // Rojo oficial
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
         onPressed: isLoading
             ? null
             : () async {
-                // Debug: confirmamos que el botón se presiona
-                print(
-                  "Login presionado: ${emailController.text}, ${passwordController.text}",
-                );
-
+                print("Login presionado: ${emailController.text}, ${passwordController.text}");
                 await ref
                     .read(authNotifierProvider.notifier)
                     .login(
@@ -37,7 +38,6 @@ class LoginButton extends ConsumerWidget {
                       passwordController.text.trim(),
                     );
 
-                // Opcional: mostrar error si ocurre
                 if (authState.error != null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(authState.error.toString())),
@@ -48,9 +48,9 @@ class LoginButton extends ConsumerWidget {
             ? const SizedBox(
                 height: 18,
                 width: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               )
-            : const Text('Ingresar', style: TextStyle(fontSize: 16)),
+            : const Text('Iniciar Sesión', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       ),
     );
   }
