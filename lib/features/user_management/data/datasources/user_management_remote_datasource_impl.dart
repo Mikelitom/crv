@@ -3,14 +3,15 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import './user_management_remote_datasource.dart';
 
-class UserManagementRemoteDatasourceImpl implements UserManagementRemoteDatasource {
+class UserManagementRemoteDatasourceImpl
+    implements UserManagementRemoteDatasource {
   final Dio dio;
 
   UserManagementRemoteDatasourceImpl(this.dio);
 
   @override
   Future<List<UserModel>> getUsers() async {
-    final response = await dio.get("/users/");
+    final response = await dio.get("/auth/users/");
 
     final List data = response.data;
 
@@ -26,21 +27,19 @@ class UserManagementRemoteDatasourceImpl implements UserManagementRemoteDatasour
   }) async {
     // Creamos un mapa con solo los datos que no son nulos
     final Map<String, dynamic> updateData = {};
-    if (role != null) updateData['role'] = [role]; // Si el rol es lista en tu entidad
+    if (role != null)
+      updateData['role'] = [role]; // Si el rol es lista en tu entidad
     if (area != null) updateData['area'] = area;
     if (isActive != null) updateData['isActive'] = isActive;
 
-    final response = await dio.patch(
-      "/users/$userId/",
-      data: updateData,
-    );
+    final response = await dio.patch("/users/$userId/", data: updateData);
 
     return UserModel.fromJson(response.data);
   }
 
   @override
   Future<Unit> deleteUser(String userId) async {
-    await dio.delete("/users/$userId/");
+    await dio.patch("/auth/$userId/deactivate");
     return unit;
   }
 }

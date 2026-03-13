@@ -20,4 +20,28 @@ class User {
     required this.role,
     required this.permissions,
   });
+
+  User copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? phone,
+    bool? isActive,
+    DateTime? lastLogin,
+    DateTime? createdAt,
+    List<String>? role,
+    List<String>? permissions,
+  }) {
+    return User(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      isActive: isActive ?? this.isActive,
+      lastLogin: lastLogin ?? this.lastLogin,
+      createdAt: createdAt ?? this.createdAt,
+      role: role ?? this.role,
+      permissions: permissions ?? this.permissions,
+    );
+  }
 }
