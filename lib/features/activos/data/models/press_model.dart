@@ -15,15 +15,19 @@ class PressModel extends Press {
 
   factory PressModel.fromJson(Map<String, dynamic> json) {
     return PressModel(
-      id: json['id'],
-      type: json['type'],
-      model: json['model'],
-      voltz: json['voltz'],
-      serie: json['serie'],
-      size: json['size'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-      isActive: json['is_active'],
+      id: json['id']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      model: json['model']?.toString() ?? '',
+      voltz: json['voltz']?.toString() ?? '',
+      serie: json['serie']?.toString() ?? '',
+      size: json['size']?.toString() ?? '',
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at']) 
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null 
+          ? DateTime.parse(json['updated_at']) 
+          : DateTime.now(),
+      isActive: json['is_active'] ?? true,
     );
   }
 }
