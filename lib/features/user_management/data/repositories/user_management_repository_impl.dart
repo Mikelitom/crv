@@ -3,7 +3,7 @@ import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import '../../domain/repositories/user_managment_repository.dart';
+import '../../domain/repositories/user_management_repository.dart';
 import '../datasources/user_management_remote_datasource.dart';
 
 class UserManagementRepositoryImpl implements UserManagementRepository {

@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
-import '../../domain/repositories/user_managment_repository.dart';
+import '../../domain/repositories/user_management_repository.dart';
 
 class DeleteUser {
   final UserManagementRepository repository;
@@ -11,3 +11,4 @@ class DeleteUser {
     return await repository.deleteUser(userId);
   }
 }
+
