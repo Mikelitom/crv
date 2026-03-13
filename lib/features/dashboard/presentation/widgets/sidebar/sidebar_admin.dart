@@ -44,6 +44,12 @@ class _SidebarAdminState extends State<SidebarAdmin> {
             isActive: widget.selectedIndex == 1,
             onTap: () => widget.onItemSelected(1),
           ),
+          SidebarItem(
+            icon: Icons.report_outlined,
+            label: 'Reportes',
+            isActive: widget.selectedIndex == 2,
+            onTap: () => widget.onItemSelected(2),
+          ),
 
           SidebarItem(
             icon: Icons.assessment_outlined,
@@ -162,4 +168,3 @@ class _SubItem {
   final int index;
   _SubItem({required this.label, required this.icon, required this.index});
 }
-
