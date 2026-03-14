@@ -18,9 +18,9 @@ class VehicleModel extends Vehicle {
       brand: json['brand'],
       model: json['model'],
       year: json['year'],
-      licensePlate: json['plate'],
+      licensePlate: json['plate'] ?? json['license_plate'],
       createdAt: DateTime.parse(json['created_at']),
-      isActive: json['is_active'],
+      isActive: json['is_active'] ?? true
     );
   }
 }

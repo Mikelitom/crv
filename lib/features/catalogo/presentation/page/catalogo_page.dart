@@ -1,9 +1,11 @@
-import 'package:crv_reprosisa/features/catalogo/presentation/widgets/catalogo_stats.dart';
-import 'package:crv_reprosisa/features/catalogo/presentation/widgets/vehicle_catalog_list.dart';
+import 'package:crv_reprosisa/features/catalogo/presentation/widgets/press_catalog_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../activos/presentation/providers/vehicle_list_notifier_provider.dart';
+import '../../../activos/presentation/providers/vehicle_list_notifier_provider.dart';
+import '../widgets/catalogo_stats.dart';
+import '../widgets/vehicle_catalog_list.dart';
 
+// 1. AGREGA ESTO AQUÍ (El enum que falta)
 enum AssetType { vehiculo, prensa }
 
 class GenericCatalogPage extends ConsumerStatefulWidget {
@@ -15,11 +17,10 @@ class GenericCatalogPage extends ConsumerStatefulWidget {
 }
 
 class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
-  
   @override
   void initState() {
     super.initState();
-    // Disparamos la carga de datos del catálogo al iniciar
+    // 2. Ahora AssetType.vehiculo ya no saldrá en rojo
     if (widget.type == AssetType.vehiculo) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(vehicleListProvider.notifier).loadVehicles();
@@ -41,31 +42,31 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header con estilo de Card
+              // HEADER (Título y Botón Rojo)
               _buildHeader(title, actionIcon),
 
               const SizedBox(height: 32),
               
-              // Tarjetas de Estadísticas Dinámicas
+              // STATS (Contadores dinámicos)
               CatalogStats(isVehiculo: isVehiculo), 
 
               const SizedBox(height: 40),
               
               const Text(
                 "Listado de Catálogo",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E)),
               ),
               const SizedBox(height: 20),
 
-              // Buscador Robusto
+              // BUSCADOR
               _buildSearchBar(),
 
               const SizedBox(height: 32),
 
-              // Lógica de Contenido: Lista real para vehículos, Placeholder para otros
+              // TABLA DE DATOS REALES
               isVehiculo 
                 ? const VehicleCatalogList() 
-                : _buildEmptyPlaceholder("No hay prensas registradas", Icons.settings_suggest),
+                : const PressCatalogList()
             ],
           ),
         ),
@@ -85,10 +86,16 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
+          Text(
+            title, 
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))
+          ),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: const Color(0xFFC62828), borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFC62828), 
+              borderRadius: BorderRadius.circular(14)
+            ),
             child: Icon(icon, color: Colors.white, size: 28),
           ),
         ],
@@ -111,25 +118,6 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 18),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyPlaceholder(String message, IconData icon) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 80),
-      decoration: BoxDecoration(
-        color: Colors.white, 
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFECEFF1)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 80, color: const Color(0xFFFDECEA)),
-          const SizedBox(height: 20),
-          Text(message, style: const TextStyle(color: Colors.grey, fontSize: 16)),
-        ],
       ),
     );
   }

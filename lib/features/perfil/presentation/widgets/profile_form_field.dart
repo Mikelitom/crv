@@ -5,7 +5,12 @@ class ProfileFormField extends StatelessWidget {
   final String initialValue;
   final IconData icon;
 
-  const ProfileFormField({super.key, required this.label, required this.initialValue, required this.icon});
+  const ProfileFormField({
+    super.key, 
+    required this.label, 
+    required this.initialValue, 
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -5,14 +5,14 @@ import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/pages/inspections_page.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/widgets/quick_actions_i.dart';
+import 'package:crv_reprosisa/features/catalogo/presentation/page/catalogo_page.dart';
 import 'package:crv_reprosisa/features/servicios/page/prensas/press_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/pages/banda_inspection_page.dart';
 import 'package:crv_reprosisa/features/prensas_industriales/Pages/prensa_inspection.dart';
 import 'package:crv_reprosisa/features/vehiculos/pages/vehicle_inspection_page.dart';
-import '../../../../catalogo/page/catalogo_page.dart';
 import 'package:crv_reprosisa/features/user_management/presentation/pages/users_admin_page.dart';
-import 'package:crv_reprosisa/features/perfil/page/profile_page.dart';
+import 'package:crv_reprosisa/features/perfil/presentation/page/profile_page.dart';
 import 'package:crv_reprosisa/features/servicios/page/vehiculos/vehicle_service_page.dart'
     hide PressServicePage;
 import 'package:flutter/material.dart';
