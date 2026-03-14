@@ -19,13 +19,6 @@ class HistoryStatusPanel extends StatelessWidget {
           _buildStatusItem(Icons.verified_user_rounded, "Cuenta Verificada", "Nivel Administrador", const Color(0xFF43A047)),
           const Divider(height: 40, color: Color(0xFFF1F3F5)),
           _buildStatusItem(Icons.history_toggle_off_rounded, "Último Acceso", "Hoy, 10:45 AM", const Color(0xFFC62828)),
-          const SizedBox(height: 30),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-             
-            ],
-          )
         ],
       ),
     );
@@ -52,4 +45,4 @@ class HistoryStatusPanel extends StatelessWidget {
       ],
     );
   }
-} 
+}

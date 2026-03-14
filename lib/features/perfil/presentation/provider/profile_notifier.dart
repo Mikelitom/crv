@@ -1,0 +1,31 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'profile_state.dart';
+import 'profile_providers.dart';
+
+class ProfileNotifier extends Notifier<ProfileState> {
+  @override
+  ProfileState build() {
+    Future.microtask(() => getUserProfile());
+    return ProfileState.initial();
+  }
+
+  Future<void> getUserProfile() async {
+    state = state.copyWith(status: ProfileStatus.loading);
+    final result = await ref.read(getMeUseCaseProvider).call();
+    result.fold(
+      (f) => state = state.copyWith(status: ProfileStatus.error, error: f),
+      (u) => state = state.copyWith(status: ProfileStatus.success, user: u),
+    );
+  }
+
+  Future<void> updateInfo(String name, String phone) async {
+    state = state.copyWith(status: ProfileStatus.loading);
+    final result = await ref.read(updateProfileUseCaseProvider).call(name: name, phone: phone);
+    result.fold(
+      (f) => state = state.copyWith(status: ProfileStatus.error, error: f),
+      (u) => state = state.copyWith(status: ProfileStatus.success, user: u),
+    );
+  }
+}
+
+final profileProvider = NotifierProvider<ProfileNotifier, ProfileState>(ProfileNotifier.new);

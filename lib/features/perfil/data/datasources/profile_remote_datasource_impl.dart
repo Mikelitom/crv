@@ -1,0 +1,38 @@
+import 'package:crv_reprosisa/features/auth/data/models/user_model.dart';
+import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
+import './profile_remote_datasource.dart';
+
+class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
+  final Dio dio;
+  ProfileRemoteDataSourceImpl(this.dio);
+
+  @override
+  Future<UserModel> getMe() async {
+    final response = await dio.get("/users/me/");
+    return UserModel.fromJson(response.data);
+  }
+
+  @override
+  Future<UserModel> updateProfile({String? name, String? phone}) async {
+    final data = <String, dynamic>{};
+    if (name != null) data['full_name'] = name;
+    if (phone != null) data['phone_number'] = phone;
+    final response = await dio.patch("/users/me/", data: data);
+    return UserModel.fromJson(response.data);
+  }
+
+  @override
+  Future<Unit> changePassword({
+    required String currentPassword, 
+    required String newPassword, 
+    required bool logoutOthers
+  }) async {
+    await dio.post("/users/change-password/", data: {
+      'old_password': currentPassword,
+      'new_password': newPassword,
+      'logout_others': logoutOthers,
+    });
+    return unit;
+  }
+}

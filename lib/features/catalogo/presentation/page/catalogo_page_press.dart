@@ -2,9 +2,9 @@ import 'package:crv_reprosisa/features/activos/presentation/providers/press_list
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../press_catalog_list.dart';
-import '../catalogo_stats.dart';
-import '../../../../activos/presentation/notifiers/press_list_notifier.dart';
+import '../widgets/press_catalog_list.dart';
+import '../widgets/catalogo_stats.dart';
+import '../../../activos/presentation/notifiers/press_list_notifier.dart';
 
 
 class PressCatalogPage extends ConsumerStatefulWidget {
