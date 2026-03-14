@@ -1,13 +1,13 @@
 import 'package:crv_reprosisa/core/models/inspection_models.dart';
-import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
+import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:flutter/material.dart';
-import '../Widgets/dynamic_stats_row.dart';
-import '../Widgets/quick_actions_i.dart';
-import '../Widgets/table_inspector.dart';
-import '../../dashboard/presentation/widgets/header.dart';
-import '../../bandas_transportadoras/pages/banda_inspection_page.dart';
-import '../../prensas_industriales/Pages/prensa_inspection.dart';
-import '../../vehiculos/pages/vehicle_inspection_page.dart';
+import '../../../inspections/presentation/widgets/dynamic_stats_row.dart';
+import '../widgets/quick_actions_i.dart';
+import '../widgets/table_inspector.dart';
+import '../../../dashboard/presentation/widgets/header.dart';
+import '../../../bandas_transportadoras/pages/banda_inspection_page.dart';
+import '../../../prensas_industriales/Pages/prensa_inspection.dart';
+import '../../../vehiculos/pages/vehicle_inspection_page.dart';
 
 class InspectionPage extends StatelessWidget {
   final List<StatsModel> stats;
@@ -36,15 +36,15 @@ class InspectionPage extends StatelessWidget {
                 children: [
                   const CustomHeader(title: 'Inspecciones', actionIcon: Icons.print_rounded),
                   const SizedBox(height: 32),
-                  
+
                   // Contadores animados seguidos
                   DynamicStatsRow(stats: stats),
-                  
+
                   const SizedBox(height: 48),
-                  const Text('Realizar Una Inspección', 
+                  const Text('Realizar Una Inspección',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
                   const SizedBox(height: 24),
-                  
+
                   // Grid responsivo forzado a fila única en PC
                   _buildQuickActionGrid(context),
 
@@ -125,7 +125,7 @@ class InspectionPage extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('Mis inspecciones', 
+        const Text('Mis inspecciones',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
         SizedBox(
           width: 380,
