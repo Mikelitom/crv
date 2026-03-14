@@ -2,6 +2,9 @@ import 'package:crv_reprosisa/core/models/inspection_models.dart';
 import 'package:crv_reprosisa/features/activos/presentation/pages/assets_admin_page.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
+import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
+import 'package:crv_reprosisa/features/inspections/presentation/pages/inspections_page.dart';
+import 'package:crv_reprosisa/features/inspections/presentation/widgets/quick_actions_i.dart';
 import 'package:crv_reprosisa/features/servicios/page/prensas/press_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/pages/banda_inspection_page.dart';
@@ -9,7 +12,6 @@ import 'package:crv_reprosisa/features/prensas_industriales/Pages/prensa_inspect
 import 'package:crv_reprosisa/features/vehiculos/pages/vehicle_inspection_page.dart';
 import '../../../../catalogo/page/catalogo_page.dart';
 import 'package:crv_reprosisa/features/user_management/presentation/pages/users_admin_page.dart';
-import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/perfil/page/profile_page.dart';
 import 'package:crv_reprosisa/features/servicios/page/vehiculos/vehicle_service_page.dart'
     hide PressServicePage;
@@ -17,11 +19,9 @@ import 'package:flutter/material.dart';
 import '../../layout/responsive_dashboard_layout.dart';
 import '../../widgets/sidebar/sidebar_admin.dart';
 import '../../widgets/header.dart';
-import '../../../../inspections/Widgets/quick_actions_i.dart';
 import '../../widgets/notification_panel.dart';
 import '../../widgets/stats_card_dash_e.dart';
 import '../../../../reports/Pages/reports_page.dart';
-import '../../../../inspections/pages/inspections_page.dart';
 
 class AdminDashboardPage extends ConsumerStatefulWidget {
   const AdminDashboardPage({super.key});

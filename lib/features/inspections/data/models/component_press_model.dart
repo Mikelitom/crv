@@ -1,27 +1,26 @@
-import 'package:crv_reprosisa/domain/entities/press/component_press.dart';
+import 'package:crv_reprosisa/features/inspections/domain/entities/component_press.dart';
 
-class ComponentPressModel extends ComponentPress{
-
+class ComponentPressModel extends ComponentPress {
   ComponentPressModel({
     required super.id,
     required super.name,
-    required super.measure_unit,
+    required super.measureUnit,
     super.description,
     required super.createdAt,
     required super.updatedAt,
-    required super.is_active,
+    required super.isActive,
   });
 
-   factory ComponentPressModel.fromJson(Map<String, dynamic> json) {
+  factory ComponentPressModel.fromJson(Map<String, dynamic> json) {
     return ComponentPressModel(
       id: json['id'],
       name: json['name'],
-      measure_unit: json['measure_unit'],
+      measureUnit: json['measure_unit'],
       description: json['description'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
-      is_active: json['is_active'],
-
+      isActive: json['is_active'],
     );
   }
 }
+

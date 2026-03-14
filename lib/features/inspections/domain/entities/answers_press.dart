@@ -1,7 +1,7 @@
 class AnswersPress {
   final String id;
-  final String report_id;
-  final String component_id;
+  final String reportId;
+  final String componentId;
   final double quantity;
   final String status;
   final String? observation;
@@ -9,12 +9,12 @@ class AnswersPress {
 
   AnswersPress({
     required this.id,
-    required this.report_id,
-    required this.component_id,
+    required this.reportId,
+    required this.componentId,
     required this.quantity,
     required this.status,
     this.observation,
     required this.createdAt,
   });
-
 }
+

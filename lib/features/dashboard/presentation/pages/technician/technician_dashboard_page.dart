@@ -2,8 +2,9 @@ import 'package:crv_reprosisa/core/models/inspection_models.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
 import 'package:crv_reprosisa/features/dashboard/presentation/layout/responsive_dashboard_layout.dart';
 import 'package:crv_reprosisa/features/dashboard/presentation/widgets/sidebar/sidebar_technician.dart';
-import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
-import 'package:crv_reprosisa/features/inspections/pages/inspections_page.dart';
+import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
+import 'package:crv_reprosisa/features/inspections/presentation/pages/inspections_page.dart';
+import 'package:crv_reprosisa/features/inspections/presentation/widgets/quick_actions_i.dart';
 import 'package:crv_reprosisa/features/reports/Pages/reports_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +12,6 @@ import '../../widgets/header.dart';
 import '../../widgets/stats_card_dash_e.dart';
 import '../../widgets/notification_panel.dart';
 import '../../widgets/notification_item.dart';
-import '../../../../inspections/Widgets/quick_actions_i.dart';
 
 class TechnicianDashboardPage extends ConsumerStatefulWidget {
   const TechnicianDashboardPage({super.key});
@@ -252,4 +252,3 @@ final List<InspectionRowUI> _testInspections = [
     state: 'Pendiente',
   ),
 ];
-

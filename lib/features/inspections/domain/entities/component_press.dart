@@ -1,19 +1,20 @@
 class ComponentPress {
   final String id;
   final String name;
-  final String measure_unit;
+  final String measureUnit;
   final String? description;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final bool is_active;
+  final bool isActive;
 
   ComponentPress({
     required this.id,
     required this.name,
-    required this.measure_unit,
+    required this.measureUnit,
     this.description,
     required this.createdAt,
     required this.updatedAt,
-    required this.is_active,
+    required this.isActive,
   });
 }
+
