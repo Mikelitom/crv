@@ -62,4 +62,17 @@ class UserManagementRepositoryImpl implements UserManagementRepository {
       return Left(UnknownFailure(e.toString()));
     }
   }
+   @override
+  Future<Either<Failure, Unit>> activateUser(String userId) async {
+    try {
+      await remote.activateUser(userId);
+      return const Right(unit);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
 }

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../dashboard/presentation/widgets/header.dart';
 import '../widgets/user_stats_card.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
-// IMPORTA TUS NUEVOS WIDGETS AQUÍ
 import '../widgets/user_search_field.dart';
 import '../widgets/user_filter_bar.dart';
 import '../widgets/user_data_table.dart';
@@ -24,7 +23,6 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
   @override
   void initState() {
     super.initState();
-
     Future.microtask(() {
       ref.read(userManagementProvider.notifier).getUsers();
     });
@@ -35,7 +33,6 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
     final state = ref.watch(userManagementProvider);
     final allUsers = state.users;
 
-    // Lógica de filtrado (se mantiene aquí para reaccionar al estado)
     final filteredUsers = allUsers.where((user) {
       final matchesSearch =
           user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -67,23 +64,14 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
                   actionIcon: Icons.admin_panel_settings_rounded,
                 ),
                 const SizedBox(height: 32),
-
-                _buildResponsiveStatsGrid(
-                  constraints.maxWidth,
-                  allUsers,
-                ), // Reutiliza tu Wrap de Stats
-
+                _buildResponsiveStatsGrid(constraints.maxWidth, allUsers),
                 const SizedBox(height: 48),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       "Listado de Personal",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.normal,
-                      ),
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.normal),
                     ),
                     UserSearchField(
                       width: 350,
@@ -93,13 +81,11 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 24),
                 UserFilterBar(
                   selectedStatus: _selectedStatus,
                   selectedRole: _selectedRole,
-                  onStatusChanged: (val) =>
-                      setState(() => _selectedStatus = val!),
+                  onStatusChanged: (val) => setState(() => _selectedStatus = val!),
                   onRoleChanged: (val) => setState(() => _selectedRole = val!),
                   onReset: () => setState(() {
                     _selectedStatus = 'Todos los Estados';
@@ -107,10 +93,7 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
                     _searchQuery = '';
                   }),
                 ),
-
                 const SizedBox(height: 16),
-
-                // CONTENEDOR DE LA TABLA
                 _tableCard(constraints.maxWidth, filteredUsers),
               ],
             ),
@@ -141,9 +124,10 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
             child: UserDataTable(
               users: users,
               onToggleStatus: (userId, val) {
+                // CAMBIO AQUÍ: Ahora enviamos 'val' que es el estado del Switch
                 ref
                     .read(userManagementProvider.notifier)
-                    .toggleUserStatus(userId, false);
+                    .toggleUserStatus(userId, val);
               },
             ),
           ),
@@ -152,7 +136,6 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
     );
   }
 
-  // Tu método _buildResponsiveStatsGrid y _stat se quedan aquí o también se pueden mover a widgets/
   Widget _buildResponsiveStatsGrid(double maxWidth, List<User> users) {
     int col = maxWidth > 1200 ? 4 : (maxWidth > 750 ? 2 : 1);
     double w = (maxWidth - (16 * (col - 1)) - 64) / col;
@@ -160,30 +143,10 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
       spacing: 16,
       runSpacing: 16,
       children: [
-        _stat(
-          w,
-          "Total Usuarios",
-          users.length.toString(),
-          Icons.people_alt_rounded,
-        ),
-        _stat(
-          w,
-          "Técnicos",
-          users.where((u) => u.role.contains('technician')).length.toString(),
-          Icons.engineering_rounded,
-        ),
-        _stat(
-          w,
-          "Habilitados",
-          users.where((u) => u.isActive).length.toString(),
-          Icons.check_circle_rounded,
-        ),
-        _stat(
-          w,
-          "Deshabilitados",
-          users.where((u) => !u.isActive).length.toString(),
-          Icons.do_not_disturb_on_rounded,
-        ),
+        _stat(w, "Total Usuarios", users.length.toString(), Icons.people_alt_rounded),
+        _stat(w, "Técnicos", users.where((u) => u.role.contains('technician')).length.toString(), Icons.engineering_rounded),
+        _stat(w, "Habilitados", users.where((u) => u.isActive).length.toString(), Icons.check_circle_rounded),
+        _stat(w, "Deshabilitados", users.where((u) => !u.isActive).length.toString(), Icons.do_not_disturb_on_rounded),
       ],
     );
   }

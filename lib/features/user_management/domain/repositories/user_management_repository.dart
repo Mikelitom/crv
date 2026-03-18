@@ -13,5 +13,6 @@ abstract class UserManagementRepository {
   });
 
   Future<Either<Failure, Unit>> deleteUser(String userId);
+  Future<Either<Failure, Unit>> activateUser(String userId);
 }
 

@@ -12,4 +12,5 @@ abstract class UserManagementRemoteDatasource {
   });
 
   Future<Unit> deleteUser(String userId);
+  Future<Unit> activateUser(String userId);
 }

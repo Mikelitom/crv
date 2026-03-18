@@ -1,33 +1,39 @@
 import 'package:flutter/material.dart';
 
-class RememberMeCheckbox extends StatefulWidget {
-  const RememberMeCheckbox({super.key});
+class RememberMeCheckbox extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool?> onChanged;
 
-  @override
-  State<RememberMeCheckbox> createState() => _RememberMeCheckboxState();
-}
-
-class _RememberMeCheckboxState extends State<RememberMeCheckbox> {
-  bool _isSelected = false; // Estado para que el check funcione
+  const RememberMeCheckbox({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Checkbox(
-          value: _isSelected,
-          activeColor: const Color(0xFFC62828), // Rojo oficial
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          onChanged: (bool? value) {
-            setState(() {
-              _isSelected = value ?? false;
-            });
-          },
+        SizedBox(
+          height: 24,
+          width: 24,
+          child: Checkbox(
+            value: value,
+            activeColor: const Color(0xFFC62828),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            onChanged: onChanged,
+            side: const BorderSide(color: Colors.grey, width: 1.5),
+          ),
         ),
+        const SizedBox(width: 8),
         const Text(
           'Recuérdame',
-          style: TextStyle(fontSize: 14, color: Colors.black87),
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
