@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
-import 'package:crv_reprosisa/features/auth/presentation/providers/auth_status.dart';
+import '../providers/auth_notifier_provider.dart';
+import '../providers/auth_status.dart';
 
 class LoginButton extends ConsumerWidget {
   final VoidCallback onAction;
@@ -23,27 +23,7 @@ class LoginButton extends ConsumerWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),
-        onPressed: isLoading
-            ? null
-            : () async {
-                final email = emailController.text.trim();
-                final password = passwordController.text.trim();
-
-                print("Login presionado: $email, $password");
-
-                await ref.read(authNotifierProvider.notifier).login(email, password);
-
-                if (!context.mounted) return;
-
-                final updatedState = ref.read(authNotifierProvider);
-
-                if (updatedState.error != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(updatedState.error.toString())),
-                  );
-                }
-              },
->>>>>>> fix/profile
+        onPressed: (isLoading || isBlocked) ? null : onAction,
         child: isLoading
             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
             : const Text('Iniciar Sesión', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
