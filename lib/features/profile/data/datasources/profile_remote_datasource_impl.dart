@@ -23,7 +23,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     if (name != null) data['name'] = name;
     if (phone != null) data['phone'] = phone;
     if (email != null) data['email'] = email;
-    final response = await dio.patch("/auth/me/", data: data);
+    final response = await dio.patch("/auth/me", data: data);
     return UserModel.fromJson(response.data);
   }
 

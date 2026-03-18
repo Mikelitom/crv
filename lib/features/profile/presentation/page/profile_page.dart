@@ -25,6 +25,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   @override
   void initState() {
+    Future.microtask(() {
+        final notifier = ref.read(profileProvider.notifier);
+        notifier.getUserProfile();
+      });
+
     super.initState();
     _nameController = TextEditingController();
     _emailController = TextEditingController();
@@ -154,7 +159,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         const SizedBox(width: 40),
         Expanded(
           flex: 2,
-          child: Column(children: [const HistoryStatusPanel()]),
+          child: Column(children: [HistoryStatusPanel(user: user)]),
         ),
       ],
     );
@@ -163,7 +168,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Widget _buildMobileLayout(BuildContext context, User user) {
     return Column(
       children: [
-        const HistoryStatusPanel(),
+        HistoryStatusPanel(user: user),
         const SizedBox(height: 24),
         _buildMainInfoPanel(user),
         const SizedBox(height: 24),
