@@ -43,7 +43,6 @@ class LoginButton extends ConsumerWidget {
                   );
                 }
               },
->>>>>>> fix/profile
         child: isLoading
             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
             : const Text('Iniciar Sesión', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
