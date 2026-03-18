@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 
 class ProfileFormField extends StatelessWidget {
   final String label;
-  final String initialValue;
+  final TextEditingController controller;
   final IconData icon;
+  final bool enabled;
 
   const ProfileFormField({
-    super.key, 
-    required this.label, 
-    required this.initialValue, 
+    super.key,
+    required this.label,
+    required this.controller,
     required this.icon,
+    this.enabled = true,
   });
 
   @override
@@ -17,10 +19,14 @@ class ProfileFormField extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: TextFormField(
-        initialValue: initialValue,
+        controller: controller,
+        enabled: enabled,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.w500),
+          labelStyle: const TextStyle(
+            color: Colors.blueGrey,
+            fontWeight: FontWeight.w500,
+          ),
           prefixIcon: Icon(icon, color: const Color(0xFFC62828), size: 22),
           filled: true,
           fillColor: Colors.white,

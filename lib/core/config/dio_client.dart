@@ -43,4 +43,3 @@ final dioProvider = Provider<Dio>((ref) {
 
   return dio;
 });
-

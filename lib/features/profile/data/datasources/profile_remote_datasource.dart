@@ -3,7 +3,7 @@ import 'package:dartz/dartz.dart';
 
 abstract class ProfileRemoteDataSource {
   Future<UserModel> getMe();
-  Future<UserModel> updateProfile({String? name, String? phone});
+  Future<UserModel> updateProfile({String? name, String? phone, String? email});
   Future<Unit> changePassword({
     required String currentPassword,
     required String newPassword,

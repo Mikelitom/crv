@@ -19,9 +19,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<Either<Failure, User>> updateProfile({String? name, String? phone}) async {
+  Future<Either<Failure, User>> updateProfile({String? name, String? phone, String? email}) async {
     try {
-      final user = await remote.updateProfile(name: name, phone: phone);
+      final user = await remote.updateProfile(name: name, email: email, phone: phone);
       return Right(user);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -30,14 +30,14 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<Either<Failure, Unit>> changePassword({
-    required String currentPassword, 
-    required String newPassword, 
+    required String currentPassword,
+    required String newPassword,
     required bool logoutOthers
   }) async {
     try {
       await remote.changePassword(
-        currentPassword: currentPassword, 
-        newPassword: newPassword, 
+        currentPassword: currentPassword,
+        newPassword: newPassword,
         logoutOthers: logoutOthers
       );
       return const Right(unit);

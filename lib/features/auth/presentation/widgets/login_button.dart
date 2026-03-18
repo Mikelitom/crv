@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
-import 'package:crv_reprosisa/features/auth/presentation/providers/auth_state.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_status.dart';
 
 class LoginButton extends ConsumerWidget {
@@ -30,17 +29,20 @@ class LoginButton extends ConsumerWidget {
         onPressed: isLoading
             ? null
             : () async {
-                print("Login presionado: ${emailController.text}, ${passwordController.text}");
-                await ref
-                    .read(authNotifierProvider.notifier)
-                    .login(
-                      emailController.text.trim(),
-                      passwordController.text.trim(),
-                    );
+                final email = emailController.text.trim();
+                final password = passwordController.text.trim();
 
-                if (authState.error != null) {
+                print("Login presionado: $email, $password");
+
+                await ref.read(authNotifierProvider.notifier).login(email, password);
+
+                if (!context.mounted) return;
+
+                final updatedState = ref.read(authNotifierProvider);
+
+                if (updatedState.error != null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(authState.error.toString())),
+                    SnackBar(content: Text(updatedState.error.toString())),
                   );
                 }
               },

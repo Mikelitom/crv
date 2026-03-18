@@ -12,7 +12,7 @@ import 'package:crv_reprosisa/features/bandas_transportadoras/pages/banda_inspec
 import 'package:crv_reprosisa/features/prensas_industriales/Pages/prensa_inspection.dart';
 import 'package:crv_reprosisa/features/vehiculos/pages/vehicle_inspection_page.dart';
 import 'package:crv_reprosisa/features/user_management/presentation/pages/users_admin_page.dart';
-import 'package:crv_reprosisa/features/perfil/presentation/page/profile_page.dart';
+import 'package:crv_reprosisa/features/profile/presentation/page/profile_page.dart';
 import 'package:crv_reprosisa/features/servicios/page/vehiculos/vehicle_service_page.dart'
     hide PressServicePage;
 import 'package:flutter/material.dart';
