@@ -5,7 +5,6 @@ import 'package:crv_reprosisa/features/auth/presentation/providers/auth_status.d
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dartz/dartz.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
-import '../../domain/entities/auth_tokens.dart';
 
 class AuthNotifier extends Notifier<AuthState> {
   @override
@@ -105,4 +104,3 @@ class AuthNotifier extends Notifier<AuthState> {
     );
   }
 }
-

@@ -9,6 +9,7 @@ class UserModel extends User {
     required super.isActive,
     required super.createdAt,
     required super.role,
+    required super.scope,
     required super.permissions,
     super.lastLogin,
   });
@@ -25,6 +26,7 @@ class UserModel extends User {
           : null,
       createdAt: DateTime.parse(json['created_at']),
       role: List<String>.from(json['roles']),
+      scope: json['scope'],
       permissions: List<String>.from(json['permissions']),
     );
   }

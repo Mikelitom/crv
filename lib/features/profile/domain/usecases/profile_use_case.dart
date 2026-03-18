@@ -12,8 +12,8 @@ class GetMeUseCase {
 class UpdateProfileUseCase {
   final ProfileRepository repository;
   UpdateProfileUseCase(this.repository);
-  Future<Either<Failure, User>> call({String? name, String? phone}) => 
-    repository.updateProfile(name: name, phone: phone);
+  Future<Either<Failure, User>> call({String? name, String? phone, String? email}) =>
+    repository.updateProfile(name: name, phone: phone, email: email);
 }
 
 class ChangePasswordUseCase {

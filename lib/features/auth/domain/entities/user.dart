@@ -6,6 +6,7 @@ class User {
   final bool isActive;
   final DateTime? lastLogin;
   final DateTime createdAt;
+  final String scope;
   final List<String> role;
   final List<String> permissions;
 
@@ -17,6 +18,7 @@ class User {
     required this.isActive,
     this.lastLogin,
     required this.createdAt,
+    required this.scope,
     required this.role,
     required this.permissions,
   });
@@ -29,6 +31,7 @@ class User {
     bool? isActive,
     DateTime? lastLogin,
     DateTime? createdAt,
+    String? scope,
     List<String>? role,
     List<String>? permissions,
   }) {
@@ -40,6 +43,7 @@ class User {
       isActive: isActive ?? this.isActive,
       lastLogin: lastLogin ?? this.lastLogin,
       createdAt: createdAt ?? this.createdAt,
+      scope: scope ?? this.scope,
       role: role ?? this.role,
       permissions: permissions ?? this.permissions,
     );

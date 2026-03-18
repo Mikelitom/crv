@@ -1,10 +1,10 @@
-import 'package:crv_reprosisa/features/perfil/presentation/provider/profile_state.dart';
+import 'package:crv_reprosisa/core/utils/scope_mapper.dart';
+import 'package:crv_reprosisa/features/profile/presentation/provider/profile_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
-import 'package:crv_reprosisa/features/perfil/presentation/provider/profile_notifier.dart';
+import 'package:crv_reprosisa/features/profile/presentation/provider/profile_notifier.dart';
 
-import '../widgets/profile_avatar.dart';
 import '../widgets/history_status_panel.dart';
 import '../widgets/profile_security_card.dart';
 import '../widgets/profile_form_field.dart';
@@ -18,10 +18,48 @@ class ProfilePage extends ConsumerStatefulWidget {
 }
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+  late TextEditingController _areaController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _emailController = TextEditingController();
+    _phoneController = TextEditingController();
+    _areaController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _areaController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Escuchamos el estado del perfil
     final profileState = ref.watch(profileProvider);
+
+    ref.listen<ProfileState>(profileProvider, (prev, next) {
+      if (next.status == ProfileStatus.success && next.user != null) {
+        _nameController.text = next.user!.name;
+        _emailController.text = next.user!.email;
+        _phoneController.text = next.user!.phone ?? '';
+        _areaController.text = mapScope(next.user!.scope);
+      }
+
+      if (next.status == ProfileStatus.error) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.error.toString())));
+      }
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA),
@@ -54,9 +92,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             const SizedBox(height: 16),
             Text("Error: ${state.error}"),
             TextButton(
-              onPressed: () => ref.read(profileProvider.notifier).getUserProfile(),
+              onPressed: () =>
+                  ref.read(profileProvider.notifier).getUserProfile(),
               child: const Text("Reintentar"),
-            )
+            ),
           ],
         ),
       );
@@ -79,10 +118,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               children: [
                 // Barra de progreso discreta si se está actualizando en segundo plano
                 if (state.status == ProfileStatus.loading)
-                  const LinearProgressIndicator(color: Color(0xFFC62828), minHeight: 2),
-                
+                  const LinearProgressIndicator(
+                    color: Color(0xFFC62828),
+                    minHeight: 2,
+                  ),
+
                 const SizedBox(height: 10),
-                
+
                 if (isDesktop)
                   _buildDesktopLayout(context, user)
                 else
@@ -112,13 +154,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         const SizedBox(width: 40),
         Expanded(
           flex: 2,
-          child: Column(
-            children: [
-              const ProfileAvatar(),
-              const SizedBox(height: 32),
-              const HistoryStatusPanel(),
-            ],
-          ),
+          child: Column(children: [const HistoryStatusPanel()]),
         ),
       ],
     );
@@ -127,8 +163,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Widget _buildMobileLayout(BuildContext context, User user) {
     return Column(
       children: [
-        const ProfileAvatar(),
-        const SizedBox(height: 24),
         const HistoryStatusPanel(),
         const SizedBox(height: 24),
         _buildMainInfoPanel(user),
@@ -150,7 +184,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 35,
             offset: const Offset(0, 15),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -163,22 +197,23 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           const SizedBox(height: 24),
           ProfileFormField(
             label: "Nombre Completo",
-            initialValue: user.name,
+            controller: _nameController,
             icon: Icons.person_outline,
           ),
           ProfileFormField(
             label: "Correo Institucional",
-            initialValue: user.email,
+            controller: _emailController,
             icon: Icons.email_outlined,
           ),
           ProfileFormField(
             label: "Teléfono",
-            initialValue: user.phone ?? "No proporcionado",
+            controller: _phoneController,
             icon: Icons.phone_android_outlined,
           ),
-          const ProfileFormField(
+          ProfileFormField(
             label: "Departamento",
-            initialValue: "Sistemas / Flota",
+            enabled: false,
+            controller: _areaController,
             icon: Icons.business_outlined,
           ),
           const SizedBox(height: 12),
@@ -187,7 +222,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             baseColor: const Color(0xFFC62828),
             hoverColor: const Color.fromARGB(255, 169, 18, 18),
             onTap: () {
-              // ref.read(profileProvider.notifier).updateInfo(...);
+              ref.read(profileProvider.notifier).updateInfo(_nameController.text, _emailController.text, _phoneController.text);
             },
           ),
         ],
