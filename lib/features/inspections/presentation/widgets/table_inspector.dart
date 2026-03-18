@@ -24,7 +24,7 @@ class TableInspector extends StatelessWidget {
         // Fondo gris sutil para el encabezado
         headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F9FA)),
         dividerThickness: 1,
-        
+
         columns: _buildColumns(),
         rows: items.map((item) => _buildRow(item)).toList(),
       ),
@@ -37,9 +37,9 @@ class TableInspector extends StatelessWidget {
       label: Text(
         label,
         style: const TextStyle(
-          fontWeight: FontWeight.w900, 
-          color: Color(0xFF454B4E), 
-          fontSize: 13, 
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF454B4E),
+          fontSize: 13,
           letterSpacing: 0.8
         ),
       ),
@@ -51,25 +51,25 @@ class TableInspector extends StatelessWidget {
       cells: [
         // ID
         DataCell(Text(
-          "#${item.id}", 
+          "#${item.id}",
           style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))
         )),
-        
+
         // TIPO (Con fuente más limpia)
         DataCell(Text(
-          item.equipment, 
+          item.equipment,
           style: const TextStyle(fontSize: 14, color: Color(0xFF454B4E))
         )),
-        
+
         // FECHA
         DataCell(Text(
-          item.date, 
+          item.date,
           style: const TextStyle(fontSize: 14, color: Color(0xFF546E7A))
         )),
-        
+
         // ESTADO (Badge estilizado)
         DataCell(_buildStatusBadge(item.state)),
-        
+
         // ACCIONES
         DataCell(
           Row(
@@ -93,7 +93,7 @@ class TableInspector extends StatelessWidget {
   Widget _buildStatusBadge(String state) {
     bool isDone = state.toLowerCase().contains('completada');
     Color baseColor = isDone ? Colors.green : Colors.orange;
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
@@ -104,8 +104,8 @@ class TableInspector extends StatelessWidget {
       child: Text(
         state.toUpperCase(),
         style: TextStyle(
-          color: baseColor, 
-          fontSize: 11, 
+          color: baseColor,
+          fontSize: 11,
           fontWeight: FontWeight.w900,
           letterSpacing: 0.5
         ),

@@ -36,15 +36,15 @@ class InspectionPage extends StatelessWidget {
                 children: [
                   const CustomHeader(title: 'Inspecciones', actionIcon: Icons.print_rounded),
                   const SizedBox(height: 32),
-                  
+
                   // Contadores animados seguidos
                   DynamicStatsRow(stats: stats),
-                  
+
                   const SizedBox(height: 48),
-                  const Text('Realizar Una Inspección', 
+                  const Text('Realizar Una Inspección',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
                   const SizedBox(height: 24),
-                  
+
                   // Grid responsivo forzado a fila única en PC
                   _buildQuickActionGrid(context),
 
@@ -125,7 +125,7 @@ class InspectionPage extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('Mis inspecciones', 
+        const Text('Mis inspecciones',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
         SizedBox(
           width: 380,
