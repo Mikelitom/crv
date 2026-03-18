@@ -1,4 +1,4 @@
-import 'package:crv_reprosisa/features/inspections/models/inspector_row_ui.dart';
+import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:flutter/material.dart';
 
 class TableInspector extends StatelessWidget {

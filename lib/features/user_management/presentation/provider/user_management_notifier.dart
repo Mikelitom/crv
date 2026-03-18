@@ -1,7 +1,7 @@
-import 'package:crv_reprosisa/features/user_management/domain/usecases/get_users_use_cases.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../presentation/provider/user_management_state.dart';
-import '../../presentation/provider/user_management_use_case.dart';
+import '../../domain/usecases/get_users_use_cases.dart';
+import 'user_management_state.dart';
+import 'user_management_use_case.dart';
 
 class UserManagementNotifier extends Notifier<UserManagementState> {
   late final GetUsers _getUsers;
@@ -14,7 +14,6 @@ class UserManagementNotifier extends Notifier<UserManagementState> {
 
   Future<void> getUsers() async {
     state = state.copyWith(status: UserManagementStatus.loading);
-
     final result = await _getUsers();
 
     result.fold(
@@ -32,20 +31,18 @@ class UserManagementNotifier extends Notifier<UserManagementState> {
   Future<void> toggleUserStatus(String userId, bool isActive) async {
     state = state.copyWith(status: UserManagementStatus.loading);
 
-    final result = await ref.read(deactivateUserUseCaseProvider).call(userId);
+    final result = isActive 
+        ? await ref.read(activateUserUseCaseProvider).call(userId) 
+        : await ref.read(deactivateUserUseCaseProvider).call(userId);
 
     result.fold(
-      (failure) {
-        state = state.copyWith(
-          status: UserManagementStatus.error,
-          error: failure.message,
-        );
-      },
+      (failure) => state = state.copyWith(
+        status: UserManagementStatus.error,
+        error: failure.message,
+      ),
       (_) {
         final updatedUsers = state.users.map((u) {
-          if (u.id == userId) {
-            return u.copyWith(isActive: isActive);
-          }
+          if (u.id == userId) return u.copyWith(isActive: isActive);
           return u;
         }).toList();
 

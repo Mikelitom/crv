@@ -42,4 +42,9 @@ class UserManagementRemoteDatasourceImpl
     await dio.patch("/auth/$userId/deactivate");
     return unit;
   }
+    @override
+  Future<Unit> activateUser(String userId) async {
+    await dio.patch("/auth/$userId/activate");
+    return unit;
+  }
 }
