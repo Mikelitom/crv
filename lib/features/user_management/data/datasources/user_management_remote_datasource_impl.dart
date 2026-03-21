@@ -2,9 +2,9 @@ import 'package:crv_reprosisa/features/auth/data/models/user_model.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import './user_management_remote_datasource.dart';
+import 'package:crv_reprosisa/core/utils/scope_mapper.dart'; 
 
-class UserManagementRemoteDatasourceImpl
-    implements UserManagementRemoteDatasource {
+class UserManagementRemoteDatasourceImpl implements UserManagementRemoteDatasource {
   final Dio dio;
 
   UserManagementRemoteDatasourceImpl(this.dio);
@@ -12,29 +12,54 @@ class UserManagementRemoteDatasourceImpl
   @override
   Future<List<UserModel>> getUsers() async {
     final response = await dio.get("/auth/users/");
-
     final List data = response.data;
-
     return data.map((json) => UserModel.fromJson(json)).toList();
   }
 
   @override
   Future<UserModel> updateUser({
     required String userId,
-    String? role,
-    String? area,
+    List<String>? role, 
+    String? scope,     
     bool? isActive,
   }) async {
-    // Creamos un mapa con solo los datos que no son nulos
     final Map<String, dynamic> updateData = {};
-    if (role != null)
-      updateData['role'] = [role]; // Si el rol es lista en tu entidad
-    if (area != null) updateData['area'] = area;
-    if (isActive != null) updateData['isActive'] = isActive;
+    
+    // 1. Roles
+    if (role != null) {
+      updateData['roles'] = role; 
+    }
 
-    final response = await dio.patch("/users/$userId/", data: updateData);
+    // 2. Scope con Mapeo (Evita Error 500)
+    if (scope != null) {
+      final String mappedValue = mapScope(scope);
+      
+      if (mappedValue != "Desconocido") {
+        updateData['scope'] = mappedValue;
+      } else {
+        print(" Advertencia: No se pudo mapear el valor '$scope'");
+      }
+    }
 
-    return UserModel.fromJson(response.data);
+    if (isActive != null) {
+      updateData['is_active'] = isActive;
+    }
+
+    // 3. Limpieza de URL (Elimina espacios y posibles slashes dobles)
+    final String cleanId = userId.trim().replaceAll('/', '');
+    final String cleanPath = "/auth/users/$cleanId";
+
+    print("🚀 Enviando PATCH a: $cleanPath");
+    print("📦 Body: $updateData");
+
+    try {
+      final response = await dio.patch(cleanPath, data: updateData);
+      return UserModel.fromJson(response.data);
+    } on DioException catch (e) {
+      // Log detallado para ver por qué falla el servidor
+      print(" Error en Servidor: ${e.response?.statusCode} - ${e.response?.data}");
+      rethrow;
+    }
   }
 
   @override
@@ -42,7 +67,8 @@ class UserManagementRemoteDatasourceImpl
     await dio.patch("/auth/$userId/deactivate");
     return unit;
   }
-    @override
+
+  @override
   Future<Unit> activateUser(String userId) async {
     await dio.patch("/auth/$userId/activate");
     return unit;

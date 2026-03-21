@@ -7,8 +7,8 @@ abstract class UserManagementRepository {
 
   Future<Either<Failure, User>> updateUser({
     required String userId,
-    String? role,
-    String? area,
+    List<String>? role,
+    String? scope,
     bool? isActive,
   });
 

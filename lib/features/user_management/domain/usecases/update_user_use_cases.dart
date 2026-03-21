@@ -10,14 +10,14 @@ class UpdateUser {
 
   Future<Either<Failure, User>> call({
     required String userId,
-    String? role,
-    String? area,
+    List<String>? role,
+    String? scope,
     bool? isActive,
   }) async {
     return await repository.updateUser(
       userId: userId,
       role: role,
-      area: area,
+      scope: scope,
       isActive: isActive,
     );
   }
