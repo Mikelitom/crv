@@ -1,4 +1,7 @@
+import 'package:crv_reprosisa/features/profile/presentation/provider/change_password_notifier.dart';
+import 'package:crv_reprosisa/features/profile/presentation/provider/change_password_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import '../../../../core/config/dio_client.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
 import '../../data/repositories/profile_repository_impl.dart';
@@ -26,4 +29,11 @@ final updateProfileUseCaseProvider = Provider<UpdateProfileUseCase>((ref) {
 
 final changePasswordUseCaseProvider = Provider<ChangePasswordUseCase>((ref) {
   return ChangePasswordUseCase(ref.read(profileRepositoryProvider));
+});
+
+final changePasswordNotifierProvider =
+    StateNotifierProvider<ChangePasswordNotifier, ChangePasswordState>((ref) {
+  return ChangePasswordNotifier(
+    ref.read(changePasswordUseCaseProvider),
+  );
 });

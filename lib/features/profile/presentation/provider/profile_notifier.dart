@@ -28,6 +28,15 @@ class ProfileNotifier extends Notifier<ProfileState> {
       (u) => state = state.copyWith(status: ProfileStatus.success, user: u),
     );
   }
+
+  Future<void> changePassword(String currentPassword, String newPassword, bool logoutOthers) async {
+    state = state.copyWith(status: ProfileStatus.loading);
+    final result = await ref.read(changePasswordUseCaseProvider).call(currentPassword: currentPassword, newPassword: newPassword, logoutOthers: logoutOthers);
+    result.fold(
+      (f) => state = state.copyWith(status: ProfileStatus.error, error: f),
+      (u) => state = state.copyWith(status: ProfileStatus.success),
+    );
+  }
 }
 
 final profileProvider = NotifierProvider<ProfileNotifier, ProfileState>(ProfileNotifier.new);

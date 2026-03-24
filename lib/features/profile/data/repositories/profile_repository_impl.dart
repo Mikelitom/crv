@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
+import 'package:dio/dio.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../datasources/profile_remote_datasource.dart';
 
@@ -41,8 +42,36 @@ class ProfileRepositoryImpl implements ProfileRepository {
         logoutOthers: logoutOthers
       );
       return const Right(unit);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
     }
+  }
+}
+
+Failure _mapDioError(DioException e) {
+  final status = e.response?.statusCode;
+  final detail = e.response?.data?["detail"] ?? "";
+
+  switch (status) {
+    case 400:
+      if (detail.contains("Current password is incorrect")) {
+        return const InvalidPasswordFailure();
+      }
+      if (detail.contains("validation failed")) {
+        return WeakPasswordFailure(detail);
+      }
+      return BadRequestFailure(detail);
+
+    case 401:
+      return const SessionExpiredFailure();
+
+    case 403:
+      return const UnauthorizedFailure();
+
+    case 500:
+      return const ServerFailure("Error interno del servidor");
+
+    default:
+      return const NetworkFailure("Error de red");
   }
 }

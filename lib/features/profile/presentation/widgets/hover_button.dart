@@ -4,14 +4,14 @@ class HoverButton extends StatefulWidget {
   final String label;
   final Color baseColor;
   final Color hoverColor;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const HoverButton({
-    super.key, 
-    required this.label, 
-    required this.baseColor, 
-    required this.hoverColor, 
-    required this.onTap,
+    super.key,
+    required this.label,
+    required this.baseColor,
+    required this.hoverColor,
+    this.onTap,
   });
 
   @override
@@ -45,7 +45,7 @@ class _HoverButtonState extends State<HoverButton> {
           onTap: widget.onTap,
           borderRadius: BorderRadius.circular(16),
           child: Center(
-            child: Text(widget.label, 
+            child: Text(widget.label,
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
           ),
         ),

@@ -34,11 +34,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     required bool logoutOthers,
   }) async {
     await dio.post(
-      "/users/change-password/",
+      "/auth/change-password",
       data: {
         'old_password': currentPassword,
         'new_password': newPassword,
-        'logout_others': logoutOthers,
       },
     );
     return unit;

@@ -18,3 +18,26 @@ class NetworkFailure extends Failure {
 class UnknownFailure extends Failure {
   const UnknownFailure(super.message);
 }
+
+class InvalidPasswordFailure extends Failure {
+  const InvalidPasswordFailure()
+      : super("Contraseña actual incorrecta");
+}
+
+class WeakPasswordFailure extends Failure {
+  const WeakPasswordFailure(String message) : super(message);
+}
+
+class SessionExpiredFailure extends Failure {
+  const SessionExpiredFailure()
+      : super("Sesión expirada, inicia sesión nuevamente");
+}
+
+class UnauthorizedFailure extends Failure {
+  const UnauthorizedFailure()
+      : super("No autorizado");
+}
+
+class BadRequestFailure extends Failure {
+  const BadRequestFailure(String message) : super(message);
+}
