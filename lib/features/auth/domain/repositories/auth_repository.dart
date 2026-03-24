@@ -28,4 +28,10 @@ abstract class AuthRepository {
   });
 
   Future<Either<Failure, bool>> validateToken();
+  Future<Either<Failure, Unit>> requestPasswordReset(String email);
+  
+  Future<Either<Failure, Unit>> confirmPasswordReset({
+    required String token,
+    required String newPassword,
+  });
 }

@@ -28,15 +28,15 @@ class UserManagementRepositoryImpl implements UserManagementRepository {
   @override
   Future<Either<Failure, User>> updateUser({
     required String userId,
-    String? role,
-    String? area,
+    List<String>? role,
+    String? scope,
     bool? isActive,
   }) async {
     try {
       final updatedUser = await remote.updateUser(
         userId: userId,
         role: role,
-        area: area,
+        scope: scope,
         isActive: isActive,
       );
       return Right(updatedUser);

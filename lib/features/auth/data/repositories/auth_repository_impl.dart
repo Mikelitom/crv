@@ -11,7 +11,32 @@ class AuthRepositoryImpl implements AuthRepository {
   final TokenRepository tokenRepository;
 
   AuthRepositoryImpl({required this.remote, required this.tokenRepository});
+@override
+  Future<Either<Failure, Unit>> requestPasswordReset(String email) async {
+    try {
+      await remote.requestPasswordReset(email);
+      return const Right(unit);
+    } catch (e) {
+      // Capturamos el error del servidor y lo retornamos como ServerFailure
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 
+  @override
+  Future<Either<Failure, Unit>> confirmPasswordReset({
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      await remote.confirmPasswordReset(
+        token: token,
+        newPassword: newPassword,
+      );
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
   @override
   Future<Either<Failure, User>> register({
     required String name,
@@ -118,4 +143,5 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+  
 }

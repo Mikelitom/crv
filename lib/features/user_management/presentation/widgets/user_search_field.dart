@@ -16,15 +16,36 @@ class UserSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       width: width,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: TextField(
         onChanged: onChanged,
+        // Agregamos un controlador o usamos el texto actual para el icono de borrar
+        controller: TextEditingController.fromValue(
+          TextEditingValue(
+            text: query,
+            selection: TextSelection.collapsed(offset: query.length),
+          ),
+        ),
         decoration: InputDecoration(
-          hintText: "Buscar por nombre o correo...",
+          hintText: "Buscar por nombre...",
+          hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
           prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFC62828)),
           suffixIcon: query.isNotEmpty 
-            ? IconButton(icon: const Icon(Icons.clear, size: 18), onPressed: onClear)
+            ? IconButton(
+                icon: const Icon(Icons.clear, size: 18, color: Colors.grey), 
+                onPressed: onClear
+              )
             : null,
           filled: true, 
           fillColor: Colors.white,
@@ -32,7 +53,11 @@ class UserSearchField extends StatelessWidget {
             borderRadius: BorderRadius.circular(18), 
             borderSide: BorderSide.none
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: Colors.grey.withOpacity(0.1)),
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         ),
       ),
     );

@@ -26,4 +26,11 @@ abstract class AuthRemoteDataSource {
   });
 
   Future<bool> validateToken();
+  Future<void> requestPasswordReset(String email);
+
+  Future<void> confirmPasswordReset({
+    required String token,
+    required String newPassword,
+  });
+
 }

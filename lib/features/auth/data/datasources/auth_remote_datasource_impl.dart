@@ -81,4 +81,25 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     return response.statusCode == 200;
   }
+  @override
+  Future<void> requestPasswordReset(String email) async {
+    await dio.post(
+      '/auth/password-reset/request',
+      data: {"email": email},
+    );
+  }
+
+  @override
+  Future<void> confirmPasswordReset({
+    required String token,
+    required String newPassword,
+  }) async {
+    await dio.post(
+      '/auth/password-reset/confirm',
+      data: {
+        "token": token,
+        "new_password": newPassword,
+      },
+    );
+  }
 }

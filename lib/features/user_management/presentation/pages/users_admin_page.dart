@@ -66,21 +66,26 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
                 const SizedBox(height: 32),
                 _buildResponsiveStatsGrid(constraints.maxWidth, allUsers),
                 const SizedBox(height: 48),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Listado de Personal",
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.normal),
-                    ),
-                    UserSearchField(
-                      width: 350,
-                      query: _searchQuery,
-                      onChanged: (val) => setState(() => _searchQuery = val),
-                      onClear: () => setState(() => _searchQuery = ''),
-                    ),
-                  ],
-                ),
+               // PEGA ESTE BLOQUE
+Wrap(
+  spacing: 16,        // Espacio horizontal entre título y buscador
+  runSpacing: 16,     // Espacio vertical si el buscador salta a la línea de abajo
+  alignment: WrapAlignment.spaceBetween,
+  crossAxisAlignment: WrapCrossAlignment.center,
+  children: [
+    const Text(
+      "Listado de Personal",
+      style: TextStyle(fontSize: 28, fontWeight: FontWeight.normal),
+    ),
+    UserSearchField(
+      // Si la pantalla es pequeña (< 600px), el buscador ocupa todo el ancho
+      width: constraints.maxWidth > 600 ? 350 : double.infinity,
+      query: _searchQuery,
+      onChanged: (val) => setState(() => _searchQuery = val),
+      onClear: () => setState(() => _searchQuery = ''),
+    ),
+  ],
+),
                 const SizedBox(height: 24),
                 UserFilterBar(
                   selectedStatus: _selectedStatus,
@@ -128,6 +133,13 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
                 ref
                     .read(userManagementProvider.notifier)
                     .toggleUserStatus(userId, val);
+              },
+              // ... dentro de UserDataTable
+              onRoleChanged: (userId, newRoles) {
+                ref.read(userManagementProvider.notifier).updateUserField(userId: userId, role: newRoles);
+              },
+              onScopeChanged: (userId, newScope) {
+                ref.read(userManagementProvider.notifier).updateUserField(userId: userId, scope: newScope);
               },
             ),
           ),
