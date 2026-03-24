@@ -11,8 +11,57 @@ class AuthNotifier extends Notifier<AuthState> {
   AuthState build() {
     return AuthState.initial();
   }
+  Future<Either<Failure, Unit>> requestPasswordReset(String email) async {
+    state = state.copyWith(status: AuthStatus.loading, error: null);
 
-  // --- MÉTODO AGREGADO: REGISTER ---
+    final result = await ref.read(authRepositoryProvider).requestPasswordReset(email);
+
+    return result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          error: failure,
+        );
+        return Left(failure);
+      },
+      (unitValue) {
+        state = state.copyWith(
+          status: AuthStatus.initial, // Volvemos a initial para que la UI limpie el loading
+          error: null,
+        );
+        return Right(unitValue);
+      },
+    );
+  }
+
+  Future<Either<Failure, Unit>> confirmPasswordReset({
+    required String token,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading, error: null);
+
+    final result = await ref.read(authRepositoryProvider).confirmPasswordReset(
+          token: token,
+          newPassword: newPassword,
+        );
+
+    return result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          error: failure,
+        );
+        return Left(failure);
+      },
+      (unitValue) {
+        state = state.copyWith(
+          status: AuthStatus.initial,
+          error: null,
+        );
+        return Right(unitValue);
+      },
+    );
+  }
   Future<void> register({
     required String name,
     required String phone,
@@ -103,4 +152,5 @@ class AuthNotifier extends Notifier<AuthState> {
       },
     );
   }
+  
 }
