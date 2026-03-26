@@ -2,7 +2,7 @@ import 'package:crv_reprosisa/features/catalogo/presentation/widgets/catalogo_st
 import 'package:crv_reprosisa/features/catalogo/presentation/widgets/vehicle_catalog_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../activos/presentation/providers/vehicle_list_notifier_provider.dart';
+import '../../assets/presentation/providers/vehicle_list_notifier_provider.dart';
 
 enum AssetType { vehiculo, prensa }
 
@@ -15,7 +15,7 @@ class GenericCatalogPage extends ConsumerStatefulWidget {
 }
 
 class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
-  
+
   @override
   void initState() {
     super.initState();
@@ -45,12 +45,12 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
               _buildHeader(title, actionIcon),
 
               const SizedBox(height: 32),
-              
+
               // Tarjetas de Estadísticas Dinámicas
-              CatalogStats(isVehiculo: isVehiculo), 
+              CatalogStats(isVehiculo: isVehiculo),
 
               const SizedBox(height: 40),
-              
+
               const Text(
                 "Listado de Catálogo",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -63,8 +63,8 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
               const SizedBox(height: 32),
 
               // Lógica de Contenido: Lista real para vehículos, Placeholder para otros
-              isVehiculo 
-                ? const VehicleCatalogList() 
+              isVehiculo
+                ? const VehicleCatalogList()
                 : _buildEmptyPlaceholder("No hay prensas registradas", Icons.settings_suggest),
             ],
           ),
@@ -120,7 +120,7 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 80),
       decoration: BoxDecoration(
-        color: Colors.white, 
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFECEFF1)),
       ),

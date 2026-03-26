@@ -31,7 +31,6 @@ class _ProfileSecurityCardState
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(changePasswordNotifierProvider);
 
     // 🔥 Listener reactivo
     ref.listen(changePasswordNotifierProvider, (prev, next) {

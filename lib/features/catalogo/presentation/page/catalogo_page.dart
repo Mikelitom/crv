@@ -1,7 +1,7 @@
 import 'package:crv_reprosisa/features/catalogo/presentation/widgets/press_catalog_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../activos/presentation/providers/vehicle_list_notifier_provider.dart';
+import '../../../assets/presentation/providers/vehicle_list_notifier_provider.dart';
 import '../widgets/catalogo_stats.dart';
 import '../widgets/vehicle_catalog_list.dart';
 
@@ -46,12 +46,12 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
               _buildHeader(title, actionIcon),
 
               const SizedBox(height: 32),
-              
+
               // STATS (Contadores dinámicos)
-              CatalogStats(isVehiculo: isVehiculo), 
+              CatalogStats(isVehiculo: isVehiculo),
 
               const SizedBox(height: 40),
-              
+
               const Text(
                 "Listado de Catálogo",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E)),
@@ -64,8 +64,8 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
               const SizedBox(height: 32),
 
               // TABLA DE DATOS REALES
-              isVehiculo 
-                ? const VehicleCatalogList() 
+              isVehiculo
+                ? const VehicleCatalogList()
                 : const PressCatalogList()
             ],
           ),
@@ -87,13 +87,13 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            title, 
+            title,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))
           ),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFC62828), 
+              color: const Color(0xFFC62828),
               borderRadius: BorderRadius.circular(14)
             ),
             child: Icon(icon, color: Colors.white, size: 28),

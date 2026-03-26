@@ -1,10 +1,9 @@
-import 'package:crv_reprosisa/features/activos/presentation/providers/press_list_notifier_provider.dart';
+import 'package:crv_reprosisa/features/assets/presentation/providers/press_list_notifier_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../widgets/press_catalog_list.dart';
 import '../widgets/catalogo_stats.dart';
-import '../../../activos/presentation/notifiers/press_list_notifier.dart';
 
 
 class PressCatalogPage extends ConsumerStatefulWidget {
@@ -37,7 +36,7 @@ class _PressCatalogPageState extends ConsumerState<PressCatalogPage> {
               _buildHeader(),
               const SizedBox(height: 32),
               // STATS CON LÓGICA DE PRENSAS
-              const CatalogStats(isVehiculo: false), 
+              const CatalogStats(isVehiculo: false),
               const SizedBox(height: 40),
               const Text(
                 "Listado de Catálogo",
@@ -46,9 +45,9 @@ class _PressCatalogPageState extends ConsumerState<PressCatalogPage> {
               const SizedBox(height: 20),
               _buildSearchBar(),
               const SizedBox(height: 32),
-              
+
               // AQUÍ ESTABA EL ERROR: AHORA LLAMAMOS A LA TABLA REAL
-              const PressCatalogList(), 
+              const PressCatalogList(),
             ],
           ),
         ),
