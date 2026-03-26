@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../activos/presentation/providers/vehicle_list_notifier_provider.dart';
-import '../../../activos/presentation/states/status.dart';
+import '../../../assets/presentation/providers/vehicle_list_notifier_provider.dart';
+import '../../../assets/presentation/states/status.dart';
 class VehicleCatalogList extends ConsumerWidget {
   const VehicleCatalogList({super.key});
 

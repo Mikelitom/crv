@@ -1,8 +1,7 @@
-import 'package:crv_reprosisa/features/activos/presentation/providers/press_list_notifier_provider.dart';
+import 'package:crv_reprosisa/features/assets/presentation/providers/press_list_notifier_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../activos/presentation/notifiers/press_list_notifier.dart';
-import '../../../activos/presentation/states/status.dart';
+import '../../../assets/presentation/states/status.dart';
 import 'catalogo_data_table.dart'; // Tu componente genérico
 
 class PressCatalogList extends ConsumerWidget {
@@ -42,7 +41,7 @@ class PressCatalogList extends ConsumerWidget {
         children: [
           // Encabezado usando tu lógica de CatalogoDataTable
           _buildHeader(["Modelo / Serie", "Volts", "Tamaño", "Estado", "Acciones"]),
-          
+
           // Filas dinámicas de la DB
           ListView.builder(
             shrinkWrap: true,
@@ -67,7 +66,7 @@ class PressCatalogList extends ConsumerWidget {
       ),
       child: Row(
         children: labels.map((l) => Expanded(
-          child: Text(l.toUpperCase(), 
+          child: Text(l.toUpperCase(),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF455A64))),
         )).toList(),
       ),

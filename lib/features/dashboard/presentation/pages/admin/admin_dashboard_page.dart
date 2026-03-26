@@ -1,5 +1,5 @@
 import 'package:crv_reprosisa/core/models/inspection_models.dart';
-import 'package:crv_reprosisa/features/activos/presentation/pages/assets_admin_page.dart';
+import 'package:crv_reprosisa/features/assets/presentation/pages/assets_admin_page.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
