@@ -1,5 +1,5 @@
-import '../../../activos/domain/entities/press.dart';
-import '../../../activos/domain/entities/vehicle.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/press.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
 
 
 class VehicleModel extends Vehicle {
