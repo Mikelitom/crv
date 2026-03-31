@@ -1,12 +1,14 @@
-import 'package:crv_reprosisa/features/catalogo/presentation/widgets/press_catalog_list.dart';
+import 'package:crv_reprosisa/features/catalogo/presentation/providers/catalogo_notifier_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:crv_reprosisa/features/activos/presentation/model/asset_models.dart';
+
+
 import '../../../assets/presentation/providers/vehicle_list_notifier_provider.dart';
 import '../widgets/catalogo_stats.dart';
 import '../widgets/vehicle_catalog_list.dart';
-
-// 1. AGREGA ESTO AQUÍ (El enum que falta)
-enum AssetType { vehiculo, prensa }
+import '../widgets/press_catalog_list.dart';
 
 class GenericCatalogPage extends ConsumerStatefulWidget {
   final AssetType type;
@@ -16,21 +18,24 @@ class GenericCatalogPage extends ConsumerStatefulWidget {
   ConsumerState<GenericCatalogPage> createState() => _GenericCatalogPageState();
 }
 
+// AQUÍ ESTABA EL ERROR: El nombre debe ser _GenericCatalogPageState
 class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
+
   @override
   void initState() {
     super.initState();
-    // 2. Ahora AssetType.vehiculo ya no saldrá en rojo
-    if (widget.type == AssetType.vehiculo) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(vehicleListProvider.notifier).loadVehicles();
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.type == AssetType.vehicle) {
+        ref.read(catalogoNotifierProvider.notifier).loadVehicles();
+      } else if (widget.type == AssetType.press) {
+        ref.read(catalogoNotifierProvider.notifier).loadVehicles();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isVehiculo = widget.type == AssetType.vehiculo;
+    final bool isVehiculo = widget.type == AssetType.vehicle;
     final String title = isVehiculo ? "Gestión de Vehículos" : "Gestión de Prensas";
     final IconData actionIcon = isVehiculo ? Icons.directions_car_filled : Icons.precision_manufacturing;
 
@@ -42,31 +47,24 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // HEADER (Título y Botón Rojo)
               _buildHeader(title, actionIcon),
-
               const SizedBox(height: 32),
-
-              // STATS (Contadores dinámicos)
               CatalogStats(isVehiculo: isVehiculo),
-
               const SizedBox(height: 40),
+
+
 
               const Text(
                 "Listado de Catálogo",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E)),
               ),
               const SizedBox(height: 20),
-
-              // BUSCADOR
               _buildSearchBar(),
-
               const SizedBox(height: 32),
-
-              // TABLA DE DATOS REALES
               isVehiculo
                 ? const VehicleCatalogList()
-                : const PressCatalogList()
+                : const PressCatalogList(),
+
             ],
           ),
         ),
