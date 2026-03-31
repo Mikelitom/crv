@@ -1,10 +1,13 @@
-import 'package:crv_reprosisa/features/catalogo/presentation/widgets/catalogo_stats.dart';
-import 'package:crv_reprosisa/features/catalogo/presentation/widgets/vehicle_catalog_list.dart';
+import 'package:crv_reprosisa/features/catalogo/presentation/providers/catalogo_notifier_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../activos/presentation/providers/vehicle_list_notifier_provider.dart';
 
-enum AssetType { vehiculo, prensa }
+import 'package:crv_reprosisa/features/activos/presentation/model/asset_models.dart'; 
+
+
+import '../widgets/catalogo_stats.dart';
+import '../widgets/vehicle_catalog_list.dart';
+import '../widgets/press_catalog_list.dart';
 
 class GenericCatalogPage extends ConsumerStatefulWidget {
   final AssetType type;
@@ -14,22 +17,24 @@ class GenericCatalogPage extends ConsumerStatefulWidget {
   ConsumerState<GenericCatalogPage> createState() => _GenericCatalogPageState();
 }
 
+// AQUÍ ESTABA EL ERROR: El nombre debe ser _GenericCatalogPageState
 class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
   
   @override
   void initState() {
     super.initState();
-    // Disparamos la carga de datos del catálogo al iniciar
-    if (widget.type == AssetType.vehiculo) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(vehicleListProvider.notifier).loadVehicles();
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.type == AssetType.vehicle) {
+        ref.read(catalogoNotifierProvider.notifier).loadVehicles();
+      } else if (widget.type == AssetType.press) {
+        ref.read(catalogoNotifierProvider.notifier).loadVehicles();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isVehiculo = widget.type == AssetType.vehiculo;
+    final bool isVehiculo = widget.type == AssetType.vehicle;
     final String title = isVehiculo ? "Gestión de Vehículos" : "Gestión de Prensas";
     final IconData actionIcon = isVehiculo ? Icons.directions_car_filled : Icons.precision_manufacturing;
 
@@ -41,31 +46,20 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header con estilo de Card
               _buildHeader(title, actionIcon),
-
               const SizedBox(height: 32),
-              
-              // Tarjetas de Estadísticas Dinámicas
               CatalogStats(isVehiculo: isVehiculo), 
-
               const SizedBox(height: 40),
-              
               const Text(
                 "Listado de Catálogo",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E)),
               ),
               const SizedBox(height: 20),
-
-              // Buscador Robusto
               _buildSearchBar(),
-
               const SizedBox(height: 32),
-
-              // Lógica de Contenido: Lista real para vehículos, Placeholder para otros
               isVehiculo 
                 ? const VehicleCatalogList() 
-                : _buildEmptyPlaceholder("No hay prensas registradas", Icons.settings_suggest),
+                : const PressCatalogList(),
             ],
           ),
         ),
@@ -88,7 +82,10 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
           Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: const Color(0xFFC62828), borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFC62828), 
+              borderRadius: BorderRadius.circular(14)
+            ),
             child: Icon(icon, color: Colors.white, size: 28),
           ),
         ],
@@ -111,25 +108,6 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 18),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyPlaceholder(String message, IconData icon) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 80),
-      decoration: BoxDecoration(
-        color: Colors.white, 
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFECEFF1)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 80, color: const Color(0xFFFDECEA)),
-          const SizedBox(height: 20),
-          Text(message, style: const TextStyle(color: Colors.grey, fontSize: 16)),
-        ],
       ),
     );
   }
