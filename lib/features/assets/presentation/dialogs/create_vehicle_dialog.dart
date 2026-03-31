@@ -25,23 +25,27 @@ class _CreateVehicleDialogState extends ConsumerState<CreateVehicleDialog> {
   final licensePlateController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
-    ref.listen(createVehicleProvider, (previous, next) {
+  void initState() {
+    super.initState();
+
+    ref.listenManual(createVehicleProvider, (previous, next) {
+      if (!mounted) return;
+
       if (next.status == Status.success) {
-        ref.invalidate(vehicleListProvider);
+        ref.read(vehicleListProvider.notifier).loadVehicles();
         Navigator.pop(context);
       }
 
       if (next.status == Status.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error ?? "Error al registrar vehiculo")),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(next.error ?? "Error al registar vehiculo")));
       }
     });
+  }
 
-
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(createVehicleProvider);
-    final typeState = ref.watch(typeListProvider);
+    final typeState = ref.read(typeListProvider);
 
     return BaseAssetDialog(
       title: "Registrar nuevo vehiculo",
@@ -58,7 +62,8 @@ class _CreateVehicleDialogState extends ConsumerState<CreateVehicleDialog> {
 
         await ref.read(createVehicleProvider.notifier).create(vehicle);
       },
-      isLoading: state.status == Status.loading || typeState.status == Status.loading,
+      isLoading:
+          state.status == Status.loading || typeState.status == Status.loading,
       children: [
         Form(
           key: _formKey,
@@ -104,20 +109,18 @@ class _CreateVehicleDialogState extends ConsumerState<CreateVehicleDialog> {
                 brandController,
                 "Marca",
                 "Toyota",
-                validator: (value) =>
-                    value == null || value.trim().isEmpty
-                        ? "Marca obligatoria"
-                        : null,
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? "Marca obligatoria"
+                    : null,
               ),
 
               buildField(
                 modelController,
                 "Modelo",
                 "Corolla",
-                validator: (value) =>
-                    value == null || value.trim().isEmpty
-                        ? "Modelo obligatorio"
-                        : null,
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? "Modelo obligatorio"
+                    : null,
               ),
 
               Row(
