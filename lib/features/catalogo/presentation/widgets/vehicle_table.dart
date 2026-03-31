@@ -51,35 +51,34 @@ class VehicleTable extends ConsumerWidget {
                     DataColumn(label: Text('ACCIONES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                   ],
                   rows: vehicles.map((v) {
-                    final bool isAvailable = v.responsibleName == null || v.responsibleName!.isEmpty;
-                    
+
                     return DataRow(cells: [
                       // Placa: Negrita y tamaño fijo
                       DataCell(Text(v.plate, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
-                      
+
                       // Responsable: Con límite de ancho para que no empuje las otras columnas
                       DataCell(
                         Container(
                           constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.3),
                           child: Text(
-                            isAvailable ? "Disponible" : v.responsibleName!,
+                            v.responsibleName,
                             style: TextStyle(
-                              color: isAvailable ? Colors.green : Colors.black87,
+                              color: Colors.black87,
                               fontSize: 13,
-                              fontWeight: isAvailable ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: FontWeight.normal,
                             ),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                           ),
                         ),
                       ),
-                      
+
                       // Ubicación
                       DataCell(Text(v.location ?? 'En Patio', style: const TextStyle(fontSize: 13))),
-                      
+
                       // Estado (Chip)
                       DataCell(_buildStatusChip(v.isActive)),
-                      
+
                       // Botón
                       DataCell(
                         Padding(
@@ -87,7 +86,7 @@ class VehicleTable extends ConsumerWidget {
                           child: ElevatedButton(
                             onPressed: () {
                               showDialog(
-                                context: context, 
+                                context: context,
                                 builder: (context) => VehicleDetailsDialog(vehicle: v)
                               );
                             },
@@ -126,8 +125,8 @@ class VehicleTable extends ConsumerWidget {
       child: Text(
         isActive ? "ACTIVO" : "INACTIVO",
         style: TextStyle(
-          color: isActive ? const Color(0xFF2E7D32) : const Color(0xFFC62828), 
-          fontSize: 10, 
+          color: isActive ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
+          fontSize: 10,
           fontWeight: FontWeight.bold,
         ),
       ),
