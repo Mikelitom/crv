@@ -1,4 +1,4 @@
-import 'package:crv_reprosisa/features/activos/presentation/providers/vehicle_list_notifier_provider.dart';
+import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_list_notifier_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,21 +9,21 @@ class CatalogStats extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vehicleState = ref.watch(vehicleListProvider);
-    
+
     // Datos reales del provider
     final int total = vehicleState.vehicles.length;
     final int enOperacion = vehicleState.vehicles.where((v) => v.isActive).length;
     final int enTaller = total - enOperacion;
 
-    final labels = isVehiculo 
+    final labels = isVehiculo
         ? ["Total Vehículos", "En Operación", "En Taller"]
         : ["Total Prensas", "Activas", "Mantenimiento"];
-        
+
     final icons = isVehiculo
         ? [Icons.inventory_2_outlined, Icons.local_shipping_outlined, Icons.build_circle_outlined]
         : [Icons.precision_manufacturing, Icons.settings_suggest, Icons.handyman_outlined];
 
-    final values = isVehiculo 
+    final values = isVehiculo
         ? [total.toString(), enOperacion.toString(), enTaller.toString()]
         : ["0", "0", "0"];
 

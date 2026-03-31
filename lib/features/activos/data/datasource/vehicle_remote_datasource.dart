@@ -1,7 +1,0 @@
-import 'package:crv_reprosisa/features/activos/data/models/vehicle_model.dart';
-import 'package:crv_reprosisa/features/activos/domain/params/create_vehicle_params.dart';
-
-abstract class VehicleRemoteDatasource {
-  Future<VehicleModel> createVehicle(CreateVehicleParams params);
-  Future<List<VehicleModel>> getAllVehicle();
-}
