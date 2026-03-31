@@ -10,12 +10,10 @@ class CreateClientDialog extends ConsumerStatefulWidget {
   const CreateClientDialog({super.key});
 
   @override
-  ConsumerState<CreateClientDialog> createState() =>
-      _CreateClientDialogState();
+  ConsumerState<CreateClientDialog> createState() => _CreateClientDialogState();
 }
 
-class _CreateClientDialogState
-    extends ConsumerState<CreateClientDialog> {
+class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
   final _formKey = GlobalKey<FormState>();
 
   final nameController = TextEditingController();
@@ -25,23 +23,27 @@ class _CreateClientDialogState
   final addressController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
-    // 👇 Manejo de efectos (éxito / error)
-    ref.listen(createClientProvider, (previous, next) {
+  void initState() {
+    super.initState();
+
+    ref.listenManual(createClientProvider, (previous, next) {
+      if (!mounted) return; // 🔥 CLAVE
+
       if (next.status == Status.success) {
-        ref.invalidate(clientListProvider);
+        ref.read(clientListProvider.notifier).loadClients();
         Navigator.pop(context);
       }
 
       if (next.status == Status.error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error ?? "Error al registrar cliente"),
-          ),
+          SnackBar(content: Text(next.error ?? "Error al registrar cliente")),
         );
       }
     });
+  }
 
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(createClientProvider);
 
     return BaseAssetDialog(
@@ -83,11 +85,7 @@ class _CreateClientDialogState
                 },
               ),
 
-              buildField(
-                companyController,
-                "Empresa",
-                "Minera del Norte",
-              ),
+              buildField(companyController, "Empresa", "Minera del Norte"),
 
               buildField(
                 phoneController,

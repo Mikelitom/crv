@@ -23,10 +23,14 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
   final sizeController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
-    ref.listen(createPressProvider, (previous, next) {
+  void initState() {
+    super.initState();
+
+    ref.listenManual(createPressProvider, (previous, next) {
+      if (!mounted) return;
+
       if (next.status == Status.success) {
-        ref.invalidate(pressListProvider);
+        ref.read(pressListProvider.notifier).loadPress();
         Navigator.pop(context);
       }
 
@@ -36,7 +40,10 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
         );
       }
     });
+  }
 
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(createPressProvider);
 
     return BaseAssetDialog(

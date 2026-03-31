@@ -1,4 +1,3 @@
-import 'package:crv_reprosisa/features/assets/domain/usecases/get_all_vehicle.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_usecase_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/vehicle_list_state.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
