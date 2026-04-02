@@ -3,6 +3,7 @@ import 'package:crv_reprosisa/features/assets/domain/usecases/create_client.dart
 import 'package:crv_reprosisa/features/assets/presentation/providers/client_usecase_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/create_client_state.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CreateClientNotifier extends Notifier<CreateClientState> {
@@ -26,10 +27,7 @@ class CreateClientNotifier extends Notifier<CreateClientState> {
 
       result.fold(
         (failure) {
-          state = state.copyWith(
-            status: Status.error,
-            error: failure.message,
-          );
+          state = state.copyWith(status: Status.error, error: failure.message);
         },
         (_) {
           state = state.copyWith(
@@ -38,6 +36,17 @@ class CreateClientNotifier extends Notifier<CreateClientState> {
           );
         },
       );
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      final data = e.response?.data;
+
+      if (statusCode == 409) {
+        state = state.copyWith(
+          status: Status.error,
+          error: data?['detail'] ?? "Ya existe un registro con ese correo",
+        );
+      }
+      return;
     } catch (e) {
       state = state.copyWith(
         status: Status.error,

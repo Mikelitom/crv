@@ -16,7 +16,7 @@ class PressRemoteDatasourceImpl implements PressRemoteDatasource {
         "type": params.type,
         "model": params.model,
         "voltz": params.voltz,
-        "serie": params.serie,
+        "serie": params.serie.toUpperCase(),
         "size": params.size,
       },
     );

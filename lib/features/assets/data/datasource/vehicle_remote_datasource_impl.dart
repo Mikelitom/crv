@@ -16,7 +16,7 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
         "brand": params.brand,
         "model": params.model,
         "year": params.year,
-        "plate": params.licensePlate,
+        "plate": params.licensePlate.toUpperCase(),
       };
 
       print("REQUEST BODY:");

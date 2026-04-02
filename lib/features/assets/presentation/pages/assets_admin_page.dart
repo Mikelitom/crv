@@ -178,7 +178,58 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> {
         title: title,
         description: "Registrar $title en el sistema",
         icon: icon,
-        onTap: () => showDialog(context: context, builder: (context) => dialog),
+        onTap: () async {
+          final result = await showDialog(
+            context: context,
+            builder: (context) => dialog,
+          );
+
+          if (!context.mounted) return;
+
+          if (result == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                behavior: SnackBarBehavior.floating,
+                content: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black12, blurRadius: 10),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 20,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(Icons.error_outline, color: Colors.green),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Registro exitoso",
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+        },
       ),
     );
   }

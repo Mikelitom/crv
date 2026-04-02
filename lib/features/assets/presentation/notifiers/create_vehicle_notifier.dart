@@ -3,6 +3,7 @@ import 'package:crv_reprosisa/features/assets/domain/usecases/create_vehicle.dar
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_usecase_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/create_vehicle_state.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CreateVehicleNotifier extends Notifier<CreateVehicleState> {
@@ -17,15 +18,34 @@ class CreateVehicleNotifier extends Notifier<CreateVehicleState> {
   Future<void> create(CreateVehicleParams params) async {
     state = state.copyWith(status: Status.loading);
 
-    final result = await _createVehicle(params);
+    try {
+      final result = await _createVehicle(params);
 
-    result.fold(
-      (failure) {
-        state = state.copyWith(status: Status.error, error: failure.message);
-      },
-      (_) {
-        state = state.copyWith(status: Status.success);
-      },
-    );
+      result.fold(
+        (failure) {
+          state = state.copyWith(status: Status.error, error: failure.message);
+        },
+        (_) {
+          state = state.copyWith(status: Status.success);
+        },
+      );
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      final data = e.response?.data;
+
+      if (statusCode == 409) {
+        state = state.copyWith(
+          status: Status.error,
+          error:
+              data?['detail'] ?? "Ya existe un vehiculo con la misma matricula",
+        );
+      }
+      return;
+    } catch (e) {
+      state = state.copyWith(
+        status: Status.error,
+        error: "Error ineserado. Intenta de nuevo.",
+      );
+    }
   }
 }

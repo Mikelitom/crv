@@ -1,6 +1,7 @@
 import 'package:crv_reprosisa/features/assets/domain/params/create_press_params.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/create_press_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_list_notifier_provider.dart';
+import 'package:crv_reprosisa/features/assets/presentation/states/press_list_state.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 import 'package:crv_reprosisa/features/assets/presentation/widgets/base_asset_dialog.dart';
 import 'package:flutter/material.dart';
@@ -22,21 +23,32 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
   final serieController = TextEditingController();
   final sizeController = TextEditingController();
 
+  bool _success = false; // 🔥 clave
+
   @override
   void initState() {
     super.initState();
 
-    ref.listenManual(createPressProvider, (previous, next) {
+    ref.listenManual(createPressProvider, (previous, next) async {
       if (!mounted) return;
 
       if (next.status == Status.success) {
+        setState(() => _success = true);
+
         ref.read(pressListProvider.notifier).loadPress();
-        Navigator.pop(context);
+
+        await Future.delayed(const Duration(seconds: 1));
+
+        if (!mounted) return;
+        Navigator.pop(context, true);
       }
 
       if (next.status == Status.error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error ?? "Error al registrar prensa")),
+          SnackBar(
+            content: Text(next.error ?? "Error al registrar prensa"),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     });
@@ -45,97 +57,152 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(createPressProvider);
+    final pressState = ref.read(pressListProvider);
 
     return BaseAssetDialog(
-      title: "Registrar nueva prensa",
-      onConfirm: () async {
-        if (!_formKey.currentState!.validate()) return;
+      title: _success ? "" : "Registrar nueva prensa",
+      onConfirm: _success
+          ? null
+          : () async {
+              if (!_formKey.currentState!.validate()) return;
 
-        final press = CreatePressParams(
-          type: typeController.text,
-          model: modelController.text,
-          voltz: voltzController.text,
-          serie: serieController.text,
-          size: sizeController.text,
-        );
+              final press = CreatePressParams(
+                type: typeController.text.trim(),
+                model: modelController.text.trim(),
+                voltz: voltzController.text.trim(),
+                serie: serieController.text.trim(),
+                size: sizeController.text.trim(),
+              );
 
-        await ref.read(createPressProvider.notifier).create(press);
-      },
-      isLoading: state.status == Status.loading,
+              await ref.read(createPressProvider.notifier).create(press);
+            },
+      isLoading: state.status == Status.loading && !_success,
       children: [
-        Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              buildField(
-                typeController,
-                "Tipo",
-                "Hidraulica / Mecanica",
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "El tipo es obligatorio";
-                  }
-                  return null;
-                },
-              ),
-
-              buildField(
-                modelController,
-                "Modelo",
-                "HS-500",
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "El modelo es obligatorio";
-                  }
-                  return null;
-                },
-              ),
-
-              buildField(
-                voltzController,
-                "Volts",
-                "220V",
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "El voltaje es obligatorio";
-                  }
-
-                  final regex = RegExp(r'^[0-9]+V$');
-                  if (!regex.hasMatch(value)) {
-                    return "Formato inválido (ej: 220V)";
-                  }
-
-                  return null;
-                },
-              ),
-
-              buildField(
-                serieController,
-                "Número de Serie",
-                "SN-2026-X",
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "La serie es obligatoria";
-                  }
-                  return null;
-                },
-              ),
-
-              buildField(
-                sizeController,
-                "Tamaño",
-                "5 tons",
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "El tamaño es obligatorio";
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _success ? _buildSuccessState() : _buildForm(pressState),
         ),
       ],
+    );
+  }
+
+  /// FORM
+  Widget _buildForm(PressListState pressState) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        key: const ValueKey("form"),
+        children: [
+          buildField(
+            typeController,
+            "Tipo",
+            "Hidráulica / Mecánica",
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "El tipo es obligatorio";
+              }
+              return null;
+            },
+          ),
+
+          buildField(
+            modelController,
+            "Modelo",
+            "HS-500",
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "El modelo es obligatorio";
+              }
+              return null;
+            },
+          ),
+
+          buildField(
+            voltzController,
+            "Volts",
+            "220V",
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "El voltaje es obligatorio";
+              }
+
+              final regex = RegExp(r'^[0-9]+V$');
+              if (!regex.hasMatch(value)) {
+                return "Formato inválido (ej: 220V)";
+              }
+
+              return null;
+            },
+          ),
+
+          buildField(
+            serieController,
+            "Número de Serie",
+            "SN-2026-X",
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "La serie es obligatoria";
+              }
+
+              final exists = pressState.press.any(
+                (p) => p.serie == serieController.text.trim(),
+              );
+
+              if (exists) return "Numero de serie ya registrado";
+
+              return null;
+            },
+          ),
+
+          buildField(
+            sizeController,
+            "Tamaño",
+            "5 tons",
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "El tamaño es obligatorio";
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// SUCCESS UI (igual que client)
+  Widget _buildSuccessState() {
+    return SizedBox(
+      key: const ValueKey("success"),
+      height: 220,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedScale(
+              scale: _success ? 1 : 0.5,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade100,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check,
+                  size: 60,
+                  color: Colors.green.shade600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Prensa registrada",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
