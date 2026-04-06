@@ -34,6 +34,25 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
   }
 
   @override
+  Future<VehicleModel> updateVehicle(
+    String id,
+    CreateVehicleParams params,
+  ) async {
+    final response = await dio.put(
+      '/vehicles/$id',
+      data: {
+        "type_id": params.typeId,
+        "brand": params.brand,
+        "model": params.model,
+        "year": params.year,
+        "plate": params.licensePlate.toUpperCase(),
+      },
+    );
+
+    return VehicleModel.fromJson(response.data);
+  }
+
+  @override
   Future<List<VehicleModel>> getAllVehicle() async {
     final response = await dio.get("/vehicles/");
 

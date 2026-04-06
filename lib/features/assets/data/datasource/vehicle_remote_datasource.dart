@@ -3,5 +3,6 @@ import 'package:crv_reprosisa/features/assets/domain/params/create_vehicle_param
 
 abstract class VehicleRemoteDatasource {
   Future<VehicleModel> createVehicle(CreateVehicleParams params);
+  Future<VehicleModel> updateVehicle(String id, CreateVehicleParams params);
   Future<List<VehicleModel>> getAllVehicle();
 }

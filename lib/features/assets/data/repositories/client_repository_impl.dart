@@ -30,6 +30,23 @@ class ClientRepositoryImpl implements ClientRepository {
   }
 
   @override
+  Future<Either<Failure, ClientsConveyor>> updateClient(
+    String id,
+    CreateClientParams params,
+  ) async {
+    try {
+      final client = await remote.updateClient(id, params);
+      return Right(client);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<ClientsConveyor>>> getAllClients() async {
     try {
       final clients = await remote.getAllClients();

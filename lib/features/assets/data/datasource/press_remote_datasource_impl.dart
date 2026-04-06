@@ -25,6 +25,22 @@ class PressRemoteDatasourceImpl implements PressRemoteDatasource {
   }
 
   @override
+  Future<PressModel> updatePress(String id, CreatePressParams params) async {
+    final response = await dio.put(
+      '/presses/$id',
+      data: {
+        "type": params.type,
+        "model": params.model,
+        "voltz": params.voltz,
+        "serie": params.serie.toUpperCase(),
+        "size": params.size,
+      },
+    );
+
+    return PressModel.fromJson(response.data);
+  }
+
+  @override
   Future<List<PressModel>> getAllPress() async {
     final response = await dio.get("/presses/");
 

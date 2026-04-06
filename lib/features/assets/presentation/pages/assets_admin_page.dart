@@ -1,6 +1,9 @@
 import 'package:crv_reprosisa/features/assets/domain/entities/clients_conveyor.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/press.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
+import 'package:crv_reprosisa/features/assets/domain/usecases/update_press.dart';
+import 'package:crv_reprosisa/features/assets/presentation/dialogs/update_client_dialog.dart';
+import 'package:crv_reprosisa/features/assets/presentation/dialogs/update_press_dialog.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/client_list_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_list_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_list_notifier_provider.dart';
@@ -206,11 +209,7 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> {
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        width: 4,
-                        height: 20,
-                        color: Colors.green,
-                      ),
+                      Container(width: 4, height: 20, color: Colors.green),
                       const SizedBox(width: 12),
                       Icon(Icons.error_outline, color: Colors.green),
                       const SizedBox(width: 12),
@@ -305,7 +304,89 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> {
                                   DataCell(Text(client.id)),
                                   DataCell(Text(client.name)),
                                   DataCell(Text(client.company)),
-                                  const DataCell(Icon(Icons.more_horiz)),
+                                  DataCell(
+                                    PopupMenuButton<String>(
+                                      icon: const Icon(
+                                        Icons.more_vert,
+                                        color: Colors.grey,
+                                      ),
+                                      color: Colors.white,
+                                      elevation: 8,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      onSelected: (value) {
+                                        switch (value) {
+                                          case 'edit':
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    UpdateClientDialog(
+                                                      client: client,
+                                                    ),
+                                              ),
+                                            );
+                                            break;
+                                          case 'delete':
+                                            print('delete');
+                                            break;
+                                          case 'details':
+                                            print("Detalles ${client.id}");
+                                            break;
+                                        }
+                                      },
+                                      itemBuilder: (context) => [
+                                        PopupMenuItem(
+                                          value: 'edit',
+                                          child: Row(
+                                            children: const [
+                                              Icon(
+                                                Icons.edit,
+                                                size: 18,
+                                                color: Color(0xFFD32F2F),
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text("Editar"),
+                                            ],
+                                          ),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'details',
+                                          child: Row(
+                                            children: const [
+                                              Icon(
+                                                Icons.info_outline,
+                                                size: 18,
+                                                color: Colors.grey,
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text("Detalles"),
+                                            ],
+                                          ),
+                                        ),
+                                        const PopupMenuDivider(),
+                                        PopupMenuItem(
+                                          value: 'delete',
+                                          child: Row(
+                                            children: const [
+                                              Icon(
+                                                Icons.delete_outline,
+                                                size: 18,
+                                                color: Colors.red,
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text(
+                                                "Eliminar",
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -323,7 +404,83 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> {
                                   DataCell(Text(vehicle.id)),
                                   DataCell(Text(vehicle.licensePlate)),
                                   DataCell(Text(vehicle.model)),
-                                  const DataCell(Icon(Icons.more_horiz)),
+
+                                  DataCell(
+                                    PopupMenuButton<String>(
+                                      icon: const Icon(
+                                        Icons.more_vert,
+                                        color: Colors.grey,
+                                      ),
+                                      color: Colors.white,
+                                      elevation: 8,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      onSelected: (value) {
+                                        switch (value) {
+                                          case 'edit':
+                                            print("Editar ${vehicle.id}");
+                                            break;
+                                          case 'delete':
+                                            print("Eliminar ${vehicle.id}");
+                                            break;
+                                          case 'details':
+                                            print("Detalles ${vehicle.id}");
+                                            break;
+                                        }
+                                      },
+                                      itemBuilder: (context) => [
+                                        PopupMenuItem(
+                                          value: 'edit',
+                                          child: Row(
+                                            children: const [
+                                              Icon(
+                                                Icons.edit,
+                                                size: 18,
+                                                color: Color(0xFFD32F2F),
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text("Editar"),
+                                            ],
+                                          ),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'details',
+                                          child: Row(
+                                            children: const [
+                                              Icon(
+                                                Icons.info_outline,
+                                                size: 18,
+                                                color: Colors.grey,
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text("Detalles"),
+                                            ],
+                                          ),
+                                        ),
+                                        const PopupMenuDivider(),
+                                        PopupMenuItem(
+                                          value: 'delete',
+                                          child: Row(
+                                            children: const [
+                                              Icon(
+                                                Icons.delete_outline,
+                                                size: 18,
+                                                color: Colors.red,
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text(
+                                                "Eliminar",
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -341,7 +498,86 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> {
                                   DataCell(Text(press.id)),
                                   DataCell(Text(press.serie)),
                                   DataCell(Text(press.type)),
-                                  const DataCell(Icon(Icons.more_horiz)),
+                                  DataCell(
+                                    PopupMenuButton<String>(
+                                      icon: const Icon(
+                                        Icons.more_vert,
+                                        color: Colors.grey,
+                                      ),
+                                      color: Colors.white,
+                                      elevation: 8,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      onSelected: (value) {
+                                        switch (value) {
+                                          case 'edit':
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (context) => UpdatePressDialog(press: press),
+                                              ),
+                                            );
+                                            break;
+                                          case 'delete':
+                                            print("Eliminar ${press.id}");
+                                            break;
+                                          case 'details':
+                                            print("Detalles ${press.id}");
+                                            break;
+                                        }
+                                      },
+                                      itemBuilder: (context) => [
+                                        PopupMenuItem(
+                                          value: 'edit',
+                                          child: Row(
+                                            children: const [
+                                              Icon(
+                                                Icons.edit,
+                                                size: 18,
+                                                color: Color(0xFFD32F2F),
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text("Editar"),
+                                            ],
+                                          ),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'details',
+                                          child: Row(
+                                            children: const [
+                                              Icon(
+                                                Icons.info_outline,
+                                                size: 18,
+                                                color: Colors.grey,
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text("Detalles"),
+                                            ],
+                                          ),
+                                        ),
+                                        const PopupMenuDivider(),
+                                        PopupMenuItem(
+                                          value: 'delete',
+                                          child: Row(
+                                            children: const [
+                                              Icon(
+                                                Icons.delete_outline,
+                                                size: 18,
+                                                color: Colors.red,
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text(
+                                                "Eliminar",
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),

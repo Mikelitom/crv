@@ -30,6 +30,23 @@ class VehicleRepositoryImpl implements VehicleRepository {
   }
 
   @override
+  Future<Either<Failure, Vehicle>> updateVehicle(
+    String id,
+    CreateVehicleParams params,
+  ) async {
+    try {
+      final vehicle = await remote.updateVehicle(id, params);
+      return Right(vehicle);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<Vehicle>>> getAllVehicle() async {
     try {
       final vehicle = await remote.getAllVehicle();

@@ -3,5 +3,6 @@ import 'package:crv_reprosisa/features/assets/domain/params/create_clients_param
 
 abstract class ClientRemoteDatasource {
   Future<ClientsConveyorModel> createClient(CreateClientParams params);
+  Future<ClientsConveyorModel> updateClient(String id, CreateClientParams params);
   Future<List<ClientsConveyorModel>> getAllClients();
 }
