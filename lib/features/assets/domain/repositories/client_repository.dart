@@ -8,5 +8,9 @@ abstract class ClientRepository {
   Future<Either<Failure, ClientsConveyor>> createClient(
     CreateClientParams params,
   );
+  Future<Either<Failure, ClientsConveyor>> updateClient(
+    String id,
+    CreateClientParams params,
+  );
   Future<Either<Failure, List<ClientsConveyor>>> getAllClients();
 }

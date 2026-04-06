@@ -1,32 +1,39 @@
 import 'package:crv_reprosisa/features/assets/domain/params/create_press_params.dart';
-import 'package:crv_reprosisa/features/assets/domain/usecases/create_press.dart';
+import 'package:crv_reprosisa/features/assets/domain/usecases/update_press.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_usecase_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/press_state.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CreatePressNotifier extends Notifier<PressState> {
-  late final CreatePress _createPress;
+class UpdatePressNotifier extends Notifier<PressState> {
+  late final UpdatePress _updatePress;
 
   @override
   PressState build() {
-    _createPress = ref.read(createPressUseCaseProvider);
-    return const PressState();
+    _updatePress = ref.read(updatePressUseCaseProvider);
+    return const PressState(status: Status.initial);
   }
 
-  Future<void> create(CreatePressParams params) async {
-    state = state.copyWith(status: Status.loading);
+  Future<void> update(String id, CreatePressParams params) async {
+    state = state.copyWith(
+      status: Status.loading,
+      clearError: true,
+      clearMessage: true,
+    );
 
     try {
-      final result = await _createPress(params);
+      final result = await _updatePress(id, params);
 
       result.fold(
         (failure) {
           state = state.copyWith(status: Status.error, error: failure.message);
         },
         (_) {
-          state = state.copyWith(status: Status.success);
+          state = state.copyWith(
+            status: Status.success,
+            message: "Prensa actualizada correctamente",
+          );
         },
       );
     } on DioException catch (e) {
@@ -43,7 +50,10 @@ class CreatePressNotifier extends Notifier<PressState> {
       }
       return;
     } catch (e) {
-      state = state.copyWith(status: Status.error, error: e.toString());
+      state = state.copyWith(
+        status: Status.error,
+        error: "Error inesperado. Intenta de nuevo.",
+      );
     }
   }
 }

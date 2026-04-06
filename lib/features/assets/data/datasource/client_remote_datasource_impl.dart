@@ -25,6 +25,25 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
   }
 
   @override
+  Future<ClientsConveyorModel> updateClient(
+    String id,
+    CreateClientParams params,
+  ) async {
+    final response = await dio.put(
+      '/clients/$id',
+      data: {
+        "name": params.name,
+        "company": params.company,
+        "phone": params.phone,
+        "email": params.email,
+        "address": params.address,
+      },
+    );
+
+    return ClientsConveyorModel.fromJson(response.data);
+  }
+
+  @override
   Future<List<ClientsConveyorModel>> getAllClients() async {
     final response = await dio.get("/clients/");
 

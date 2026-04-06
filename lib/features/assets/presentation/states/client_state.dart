@@ -1,24 +1,24 @@
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 
-class CreateClientState {
+class ClientState {
   final Status status;
   final String? error;
   final String? message;
 
-  const CreateClientState({
+  const ClientState({
     this.status = Status.initial,
     this.error,
     this.message,
   });
 
-  CreateClientState copyWith({
+  ClientState copyWith({
     Status? status,
     String? error,
     String? message,
     bool clearError = false,
     bool clearMessage = false,
   }) {
-    return CreateClientState(
+    return ClientState(
       status: status ?? this.status,
       error: clearError ? null : (error ?? this.error),
       message: clearMessage ? null : (message ?? this.message),

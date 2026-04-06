@@ -5,5 +5,9 @@ import 'package:dartz/dartz.dart';
 
 abstract class PressRepository {
   Future<Either<Failure, Press>> createPress(CreatePressParams params);
+  Future<Either<Failure, Press>> updatePress(
+    String id,
+    CreatePressParams params,
+  );
   Future<Either<Failure, List<Press>>> getAllPress();
 }

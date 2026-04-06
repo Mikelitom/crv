@@ -6,5 +6,6 @@ import 'package:dartz/dartz.dart';
 
 abstract class VehicleRepository {
   Future<Either<Failure, Vehicle>> createVehicle(CreateVehicleParams params);
+  Future<Either<Failure, Vehicle>> updateVehicle(String id, CreateVehicleParams params);
   Future<Either<Failure, List<Vehicle>>> getAllVehicle();
 }

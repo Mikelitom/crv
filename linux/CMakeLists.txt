@@ -13,7 +13,10 @@ set(APPLICATION_ID "com.example.crv_reprosisa")
 # versions of CMake.
 cmake_policy(SET CMP0063 NEW)
 # Instalación local en tu home, para no necesitar sudo
-set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local/flutter_build" CACHE PATH "Install prefix" FORCE)
+# set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local/flutter_build" CACHE PATH "Install prefix" FORCE)
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "${BUILD_BUNDLE_DIR}" CACHE PATH "..." FORCE)
+endif()
 # Load bundled libraries from the lib/ directory relative to the binary.
 set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
 
