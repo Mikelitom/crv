@@ -1,8 +1,7 @@
-// lib/core/models/prensa_inspection_model.dart
 class PrensaComponentItem {
  final String unidad;
   final String descripcion;
-  int? estado; // null: sin selección, 0: Bueno, 1: Malo, 2: N/A
+  int? estado; 
   String cantidad;
   String observaciones;
   String? evidenciaPath;

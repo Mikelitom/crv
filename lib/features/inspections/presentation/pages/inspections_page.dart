@@ -5,8 +5,8 @@ import 'package:crv_reprosisa/features/inspections/presentation/models/inspector
 import 'package:crv_reprosisa/features/inspections/presentation/widgets/dynamic_stats_row.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/widgets/quick_actions_i.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/widgets/table_inspector.dart';
-import 'package:crv_reprosisa/features/prensas_industriales/Pages/prensa_inspection.dart';
-import 'package:crv_reprosisa/features/vehiculos/pages/vehicle_inspection_page.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/presentation/Pages/prensa_inspection.dart';
+import 'package:crv_reprosisa/features/vehiculos/presentation/pages/vehicle_inspection_page.dart';
 import 'package:flutter/material.dart';
 
 class InspectionPage extends StatelessWidget {
@@ -89,7 +89,7 @@ class InspectionPage extends StatelessWidget {
           return IntrinsicHeight(
             child: Row(
               children: [
-                Expanded(child: _buildActionItem(context, "Inspección de Prensas", "Administrar checklists industriales", Icons.build_circle_outlined, const PrensaInspectionPage())),
+                Expanded(child: _buildActionItem(context, "Inspección de Prensas", "Administrar checklists industriales", Icons.build_circle_outlined,  PrensaInspectionPage())),
                 const SizedBox(width: 24),
                 Expanded(child: _buildActionItem(context, "Inspección de Vehículos", "Gestión de flota corporativa", Icons.local_shipping_outlined, VehicleInspectionPage())),
                 const SizedBox(width: 24),
@@ -101,7 +101,7 @@ class InspectionPage extends StatelessWidget {
 
         return Column(
           children: [
-            _buildActionItem(context, "Inspección de Prensas", "Administrar checklists", Icons.build_circle_outlined, const PrensaInspectionPage()),
+            _buildActionItem(context, "Inspección de Prensas", "Administrar checklists", Icons.build_circle_outlined,  PrensaInspectionPage()),
             const SizedBox(height: 16),
             _buildActionItem(context, "Inspección de Vehículos", "Gestión de flota", Icons.local_shipping_outlined, VehicleInspectionPage()),
             const SizedBox(height: 16),

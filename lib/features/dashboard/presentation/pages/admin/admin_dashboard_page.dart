@@ -10,8 +10,8 @@ import 'package:crv_reprosisa/features/catalogo/presentation/page/generic_catalo
 import 'package:crv_reprosisa/features/servicios/page/prensas/press_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/pages/banda_inspection_page.dart';
-import 'package:crv_reprosisa/features/prensas_industriales/Pages/prensa_inspection.dart';
-import 'package:crv_reprosisa/features/vehiculos/pages/vehicle_inspection_page.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/presentation/Pages/prensa_inspection.dart';
+import 'package:crv_reprosisa/features/vehiculos/presentation/pages/vehicle_inspection_page.dart';
 import 'package:crv_reprosisa/features/user_management/presentation/pages/users_admin_page.dart';
 import 'package:crv_reprosisa/features/profile/presentation/page/profile_page.dart';
 import 'package:crv_reprosisa/features/servicios/page/vehiculos/vehicle_service_page.dart';
@@ -233,7 +233,7 @@ class _AdminHomePage extends StatelessWidget {
                     "Inspección de Prensas",
                     "Administrar checklists industriales",
                     Icons.build_circle_outlined,
-                    const PrensaInspectionPage(),
+                     PrensaInspectionPage(),
                   ),
                 ),
                 const SizedBox(width: 24),
@@ -268,7 +268,7 @@ class _AdminHomePage extends StatelessWidget {
               "Inspección de Prensas",
               "Administrar checklists",
               Icons.build_circle_outlined,
-              const PrensaInspectionPage(),
+               PrensaInspectionPage(),
             ),
             const SizedBox(height: 16),
             _buildActionItem(

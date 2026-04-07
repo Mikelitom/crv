@@ -3,7 +3,7 @@ import '../model/banda_inspection_model.dart';
 import '../widgets/banda_section_table.dart';
 import '../../dashboard/presentation/widgets/header.dart';
 import '../widgets/customer_section.dart';
-import '../../prensas_industriales/widgets/capture_method_selector.dart';
+import '../../prensas_industriales/presentation/widgets/capture_method_selector.dart';
 import '../widgets/general_banda.dart';
 import '../widgets/rodilleria_section.dart';
 

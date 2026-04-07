@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/inspection_vehicle_model.dart';
+import '../../data/models/inspection_vehicle_model.dart';
 
 class VehicleInspectionSection extends StatefulWidget {
   final String title;

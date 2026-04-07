@@ -1,12 +1,12 @@
-import 'package:crv_reprosisa/features/prensas_industriales/widgets/prestamo_devolucion.dart';
-import 'package:crv_reprosisa/features/vehiculos/models/inspection_vehicle_model.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/presentation/widgets/prestamo_devolucion.dart';
+import 'package:crv_reprosisa/features/vehiculos/data/models/inspection_vehicle_model.dart';
 import 'package:flutter/material.dart';
-import '../../prensas_industriales/widgets/capture_method_selector.dart';
+import '../../../prensas_industriales/presentation/widgets/capture_method_selector.dart';
 import '../widgets/General_vehicle_info.dart';
 import '../widgets/Vehicle_inspection_section.dart';
 import '../widgets/Service_Vehicle_required.dart';
 import '../widgets/Inspector.dart';
-import '../../dashboard/presentation/widgets/header.dart';
+import '../../../dashboard/presentation/widgets/header.dart';
 
 class VehicleInspectionPage extends StatelessWidget {
   // Definición de listas de inspección
