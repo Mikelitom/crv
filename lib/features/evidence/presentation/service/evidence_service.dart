@@ -68,3 +68,10 @@ extension EvidenceServiceMultiple on EvidenceService {
     return Right(evidences);
   }
 }
+
+String _getFileType(String mime) {
+  if (mime.startsWith('image/')) return 'image';
+  if (mime.startsWith('video/')) return 'video';
+  if (mime == 'application/pdf') return 'pdf';
+  return 'file';
+}
