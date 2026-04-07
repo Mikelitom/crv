@@ -19,9 +19,16 @@ class UnknownFailure extends Failure {
   const UnknownFailure(super.message);
 }
 
+class FileFailure extends Failure {
+  const FileFailure(super.message);
+}
+
+class UploadFailure extends Failure {
+  const UploadFailure(super.message);
+}
+
 class InvalidPasswordFailure extends Failure {
-  const InvalidPasswordFailure()
-      : super("Contraseña actual incorrecta");
+  const InvalidPasswordFailure() : super("Contraseña actual incorrecta");
 }
 
 class WeakPasswordFailure extends Failure {
@@ -30,12 +37,11 @@ class WeakPasswordFailure extends Failure {
 
 class SessionExpiredFailure extends Failure {
   const SessionExpiredFailure()
-      : super("Sesión expirada, inicia sesión nuevamente");
+    : super("Sesión expirada, inicia sesión nuevamente");
 }
 
 class UnauthorizedFailure extends Failure {
-  const UnauthorizedFailure()
-      : super("No autorizado");
+  const UnauthorizedFailure() : super("No autorizado");
 }
 
 class BadRequestFailure extends Failure {
