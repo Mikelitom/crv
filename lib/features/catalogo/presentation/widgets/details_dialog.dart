@@ -38,7 +38,7 @@ class VehicleDetailsDialog extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Placa: ${vehicle.plate}", 
+                        Text("Placa: ${vehicle.plate}",
                           style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                         Text(vehicle.isActive ? "UNIDAD EN OPERACIÓN" : "UNIDAD FUERA DE SERVICIO",
                           style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11, letterSpacing: 1.2)),
@@ -46,7 +46,7 @@ class VehicleDetailsDialog extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => Navigator.pop(context), 
+                    onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close, color: Colors.white)
                   ),
                 ],
@@ -58,49 +58,49 @@ class VehicleDetailsDialog extends StatelessWidget {
               child: Column(
                 children: [
                   _buildPrimaryCard(
-                    Icons.person_pin_rounded, 
-                    "RESPONSABLE ASIGNADO", 
-                    vehicle.responsibleName ?? "DISPONIBLE",
-                    vehicle.responsibleName == null ? Colors.green : Colors.black87
+                    Icons.person_pin_rounded,
+                    "RESPONSABLE ASIGNADO",
+                    vehicle.responsibleName,
+                    Colors.black87
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Sección de Tiempos: CHECK-OUT y CHECK-IN
                   Row(
                     children: [
                       Expanded(child: _buildSecondaryTile(
-                        Icons.logout_rounded, 
-                        "CHECK-OUT (SALIDA)", 
-                        vehicle.checkout != null 
-                          ? "${vehicle.checkout!.day}/${vehicle.checkout!.month}/${vehicle.checkout!.year}" 
+                        Icons.logout_rounded,
+                        "CHECK-OUT (SALIDA)",
+                        vehicle.checkout != null
+                          ? "${vehicle.checkout!.day}/${vehicle.checkout!.month}/${vehicle.checkout!.year}"
                           : "---"
                       )),
                       const SizedBox(width: 12),
                       Expanded(child: _buildSecondaryTile(
-                        Icons.login_rounded, 
-                        "CHECK-IN (ENTRADA)", 
-                        vehicle.checkin != null 
-                          ? "${vehicle.checkin!.day}/${vehicle.checkin!.month}/${vehicle.checkin!.year}" 
+                        Icons.login_rounded,
+                        "CHECK-IN (ENTRADA)",
+                        vehicle.checkin != null
+                          ? "${vehicle.checkin!.day}/${vehicle.checkin!.month}/${vehicle.checkin!.year}"
                           : "---"
                       )),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Ubicación y KM
                   Row(
                     children: [
                       Expanded(child: _buildSecondaryTile(
-                        Icons.map_rounded, 
-                        "UBICACIÓN", 
+                        Icons.map_rounded,
+                        "UBICACIÓN",
                         vehicle.location ?? "En Patio"
                       )),
                       const SizedBox(width: 12),
                       Expanded(child: _buildSecondaryTile(
-                        Icons.shutter_speed_rounded, 
-                        "KM ACTUAL", 
+                        Icons.shutter_speed_rounded,
+                        "KM ACTUAL",
                         "${vehicle.mileage ?? 0} KM"
                       )),
                     ],
@@ -171,7 +171,7 @@ class VehicleDetailsDialog extends StatelessWidget {
           const SizedBox(height: 8),
           Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(value, 
+          Text(value,
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
             overflow: TextOverflow.ellipsis,
           ),

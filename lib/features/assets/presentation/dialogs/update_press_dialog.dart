@@ -1,39 +1,52 @@
+import 'package:crv_reprosisa/features/assets/domain/entities/press.dart';
+import 'package:crv_reprosisa/features/assets/domain/params/create_clients_params.dart';
 import 'package:crv_reprosisa/features/assets/domain/params/create_press_params.dart';
-import 'package:crv_reprosisa/features/assets/presentation/providers/create_press_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_list_notifier_provider.dart';
+import 'package:crv_reprosisa/features/assets/presentation/providers/update_press_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/press_list_state.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 import 'package:crv_reprosisa/features/assets/presentation/widgets/base_asset_dialog.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CreatePressDialog extends ConsumerStatefulWidget {
-  const CreatePressDialog({super.key});
+class UpdatePressDialog extends ConsumerStatefulWidget {
+  final Press press;
+
+  const UpdatePressDialog({super.key, required this.press});
 
   @override
-  ConsumerState<CreatePressDialog> createState() => _CreatePressDialogState();
+  ConsumerState<UpdatePressDialog> createState() => _UpdatePressDialogState();
 }
 
-class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
+class _UpdatePressDialogState extends ConsumerState<UpdatePressDialog> {
   final _formKey = GlobalKey<FormState>();
 
-  final typeController = TextEditingController();
-  final modelController = TextEditingController();
-  final voltzController = TextEditingController();
-  final serieController = TextEditingController();
-  final sizeController = TextEditingController();
+  late TextEditingController typeController;
+  late TextEditingController modelController;
+  late TextEditingController voltzController;
+  late TextEditingController serieController;
+  late TextEditingController sizeController;
 
-  bool _success = false; // 🔥 clave
+  bool _success = false;
 
   @override
   void initState() {
     super.initState();
 
-    ref.listenManual(createPressProvider, (previous, next) async {
+    typeController = TextEditingController(text: widget.press.type);
+    modelController = TextEditingController(text: widget.press.model);
+    voltzController = TextEditingController(text: widget.press.voltz);
+    serieController = TextEditingController(text: widget.press.serie);
+    sizeController = TextEditingController(text: widget.press.size);
+
+    ref.listenManual(updatePressProvider, (previous, next) async {
       if (!mounted) return;
 
       if (next.status == Status.success) {
-        setState(() => _success = true);
+        setState(() {
+          _success = true;
+        });
 
         ref.read(pressListProvider.notifier).loadPress();
 
@@ -46,7 +59,7 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
       if (next.status == Status.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.error ?? "Error al registrar prensa"),
+            content: Text(next.error ?? "Error al actualizar prensa"),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -56,11 +69,11 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(createPressProvider);
+    final state = ref.watch(updatePressProvider);
     final pressState = ref.read(pressListProvider);
 
     return BaseAssetDialog(
-      title: _success ? "" : "Registrar nueva prensa",
+      title: _success ? "" : "Editar prensa",
       onConfirm: _success
           ? null
           : () async {
@@ -74,7 +87,9 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
                 size: sizeController.text.trim(),
               );
 
-              await ref.read(createPressProvider.notifier).create(press);
+              await ref
+                  .read(updatePressProvider.notifier)
+                  .update(widget.press.id, press);
             },
       isLoading: state.status == Status.loading && !_success,
       children: [
@@ -86,7 +101,6 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
     );
   }
 
-  /// FORM
   Widget _buildForm(PressListState pressState) {
     return Form(
       key: _formKey,
@@ -144,11 +158,13 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
                 return "La serie es obligatoria";
               }
 
-              final exists = pressState.press.any(
-                (p) => p.serie == serieController.text.trim(),
-              );
+              if (value.trim() != widget.press.serie) {
+                final exists = pressState.press.any(
+                  (p) => p.serie == serieController.text.trim(),
+                );
 
-              if (exists) return "Numero de serie ya registrado";
+                if (exists) return "Numero de serie ya registrado";
+              }
 
               return null;
             },

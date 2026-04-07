@@ -16,7 +16,7 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
         "brand": params.brand,
         "model": params.model,
         "year": params.year,
-        "plate": params.licensePlate,
+        "plate": params.licensePlate.toUpperCase(),
       };
 
       print("REQUEST BODY:");
@@ -31,6 +31,25 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
 
       rethrow;
     }
+  }
+
+  @override
+  Future<VehicleModel> updateVehicle(
+    String id,
+    CreateVehicleParams params,
+  ) async {
+    final response = await dio.put(
+      '/vehicles/$id',
+      data: {
+        "type_id": params.typeId,
+        "brand": params.brand,
+        "model": params.model,
+        "year": params.year,
+        "plate": params.licensePlate.toUpperCase(),
+      },
+    );
+
+    return VehicleModel.fromJson(response.data);
   }
 
   @override

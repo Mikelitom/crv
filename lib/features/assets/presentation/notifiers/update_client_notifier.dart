@@ -1,21 +1,21 @@
 import 'package:crv_reprosisa/features/assets/domain/params/create_clients_params.dart';
-import 'package:crv_reprosisa/features/assets/domain/usecases/create_client.dart';
+import 'package:crv_reprosisa/features/assets/domain/usecases/update_client.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/client_usecase_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/client_state.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CreateClientNotifier extends Notifier<ClientState> {
-  late final CreateClient _createClient;
+class UpdateClientNotifier extends Notifier<ClientState> {
+  late final UpdateClient _updateClient;
 
   @override
   ClientState build() {
-    _createClient = ref.read(createClientUseCaseProvider);
-    return const ClientState();
+    _updateClient = ref.read(updateClientUseCaseProvider);
+    return const ClientState(status: Status.initial);
   }
 
-  Future<void> create(CreateClientParams params) async {
+  Future<void> update(String id, CreateClientParams params) async {
     state = state.copyWith(
       status: Status.loading,
       clearError: true,
@@ -23,7 +23,7 @@ class CreateClientNotifier extends Notifier<ClientState> {
     );
 
     try {
-      final result = await _createClient(params);
+      final result = await _updateClient(id, params);
 
       result.fold(
         (failure) {
@@ -32,7 +32,7 @@ class CreateClientNotifier extends Notifier<ClientState> {
         (_) {
           state = state.copyWith(
             status: Status.success,
-            message: "Cliente registrado correctamente",
+            message: "Cliente actualizado correctamente",
           );
         },
       );
