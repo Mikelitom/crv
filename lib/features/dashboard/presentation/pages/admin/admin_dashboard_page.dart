@@ -233,7 +233,7 @@ class _AdminHomePage extends StatelessWidget {
                     "Inspección de Prensas",
                     "Administrar checklists industriales",
                     Icons.build_circle_outlined,
-                     PrensaInspectionPage(),
+                    PrensaInspectionPage(),
                   ),
                 ),
                 const SizedBox(width: 24),
@@ -268,7 +268,7 @@ class _AdminHomePage extends StatelessWidget {
               "Inspección de Prensas",
               "Administrar checklists",
               Icons.build_circle_outlined,
-               PrensaInspectionPage(),
+              PrensaInspectionPage(),
             ),
             const SizedBox(height: 16),
             _buildActionItem(
