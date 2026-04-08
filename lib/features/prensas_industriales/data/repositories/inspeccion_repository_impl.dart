@@ -4,7 +4,7 @@ import '../../../../core/error/failure.dart';
 import '../../domain/entities/entities_press.dart';
 import '../../domain/entities/component_item.dart';
 import '../../domain/repositories/inspeccion_repository.dart';
-import '../Models/component_model.dart';
+import '../models/component_model.dart';
 import '../datasource/inspeccion_datasource_remote.dart';
 
 class InspeccionRepositoryImpl implements InspeccionRepository {
@@ -15,10 +15,14 @@ class InspeccionRepositoryImpl implements InspeccionRepository {
   Future<Either<Failure, List<ComponentItem>>> getInspectionTemplate() async {
     try {
       final List<dynamic> data = await dataSource.getInspectionTemplate();
-      final items = data.map((json) => PrensaComponentItem.fromJson(json)).toList();
+      final items = data
+          .map((json) => PrensaComponentItem.fromJson(json))
+          .toList();
       return Right(items);
     } on DioException catch (e) {
-      return Left(ServerFailure(e.message ?? "Error al conectar con el servidor"));
+      return Left(
+        ServerFailure(e.message ?? "Error al conectar con el servidor"),
+      );
     } catch (e) {
       return const Left(UnknownFailure("Error al procesar el formulario"));
     }
@@ -45,15 +49,18 @@ class InspeccionRepositoryImpl implements InspeccionRepository {
     }
   }
 
- @override
-Future<Either<Failure, Unit>> createPressReport(Map<String, dynamic> reportData) async {
-  try {
-    await dataSource.savePressReport(reportData);
-    return const Right(unit);
-  } on DioException catch (e) {
-    return Left(ServerFailure(e.message ?? "Error al enviar el reporte"));
-  } catch (e) {
-    return const Left(UnknownFailure("Error inesperado al guardar"));
+  @override
+  Future<Either<Failure, Unit>> createPressReport(
+    Map<String, dynamic> reportData,
+  ) async {
+    try {
+      await dataSource.savePressReport(reportData);
+      return const Right(unit);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? "Error al enviar el reporte"));
+    } catch (e) {
+      return const Left(UnknownFailure("Error inesperado al guardar"));
+    }
   }
 }
-}
+

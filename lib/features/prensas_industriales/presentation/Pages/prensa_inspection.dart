@@ -16,18 +16,19 @@ class PrensaInspectionPage extends ConsumerStatefulWidget {
   const PrensaInspectionPage({super.key});
 
   @override
-  ConsumerState<PrensaInspectionPage> createState() => _PrensaInspectionPageState();
+  ConsumerState<PrensaInspectionPage> createState() =>
+      _PrensaInspectionPageState();
 }
 
 class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
   bool isScanning = false;
-  bool isLoading = true; 
+  bool isLoading = true;
   List<ComponentItem> templateItems = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchTemplate(); 
+    _fetchTemplate();
   }
 
   Future<void> _fetchTemplate() async {
@@ -51,17 +52,21 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
       "fecha": fechaActual,
       "area": state.area,
       // MAPEAMOS LAS VARIABLES EXACTAS DE TU ENTIDAD
-      "tipo": state.selectedPress?.type ?? "", 
+      "tipo": state.selectedPress?.type ?? "",
       "modelo": state.selectedPress?.model ?? "",
       "volts": state.selectedPress?.voltz ?? "",
       "serie": state.selectedPress?.serie ?? "",
-      "items": templateItems.map((item) => {
-        "cant": item.quantity,
-        "unidad": item.measureUnit,
-        "descripcion": item.name,
-        "estado": item.estado, 
-        "observaciones": item.observaciones,
-      }).toList(),
+      "items": templateItems
+          .map(
+            (item) => {
+              "cant": item.quantity,
+              "unidad": item.measureUnit,
+              "descripcion": item.name,
+              "estado": item.estado,
+              "observaciones": item.observaciones,
+            },
+          )
+          .toList(),
       "area_solicita": "Taller Solicitante",
       "obs_footer": "Ninguna",
     };
@@ -90,71 +95,92 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: isLoading 
-        ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
-        : SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1600),
-                child: Column(
-                  children: [
-                    CustomHeader(title: "Inspección de Prensas", actionIcon: Icons.build_rounded, onActionTap: () => Navigator.pop(context)),
-                    const SizedBox(height: 32),
-                    CaptureMethodSelector(
-                      onManualFill: () => setState(() => isScanning = false),
-                      onScan: () => setState(() => isScanning = true),
-                    ),
-                    const SizedBox(height: 32),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 400),
-                      child: isScanning ? _buildScannerView() : _buildFormView(templateItems),
-                    ),
-                    const SizedBox(height: 40),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () => _showPdfPreview(context),
-                          icon: const Icon(Icons.picture_as_pdf),
-                          label: const Text("VISTA PREVIA PDF"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueGrey.shade700,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(200, 65),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFC62828)),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1600),
+                  child: Column(
+                    children: [
+                      CustomHeader(
+                        title: "Inspección de Prensas",
+                        actionIcon: Icons.build_rounded,
+                        onActionTap: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(height: 32),
+                      CaptureMethodSelector(
+                        onManualFill: () => setState(() => isScanning = false),
+                        onScan: () => setState(() => isScanning = true),
+                      ),
+                      const SizedBox(height: 32),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 400),
+                        child: isScanning
+                            ? _buildScannerView()
+                            : _buildFormView(templateItems),
+                      ),
+                      const SizedBox(height: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () => _showPdfPreview(context),
+                            icon: const Icon(Icons.picture_as_pdf),
+                            label: const Text("VISTA PREVIA PDF"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueGrey.shade700,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(200, 65),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 20),
-                        ElevatedButton.icon(
-                          onPressed: () {}, 
-                          icon: const Icon(Icons.check_circle),
-                          label: const Text("FINALIZAR REPORTE"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC62828),
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(200, 65),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          const SizedBox(width: 20),
+                          ElevatedButton.icon(
+                            onPressed: () {},
+                            icon: const Icon(Icons.check_circle),
+                            label: const Text("FINALIZAR REPORTE"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFC62828),
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(200, 65),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 60),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 60),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
     );
   }
 
-  Widget _buildScannerView() => Container(height: 400, color: Colors.black, child: const Center(child: Icon(Icons.qr_code_scanner, color: Colors.white, size: 80)));
+  Widget _buildScannerView() => Container(
+    height: 400,
+    color: Colors.black,
+    child: const Center(
+      child: Icon(Icons.qr_code_scanner, color: Colors.white, size: 80),
+    ),
+  );
 
-  Widget _buildFormView(List<ComponentItem> data) => Column(children: [
-    const InformationGeneralEquipo(),
-    const SizedBox(height: 24),
-    PrensaInspectionTable(items: data),
-    const SizedBox(height: 24),
-    const LoanAndInspectorSection(),
-  ]);
+  Widget _buildFormView(List<ComponentItem> data) => Column(
+    children: [
+      const InformationGeneralEquipo(),
+      const SizedBox(height: 24),
+      PrensaInspectionTable(items: data),
+      const SizedBox(height: 24),
+      const LoanAndInspectorSection(),
+    ],
+  );
 }
+

@@ -19,3 +19,4 @@ class PressModel extends Press {
     );
   }
 }
+
