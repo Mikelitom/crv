@@ -1,11 +1,7 @@
+import 'package:crv_reprosisa/features/assets/presentation/model/asset_models.dart';
 import 'package:crv_reprosisa/features/catalogo/presentation/providers/catalogo_notifier_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:crv_reprosisa/features/activos/presentation/model/asset_models.dart';
-
-
-import '../../../assets/presentation/providers/vehicle_list_notifier_provider.dart';
 import '../widgets/catalogo_stats.dart';
 import '../widgets/vehicle_catalog_list.dart';
 import '../widgets/press_catalog_list.dart';
