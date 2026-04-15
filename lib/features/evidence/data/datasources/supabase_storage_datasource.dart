@@ -1,5 +1,6 @@
 import 'package:crv_reprosisa/features/evidence/domain/entities/upload_file_entity.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
 
 class SupabaseStorageDatasource {
   final SupabaseClient client;

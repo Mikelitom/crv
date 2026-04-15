@@ -5,26 +5,34 @@ class PrensaComponentItem extends ComponentItem {
     required super.id,
     required super.name,
     required super.measureUnit,
-    super.estado,
     super.quantity,
-    super.observaciones,
+    super.status,
+    super.observation,
+    super.evidenceBefore,
+    super.evidenceAfter,
   });
 
-  // ESTE ES EL MÉTODO QUE BUSCA EL REPOSITORIO
+  // Constructor para convertir lo que viene del endpoint /template/press
   factory PrensaComponentItem.fromJson(Map<String, dynamic> json) {
     return PrensaComponentItem(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       measureUnit: json['measure_unit'] ?? 'PZA',
+      // Se inicializan vacíos para la nueva inspección
+      quantity: 0,
+      status: '', 
+      observation: '',
     );
   }
 
-  Map<String, dynamic> toJson() {
+  // Método para generar el JSON que va dentro de 'answers' en el full-report
+  Map<String, dynamic> toAnswerJson(List<Map<String, String>> uploadedEvidences) {
     return {
       "component_id": id,
-      "quantity": quantity,
-      "state": estado == 0 ? "buena" : estado == 1 ? "mala" : "no_aplica",
-      "observations": observaciones,
+      "quantity": quantity ?? 0,
+      "status": status, // "good", "bad", "not_applicable"
+      "observation": observation,
+      "evidences": uploadedEvidences, // Aquí pasamos los DTOs ya subidos
     };
   }
 }
