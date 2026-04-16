@@ -32,7 +32,7 @@ class UserManagementRemoteDatasourceImpl implements UserManagementRemoteDatasour
 
     // 2. Scope con Mapeo (Evita Error 500)
     if (scope != null) {
-      final String mappedValue = mapScope(scope);
+      final String mappedValue = scope;
       
       if (mappedValue != "Desconocido") {
         updateData['scope'] = mappedValue;
