@@ -5,93 +5,30 @@ import 'package:crv_reprosisa/features/auth/presentation/providers/auth_status.d
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dartz/dartz.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthNotifier extends Notifier<AuthState> {
+  // Herramienta para guardar el token físicamente en el celular
+  final _storage = const FlutterSecureStorage();
+
   @override
   AuthState build() {
+    // Al iniciar el provider, intentamos recuperar la sesión
+    Future.microtask(() => checkAuthStatus());
     return AuthState.initial();
   }
-  Future<Either<Failure, Unit>> requestPasswordReset(String email) async {
-    state = state.copyWith(status: AuthStatus.loading, error: null);
 
-    final result = await ref.read(authRepositoryProvider).requestPasswordReset(email);
+  /// Revisa si hay un token guardado para entrar directo a la app
+  Future<void> checkAuthStatus() async {
+    final token = await _storage.read(key: 'token');
+    
+    // Si no hay token guardado, no hacemos nada (el usuario debe loguearse)
+    if (token == null) return;
 
-    return result.fold(
-      (failure) {
-        state = state.copyWith(
-          status: AuthStatus.unauthenticated,
-          error: failure,
-        );
-        return Left(failure);
-      },
-      (unitValue) {
-        state = state.copyWith(
-          status: AuthStatus.initial, // Volvemos a initial para que la UI limpie el loading
-          error: null,
-        );
-        return Right(unitValue);
-      },
-    );
+    // Si hay token, ejecutamos getMe para validar si sigue vigente en el servidor
+    await getMe();
   }
 
-  Future<Either<Failure, Unit>> confirmPasswordReset({
-    required String token,
-    required String newPassword,
-  }) async {
-    state = state.copyWith(status: AuthStatus.loading, error: null);
-
-    final result = await ref.read(authRepositoryProvider).confirmPasswordReset(
-          token: token,
-          newPassword: newPassword,
-        );
-
-    return result.fold(
-      (failure) {
-        state = state.copyWith(
-          status: AuthStatus.unauthenticated,
-          error: failure,
-        );
-        return Left(failure);
-      },
-      (unitValue) {
-        state = state.copyWith(
-          status: AuthStatus.initial,
-          error: null,
-        );
-        return Right(unitValue);
-      },
-    );
-  }
-  Future<void> register({
-    required String name,
-    required String phone,
-    required String email,
-    required String password,
-  }) async {
-    state = state.copyWith(status: AuthStatus.loading, error: null);
-
-    final Either<Failure, User> result = await ref.read(
-      registerUseCaseProvider,
-    )(name: name, phone: phone, email: email, password: password);
-
-    result.fold(
-      (failure) {
-        state = state.copyWith(
-          status: AuthStatus.unauthenticated,
-          error: failure,
-        );
-      },
-      (user) {
-        state = state.copyWith(
-          status: AuthStatus.authenticated,
-          user: user,
-          error: null,
-        );
-      },
-    );
-  }
-
-  // --- MÉTODOS EXISTENTES (SIN MODIFICACIONES) ---
   Future<void> login(String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
 
@@ -107,7 +44,11 @@ class AuthNotifier extends Notifier<AuthState> {
           error: failure,
         );
       },
-      (user) {
+      (user) async {
+        // --- PERSISTENCIA ---
+        // Guardamos el ID o Token para que la sesión sea permanente
+        await _storage.write(key: 'token', value: user.id);
+
         state = state.copyWith(
           status: AuthStatus.authenticated,
           user: user,
@@ -119,6 +60,9 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> logout() async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
+
+    // Borramos el token físico al cerrar sesión voluntariamente
+    await _storage.delete(key: 'token');
 
     final result = await ref.read(logoutUseCaseProvider)();
 
@@ -141,16 +85,73 @@ class AuthNotifier extends Notifier<AuthState> {
     final result = await ref.read(getMeUseCaseProvider)();
 
     result.fold(
-      (failure) {
+      (failure) async {
+        // Si getMe falla (token inválido o expirado), limpiamos el storage
+        await _storage.delete(key: 'token');
         state = state.copyWith(
           status: AuthStatus.unauthenticated,
           error: failure,
         );
       },
       (user) {
-        state = state.copyWith(user: user);
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          user: user,
+          error: null,
+        );
       },
     );
   }
-  
+
+  Future<Either<Failure, Unit>> requestPasswordReset(String email) async {
+    state = state.copyWith(status: AuthStatus.loading, error: null);
+    final result = await ref.read(authRepositoryProvider).requestPasswordReset(email);
+    return result.fold(
+      (failure) {
+        state = state.copyWith(status: AuthStatus.unauthenticated, error: failure);
+        return Left(failure);
+      },
+      (unitValue) {
+        state = state.copyWith(status: AuthStatus.initial, error: null);
+        return Right(unitValue);
+      },
+    );
+  }
+
+  Future<Either<Failure, Unit>> confirmPasswordReset({
+    required String token,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading, error: null);
+    final result = await ref.read(authRepositoryProvider).confirmPasswordReset(
+          token: token,
+          newPassword: newPassword,
+        );
+    return result.fold(
+      (failure) {
+        state = state.copyWith(status: AuthStatus.unauthenticated, error: failure);
+        return Left(failure);
+      },
+      (unitValue) {
+        state = state.copyWith(status: AuthStatus.initial, error: null);
+        return Right(unitValue);
+      },
+    );
+  }
+
+  Future<void> register({
+    required String name,
+    required String phone,
+    required String email,
+    required String password,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading, error: null);
+    final Either<Failure, User> result = await ref.read(
+      registerUseCaseProvider,
+    )(name: name, phone: phone, email: email, password: password);
+    result.fold(
+      (failure) => state = state.copyWith(status: AuthStatus.unauthenticated, error: failure),
+      (user) => state = state.copyWith(status: AuthStatus.authenticated, user: user, error: null),
+    );
+  }
 }

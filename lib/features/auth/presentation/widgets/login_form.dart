@@ -127,7 +127,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
     if (emailError != null || passwordError != null) return;
 
+    // 1. Ejecutamos login
     await ref.read(authNotifierProvider.notifier).login(email, pass);
+    
+    // 2. Revisamos el estado
     final state = ref.read(authNotifierProvider);
 
     if (state.status == AuthStatus.authenticated) {
@@ -137,11 +140,23 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         await prefs.setBool('remember_me', true);
         await storage.write(key: 'saved_password', value: pass); 
       }
-    } else {
+      // NO MOSTRAMOS NADA, EL ROUTER NOS LLEVA AL DASHBOARD
+    } else if (state.status == AuthStatus.unauthenticated && state.error != null) {
+      // 👈 SOLO SI EL ESTADO ES FALLIDO Y HAY UN ERROR REAL
       if (mounted) {
+        String errorMessage = "Correo o contraseña incorrectos";
+        
+        final errStr = state.error.toString().toLowerCase();
+        
+        if (errStr.contains('socketexception') || 
+            errStr.contains('connection refused') || 
+            errStr.contains('timeout')) {
+          errorMessage = "Servidor fuera de línea. Intente más tarde.";
+        }
+
         setState(() => failedAttempts++);
         if (failedAttempts >= 3) _startBlockTimer();
-        _showToast("Correo o contraseña incorrectos", true);
+        _showToast(errorMessage, true);
       }
     }
   }
@@ -156,7 +171,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // El logo ahora se muestra siempre (Móvil, Tablet y Desktop)
               Center(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 20),
@@ -196,7 +210,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               if (isBlocked) 
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: Text('Sistema bloqueado por $secondsRemaining seg.', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    'Sistema bloqueado por $secondsRemaining seg.', 
+                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)
+                  ),
                 ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -220,8 +237,14 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                   children: [
                     const Text('¿Usuario nuevo? ', style: TextStyle(color: Colors.grey)),
                     TextButton(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (c) => const RegisterPage())), 
-                      child: const Text('Regístrate aquí', style: TextStyle(color: Color(0xFFC62828), fontWeight: FontWeight.bold))
+                      onPressed: () => Navigator.push(
+                        context, 
+                        MaterialPageRoute(builder: (c) => const RegisterPage())
+                      ), 
+                      child: const Text(
+                        'Regístrate aquí', 
+                        style: TextStyle(color: Color(0xFFC62828), fontWeight: FontWeight.bold)
+                      )
                     ),
                   ]
                 )
