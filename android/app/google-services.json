@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "70858734023",
+    "project_id": "crv-reprosisa",
+    "storage_bucket": "crv-reprosisa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:70858734023:android:78ba8d9e3989124adb01e2",
+        "android_client_info": {
+          "package_name": "com.example.crv_reprosisa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCemxEubC4p4hrgxvlzIuB9M0JMqS1Ifdg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
