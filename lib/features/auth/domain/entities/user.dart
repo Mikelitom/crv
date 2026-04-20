@@ -23,6 +23,10 @@ class User {
     required this.permissions,
   });
 
+  bool get isVerified => scope != 'NONE' && scope.isNotEmpty;
+
+  bool get isAdmin => role.contains('admin');
+
   User copyWith({
     String? id,
     String? name,
