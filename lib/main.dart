@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +18,16 @@ Future<void> main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
-  await Firebase.initializeApp();
+  if (Platform.isAndroid ||
+      Platform.isIOS ||
+      Platform.isMacOS ||
+      Platform.isWindows) {
+    await Firebase.initializeApp();
+  } else {
+    print(
+      "Firebase is not supported on this platform (${Platform.operatingSystem})",
+    );
+  }
 
   runApp(const ProviderScope(child: MyApp()));
 }
