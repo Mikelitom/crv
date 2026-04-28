@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class CustomHeader extends StatelessWidget {
   final String title;
-  final String? userName; // Opcional: Si viene, muestra el saludo
+  final String? userName; 
   final IconData? actionIcon;
   final VoidCallback? onActionTap;
 
@@ -16,35 +16,49 @@ class CustomHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Lógica: Si hay userName, dice "Bienvenido, Juan". Si no, usa el title.
-          Text(
-            userName != null ? "Bienvenido, $userName" : title,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Si el ancho es muy pequeño, reducimos el tamaño de fuente o el espaciado
+        bool isCompact = constraints.maxWidth < 400;
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
           ),
-          if (actionIcon != null)
-            InkWell(
-              onTap: onActionTap,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE53935), // Rojo del diseño
-                  borderRadius: BorderRadius.circular(10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  userName != null ? "Bienvenido, $userName" : title,
+                  style: TextStyle(
+                    fontSize: isCompact ? 18 : 22, 
+                    fontWeight: FontWeight.bold
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: Icon(actionIcon, color: Colors.white),
               ),
-            ),
-        ],
-      ),
+              if (actionIcon != null)
+                const SizedBox(width: 10),
+              if (actionIcon != null)
+                InkWell(
+                  onTap: onActionTap,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE53935),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(actionIcon, color: Colors.white),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

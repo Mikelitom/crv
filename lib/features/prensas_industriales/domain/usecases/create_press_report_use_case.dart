@@ -7,7 +7,7 @@ class CreatePressReportUseCase {
 
   CreatePressReportUseCase(this.repository);
 
-  Future<Either<Failure, Unit>> call(Map<String, dynamic> reportData) async {
+  Future<Either<Failure, String>> call(Map<String, dynamic> reportData) async {
     return await repository.createPressReport(reportData);
   }
 }

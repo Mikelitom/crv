@@ -20,9 +20,7 @@ class InspeccionRepositoryImpl implements InspeccionRepository {
           .toList();
       return Right(items);
     } on DioException catch (e) {
-      return Left(
-        ServerFailure(e.message ?? "Error al conectar con el servidor"),
-      );
+      return Left(ServerFailure(e.message ?? "Error al conectar con el servidor"));
     } catch (e) {
       return const Left(UnknownFailure("Error al procesar el formulario"));
     }
@@ -50,17 +48,44 @@ class InspeccionRepositoryImpl implements InspeccionRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> createPressReport(
-    Map<String, dynamic> reportData,
-  ) async {
+  Future<Either<Failure, String>> createPressReport(Map<String, dynamic> reportData) async {
     try {
-      await dataSource.savePressReport(reportData);
-      return const Right(unit);
+      final id = await dataSource.savePressReport(reportData);
+      return Right(id);
     } on DioException catch (e) {
       return Left(ServerFailure(e.message ?? "Error al enviar el reporte"));
     } catch (e) {
-      return const Left(UnknownFailure("Error inesperado al guardar"));
+      return const Left(UnknownFailure("Error inesperado al guardar el reporte"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<dynamic>>> getLoanAreas() async {
+    try {
+      final areas = await dataSource.getAllLoanAreas();
+      return Right(areas);
+    } catch (e) {
+      return const Left(ServerFailure("Error al cargar las áreas"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> createLoanArea(Map<String, String> data) async {
+    try {
+      final area = await dataSource.createLoanArea(data);
+      return Right(area);
+    } catch (e) {
+      return const Left(ServerFailure("Error al crear área nueva"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> createLoan(Map<String, dynamic> data) async {
+    try {
+      await dataSource.createLoan(data);
+      return const Right(unit);
+    } catch (e) {
+      return const Left(ServerFailure("Error al registrar el préstamo"));
     }
   }
 }
-

@@ -3,10 +3,13 @@ import '../models/press_model.dart';
 
 abstract class InspeccionRemoteDataSource {
   Future<PressModel?> getPressBySerie(String serie);
-  Future<void> savePressReport(Map<String, dynamic> reportData);
+  Future<String> savePressReport(Map<String, dynamic> reportData);
   Future<List<String>> getAllSeries();
-  // NUEVO: Petición al endpoint del template
   Future<List<dynamic>> getInspectionTemplate();
+  
+  Future<List<dynamic>> getAllLoanAreas();
+  Future<Map<String, dynamic>> createLoanArea(Map<String, String> areaData);
+  Future<void> createLoan(Map<String, dynamic> loanData);
 }
 
 class InspeccionRemoteDataSourceImpl implements InspeccionRemoteDataSource {
@@ -16,9 +19,7 @@ class InspeccionRemoteDataSourceImpl implements InspeccionRemoteDataSource {
   @override
   Future<List<dynamic>> getInspectionTemplate() async {
     try {
-      // El endpoint que nos da los componentes
       final response = await dio.get('/template/press');
-
       if (response.data != null && response.data['components'] != null) {
         return response.data['components'] as List<dynamic>;
       }
@@ -47,8 +48,9 @@ class InspeccionRemoteDataSourceImpl implements InspeccionRemoteDataSource {
   }
 
   @override
-  Future<void> savePressReport(Map<String, dynamic> reportData) async {
-    await dio.post('/full-press-reports', data: reportData);
+  Future<String> savePressReport(Map<String, dynamic> reportData) async {
+    final response = await dio.post('/full-press-reports', data: reportData);
+    return response.data['id'].toString();
   }
 
   @override
@@ -59,5 +61,23 @@ class InspeccionRemoteDataSourceImpl implements InspeccionRemoteDataSource {
     }
     return [];
   }
-}
 
+  @override
+  Future<List<dynamic>> getAllLoanAreas() async {
+    final response = await dio.get('/loan-area/active');
+    if (response.data is List) return response.data;
+    if (response.data != null) return [response.data];
+    return [];
+  }
+
+  @override
+  Future<Map<String, dynamic>> createLoanArea(Map<String, String> areaData) async {
+    final response = await dio.post('/loan-area/', data: areaData);
+    return response.data;
+  }
+
+  @override
+  Future<void> createLoan(Map<String, dynamic> loanData) async {
+    await dio.post('/loans/', data: loanData);
+  }
+}

@@ -1,6 +1,5 @@
 class PressReportEntity {
   final String pressId;
-  final String responsibleId;
   final DateTime inspectionDate;
   final String area;
   final String folio;
@@ -8,7 +7,6 @@ class PressReportEntity {
 
   PressReportEntity({
     required this.pressId,
-    required this.responsibleId,
     required this.inspectionDate,
     required this.area,
     required this.folio,
