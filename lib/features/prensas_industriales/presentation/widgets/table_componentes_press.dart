@@ -112,9 +112,9 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
             width: _colWidth * 3,
             child: Row(
               children: [
-                _statusBtnWrapper(item, "good", Icons.check, Colors.green),
-                _statusBtnWrapper(item, "bad", Icons.close, kRedReprosisa),
-                _statusBtnWrapper(item, "not_applicable", Icons.remove, Colors.grey),
+                _statusBtnWrapper(item, "GOOD", Icons.check, Colors.green),
+                _statusBtnWrapper(item, "BAD", Icons.close, kRedReprosisa),
+                _statusBtnWrapper(item, "NOT_APPLICABLE", Icons.remove, Colors.grey),
               ],
             ),
           )),

@@ -4,9 +4,12 @@ import '../entities/entities_press.dart';
 import '../../../../core/error/failure.dart';
 
 abstract class InspeccionRepository {
-Future<Either<Failure, Press>> getPressBySerie(String serie);
+  Future<Either<Failure, Press>> getPressBySerie(String serie);
   Future<Either<Failure, List<String>>> fetchAllSeries();
-  
-  Future<Either<Failure, Unit>> createPressReport(Map<String, dynamic> reportData);
+  Future<Either<Failure, String>> createPressReport(Map<String, dynamic> reportData);
   Future<Either<Failure, List<ComponentItem>>> getInspectionTemplate();
+  
+  Future<Either<Failure, List<dynamic>>> getLoanAreas();
+  Future<Either<Failure, Map<String, dynamic>>> createLoanArea(Map<String, String> data);
+  Future<Either<Failure, Unit>> createLoan(Map<String, dynamic> data);
 }

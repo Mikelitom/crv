@@ -8,7 +8,7 @@ import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthNotifier extends Notifier<AuthState> {
-  // Herramienta para guardar el token físicamente en el celular
+  // Herramienta única para persistencia segura
   final _storage = const FlutterSecureStorage();
 
   @override
@@ -29,7 +29,8 @@ class AuthNotifier extends Notifier<AuthState> {
     await getMe();
   }
 
-  Future<void> login(String email, String password) async {
+  /// Proceso de inicio de sesión con persistencia selectiva
+  Future<void> login(String email, String password, {bool rememberMe = false}) async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
 
     final Either<Failure, User> result = await ref.read(loginUseCaseProvider)(
@@ -45,9 +46,21 @@ class AuthNotifier extends Notifier<AuthState> {
         );
       },
       (user) async {
-        // --- PERSISTENCIA ---
-        // Guardamos el ID o Token para que la sesión sea permanente
+        // --- PERSISTENCIA DEL TOKEN ---
         await _storage.write(key: 'token', value: user.id);
+
+        // --- LÓGICA DE RECUÉRDAME ---
+        // Usamos llaves fijas para que la nueva cuenta siempre sobrescriba a la anterior
+        if (rememberMe) {
+          await _storage.write(key: 'saved_email', value: email);
+          await _storage.write(key: 'saved_password', value: password);
+          await _storage.write(key: 'is_remembered', value: 'true');
+        } else {
+          // Si no se marca, limpiamos para que el formulario inicie vacío
+          await _storage.delete(key: 'saved_email');
+          await _storage.delete(key: 'saved_password');
+          await _storage.write(key: 'is_remembered', value: 'false');
+        }
 
         state = state.copyWith(
           status: AuthStatus.authenticated,

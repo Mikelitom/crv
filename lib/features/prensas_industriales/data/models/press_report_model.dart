@@ -3,7 +3,6 @@ import '../../domain/entities/press_report_entity.dart';
 class PressReportModel extends PressReportEntity {
   PressReportModel({
     required super.pressId,
-    required super.responsibleId,
     required super.inspectionDate,
     required super.area,
     required super.folio,
@@ -11,13 +10,12 @@ class PressReportModel extends PressReportEntity {
   });
 
   Map<String, dynamic> toJson() => {
-    "press_id": pressId,
-    "responsible_id": responsibleId,
-    "inspection_date": inspectionDate.toIso8601String(),
-    "area": area,
-    "folio": folio,
-    "answers": answers.map((x) => (x as PressAnswerModel).toJson()).toList(),
-  };
+        "press_id": pressId,
+        "inspection_date": inspectionDate.toIso8601String(),
+        "area": area,
+        "folio": folio,
+        "answers": answers.map((x) => (x as PressAnswerModel).toJson()).toList(),
+      };
 }
 
 class PressAnswerModel extends PressAnswerEntity {
@@ -29,10 +27,10 @@ class PressAnswerModel extends PressAnswerEntity {
   });
 
   Map<String, dynamic> toJson() => {
-    "component_id": componentId,
-    "quantity": quantity,
-    "status": status,
-    "observation": observation,
-    "evidences": [], // Se puede expandir para fotos
-  };
+        "component_id": componentId,
+        "quantity": quantity,
+        "status": status,
+        "observation": observation,
+        "evidences": [], // Se llena dinámicamente en el Repository/DataSource si es necesario
+      };
 }
