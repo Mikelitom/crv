@@ -1,10 +1,13 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Para atajos de teclado
 import 'package:image_picker/image_picker.dart';
 import '../../domain/entities/component_item.dart';
 
+// Paleta de colores institucional Reprosisa
 const Color kRedReprosisa = Color(0xFFC62828);
+const Color kHeaderGray = Color(0xFFF1F5F9); 
+const Color kBorderSuave = Color(0xFFD1D9E0); 
+const Color kTextDark = Color(0xFF0F172A);
 
 class PrensaInspectionTable extends StatefulWidget {
   final List<ComponentItem> items;
@@ -16,27 +19,19 @@ class PrensaInspectionTable extends StatefulWidget {
 
 class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
   final ImagePicker _picker = ImagePicker();
-  final double _btnSize = 42.0;
-  final double _colWidth = 70.0;
 
-  // --- FUNCIÓN PARA VER IMAGEN EN GRANDE ---
   void _showFullImage(Uint8List bytes) {
     showDialog(
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(10),
         child: Stack(
           alignment: Alignment.topRight,
           children: [
-            // InteractiveViewer permite hacer zoom con los dedos o mouse
-            Center(
-              child: InteractiveViewer(
-                clipBehavior: Clip.none,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: Image.memory(bytes, fit: BoxFit.contain),
-                ),
+            InteractiveViewer(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.memory(bytes, fit: BoxFit.contain),
               ),
             ),
             IconButton(
@@ -51,269 +46,182 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
 
   @override
   Widget build(BuildContext context) {
-    // Shortcuts: Envolvemos todo en un KeyboardListener
-    return KeyboardListener(
-      focusNode: FocusNode()..requestFocus(),
-      onKeyEvent: (KeyEvent event) {
-        // Ejemplo opcional: Si quieres que al presionar '1' se marque la primera fila como buena
-        // Esto se puede expandir según tu flujo de trabajo
-      },
-      child: LayoutBuilder(builder: (context, constraints) {
-        if (constraints.maxWidth < 800) {
-          return _buildMobileView();
-        }
-        return _buildDesktopView();
-      }),
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      if (constraints.maxWidth < 900) {
+        return _buildHighDesignMobileList(); 
+      }
+      return _buildDesktopTable();
+    });
   }
 
-  Widget _buildDesktopView() {
+  // --- VISTA ESCRITORIO: ANCHO COMPLETO Y ALINEACIÓN PERFECTA ---
+  Widget _buildDesktopTable() {
     return Container(
-      width: double.infinity,
+      width: double.infinity, // Abarca todo el ancho de la pantalla
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kBorderSuave, width: 1.5),
       ),
-      child: DataTable(
-        headingRowHeight: 85,
-        dataRowMaxHeight: 100,
-        headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F9FA)),
-        columnSpacing: 10,
-        columns: [
-          DataColumn(label: _HeaderLabel('Cant.')),
-          DataColumn(label: _HeaderLabel('Unid.')),
-          DataColumn(label: _HeaderLabel('Descripción')),
-          DataColumn(label: SizedBox(
-            width: _colWidth * 3,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("Condición", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _stLabel("Buena (1)"), // Indicador de atajo
-                    _stLabel("Mala (2)"),
-                    _stLabel("N/A (3)"),
-                  ],
-                ),
-              ],
-            ),
-          )),
-          DataColumn(label: _HeaderLabel('Observaciones')),
-          DataColumn(label: _HeaderLabel('Evidencia')),
-        ],
-        rows: widget.items.map((item) => DataRow(cells: [
-          DataCell(SizedBox(width: 40, child: TextField(onChanged: (v) => item.quantity = int.tryParse(v), textAlign: TextAlign.center, decoration: const InputDecoration(border: InputBorder.none, hintText: "0")))),
-          DataCell(Text(item.measureUnit, style: const TextStyle(fontWeight: FontWeight.bold))),
-          DataCell(SizedBox(width: 180, child: Text(item.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)))),
-          DataCell(SizedBox(
-            width: _colWidth * 3,
-            child: Row(
-              children: [
-                _statusBtnWrapper(item, "GOOD", Icons.check, Colors.green),
-                _statusBtnWrapper(item, "BAD", Icons.close, kRedReprosisa),
-                _statusBtnWrapper(item, "NOT_APPLICABLE", Icons.remove, Colors.grey),
-              ],
-            ),
-          )),
-          DataCell(SizedBox(width: 180, child: TextField(onChanged: (v) => item.observation = v, decoration: const InputDecoration(hintText: "Notas...", border: InputBorder.none)))),
-          DataCell(_buildEvidenceDual(item)),
-        ])).toList(),
-      ),
-    );
-  }
-
-  Widget _buildMobileView() {
-    return Column(
-      children: widget.items.map((item) => Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            Container(
-              color: const Color(0xFFE9ECF1),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(child: Center(child: Text("CANTIDAD", style: _mobileLabelStyle))),
-                  Expanded(child: Center(child: Text("UNIDAD", style: _mobileLabelStyle))),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(child: Center(child: Text("${item.quantity ?? 0}", style: const TextStyle(fontWeight: FontWeight.bold)))),
-                  Expanded(child: Center(child: Text(item.measureUnit, style: const TextStyle(fontWeight: FontWeight.bold)))),
-                ],
-              ),
-            ),
-            Container(color: const Color(0xFFE9ECF1), width: double.infinity, padding: const EdgeInsets.all(8), child: Center(child: Text("DESCRIPCIÓN DEL COMPONENTE", style: _mobileLabelStyle))),
-            Padding(padding: const EdgeInsets.all(12), child: Text(item.name.toUpperCase(), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
-            Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    children: [
-                      Container(color: const Color(0xFFE9ECF1), width: double.infinity, padding: const EdgeInsets.all(8), child: Center(child: Text("CONDICIÓN", style: _mobileLabelStyle))),
-                      _mobileRadio(item, "good", "BUENO"),
-                      _mobileRadio(item, "bad", "MALO"),
-                      _mobileRadio(item, "not_applicable", "NO APLICA"),
-                    ],
-                  ),
-                ),
-                Container(width: 1, height: 150, color: Colors.grey.shade300),
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    children: [
-                      Container(color: const Color(0xFFE9ECF1), width: double.infinity, padding: const EdgeInsets.all(8), child: Center(child: Text("ACCIONES", style: _mobileLabelStyle))),
-                      const SizedBox(height: 20),
-                      _mobileActionButton(Icons.chat_bubble, () {}),
-                      const SizedBox(height: 12),
-                      _mobileActionButton(Icons.file_upload, () => _showMediaOptions(item, true)),
-                    ],
-                  ),
-                )
-              ],
-            )
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: DataTable(
+          headingRowHeight: 56,
+          dataRowMaxHeight: 95,
+          columnSpacing: 20, // Espaciado controlado para alineación
+          headingRowColor: WidgetStateProperty.all(kHeaderGray),
+          columns: const [
+            DataColumn(label: _HeaderLabel('CANTID.')),
+            DataColumn(label: _HeaderLabel('UNIDAD')),
+            DataColumn(label: _HeaderLabel('DESCRIPCIÓN DEL COMPONENTE')),
+            DataColumn(label: _HeaderLabel('CONDICIÓN')),
+            DataColumn(label: _HeaderLabel('EVIDENCIA (A / D)')),
           ],
-        ),
-      )).toList(),
-    );
-  }
-
-  TextStyle get _mobileLabelStyle => const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black87);
-
-  Widget _mobileRadio(ComponentItem item, String val, String label) {
-    bool isSel = item.status == val;
-    return InkWell(
-      onTap: () => setState(() => item.status = val),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: Row(
-          children: [
-            Icon(isSel ? Icons.radio_button_checked : Icons.radio_button_off, size: 20, color: isSel ? kRedReprosisa : Colors.grey),
-            const SizedBox(width: 8),
-            Text(label, style: TextStyle(fontSize: 12, fontWeight: isSel ? FontWeight.bold : FontWeight.normal)),
-          ],
+          rows: widget.items.map((item) => DataRow(
+            cells: [
+              DataCell(_qtyField(item)),
+              DataCell(Text(item.measureUnit, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey))),
+              DataCell(SizedBox(
+                width: 350, // Descripción amplia alineada
+                child: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w700, color: kTextDark))
+              )),
+              DataCell(_desktopStatus(item)), // Condición con N/A reintegrado
+              DataCell(_evidenceDual(item, 44, true)),
+            ],
+          )).toList(),
         ),
       ),
     );
   }
 
-  Widget _mobileActionButton(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: kRedReprosisa, borderRadius: BorderRadius.circular(8)),
-        child: Icon(icon, color: Colors.white, size: 24),
+  // --- VISTA MÓVIL: DISEÑO CONTINUO Y COMPACTO ---
+  Widget _buildHighDesignMobileList() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: kBorderSuave, width: 1.2),
       ),
-    );
-  }
+      child: Column(
+        children: widget.items.asMap().entries.map((entry) {
+          final item = entry.value;
+          bool isLast = entry.key == widget.items.length - 1;
 
-  Widget _stLabel(String t) => SizedBox(width: _colWidth, child: Center(child: Text(t, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold))));
-  Widget _statusBtnWrapper(ComponentItem item, String val, IconData icon, Color color) => SizedBox(width: _colWidth, child: Center(child: _statusBtn(item, val, icon, color)));
-
-  Widget _statusBtn(ComponentItem item, String val, IconData icon, Color color) {
-    bool isSelected = item.status == val;
-    return GestureDetector(
-      onTap: () => setState(() => item.status = val),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: _btnSize, height: _btnSize,
-        decoration: BoxDecoration(
-          color: isSelected ? color : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSelected ? color : kRedReprosisa, width: 2.5),
-        ),
-        child: Icon(icon, size: 24, color: isSelected ? Colors.white : kRedReprosisa),
-      ),
-    );
-  }
-
-  Widget _buildEvidenceDual(ComponentItem item) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _mediaBox("ANTES", item.evidenceBefore, () => _showMediaOptions(item, true)),
-        const SizedBox(width: 8),
-        _mediaBox("DESPUÉS", item.evidenceAfter, () => _showMediaOptions(item, false)),
-      ],
-    );
-  }
-
-  Widget _mediaBox(String label, List<EvidenceFile> files, VoidCallback onTap) {
-    bool hasData = files.isNotEmpty;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: kRedReprosisa)),
-        const SizedBox(height: 4),
-        GestureDetector(
-          // SI TIENE IMAGEN: Ver en grande. SI NO: Abrir opciones para subir.
-          onTap: hasData ? () => _showFullImage(files.first.bytes) : onTap,
-          child: Container(
-            width: 48, height: 48,
+          return Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FA),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: kRedReprosisa, width: 1.5),
+              border: isLast ? null : const Border(bottom: BorderSide(color: kBorderSuave, width: 1.5)),
             ),
-            child: hasData 
-              ? Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.memory(files.first.bytes, fit: BoxFit.cover, width: 48, height: 48),
-                    ),
-                    // Iconito para borrar rápido si te equivocas
-                    Positioned(
-                      top: 0, right: 0,
-                      child: GestureDetector(
-                        onTap: () => setState(() => files.clear()),
-                        child: Container(
-                          decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                          child: const Icon(Icons.close, size: 14, color: Colors.white),
-                        ),
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: kHeaderGray,
+                    borderRadius: entry.key == 0 ? const BorderRadius.vertical(top: Radius.circular(18)) : null,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("DESCRIPCIÓN DEL COMPONENTE", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.blueGrey)),
+                      const SizedBox(height: 4),
+                      Text(item.name.toUpperCase(), 
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: kTextDark, letterSpacing: 0.5)),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          _infoColumn("CANTIDAD", _qtyField(item)),
+                          const SizedBox(width: 12),
+                          _infoColumn("UNIDAD", _unitLabel(item.measureUnit)),
+                        ],
                       ),
-                    )
-                  ],
-                )
-              : const Icon(Icons.add_a_photo_rounded, size: 18, color: kRedReprosisa),
-          ),
-        ),
-      ],
+                      const SizedBox(height: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("CONDICIÓN", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.blueGrey)),
+                          const SizedBox(height: 8),
+                          _modernConditionSelector(item),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: kHeaderGray.withOpacity(0.3),
+                    borderRadius: isLast ? const BorderRadius.vertical(bottom: Radius.circular(18)) : null,
+                    border: const Border(top: BorderSide(color: kHeaderGray, width: 1.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      _noteActionBtn(item),
+                      const Spacer(),
+                      const Text("FOTOS (A / D)", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.blueGrey)),
+                      const SizedBox(width: 12),
+                      _evidenceDual(item, 40, false),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
-  void _showMediaOptions(ComponentItem item, bool isBefore) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-          child: Column(
+  // --- HELPERS DE UI ---
+
+  Widget _infoColumn(String title, Widget content) => Expanded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.blueGrey)),
+        const SizedBox(height: 6),
+        content,
+      ],
+    ),
+  );
+
+  Widget _unitLabel(String unit) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    decoration: BoxDecoration(
+      color: kHeaderGray.withOpacity(0.5), 
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: kBorderSuave.withOpacity(0.5))
+    ),
+    child: Center(child: Text(unit, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13))),
+  );
+
+  Widget _noteActionBtn(ComponentItem item) {
+    bool hasNote = item.observation.isNotEmpty;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showNote(item),
+        borderRadius: BorderRadius.circular(12),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: hasNote ? kRedReprosisa : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: hasNote ? kRedReprosisa : kBorderSuave, width: 1.5),
+          ),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20), decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10))),
-              const Text("AÑADIR EVIDENCIA", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-              const SizedBox(height: 24),
-              _minimalOptionBtn(icon: Icons.camera_alt_rounded, label: "TOMAR FOTO", onTap: () { Navigator.pop(context); _pick(item, isBefore, ImageSource.camera); }),
-              const SizedBox(height: 12),
-              _minimalOptionBtn(icon: Icons.photo_library_rounded, label: "SELECCIONAR DE GALERÍA", onTap: () { Navigator.pop(context); _pick(item, isBefore, ImageSource.gallery); }),
-              const SizedBox(height: 16),
+              Icon(Icons.edit_note_rounded, color: hasNote ? Colors.white : kTextDark, size: 18),
+              const SizedBox(width: 8),
+              Text("NOTAS", style: TextStyle(color: hasNote ? Colors.white : kTextDark, fontSize: 10, fontWeight: FontWeight.w900)),
             ],
           ),
         ),
@@ -321,35 +229,135 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     );
   }
 
-  Widget _minimalOptionBtn({required IconData icon, required String label, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-        decoration: BoxDecoration(color: const Color(0xFFF8F9FA), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.shade200)),
-        child: Row(
-          children: [
-            Icon(icon, color: kRedReprosisa, size: 24),
-            const SizedBox(width: 16),
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-            const Spacer(),
-            const Icon(Icons.chevron_right_rounded, color: Colors.grey)
-          ],
+  Widget _modernConditionSelector(ComponentItem item) {
+    return Row(
+      children: [
+        _condBtn(item, "good", "BUENO", Colors.green),
+        const SizedBox(width: 8),
+        _condBtn(item, "bad", "MALO", kRedReprosisa),
+        const SizedBox(width: 8),
+        _condBtn(item, "not_applicable", "N/A", Colors.blueGrey),
+      ],
+    );
+  }
+
+  Widget _condBtn(ComponentItem item, String val, String label, Color color) {
+    bool isSel = item.status == val;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => item.status = val),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSel ? color : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: isSel ? color : kBorderSuave, width: 1.2),
+          ),
+          child: Center(child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isSel ? Colors.white : Colors.black54))),
         ),
       ),
     );
   }
 
-  Future<void> _pick(ComponentItem item, bool isBefore, ImageSource source) async {
-    final file = await _picker.pickMedia(imageQuality: 50);
-    if (file != null) {
-      final bytes = await file.readAsBytes();
-      final isVid = file.path.toLowerCase().endsWith('.mp4');
-      setState(() {
-        final ev = EvidenceFile(bytes: bytes, type: isVid ? "video" : "image", mimeType: isVid ? "video/mp4" : "image/jpeg");
-        if (isBefore) item.evidenceBefore = [ev]; else item.evidenceAfter = [ev];
-      });
+  Widget _qtyField(ComponentItem item) => TextField(
+    onChanged: (v) => setState(() => item.quantity = int.tryParse(v)),
+    textAlign: TextAlign.center, keyboardType: TextInputType.number,
+    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+    decoration: InputDecoration(
+      hintText: "0", filled: true, fillColor: Colors.white, isDense: true, 
+      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: kBorderSuave, width: 1.5)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: kRedReprosisa, width: 2.0)),
+    ),
+  );
+
+  Widget _evidenceDual(ComponentItem item, double size, bool showLabel) => Row(
+    children: [
+      _mediaBox("A", item.evidenceBefore, () => _pick(item, true), () => setState(() => item.evidenceBefore = []), size),
+      const SizedBox(width: 8),
+      _mediaBox("D", item.evidenceAfter, () => _pick(item, false), () => setState(() => item.evidenceAfter = []), size),
+    ],
+  );
+
+  Widget _mediaBox(String label, List<EvidenceFile> files, VoidCallback onAdd, VoidCallback onDelete, double size) {
+    bool hasData = files.isNotEmpty;
+    return GestureDetector(
+      onTap: hasData ? () => _showFullImage(files.first.bytes) : onAdd,
+      child: Container(
+        width: size, height: size,
+        decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(10), 
+          border: Border.all(color: hasData ? kRedReprosisa : kBorderSuave, width: 1.5)
+        ),
+        child: hasData
+            ? Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.memory(files.first.bytes, fit: BoxFit.cover, width: size, height: size)),
+                  Positioned(top: -6, right: -6, child: GestureDetector(onTap: onDelete, child: Container(padding: const EdgeInsets.all(3), decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle), child: const Icon(Icons.close, size: 10, color: Colors.white)))),
+                ],
+              )
+            : Icon(Icons.camera_alt_rounded, size: 18, color: kRedReprosisa.withOpacity(0.6)),
+      ),
+    );
+  }
+
+  void _showNote(ComponentItem item) {
+    final ctrl = TextEditingController(text: item.observation);
+    showDialog(context: context, builder: (context) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text("Notas del Componente", style: TextStyle(fontWeight: FontWeight.w900)),
+      content: TextField(controller: ctrl, maxLines: 4, decoration: const InputDecoration(hintText: "Escriba las observaciones aquí...", border: OutlineInputBorder())),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCELAR")),
+        ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: kRedReprosisa), 
+          onPressed: () { setState(() => item.observation = ctrl.text); Navigator.pop(context); }, 
+          child: const Text("GUARDAR", style: TextStyle(color: Colors.white)))
+      ]
+    ));
+  }
+
+  Future<void> _pick(ComponentItem item, bool isBefore) async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        ListTile(leading: const Icon(Icons.camera_alt, color: kRedReprosisa), title: const Text("Cámara"), onTap: () => Navigator.pop(context, ImageSource.camera)),
+        ListTile(leading: const Icon(Icons.photo_library, color: kRedReprosisa), title: const Text("Galería"), onTap: () => Navigator.pop(context, ImageSource.gallery)),
+      ])),
+    );
+    if (source != null) {
+      final file = await _picker.pickImage(source: source, imageQuality: 50);
+      if (file != null) {
+        final bytes = await file.readAsBytes();
+        setState(() {
+          final ev = EvidenceFile(bytes: bytes, type: "image", mimeType: "image/jpeg");
+          if (isBefore) item.evidenceBefore = [ev]; else item.evidenceAfter = [ev];
+        });
+      }
     }
+  }
+
+  // --- COMPONENTE DE CONDICIÓN EN PC (CON N/A REINTEGRADO) ---
+  Widget _desktopStatus(ComponentItem item) => Row(children: [
+    _stBtn(item, "good", Colors.green, Icons.check, "BUENO"),
+    const SizedBox(width: 10),
+    _stBtn(item, "bad", kRedReprosisa, Icons.close, "MALO"),
+    const SizedBox(width: 10),
+    _stBtn(item, "not_applicable", Colors.grey, Icons.remove, "N/A"), // N/A añadido
+  ]);
+
+  Widget _stBtn(ComponentItem item, String val, Color c, IconData i, String l) {
+    bool isSel = item.status == val;
+    return GestureDetector(
+      onTap: () => setState(() => item.status = val), 
+      child: Row(children: [
+        CircleAvatar(radius: 14, backgroundColor: isSel ? c : kHeaderGray, child: Icon(i, size: 14, color: isSel ? Colors.white : Colors.grey)), 
+        const SizedBox(width: 6), 
+        Text(l, style: TextStyle(fontSize: 10, fontWeight: isSel ? FontWeight.w900 : FontWeight.normal, color: isSel ? c : Colors.black54))
+      ])
+    );
   }
 }
 
@@ -357,5 +365,5 @@ class _HeaderLabel extends StatelessWidget {
   final String label;
   const _HeaderLabel(this.label);
   @override
-  Widget build(BuildContext context) => Text(label, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E), fontSize: 13));
+  Widget build(BuildContext context) => Text(label, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.blueGrey, fontSize: 10));
 }
