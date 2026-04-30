@@ -54,10 +54,9 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     });
   }
 
-  // --- VISTA ESCRITORIO: ANCHO COMPLETO Y ALINEACIÓN PERFECTA ---
   Widget _buildDesktopTable() {
     return Container(
-      width: double.infinity, // Abarca todo el ancho de la pantalla
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -68,7 +67,7 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
         child: DataTable(
           headingRowHeight: 56,
           dataRowMaxHeight: 95,
-          columnSpacing: 20, // Espaciado controlado para alineación
+          columnSpacing: 20,
           headingRowColor: WidgetStateProperty.all(kHeaderGray),
           columns: const [
             DataColumn(label: _HeaderLabel('CANTID.')),
@@ -82,10 +81,10 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
               DataCell(_qtyField(item)),
               DataCell(Text(item.measureUnit, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey))),
               DataCell(SizedBox(
-                width: 350, // Descripción amplia alineada
+                width: 350,
                 child: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w700, color: kTextDark))
               )),
-              DataCell(_desktopStatus(item)), // Condición con N/A reintegrado
+              DataCell(_desktopStatus(item)), 
               DataCell(_evidenceDual(item, 44, true)),
             ],
           )).toList(),
@@ -94,7 +93,6 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     );
   }
 
-  // --- VISTA MÓVIL: DISEÑO CONTINUO Y COMPACTO ---
   Widget _buildHighDesignMobileList() {
     return Container(
       decoration: BoxDecoration(
@@ -178,8 +176,6 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     );
   }
 
-  // --- HELPERS DE UI ---
-
   Widget _infoColumn(String title, Widget content) => Expanded(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,11 +228,11 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
   Widget _modernConditionSelector(ComponentItem item) {
     return Row(
       children: [
-        _condBtn(item, "good", "BUENO", Colors.green),
+        _condBtn(item, "GOOD", "BUENO", Colors.green),
         const SizedBox(width: 8),
-        _condBtn(item, "bad", "MALO", kRedReprosisa),
+        _condBtn(item, "BAD", "MALO", kRedReprosisa),
         const SizedBox(width: 8),
-        _condBtn(item, "not_applicable", "N/A", Colors.blueGrey),
+        _condBtn(item, "NOT_APPLICABLE", "N/A", Colors.blueGrey),
       ],
     );
   }
@@ -339,13 +335,12 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     }
   }
 
-  // --- COMPONENTE DE CONDICIÓN EN PC (CON N/A REINTEGRADO) ---
   Widget _desktopStatus(ComponentItem item) => Row(children: [
-    _stBtn(item, "good", Colors.green, Icons.check, "BUENO"),
+    _stBtn(item, "GOOD", Colors.green, Icons.check, "BUENO"),
     const SizedBox(width: 10),
-    _stBtn(item, "bad", kRedReprosisa, Icons.close, "MALO"),
+    _stBtn(item, "BAD", kRedReprosisa, Icons.close, "MALO"),
     const SizedBox(width: 10),
-    _stBtn(item, "not_applicable", Colors.grey, Icons.remove, "N/A"), // N/A añadido
+    _stBtn(item, "NOT_APPLICABLE", Colors.grey, Icons.remove, "N/A"),
   ]);
 
   Widget _stBtn(ComponentItem item, String val, Color c, IconData i, String l) {

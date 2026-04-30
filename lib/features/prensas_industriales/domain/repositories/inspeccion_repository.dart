@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import '../entities/component_item.dart';
 import '../entities/entities_press.dart';
+import '../entities/loan_area.dart'; // Asegúrate de importar tu entidad
 import '../../../../core/error/failure.dart';
 
 abstract class InspeccionRepository {
@@ -10,6 +11,9 @@ abstract class InspeccionRepository {
   Future<Either<Failure, List<ComponentItem>>> getInspectionTemplate();
   
   Future<Either<Failure, List<dynamic>>> getLoanAreas();
-  Future<Either<Failure, Map<String, dynamic>>> createLoanArea(Map<String, String> data);
+  
+  // CAMBIO CLAVE: Ahora devuelve LoanArea en lugar de Map<String, dynamic>
+  Future<Either<Failure, LoanArea>> createLoanArea(Map<String, String> data);
+  
   Future<Either<Failure, Unit>> createLoan(Map<String, dynamic> data);
 }

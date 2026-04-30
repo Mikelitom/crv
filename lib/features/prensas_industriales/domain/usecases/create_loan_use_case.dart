@@ -1,13 +1,13 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failure.dart';
+import '../entities/loan_area.dart';
 import '../repositories/inspeccion_repository.dart';
 
-class CreateLoanUseCase {
+class CreateLoanAreaUseCase {
   final InspeccionRepository repository;
+  CreateLoanAreaUseCase(this.repository);
 
-  CreateLoanUseCase(this.repository);
-
-  Future<Either<Failure, Unit>> call(Map<String, dynamic> loanData) async {
-    return await repository.createLoan(loanData);
+  Future<Either<Failure, LoanArea>> call(Map<String, String> data) async {
+    return await repository.createLoanArea(data);
   }
 }
