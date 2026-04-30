@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
 
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-08-PRESS.DART';
 import '../../domain/entities/component_item.dart';
@@ -18,8 +19,7 @@ class PrensaInspectionPage extends ConsumerStatefulWidget {
   const PrensaInspectionPage({super.key});
 
   @override
-  ConsumerState<PrensaInspectionPage> createState() =>
-      _PrensaInspectionPageState();
+  ConsumerState<PrensaInspectionPage> createState() => _PrensaInspectionPageState();
 }
 
 class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
@@ -27,16 +27,9 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
   bool isLoading = true;
   List<ComponentItem> templateItems = [];
 
-  // --- Datos de Texto Manual ---
   final TextEditingController _areaController = TextEditingController();
   final TextEditingController _recibeController = TextEditingController();
-  final TextEditingController _observacionesLoanController =
-      TextEditingController();
-
-  // --- Estados para Popup ---
-  final TextEditingController _newNameController = TextEditingController();
-  final TextEditingController _newAddressController = TextEditingController();
-  final TextEditingController _newContactController = TextEditingController();
+  final TextEditingController _observacionesLoanController = TextEditingController();
 
   @override
   void initState() {
@@ -49,9 +42,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
     _areaController.dispose();
     _recibeController.dispose();
     _observacionesLoanController.dispose();
-    _newNameController.dispose();
-    _newAddressController.dispose();
-    _newContactController.dispose();
     super.dispose();
   }
 
@@ -67,153 +57,37 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
     );
   }
 
-  // --- REINTEGRADA: VISTA PREVIA DEL PDF ---
   void _showPdfPreview(BuildContext context) {
     final state = ref.read(inspeccionProvider);
-    final String fechaActual = DateTime.now()
-        .toIso8601String(); // .split('T').first;
+    final String fechaActual = DateFormat('dd/MM/yyyy').format(state.inspectionDate);
 
     final Map<String, dynamic> pdfData = {
       "serie": state.selectedPress?.serie ?? "S/N",
       "fecha": fechaActual,
-      "area": _areaController.text.isEmpty ? "N/A" : _areaController.text,
+      "area": _areaController.text.trim().isEmpty ? "General" : _areaController.text.trim(),
       "tipo": state.selectedPress?.type ?? "N/A",
       "modelo": state.selectedPress?.model ?? "N/A",
       "volts": state.selectedPress?.voltz ?? "N/A",
-      "nombre_recibe": _recibeController.text.isEmpty
-          ? "N/A"
-          : _recibeController.text,
+      "nombre_recibe": _recibeController.text.isEmpty ? "N/A" : _recibeController.text,
       "obs_prestamo": _observacionesLoanController.text,
-      "items": templateItems
-          .map(
-            (item) => {
-              "quantity": item.quantity,
-              "measureUnit": item.measureUnit,
-              "name": item.name,
-              "status": item.status,
-              "observation": item.observation,
-              "foto_antes_bytes": item.evidenceBefore.isNotEmpty
-                  ? item.evidenceBefore.first.bytes
-                  : null,
-              "foto_despues_bytes": item.evidenceAfter.isNotEmpty
-                  ? item.evidenceAfter.first.bytes
-                  : null,
-            },
-          )
-          .toList(),
+      "items": templateItems.map((item) => {
+        "quantity": item.quantity ?? 0,
+        "measureUnit": item.measureUnit,
+        "name": item.name,
+        "status": item.status,
+        "observation": item.observation,
+        "foto_antes_bytes": item.evidenceBefore.isNotEmpty ? item.evidenceBefore.first.bytes : null,
+        "foto_despues_bytes": item.evidenceAfter.isNotEmpty ? item.evidenceAfter.first.bytes : null,
+      }).toList(),
     };
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: const Text("Vista Previa REPROSISA"),
-            backgroundColor: const Color(0xFFC62828),
-            foregroundColor: Colors.white,
-          ),
-          body: PdfPreview(
-            build: (format) => PrensaPdfGenerator.generateEsqueleto(pdfData),
-            allowPrinting: true,
-            allowSharing: true,
-            canChangePageFormat: false,
-            initialPageFormat: PdfPageFormat.letter.landscape,
-          ),
-        ),
+    Navigator.push(context, MaterialPageRoute(builder: (context) => Scaffold(
+      appBar: AppBar(title: const Text("Vista Previa REPROSISA"), backgroundColor: const Color(0xFFC62828)),
+      body: PdfPreview(
+        build: (format) => PrensaPdfGenerator.generateEsqueleto(pdfData),
+        initialPageFormat: PdfPageFormat.letter.landscape,
       ),
-    );
-  }
-
-  void _showCreateAreaDialog() {
-    _newNameController.clear();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: const Text(
-          "Nuevo Taller o Área",
-          style: TextStyle(fontWeight: FontWeight.w900),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDialogField(
-              "Nombre del Taller",
-              _newNameController,
-              Icons.business,
-              "Obligatorio",
-            ),
-            const SizedBox(height: 16),
-            _buildDialogField(
-              "Dirección",
-              _newAddressController,
-              Icons.location_on,
-              "Opcional",
-            ),
-            const SizedBox(height: 16),
-            _buildDialogField(
-              "Teléfono",
-              _newContactController,
-              Icons.phone,
-              "Opcional",
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("CANCELAR"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFC62828),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () async {
-              if (_newNameController.text.isEmpty) return;
-              final result = await ref
-                  .read(inspeccionRepositoryProvider)
-                  .createLoanArea({
-                    "name": _newNameController.text,
-                    "address": _newAddressController.text,
-                    "contact": _newContactController.text,
-                  });
-              result.fold((f) => _showSnack("Error al crear", Colors.red), (
-                newArea,
-              ) {
-                setState(() => _areaController.text = newArea['name']);
-                Navigator.pop(context);
-              });
-            },
-            child: const Text("GUARDAR", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDialogField(
-    String label,
-    TextEditingController ctrl,
-    IconData icon,
-    String hint,
-  ) {
-    return TextField(
-      controller: ctrl,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: Icon(icon, size: 20),
-        filled: true,
-        fillColor: const Color(0xFFF8F9FA),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
+    )));
   }
 
   Future<void> _guardarInspeccion() async {
@@ -225,10 +99,7 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
       return;
     }
 
-    final answeredItems = templateItems
-        .where((item) => item.status.isNotEmpty)
-        .toList();
-
+    final answeredItems = templateItems.where((item) => item.status.isNotEmpty).toList();
     if (answeredItems.isEmpty) {
       _showSnack("No hay respuestas para enviar", Colors.orange);
       return;
@@ -238,157 +109,103 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
 
     try {
       final List<Map<String, dynamic>> answers = [];
-      final String pressId = state.selectedPress!.id;
-
       for (var item in answeredItems) {
         final List<Map<String, String>> evidenceList = [];
-        final List<Map<String, dynamic>> mediaToProcess = [
-          ...item.evidenceBefore.map((e) => {'file': e, 'tag': 'antes'}),
-          ...item.evidenceAfter.map((e) => {'file': e, 'tag': 'despues'}),
+        final List<Map<String, dynamic>> media = [
+          ...item.evidenceBefore.map((e) => {'file': e, 'tag': 'ant'}),
+          ...item.evidenceAfter.map((e) => {'file': e, 'tag': 'des'}),
         ];
 
-        for (var media in mediaToProcess) {
-          final evidenceFile = media['file'] as EvidenceFile;
+        for (var m in media) {
+          final evFile = m['file'] as EvidenceFile;
           final tempDir = await getTemporaryDirectory();
-          final tempFile = File(
-            '${tempDir.path}/temp_${item.id}_${media['tag']}.jpg',
-          );
-          await tempFile.writeAsBytes(evidenceFile.bytes);
+          final file = File('${tempDir.path}/tmp_${item.id}_${m['tag']}.jpg');
+          await file.writeAsBytes(evFile.bytes);
 
-          final uploadResult = await evidenceService.uploadEvidence(
-            file: tempFile,
-            basePath: 'prensas/$pressId',
-          );
-          uploadResult.fold(
-            (failure) => debugPrint("Error upload"),
-            (dto) => evidenceList.add({
-              "file_path": dto.filePath,
-              "file_type": dto.fileType,
-              "mime_type": dto.mimeType,
-              "file_size": dto.fileSize,
-            }),
-          );
-          if (await tempFile.exists()) await tempFile.delete();
+          final upload = await evidenceService.uploadEvidence(file: file, basePath: 'inspecciones');
+          upload.fold((f) => null, (dto) => evidenceList.add({
+            "file_path": dto.filePath,
+            "file_type": dto.fileType,
+            "mime_type": dto.mimeType,
+            "file_size": dto.fileSize,
+          }));
         }
-
-        final String? validObs = (item.observation.trim().length >= 2)
-            ? item.observation.trim()
-            : null;
 
         answers.add({
           "component_id": item.id,
           "quantity": item.quantity ?? 0,
-          "status": item.status,
-          "observation": validObs,
+          "status": item.status.toLowerCase(),
+          "observation": (item.observation.trim().length >= 2) ? item.observation.trim() : null,
           "evidences": evidenceList,
         });
       }
 
-      final Map<String, dynamic> reportRequest = {
-        "press_id": pressId,
+      final reportRequest = {
+        "press_id": state.selectedPress!.id,
         "inspection_date": DateTime.now().toIso8601String(),
-        "area": _areaController.text.trim().isEmpty
-            ? "General"
-            : _areaController.text.trim(),
+        "area": _areaController.text.trim().isEmpty ? "General" : _areaController.text.trim(),
         "folio": "F-${DateTime.now().millisecondsSinceEpoch}",
         "answers": answers,
       };
 
-      final result = await ref
-          .read(createPressReportProvider)
-          .call(reportRequest);
-
-      await result.fold(
-        (f) async => _showSnack("Error: ${f.message}", Colors.red),
-        (reportId) async {
-          _showSnack("¡Reporte guardado con éxito!", Colors.green);
-          Navigator.pop(context);
-        },
+      final result = await ref.read(createPressReportProvider).call(reportRequest);
+      result.fold(
+        (f) => _showSnack("Error: ${f.message}", Colors.red),
+        (r) { _showSnack("¡Reporte guardado!", Colors.green); Navigator.pop(context); }
       );
     } catch (e) {
-      _showSnack("Error inesperado: $e", Colors.red);
+      _showSnack("Error inesperado", Colors.red);
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
 
   void _showSnack(String m, Color c) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(m),
-        backgroundColor: c,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m), backgroundColor: c, behavior: SnackBarBehavior.floating));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFC62828)),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  CustomHeader(
-                    title: "Inspección de Prensas",
-                    actionIcon: Icons.build_rounded,
-                    onActionTap: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(height: 32),
-                  CaptureMethodSelector(
-                    onManualFill: () => setState(() => isScanning = false),
-                    onScan: () => setState(() => isScanning = true),
-                  ),
-                  const SizedBox(height: 32),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    child: isScanning
-                        ? Container(
-                            height: 400,
-                            color: Colors.black,
-                            child: const Center(
-                              child: Icon(
-                                Icons.qr_code_scanner,
-                                color: Colors.white,
-                                size: 80,
-                              ),
-                            ),
-                          )
-                        : _buildFormView(templateItems),
-                  ),
-                  const SizedBox(height: 60),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+      body: isLoading 
+        ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                CustomHeader(title: "Inspección de Prensas", actionIcon: Icons.build_rounded, onActionTap: () => Navigator.pop(context)),
+                const SizedBox(height: 32),
+                CaptureMethodSelector(onManualFill: () => setState(() => isScanning = false), onScan: () => setState(() => isScanning = true)),
+                const SizedBox(height: 32),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  child: isScanning 
+                    ? Container(height: 400, decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(20)), child: const Center(child: Icon(Icons.qr_code_scanner, color: Colors.white, size: 80)))
+                    : _buildFormView(),
+                ),
+                const SizedBox(height: 40),
+                // BOTONES INFERIORES ADAPTABLES
+                LayoutBuilder(builder: (context, c) {
+                  bool small = c.maxWidth < 600;
+                  return Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    alignment: WrapAlignment.center,
                     children: [
-                      // --- RE-INTEGRADO: BOTÓN VISTA PREVIA ---
-                      _actionButton(
-                        "VISTA PREVIA PDF",
-                        Colors.blueGrey.shade700,
-                        Icons.picture_as_pdf,
-                        () => _showPdfPreview(context),
-                      ),
-                      const SizedBox(width: 20),
-                      _actionButton(
-                        "FINALIZAR REPORTE",
-                        const Color(0xFFC62828),
-                        Icons.check_circle,
-                        _guardarInspeccion,
-                      ),
+                      _actionButton("VISTA PREVIA PDF", Colors.blueGrey.shade700, Icons.picture_as_pdf, () => _showPdfPreview(context), small),
+                      _actionButton("FINALIZAR REPORTE", const Color(0xFFC62828), Icons.check_circle, _guardarInspeccion, small),
                     ],
-                  ),
-                  const SizedBox(height: 60),
-                ],
-              ),
+                  );
+                }),
+                const SizedBox(height: 60),
+              ],
             ),
+          ),
     );
   }
 
-  Widget _buildFormView(List<ComponentItem> data) {
+  Widget _buildFormView() {
     return Column(
       children: [
         const InformationGeneralEquipo(),
@@ -397,14 +214,11 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
           children: [
             Icon(Icons.list_alt_rounded, color: Color(0xFFC62828)),
             SizedBox(width: 12),
-            Text(
-              "LISTA DE COMPONENTES A REVISAR",
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-            ),
+            Expanded(child: Text("LISTA DE COMPONENTES A REVISAR", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18))),
           ],
         ),
         const SizedBox(height: 16),
-        PrensaInspectionTable(items: data),
+        PrensaInspectionTable(items: templateItems),
         const SizedBox(height: 32),
         _buildLoanSection(),
       ],
@@ -413,154 +227,29 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
 
   Widget _buildLoanSection() {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Préstamo o Devolución (Opcional)",
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            "Llena estos campos solo si la prensa será entregada a un taller externo",
-            style: TextStyle(color: Color(0xFF757575), fontSize: 13),
-          ),
+          const Text("Préstamo o Devolución (Opcional)", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
           const SizedBox(height: 24),
-
-          const Text(
-            "Área o Taller Solicitante",
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Autocomplete<String>(
-            optionsBuilder: (val) async {
-              final result = await ref
-                  .read(inspeccionRepositoryProvider)
-                  .getLoanAreas();
-              return result.fold(
-                (l) => [],
-                (areas) => areas
-                    .where(
-                      (e) => e['name'].toString().toLowerCase().contains(
-                        val.text.toLowerCase(),
-                      ),
-                    )
-                    .map((e) => e['name'].toString()),
-              );
-            },
-            onSelected: (sel) {
-              setState(() => _areaController.text = sel);
-            },
-            fieldViewBuilder:
-                (context, controller, focusNode, onFieldSubmitted) {
-                  controller.addListener(() {
-                    _areaController.text = controller.text;
-                  });
-                  return TextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    decoration: InputDecoration(
-                      hintText: "Escribe o busca taller...",
-                      filled: true,
-                      fillColor: const Color(0xFFF8F9FA),
-                      suffixIcon: TextButton(
-                        onPressed: _showCreateAreaDialog,
-                        child: const Text(
-                          "+ ¿No existe? Crear nueva",
-                          style: TextStyle(
-                            color: Color(0xFFC62828),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDDE1E6)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFC62828)),
-                      ),
-                    ),
-                  );
-                },
-          ),
-          const SizedBox(height: 20),
-          _buildField("Nombre de quien recibe la prensa", _recibeController),
-          _buildField(
-            "Observaciones del Préstamo",
-            _observacionesLoanController,
-          ),
+          _buildField("Área o Taller Solicitante", _areaController),
+          _buildField("Nombre de quien recibe", _recibeController),
+          _buildField("Observaciones del Préstamo", _observacionesLoanController),
         ],
       ),
     );
   }
 
-  Widget _buildField(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: const Color(0xFFF8F9FA),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFDDE1E6)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFC62828)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  Widget _buildField(String label, TextEditingController ctrl) {
+    return Padding(padding: const EdgeInsets.only(bottom: 20), child: TextField(controller: ctrl, decoration: InputDecoration(labelText: label, filled: true, fillColor: const Color(0xFFF8F9FA), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFDDE1E6))))));
   }
 
-  Widget _actionButton(
-    String label,
-    Color color,
-    IconData icon,
-    VoidCallback onTap,
-  ) {
+  Widget _actionButton(String label, Color color, IconData icon, VoidCallback onTap, bool small) {
     return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, color: Colors.white),
-      label: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        minimumSize: const Size(220, 65),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      ),
+      onPressed: onTap, icon: Icon(icon, color: Colors.white, size: 20), label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+      style: ElevatedButton.styleFrom(backgroundColor: color, minimumSize: Size(small ? double.infinity : 220, 60), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
     );
   }
 }
