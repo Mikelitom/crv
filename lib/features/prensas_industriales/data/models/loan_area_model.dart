@@ -1,7 +1,12 @@
 import '../../domain/entities/loan_area.dart';
 
 class LoanAreaModel extends LoanArea {
-  LoanAreaModel({required super.id, required super.name, super.address, super.contact});
+  LoanAreaModel({
+    required super.id, 
+    required super.name, 
+    super.address, 
+    super.contact
+  });
 
   factory LoanAreaModel.fromJson(Map<String, dynamic> json) {
     return LoanAreaModel(

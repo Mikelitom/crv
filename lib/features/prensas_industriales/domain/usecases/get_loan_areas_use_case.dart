@@ -4,7 +4,6 @@ import '../repositories/inspeccion_repository.dart';
 
 class GetLoanAreasUseCase {
   final InspeccionRepository repository;
-
   GetLoanAreasUseCase(this.repository);
 
   Future<Either<Failure, List<dynamic>>> call() async {

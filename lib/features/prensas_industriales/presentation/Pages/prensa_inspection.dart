@@ -131,10 +131,11 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
           }));
         }
 
+        // CORRECCIÓN: Se envía el status tal cual (MAYÚSCULAS) sin .toLowerCase()
         answers.add({
           "component_id": item.id,
           "quantity": item.quantity ?? 0,
-          "status": item.status.toLowerCase(),
+          "status": item.status, 
           "observation": (item.observation.trim().length >= 2) ? item.observation.trim() : null,
           "evidences": evidenceList,
         });
@@ -185,7 +186,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                     : _buildFormView(),
                 ),
                 const SizedBox(height: 40),
-                // BOTONES INFERIORES ADAPTABLES
                 LayoutBuilder(builder: (context, c) {
                   bool small = c.maxWidth < 600;
                   return Wrap(

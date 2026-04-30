@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/entities_press.dart';
 import '../../domain/entities/component_item.dart';
+import '../../domain/entities/loan_area.dart'; // Importa la entidad
 import '../../domain/repositories/inspeccion_repository.dart';
 import '../models/component_model.dart';
 import '../datasource/inspeccion_datasource_remote.dart';
@@ -70,9 +71,15 @@ class InspeccionRepositoryImpl implements InspeccionRepository {
   }
 
   @override
-  Future<Either<Failure, Map<String, dynamic>>> createLoanArea(Map<String, String> data) async {
+  Future<Either<Failure, LoanArea>> createLoanArea(Map<String, String> data) async {
     try {
-      final area = await dataSource.createLoanArea(data);
+      // 1. Obtenemos el Map del DataSource
+      final result = await dataSource.createLoanArea(data);
+      
+      // 2. CONVERSIÓN: Transformamos el Map a la Entidad LoanArea
+      // Esto soluciona el error 'invalid_override'
+      final area = LoanArea.fromJson(result);
+      
       return Right(area);
     } catch (e) {
       return const Left(ServerFailure("Error al crear área nueva"));
