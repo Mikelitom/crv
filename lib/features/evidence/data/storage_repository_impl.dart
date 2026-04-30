@@ -26,11 +26,11 @@ class StorageRepositoryImpl extends StorageRepository {
 
       return Right(result);
     } on StorageException catch (e) {
-      return Left(UploadFailure(e.message));
+      return Left(UploadFailure('Upload failure: ${e.message}'));
     } on SocketException catch (e) {
-      return Left(NetworkFailure('Error de conexion'));
+      return Left(NetworkFailure('Connection failure: ${e.message}'));
     } catch (e) {
-      return Left(UploadFailure('Error inesperado'));
+      return Left(UnknownFailure('Unexpected failure'));
     }
   }
 }
