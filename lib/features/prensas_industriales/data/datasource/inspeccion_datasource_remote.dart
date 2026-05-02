@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../models/press_model.dart';
+import '../models/loan_area_model.dart';
 
 abstract class InspeccionRemoteDataSource {
   Future<PressModel?> getPressBySerie(String serie);
@@ -7,9 +8,10 @@ abstract class InspeccionRemoteDataSource {
   Future<List<String>> getAllSeries();
   Future<List<dynamic>> getInspectionTemplate();
   
+  // Métodos para el manejo de áreas y préstamos
   Future<List<dynamic>> getAllLoanAreas();
   Future<Map<String, dynamic>> createLoanArea(Map<String, String> areaData);
-  Future<void> createLoan(Map<String, dynamic> loanData);
+  Future<void> createLoan(Map<String, dynamic> loanData); // Método que faltaba implementar
 }
 
 class InspeccionRemoteDataSourceImpl implements InspeccionRemoteDataSource {
@@ -64,20 +66,25 @@ class InspeccionRemoteDataSourceImpl implements InspeccionRemoteDataSource {
 
   @override
   Future<List<dynamic>> getAllLoanAreas() async {
-    final response = await dio.get('/loan-area/active');
-    if (response.data is List) return response.data;
-    if (response.data != null) return [response.data];
-    return [];
+    try {
+      final response = await dio.get('/loan-area/active');
+      if (response.data is List) return response.data as List<dynamic>;
+      if (response.data != null) return [response.data];
+      return [];
+    } catch (e) {
+      rethrow;
+    }
   }
 
   @override
   Future<Map<String, dynamic>> createLoanArea(Map<String, String> areaData) async {
     final response = await dio.post('/loan-area/', data: areaData);
-    return response.data;
+    return response.data as Map<String, dynamic>;
   }
 
   @override
   Future<void> createLoan(Map<String, dynamic> loanData) async {
+    // Implementación del método que faltaba
     await dio.post('/loans/', data: loanData);
   }
 }

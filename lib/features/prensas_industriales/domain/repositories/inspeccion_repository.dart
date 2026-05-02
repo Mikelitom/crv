@@ -10,9 +10,7 @@ abstract class InspeccionRepository {
   Future<Either<Failure, String>> createPressReport(Map<String, dynamic> reportData);
   Future<Either<Failure, List<ComponentItem>>> getInspectionTemplate();
   
-  Future<Either<Failure, List<dynamic>>> getLoanAreas();
-  
-  // CAMBIO CLAVE: Ahora devuelve LoanArea en lugar de Map<String, dynamic>
+Future<Either<Failure, List<LoanArea>>> getLoanAreas();  
   Future<Either<Failure, LoanArea>> createLoanArea(Map<String, String> data);
   
   Future<Either<Failure, Unit>> createLoan(Map<String, dynamic> data);

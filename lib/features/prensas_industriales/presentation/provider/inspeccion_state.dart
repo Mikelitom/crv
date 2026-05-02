@@ -4,9 +4,9 @@ import '../../domain/entities/loan_area.dart';
 class InspeccionState {
   final Press? selectedPress;
   final DateTime inspectionDate;
-  final String area; 
-  final List<LoanArea> loanAreas; 
-  final LoanArea? selectedLoanArea; 
+  final String area; // Ubicación física (Ej: Taller 1)
+  final List<LoanArea> loanAreas; // Lista para el Autocomplete
+  final LoanArea? selectedLoanArea; // Área/Taller seleccionado para préstamo
   final bool isLoading;
 
   InspeccionState({

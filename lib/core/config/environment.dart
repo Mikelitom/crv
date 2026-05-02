@@ -15,7 +15,7 @@ class EnvironmentConfig {
         );
       default:
         return EnvironmentConfig._(
-          'http://127.0.0.1:8000/api/v1',
+          'https://backend-crv-refactor.onrender.com/api/v1',
         );
     }
   }

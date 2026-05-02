@@ -1,77 +1,126 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../provider/inspeccion_providers.dart';
+import '../../domain/entities/loan_area.dart';
 
 const Color kRedReprosisa = Color(0xFFC62828);
-const Color kHeaderGray = Color(0xFFF1F5F9); 
-const Color kBorderSuave = Color(0xFFD1D9E0); 
+const Color kHeaderGray = Color(0xFFF1F5F9);
+const Color kBorderSuave = Color(0xFFD1D9E0);
 const Color kTextDark = Color(0xFF0F172A);
 
-class LoanAndInspectorSection extends StatefulWidget {
+class LoanAndInspectorSection extends ConsumerStatefulWidget {
   const LoanAndInspectorSection({super.key});
 
   @override
-  State<LoanAndInspectorSection> createState() => _LoanAndInspectorSectionState();
+  ConsumerState<LoanAndInspectorSection> createState() => _LoanAndInspectorSectionState();
 }
 
-class _LoanAndInspectorSectionState extends State<LoanAndInspectorSection> {
-  bool _isCreatingArea = false;
-  String? _selectedArea;
+class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSection> {
+  // Controlador para manejar el texto del buscador manualmente
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(inspeccionProvider);
+    final notifier = ref.read(inspeccionProvider.notifier);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: kBorderSuave, width: 1.2),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 8)),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: Column(
         children: [
-          // CABECERA INTEGRADA
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
             decoration: const BoxDecoration(
               color: kHeaderGray,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
             ),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("PRÉSTAMO O DEVOLUCIÓN", 
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kTextDark, letterSpacing: 0.5)),
-                const SizedBox(height: 4),
-                const Text("Gestión de salida y retorno de prensa móvil", 
-                  style: TextStyle(color: Colors.blueGrey, fontSize: 10, fontWeight: FontWeight.w600)),
+                Text("PRÉSTAMO O DEVOLUCIÓN", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kTextDark)),
+                Text("Gestión de salida y retorno de prensa móvil", style: TextStyle(color: Colors.blueGrey, fontSize: 10, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
-
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // SELECTOR DE ÁREA CON OPCIÓN DINÁMICA
                 _buildFieldLabel("ÁREA O TALLER SOLICITANTE"),
-                _buildAreaDropdown(),
+                
+                Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textValue) {
+                    final List<String> areaNames = state.loanAreas.map((a) => a.name).toList();
+                    
+                    // Si ya seleccionamos algo y el texto coincide, no sugerimos crear
+                    if (textValue.text == '' || areaNames.contains(textValue.text)) return areaNames;
+                    
+                    final matches = areaNames.where((name) => 
+                      name.toLowerCase().contains(textValue.text.toLowerCase())).toList();
 
-                // PANEL DE CREACIÓN ("TAP" PARA CREAR NUEVO)
-                if (_isCreatingArea) ...[
-                  const SizedBox(height: 12),
-                  _buildNewAreaForm(),
-                ],
+                    // Si no hay coincidencia exacta, sugerimos crear
+                    if (!areaNames.any((n) => n.toLowerCase() == textValue.text.toLowerCase())) {
+                      return [...matches, '+ CREAR NUEVO: "${textValue.text}"'];
+                    }
+                    return matches;
+                  },
+                  onSelected: (String selection) {
+                    if (selection.startsWith('+ CREAR NUEVO')) {
+                      final RegExp regExp = RegExp(r'"([^"]*)"');
+                      final match = regExp.firstMatch(selection);
+                      final String cleanName = match?.group(1) ?? "";
+                      
+                      // Abrimos popup y le pasamos el controlador para que lo actualice al terminar
+                      _showCreatePopUp(context, notifier, state.loanAreas, initialName: cleanName);
+                    } else {
+                      // Si seleccionó uno existente, actualizamos el texto del campo
+                      _searchController.text = selection;
+                      final areaObj = state.loanAreas.firstWhere((a) => a.name == selection);
+                      notifier.selectLoanArea(areaObj);
+                    }
+                  },
+                  fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
+                    // Sincronizamos con nuestro controlador local
+                    if (_searchController.text.isNotEmpty && controller.text != _searchController.text) {
+                       controller.text = _searchController.text;
+                    }
+                    return TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      decoration: _inputStyle(hint: "Buscar taller...", suffixIcon: Icons.search_rounded),
+                    );
+                  },
+                ),
 
                 const SizedBox(height: 20),
                 _buildFieldLabel("NOMBRE DE QUIEN RECIBE"),
-                _buildTextField(hint: "Nombre completo del responsable", isMandatory: true),
+                TextField(
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  decoration: _inputStyle(hint: "Nombre completo del responsable"),
+                ),
 
                 const SizedBox(height: 20),
                 _buildFieldLabel("OBSERVACIONES DEL MOVIMIENTO"),
-                _buildTextField(hint: "Notas sobre el estado de la prensa...", maxLines: 2),
+                TextField(
+                  maxLines: 2,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  decoration: _inputStyle(hint: "Notas adicionales..."),
+                ),
               ],
             ),
           ),
@@ -80,108 +129,88 @@ class _LoanAndInspectorSectionState extends State<LoanAndInspectorSection> {
     );
   }
 
-  // Dropdown con lógica de "Crear Nuevo"
-  Widget _buildAreaDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _selectedArea,
-      decoration: _inputDecoration(hint: "Busque o seleccione área"),
-      items: [
-        const DropdownMenuItem(value: "Taller A", child: Text("Taller A - Mantenimiento")),
-        const DropdownMenuItem(value: "Taller B", child: Text("Taller B - Operaciones")),
-        DropdownMenuItem(
-          value: "CREATE_NEW", 
-          child: Row(
-            children: [
-              const Icon(Icons.add_circle_outline, size: 18, color: kRedReprosisa),
-              const SizedBox(width: 8),
-              Text("¿No existe? Crear nuevo", 
-                style: TextStyle(color: kRedReprosisa, fontWeight: FontWeight.w900, fontSize: 12)),
-            ],
-          )
-        ),
-      ],
-      onChanged: (val) {
-        setState(() {
-          if (val == "CREATE_NEW") {
-            _isCreatingArea = true;
-            _selectedArea = null;
-          } else {
-            _isCreatingArea = false;
-            _selectedArea = val;
-          }
-        });
-      },
-    );
-  }
+  void _showCreatePopUp(BuildContext context, notifier, List<LoanArea> existingAreas, {String initialName = ""}) {
+    final nameCtrl = TextEditingController(text: initialName);
+    final phoneCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
 
-  // Formulario expandible para nueva área
-  Widget _buildNewAreaForm() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: kHeaderGray.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kRedReprosisa.withOpacity(0.2), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("REGISTRO DE NUEVA ÁREA", 
-            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: kRedReprosisa)),
-          const SizedBox(height: 12),
-          _buildTextField(hint: "Nombre del área (Obligatorio)", isMandatory: true),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _buildTextField(hint: "Teléfono (Opcional)")),
-              const SizedBox(width: 12),
-              Expanded(child: _buildTextField(hint: "Dirección (Opcional)")),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () => setState(() => _isCreatingArea = false),
-              icon: const Icon(Icons.check_circle, size: 16, color: Colors.green),
-              label: const Text("LISTO", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Colors.green)),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text("Nuevo Área o Taller", style: TextStyle(color: kRedReprosisa, fontWeight: FontWeight.w900)),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: "Nombre del área *"),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return "Obligatorio";
+                    if (existingAreas.any((a) => a.name.toLowerCase() == value.toLowerCase())) return "Ya existe";
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(controller: phoneCtrl, decoration: const InputDecoration(labelText: "Teléfono")),
+                const SizedBox(height: 12),
+                TextFormField(controller: emailCtrl, decoration: const InputDecoration(labelText: "Correo")),
+              ],
             ),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCELAR")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: kRedReprosisa),
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                final newName = nameCtrl.text;
+                await notifier.createAndSelectLoanArea(
+                  name: newName,
+                  phone: phoneCtrl.text.isEmpty ? "N/A" : phoneCtrl.text,
+                  address: emailCtrl.text.isEmpty ? "N/A" : emailCtrl.text,
+                );
+                
+                // ACTUALIZACIÓN CLAVE: Ponemos el nombre limpio en el buscador
+                setState(() {
+                  _searchController.text = newName;
+                });
+                
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Taller creado con éxito"), backgroundColor: Colors.green),
+                  );
+                }
+              }
+            }, 
+            child: const Text("CREAR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
           )
         ],
       ),
     );
   }
 
-  Widget _buildTextField({required String hint, int maxLines = 1, bool isMandatory = false}) {
-    return TextField(
-      maxLines: maxLines,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-      decoration: _inputDecoration(hint: hint, isMandatory: isMandatory),
-    );
-  }
-
-  InputDecoration _inputDecoration({required String hint, bool isMandatory = false}) {
+  InputDecoration _inputStyle({required String hint, IconData? suffixIcon}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(fontSize: 11, color: Colors.blueGrey, fontWeight: FontWeight.normal),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10), 
-        borderSide: BorderSide(color: isMandatory ? kRedReprosisa.withOpacity(0.3) : kBorderSuave, width: 1.2)
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10), 
-        borderSide: const BorderSide(color: kRedReprosisa, width: 1.8)
-      ),
+      filled: true, fillColor: const Color(0xFFF8F9FA),
+      suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: kRedReprosisa, size: 18) : null,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFDDE1E6))),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: kRedReprosisa, width: 1.5)),
     );
   }
 
-  Widget _buildFieldLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6, left: 4),
-      child: Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.blueGrey)),
-    );
-  }
+  Widget _buildFieldLabel(String label) => Padding(
+    padding: const EdgeInsets.only(bottom: 8, left: 4),
+    child: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.blueGrey)),
+  );
 }
