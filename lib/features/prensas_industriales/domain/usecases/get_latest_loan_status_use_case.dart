@@ -7,7 +7,7 @@ class GetLatestLoanStatusUseCase {
 
   GetLatestLoanStatusUseCase(this.repository);
 
-  Future<Either<Failure, String>> call(String pressId) async {
-    return await repository.getLatestLoanStatus(pressId);
+Future<Either<Failure, Map<String, dynamic>>> call(String pressId) async {   
+   return await repository.getLatestLoanStatus(pressId);
   }
 }

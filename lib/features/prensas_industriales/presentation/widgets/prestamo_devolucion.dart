@@ -36,7 +36,13 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: kBorderSuave, width: 1.2),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04), 
+            blurRadius: 20, 
+            offset: const Offset(0, 10)
+          )
+        ],
       ),
       child: Column(
         children: [
@@ -50,8 +56,10 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("PRÉSTAMO O DEVOLUCIÓN", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kTextDark)),
-                Text("Gestión de salida y retorno de prensa móvil", style: TextStyle(color: Colors.blueGrey, fontSize: 10, fontWeight: FontWeight.w600)),
+                Text("PRÉSTAMO O DEVOLUCIÓN", 
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kTextDark)),
+                Text("Gestión de salida y retorno de prensa móvil", 
+                  style: TextStyle(color: Colors.blueGrey, fontSize: 10, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -66,13 +74,11 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                   optionsBuilder: (TextEditingValue textValue) {
                     final List<String> areaNames = state.loanAreas.map((a) => a.name).toList();
                     
-                    // Si ya seleccionamos algo y el texto coincide, no sugerimos crear
                     if (textValue.text == '' || areaNames.contains(textValue.text)) return areaNames;
                     
                     final matches = areaNames.where((name) => 
                       name.toLowerCase().contains(textValue.text.toLowerCase())).toList();
 
-                    // Si no hay coincidencia exacta, sugerimos crear
                     if (!areaNames.any((n) => n.toLowerCase() == textValue.text.toLowerCase())) {
                       return [...matches, '+ CREAR NUEVO: "${textValue.text}"'];
                     }
@@ -83,21 +89,30 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                       final RegExp regExp = RegExp(r'"([^"]*)"');
                       final match = regExp.firstMatch(selection);
                       final String cleanName = match?.group(1) ?? "";
-                      
-                      // Abrimos popup y le pasamos el controlador para que lo actualice al terminar
                       _showCreatePopUp(context, notifier, state.loanAreas, initialName: cleanName);
                     } else {
-                      // Si seleccionó uno existente, actualizamos el texto del campo
                       _searchController.text = selection;
                       final areaObj = state.loanAreas.firstWhere((a) => a.name == selection);
                       notifier.selectLoanArea(areaObj);
                     }
                   },
                   fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
-                    // Sincronizamos con nuestro controlador local
-                    if (_searchController.text.isNotEmpty && controller.text != _searchController.text) {
-                       controller.text = _searchController.text;
+                    
+                    // --- IMPLEMENTACIÓN DE AUTOCOMPLETADO POR ESTADO (PRESTAMO) ---
+                    // Si el estado tiene un área seleccionada (por el autocompletado del Notifier)
+                    // y el texto del controller es diferente, actualizamos.
+                    if (state.selectedLoanArea != null && controller.text != state.selectedLoanArea!.name) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        controller.text = state.selectedLoanArea!.name;
+                        _searchController.text = state.selectedLoanArea!.name;
+                      });
                     }
+
+                    // Si se reinicia el estado (reset), limpiamos el controlador local
+                    if (state.selectedLoanArea == null && controller.text.isNotEmpty && _searchController.text.isEmpty) {
+                       controller.text = "";
+                    }
+
                     return TextField(
                       controller: controller,
                       focusNode: focusNode,
@@ -110,6 +125,8 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                 const SizedBox(height: 20),
                 _buildFieldLabel("NOMBRE DE QUIEN RECIBE"),
                 TextField(
+                  // Agregamos un controlador o valor inicial si necesitas que también se autocomplete
+                  controller: TextEditingController(text: state.solicitantsName)..selection = TextSelection.collapsed(offset: state.solicitantsName.length),
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   decoration: _inputStyle(hint: "Nombre completo del responsable"),
                   onChanged: (value) => notifier.updateSolicitantsName(value),
@@ -118,6 +135,7 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                 const SizedBox(height: 20),
                 _buildFieldLabel("OBSERVACIONES DEL MOVIMIENTO"),
                 TextField(
+                  controller: TextEditingController(text: state.observations)..selection = TextSelection.collapsed(offset: state.observations.length),
                   maxLines: 2,
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   decoration: _inputStyle(hint: "Notas adicionales..."),
@@ -131,6 +149,7 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
     );
   }
 
+  // --- POPUP DE CREACIÓN (SE MANTIENE IGUAL) ---
   void _showCreatePopUp(BuildContext context, notifier, List<LoanArea> existingAreas, {String initialName = ""}) {
     final nameCtrl = TextEditingController(text: initialName);
     final phoneCtrl = TextEditingController();
@@ -180,7 +199,6 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                   address: emailCtrl.text.isEmpty ? "N/A" : emailCtrl.text,
                 );
                 
-                // ACTUALIZACIÓN CLAVE: Ponemos el nombre limpio en el buscador
                 setState(() {
                   _searchController.text = newName;
                 });

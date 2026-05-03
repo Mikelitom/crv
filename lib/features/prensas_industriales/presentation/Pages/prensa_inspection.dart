@@ -109,6 +109,16 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
       return;
     }
 
+    // --- VALIDACIÓN DE CAMPOS DE PRÉSTAMO/DEVOLUCIÓN ---
+    final bool hasLoanData = state.selectedLoanArea != null || state.solicitantsName.isNotEmpty;
+    final String currentStatus = state.status.toUpperCase();
+
+    // Si la prensa está prestada, ES OBLIGATORIO llenar los campos para la devolución
+    if (currentStatus == 'LOANED' && !hasLoanData) {
+      _showSnack("La prensa está prestada. Debe llenar los campos de devolución para continuar.", Colors.red);
+      return;
+    }
+
     final answeredItems = templateItems
         .where((item) => item.status.isNotEmpty)
         .toList();
@@ -158,21 +168,18 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
         });
       }
 
-      final bool hasLoanData = state.selectedLoanArea != null || state.solicitantsName.isNotEmpty;
-
       final reportRequest = {
         "press_id": state.selectedPress!.id,
         "inspection_date": DateTime.now().toIso8601String(),
         "area": state.area.isEmpty ? "General" : state.area,
         "folio": "F-${DateTime.now().millisecondsSinceEpoch}",
         "answers": answers,
-        // Si tiene datos, envía el objeto; si no, envía una lista vacía o null según pida tu API
         "loan": hasLoanData ? {
           "area_id": state.selectedLoanArea?.id,
           "loan_date": DateTime.now().toIso8601String(),
           "solicitants_name": state.solicitantsName,
           "observations": state.observations,
-        } : null // Cámbialo por [] si tu API estrictamente requiere una lista vacía
+        } : null
       };
 
       final result = await ref
@@ -180,10 +187,21 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
           .call(reportRequest);
 
       result.fold((f) => _showSnack("Error: ${f.message}", Colors.red), (r) {
-        _showSnack("¡Reporte guardado!", Colors.green);
+        
+        // --- DETERMINAR MENSAJE DE ÉXITO DINÁMICO ---
+        String successMessage = "¡Reporte guardado!";
+        
+        if (currentStatus == 'LOANED') {
+          successMessage = "¡Devolución exitosa!";
+        } else if (currentStatus == 'AVAILABLE' && hasLoanData) {
+          successMessage = "¡Préstamo exitoso!";
+        } else {
+          successMessage = "¡Inspección guardada con éxito!";
+        }
+
+        _showSnack(successMessage, Colors.green);
 
         notifier.reset();
-
         Navigator.pop(context);
       });
     } catch (e) {

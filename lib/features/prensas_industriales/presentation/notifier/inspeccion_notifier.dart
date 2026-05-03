@@ -11,7 +11,10 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
   }
 
   void reset() {
-    state = InspeccionState(inspectionDate: DateTime.now(), loanAreas: state.loanAreas);
+    state = InspeccionState(
+      inspectionDate: DateTime.now(), 
+      loanAreas: state.loanAreas
+    );
   }
 
   Future<void> onSerieSelected(String serie) async {
@@ -21,27 +24,50 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
     final getPressUseCase = ref.read(getPressBySerieProvider);
     final result = await getPressUseCase(serie);
 
-    await result.fold((f) async => state = state.copyWith(isLoading: false), (
-      press,
-    ) async {
-      state = state.copyWith(selectedPress: press);
+    await result.fold(
+      (f) async => state = state.copyWith(isLoading: false), 
+      (press) async {
+        state = state.copyWith(selectedPress: press);
 
-      // 2. LLAMADA AL NUEVO USE CASE PARA EL STATUS
-      final getStatusUseCase = ref.read(getLatestLoanStatusUseCaseProvider);
-      final statusResult = await getStatusUseCase(press.id);
+        // 2. LLAMADA AL USE CASE PARA OBTENER EL ÚLTIMO ESTADO (AHORA DEVUELVE MAP)
+        final getStatusUseCase = ref.read(getLatestLoanStatusUseCaseProvider);
+        final statusResult = await getStatusUseCase(press.id);
 
-      statusResult.fold(
-        (f) => state = state.copyWith(status: 'UNKNOWN', isLoading: false),
-        (currentStatus) =>
-            state = state.copyWith(status: currentStatus, isLoading: false),
-      );
-    });
+        statusResult.fold(
+          (f) => state = state.copyWith(status: 'UNKNOWN', isLoading: false),
+          (loanData) {
+            // Extraemos el status para el badge visual
+            final String currentStatus = loanData['status'] ?? 'AVAILABLE';
+            
+            // Lógica de autocompletado de área si la prensa está prestada (LOANED)
+            LoanArea? autoSelectedArea;
+            if (currentStatus == 'LOANED') {
+              final String? areaId = loanData['area_id'];
+              try {
+                // Buscamos en la lista de áreas cargadas la que coincida con el ID
+                autoSelectedArea = state.loanAreas.firstWhere((a) => a.id == areaId);
+              } catch (_) {
+                autoSelectedArea = null;
+              }
+            }
+
+            state = state.copyWith(
+              status: currentStatus,
+              selectedLoanArea: autoSelectedArea, // Se asigna automáticamente si se encontró
+              isLoading: false,
+            );
+          },
+        );
+      }
+    );
   }
 
   void updateSolicitantsName(String name) =>
       state = state.copyWith(solicitantsName: name);
+      
   void updateObservations(String obs) =>
       state = state.copyWith(observations: obs);
+      
   void updateArea(String area) => state = state.copyWith(area: area);
 
   void onSerieChanged(String serie) {
