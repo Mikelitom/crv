@@ -9,7 +9,6 @@ import 'package:intl/intl.dart';
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-08-PRESS.DART';
 import '../../domain/entities/component_item.dart';
 import '../provider/inspeccion_providers.dart';
-import '../notifier/inspeccion_notifier.dart';
 import '../../../../features/evidence/presentation/providers/evidence_service_provider.dart';
 import '../widgets/information_general_equipo.dart';
 import '../widgets/table_componentes_press.dart';
