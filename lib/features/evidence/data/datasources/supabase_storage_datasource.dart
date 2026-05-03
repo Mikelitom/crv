@@ -13,7 +13,7 @@ class SupabaseStorageDatasource {
     final localFile = File(file.localPath);
 
     await client.storage
-        .from("evidences")
+        .from("evidencias")
         .upload(
           fullPath,
           localFile,
