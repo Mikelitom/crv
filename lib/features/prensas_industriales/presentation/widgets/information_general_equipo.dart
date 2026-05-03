@@ -36,7 +36,6 @@ class _InformationGeneralEquipoState extends ConsumerState<InformationGeneralEqu
     }
 
     return LayoutBuilder(builder: (context, constraints) {
-      // Umbral para modo computadora (escritorio)
       bool isDesktop = constraints.maxWidth >= 1000;
       bool isMobile = constraints.maxWidth < 700;
 
@@ -57,22 +56,27 @@ class _InformationGeneralEquipoState extends ConsumerState<InformationGeneralEqu
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Información General del Equipo",
-              style: TextStyle(
-                fontWeight: FontWeight.w900, 
-                fontSize: isMobile ? 18 : 22,
-                color: const Color(0xFF1A1C1E),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Información General del Equipo",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900, 
+                    fontSize: isMobile ? 18 : 22,
+                    color: const Color(0xFF1A1C1E),
+                  ),
+                ),
+                // COMENTARIO DE ESTADO VISUAL (NUEVO)
+                if (state.status.isNotEmpty) _buildStatusChip(state.status),
+              ],
             ),
             const SizedBox(height: 24),
             
-            // Si es computadora, usamos un Row para separar campos de imagen
             if (isDesktop) 
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Lado izquierdo: Rejilla de campos (4 columnas)
                   Expanded(
                     flex: 8,
                     child: Column(
@@ -95,14 +99,13 @@ class _InformationGeneralEquipoState extends ConsumerState<InformationGeneralEqu
                             const SizedBox(width: 16),
                             Expanded(child: _buildAreaField()),
                             const SizedBox(width: 16),
-                            const Spacer(flex: 2), // Espacio vacío para mantener alineación
+                            const Spacer(flex: 2), 
                           ],
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 32),
-                  // Lado derecho: Foto de la prensa
                   Expanded(
                     flex: 3,
                     child: _buildPressImage(false),
@@ -110,7 +113,6 @@ class _InformationGeneralEquipoState extends ConsumerState<InformationGeneralEqu
                 ],
               )
             else
-              // Si es Tablet o Móvil, usamos la vista de Wrap anterior
               Column(
                 children: [
                   Wrap(
@@ -135,7 +137,41 @@ class _InformationGeneralEquipoState extends ConsumerState<InformationGeneralEqu
     });
   }
 
-  // --- WIDGETS DE APOYO ---
+  Widget _buildStatusChip(String status) {
+    Color color;
+    String label;
+
+    switch (status.toUpperCase()) {
+      case 'AVAILABLE':
+        color = Colors.green;
+        label = "DISPONIBLE";
+        break;
+      case 'LOANED':
+        color = const Color(0xFFC62828);
+        label = "PRESTADA";
+        break;
+      case 'IN_SERVICE':
+        color = Colors.orange;
+        label = "EN SERVICIO";
+        break;
+      default:
+        color = Colors.grey;
+        label = status;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color, width: 1.5),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 11),
+      ),
+    );
+  }
 
   Widget _buildSerieAutocomplete(AsyncValue allSeriesAsync, {double? width}) {
     return _buildField(

@@ -7,6 +7,9 @@ class InspeccionState {
   final String area; 
   final List<LoanArea> loanAreas; 
   final LoanArea? selectedLoanArea; 
+  final String solicitantsName; 
+  final String observations; 
+  final String status; // Sincronizado con el body de la API: AVAILABLE, LOANED, etc.
   final bool isLoading;
 
   InspeccionState({
@@ -15,6 +18,9 @@ class InspeccionState {
     this.area = '', 
     this.loanAreas = const [],
     this.selectedLoanArea,
+    this.solicitantsName = '',
+    this.observations = '',
+    this.status = '', 
     this.isLoading = false
   });
 
@@ -25,6 +31,9 @@ class InspeccionState {
     String? area, 
     List<LoanArea>? loanAreas,
     LoanArea? selectedLoanArea,
+    String? solicitantsName,
+    String? observations,
+    String? status,
     bool? isLoading
   }) {
     return InspeccionState(
@@ -33,6 +42,9 @@ class InspeccionState {
       area: area ?? this.area,
       loanAreas: loanAreas ?? this.loanAreas,
       selectedLoanArea: selectedLoanArea ?? this.selectedLoanArea,
+      solicitantsName: solicitantsName ?? this.solicitantsName,
+      observations: observations ?? this.observations,
+      status: status ?? this.status,
       isLoading: isLoading ?? this.isLoading,
     );
   }

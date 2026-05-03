@@ -10,14 +10,16 @@ class LoanAreaModel extends LoanArea {
 
   factory LoanAreaModel.fromJson(Map<String, dynamic> json) {
     return LoanAreaModel(
-      id: json['id'].toString(),
-      name: json['name'] ?? '',
-      address: json['address'],
-      contact: json['contact'],
+      // Usamos el operador de nulidad por seguridad
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      address: json['address']?.toString(),
+      contact: json['contact']?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() => {
+    "id": id, // Agregué el ID por si necesitas actualizar
     "name": name,
     "address": address,
     "contact": contact,

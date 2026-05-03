@@ -38,7 +38,7 @@ class PrensaPdfGenerator {
             pw.SizedBox(height: 10),
             _buildInspectionTable(data['items'] ?? []),
             pw.SizedBox(height: 10),
-            _buildFooterSection(data),
+            _buildLoanFooterSection(data),
             if (itemsConEvidencia.isNotEmpty) ...[
               pw.NewPage(),
               pw.Center(child: pw.Text("ANEXO DE EVIDENCIAS FOTOGRÁFICAS", style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.red900))),
@@ -131,15 +131,15 @@ class PrensaPdfGenerator {
     return pw.Table(
       border: pw.TableBorder.all(width: 0.8),
       columnWidths: {
-        0: const pw.FixedColumnWidth(30), // CANT
-        1: const pw.FixedColumnWidth(35), // UNIDAD
-        2: const pw.FlexColumnWidth(2.5), // DESCRIPCIÓN (Más chico para dar espacio)
-        3: const pw.FixedColumnWidth(20), // B
-        4: const pw.FixedColumnWidth(20), // M
-        5: const pw.FixedColumnWidth(25), // N/A
-        6: const pw.FixedColumnWidth(110),// OBSERVACIONES
-        7: const pw.FixedColumnWidth(40), // ANTES
-        8: const pw.FixedColumnWidth(40), // DESPUÉS
+        0: const pw.FixedColumnWidth(30),
+        1: const pw.FixedColumnWidth(35),
+        2: const pw.FlexColumnWidth(2.5),
+        3: const pw.FixedColumnWidth(20),
+        4: const pw.FixedColumnWidth(20),
+        5: const pw.FixedColumnWidth(25),
+        6: const pw.FixedColumnWidth(110),
+        7: const pw.FixedColumnWidth(40),
+        8: const pw.FixedColumnWidth(40),
       },
       children: [
         pw.TableRow(
@@ -159,9 +159,9 @@ class PrensaPdfGenerator {
             _tC(cantStr),
             _tC(item['measureUnit'] ?? ""),
             pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(item['name'] ?? "", style: const pw.TextStyle(fontSize: 7))),
-            _tC(item['status'] == 'good' ? "V" : ""),
-            _tC(item['status'] == 'bad' ? "X" : ""),
-            _tC(item['status'] == 'not_applicable' ? "N" : ""),
+            _tC(item['status'] == 'GOOD' ? "V" : ""),
+            _tC(item['status'] == 'BAD' ? "X" : ""),
+            _tC(item['status'] == 'NOT_APPLICABLE' ? "N" : ""),
             pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(item['observation'] ?? "", style: const pw.TextStyle(fontSize: 6.5))),
             _buildEvidenciaMini(item['foto_antes_bytes']),
             _buildEvidenciaMini(item['foto_despues_bytes']),
@@ -175,32 +175,30 @@ class PrensaPdfGenerator {
   static pw.Widget _tC(String val) => pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(val, textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 7)));
   static pw.Widget _buildEvidenciaMini(Uint8List? bytes) => pw.Container(height: 18, width: 18, alignment: pw.Alignment.center, child: bytes != null ? pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain) : pw.SizedBox());
 
-  static pw.Widget _buildFooterSection(Map<String, dynamic> data) {
+  static pw.Widget _buildLoanFooterSection(Map<String, dynamic> data) {
     return pw.Column(children: [
-      pw.SizedBox(height: 10),
-      pw.Row(mainAxisAlignment: pw.MainAxisAlignment.center, children: [
-        pw.Column(children: [
-          pw.Container(width: 250, decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(width: 1)))),
-          pw.Text("NOMBRE Y FIRMA QUIEN REALIZA EL CHECKLIST", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))
-        ])
-      ]),
-      pw.SizedBox(height: 10),
-      pw.Container(width: double.infinity, color: PdfColors.red900, padding: const pw.EdgeInsets.all(3), child: pw.Center(child: pw.Text("En caso de préstamo o devolución de prensa (móvil) llenar este campo", style: pw.TextStyle(color: PdfColors.white, fontSize: 7, fontWeight: pw.FontWeight.bold)))),
+      pw.SizedBox(height: 15),
+      pw.Container(
+        width: double.infinity, 
+        color: PdfColors.red900, 
+        padding: const pw.EdgeInsets.all(4), 
+        child: pw.Center(child: pw.Text("En caso de préstamo o devolución de prensa (móvil) llenar este campo", style: pw.TextStyle(color: PdfColors.white, fontSize: 7, fontWeight: pw.FontWeight.bold)))
+      ),
       pw.Table(
-        border: pw.TableBorder.all(width: 1),
-        columnWidths: {0: const pw.FixedColumnWidth(200), 1: const pw.FlexColumnWidth()},
+        border: pw.TableBorder.all(width: 0.8),
+        columnWidths: {0: const pw.FixedColumnWidth(220), 1: const pw.FlexColumnWidth()},
         children: [
-          _footerRow("AREA O TALLER QUE SOLICITA:", data['area_solicita'] ?? ""),
-          _footerRow("NOMBRE DE LA PERSONA QUE REALIZÓ EL CHECKLIST:", ""),
-          _footerRow("OBSERVACIONES:", data['observaciones_footer'] ?? ""),
+          _footerRow("ÁREA O TALLER QUE SOLICITA:", data['area_solicita'] ?? "N/A"),
+          _footerRow("NOMBRE DE LA PERSONA QUE RECIBE:", data['nombre_recibe'] ?? "N/A"),
+          _footerRow("OBSERVACIONES:", data['observaciones_footer'] ?? "N/A"),
         ],
       ),
     ]);
   }
 
   static pw.TableRow _footerRow(String label, String val) => pw.TableRow(children: [
-    pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(label, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))),
-    pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(val, style: const pw.TextStyle(fontSize: 7))),
+    pw.Padding(padding: const pw.EdgeInsets.all(5), child: pw.Text(label, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))),
+    pw.Padding(padding: const pw.EdgeInsets.all(5), child: pw.Text(val.isEmpty ? "N/A" : val, style: const pw.TextStyle(fontSize: 7))),
   ]);
 
   static pw.Widget _buildComponentEvidenciaGrande(dynamic item) {
