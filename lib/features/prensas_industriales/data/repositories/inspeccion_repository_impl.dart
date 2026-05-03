@@ -14,14 +14,15 @@ class InspeccionRepositoryImpl implements InspeccionRepository {
   InspeccionRepositoryImpl(this.dataSource);
 
   @override
-  Future<Either<Failure, String>> getLatestLoanStatus(String pressId) async {
+  Future<Either<Failure, Map<String, dynamic>>> getLatestLoanStatus(String pressId) async {
     try {
       final response = await dataSource.getLoansMultiFilter({"press_id": pressId});
       
       if (response.isNotEmpty) {
-        return Right(response.first['status'].toString());
+        return Right(Map<String, dynamic>.from(response.first));
       }
-      return const Right('AVAILABLE');
+      
+      return const Right({'status': 'AVAILABLE'});
     } on DioException catch (e) {
       return Left(ServerFailure(e.message ?? "Error al verificar estatus"));
     } catch (e) {

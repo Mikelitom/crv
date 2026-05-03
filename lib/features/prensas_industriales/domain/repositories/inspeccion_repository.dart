@@ -14,5 +14,4 @@ abstract class InspeccionRepository {
   Future<Either<Failure, LoanArea>> createLoanArea(Map<String, String> data);
   Future<Either<Failure, Unit>> createLoan(Map<String, dynamic> data);
   Future<Either<Failure, Uint8List>> getInspectionPdfBinary(String id);
-  Future<Either<Failure, String>> getLatestLoanStatus(String pressId);
-}
+Future<Either<Failure, Map<String, dynamic>>> getLatestLoanStatus(String pressId);}
