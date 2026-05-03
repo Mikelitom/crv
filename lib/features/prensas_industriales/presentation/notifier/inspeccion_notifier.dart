@@ -10,56 +10,75 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
     return InspeccionState(inspectionDate: DateTime.now());
   }
 
+  void reset() {
+    state = InspeccionState(inspectionDate: DateTime.now(), loanAreas: state.loanAreas);
+  }
+
+  Future<void> onSerieSelected(String serie) async {
+    state = state.copyWith(isLoading: true, status: '');
+
+    // 1. Buscamos la prensa por serie
+    final getPressUseCase = ref.read(getPressBySerieProvider);
+    final result = await getPressUseCase(serie);
+
+    await result.fold((f) async => state = state.copyWith(isLoading: false), (
+      press,
+    ) async {
+      state = state.copyWith(selectedPress: press);
+
+      // 2. LLAMADA AL NUEVO USE CASE PARA EL STATUS
+      final getStatusUseCase = ref.read(getLatestLoanStatusUseCaseProvider);
+      final statusResult = await getStatusUseCase(press.id);
+
+      statusResult.fold(
+        (f) => state = state.copyWith(status: 'UNKNOWN', isLoading: false),
+        (currentStatus) =>
+            state = state.copyWith(status: currentStatus, isLoading: false),
+      );
+    });
+  }
+
+  void updateSolicitantsName(String name) =>
+      state = state.copyWith(solicitantsName: name);
+  void updateObservations(String obs) =>
+      state = state.copyWith(observations: obs);
   void updateArea(String area) => state = state.copyWith(area: area);
+
+  void onSerieChanged(String serie) {
+    if (serie.isEmpty) state = state.copyWith(clearPress: true, status: '');
+  }
 
   Future<void> loadLoanAreas() async {
     final useCase = ref.read(getLoanAreasUseCaseProvider);
     final result = await useCase();
-    
     result.fold(
       (f) => null,
-      (areasList) {
-        // CORRECCIÓN: 'areasList' ya es List<LoanArea> gracias al ajuste en el Repository
-        state = state.copyWith(loanAreas: areasList);
-      },
+      (areasList) => state = state.copyWith(loanAreas: areasList),
     );
   }
 
-  void selectLoanArea(LoanArea? area) => state = state.copyWith(selectedLoanArea: area);
+  void selectLoanArea(LoanArea? area) =>
+      state = state.copyWith(selectedLoanArea: area);
 
-  Future<void> createAndSelectLoanArea({required String name, String? phone, String? address}) async {
+  Future<void> createAndSelectLoanArea({
+    required String name,
+    String? phone,
+    String? address,
+  }) async {
     state = state.copyWith(isLoading: true);
     final useCase = ref.read(createLoanAreaUseCaseProvider);
-    
     final result = await useCase({
       "name": name,
-      "contact": phone ?? "",
-      "address": address ?? ""
+      "contact": phone ?? "N/A",
+      "address": address ?? "N/A",
     });
-
     result.fold(
       (f) => state = state.copyWith(isLoading: false),
-      (newArea) {
-        state = state.copyWith(
-          loanAreas: [...state.loanAreas, newArea],
-          selectedLoanArea: newArea,
-          isLoading: false,
-        );
-      }
+      (newArea) => state = state.copyWith(
+        loanAreas: [...state.loanAreas, newArea],
+        selectedLoanArea: newArea,
+        isLoading: false,
+      ),
     );
-  }
-
-  Future<void> onSerieSelected(String serie) async {
-    state = state.copyWith(isLoading: true);
-    final useCase = ref.read(getPressBySerieProvider);
-    final result = await useCase(serie);
-    result.fold(
-      (f) => state = state.copyWith(isLoading: false),
-      (press) => state = state.copyWith(selectedPress: press, isLoading: false),
-    );
-  }
-
-  void onSerieChanged(String serie) {
-    if (serie.isEmpty) state = state.copyWith(clearPress: true);
   }
 }

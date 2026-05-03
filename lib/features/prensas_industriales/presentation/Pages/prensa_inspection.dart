@@ -14,14 +14,15 @@ import '../../../../features/evidence/presentation/providers/evidence_service_pr
 import '../widgets/information_general_equipo.dart';
 import '../widgets/table_componentes_press.dart';
 import '../widgets/capture_method_selector.dart';
-import '../widgets/prestamo_devolucion.dart'; 
+import '../widgets/prestamo_devolucion.dart';
 import '../../../dashboard/presentation/widgets/header.dart';
 
 class PrensaInspectionPage extends ConsumerStatefulWidget {
   const PrensaInspectionPage({super.key});
 
   @override
-  ConsumerState<PrensaInspectionPage> createState() => _PrensaInspectionPageState();
+  ConsumerState<PrensaInspectionPage> createState() =>
+      _PrensaInspectionPageState();
 }
 
 class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
@@ -49,7 +50,9 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
 
   void _showPdfPreview(BuildContext context) {
     final state = ref.read(inspeccionProvider);
-    final String fechaActual = DateFormat('dd/MM/yyyy').format(state.inspectionDate);
+    final String fechaActual = DateFormat(
+      'dd/MM/yyyy',
+    ).format(state.inspectionDate);
 
     final Map<String, dynamic> pdfData = {
       "serie": state.selectedPress?.serie ?? "S/N",
@@ -58,31 +61,48 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
       "tipo": state.selectedPress?.type ?? "N/A",
       "modelo": state.selectedPress?.model ?? "N/A",
       "volts": state.selectedPress?.voltz ?? "N/A",
-      "nombre_recibe": state.selectedLoanArea?.name ?? "N/A",
+      "nombre_recibe": state.solicitantsName,
       "area_solicita": state.selectedLoanArea?.name ?? "N/A",
-      "observaciones_footer": "", 
-      "items": templateItems.map((item) => {
-        "quantity": item.quantity ?? 0,
-        "measureUnit": item.measureUnit,
-        "name": item.name,
-        "status": item.status.toUpperCase(),
-        "observation": item.observation,
-        "foto_antes_bytes": item.evidenceBefore.isNotEmpty ? item.evidenceBefore.first.bytes : null,
-        "foto_despues_bytes": item.evidenceAfter.isNotEmpty ? item.evidenceAfter.first.bytes : null,
-      }).toList(),
+      "observaciones_footer": state.observations,
+      "items": templateItems
+          .map(
+            (item) => {
+              "quantity": item.quantity ?? 0,
+              "measureUnit": item.measureUnit,
+              "name": item.name,
+              "status": item.status.toUpperCase(),
+              "observation": item.observation,
+              "foto_antes_bytes": item.evidenceBefore.isNotEmpty
+                  ? item.evidenceBefore.first.bytes
+                  : null,
+              "foto_despues_bytes": item.evidenceAfter.isNotEmpty
+                  ? item.evidenceAfter.first.bytes
+                  : null,
+            },
+          )
+          .toList(),
     };
 
-    Navigator.push(context, MaterialPageRoute(builder: (context) => Scaffold(
-      appBar: AppBar(title: const Text("Vista Previa REPROSISA"), backgroundColor: const Color(0xFFC62828)),
-      body: PdfPreview(
-        build: (format) => PrensaPdfGenerator.generateEsqueleto(pdfData),
-        initialPageFormat: PdfPageFormat.letter.landscape,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text("Vista Previa REPROSISA"),
+            backgroundColor: const Color(0xFFC62828),
+          ),
+          body: PdfPreview(
+            build: (format) => PrensaPdfGenerator.generateEsqueleto(pdfData),
+            initialPageFormat: PdfPageFormat.letter.landscape,
+          ),
+        ),
       ),
-    )));
+    );
   }
 
   Future<void> _guardarInspeccion() async {
     final state = ref.read(inspeccionProvider);
+    final notifier = ref.read(inspeccionProvider.notifier);
     final evidenceService = ref.read(evidenceServiceProvider);
 
     if (state.selectedPress == null) {
@@ -90,25 +110,46 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
       return;
     }
 
-    final answeredItems = templateItems.where((item) => item.status.isNotEmpty).toList();
+    final answeredItems = templateItems
+        .where((item) => item.status.isNotEmpty)
+        .toList();
     setState(() => isLoading = true);
 
     try {
       final List<Map<String, dynamic>> answers = [];
+
       for (var item in answeredItems) {
         final List<Map<String, String>> evidenceList = [];
-        for (var evFile in [...item.evidenceBefore, ...item.evidenceAfter]) {
+        final allEvidenceFiles = [
+          ...item.evidenceBefore,
+          ...item.evidenceAfter,
+        ];
+
+        for (var evFile in allEvidenceFiles) {
           final tempDir = await getTemporaryDirectory();
-          final file = File('${tempDir.path}/tmp_${DateTime.now().microsecondsSinceEpoch}.jpg');
+          final file = File(
+            '${tempDir.path}/img_${DateTime.now().microsecondsSinceEpoch}.jpg',
+          );
           await file.writeAsBytes(evFile.bytes);
-          final upload = await evidenceService.uploadEvidence(file: file, basePath: 'inspecciones');
-          upload.fold((f) => null, (dto) => evidenceList.add({
-            "file_path": dto.filePath,
-            "file_type": dto.fileType,
-            "mime_type": dto.mimeType,
-            "file_size": dto.fileSize.toString(),
-          }));
+
+          final uploadResult = await evidenceService.uploadEvidence(
+            file: file,
+            basePath: 'inspecciones/prensas',
+          );
+
+          uploadResult.fold(
+            (failure) => print("Error al subir imagen: ${failure.message}"),
+            (evidenceDto) {
+              evidenceList.add({
+                "file_path": evidenceDto.filePath,
+                "file_type": evidenceDto.fileType,
+                "mime_type": evidenceDto.mimeType,
+                "file_size": evidenceDto.fileSize.toString(),
+              });
+            },
+          );
         }
+
         answers.add({
           "component_id": item.id,
           "quantity": item.quantity ?? 0,
@@ -118,75 +159,144 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
         });
       }
 
+      final bool hasLoanData = state.selectedLoanArea != null || state.solicitantsName.isNotEmpty;
+
       final reportRequest = {
         "press_id": state.selectedPress!.id,
-        "inspection_date": state.inspectionDate.toIso8601String(),
+        "inspection_date": DateTime.now().toIso8601String(),
         "area": state.area.isEmpty ? "General" : state.area,
         "folio": "F-${DateTime.now().millisecondsSinceEpoch}",
         "answers": answers,
-        "loan_area_id": state.selectedLoanArea?.id,
+        // Si tiene datos, envía el objeto; si no, envía una lista vacía o null según pida tu API
+        "loan": hasLoanData ? {
+          "area_id": state.selectedLoanArea?.id,
+          "loan_date": DateTime.now().toIso8601String(),
+          "solicitants_name": state.solicitantsName,
+          "observations": state.observations,
+        } : null // Cámbialo por [] si tu API estrictamente requiere una lista vacía
       };
 
-      final result = await ref.read(createPressReportProvider).call(reportRequest);
-      result.fold(
-        (f) => _showSnack("Error: ${f.message}", Colors.red),
-        (r) { _showSnack("¡Reporte guardado!", Colors.green); Navigator.pop(context); }
-      );
+      final result = await ref
+          .read(createPressReportProvider)
+          .call(reportRequest);
+
+      result.fold((f) => _showSnack("Error: ${f.message}", Colors.red), (r) {
+        _showSnack("¡Reporte guardado!", Colors.green);
+
+        notifier.reset();
+
+        Navigator.pop(context);
+      });
     } catch (e) {
-      _showSnack("Error inesperado", Colors.red);
+      _showSnack("Error inesperado al guardar", Colors.red);
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
 
-  void _showSnack(String m, Color c) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m), backgroundColor: c, behavior: SnackBarBehavior.floating));
+  void _showSnack(String m, Color c) =>
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(m),
+          backgroundColor: c,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: isLoading 
-        ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
-        : SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                CustomHeader(title: "Inspección de Prensas", actionIcon: Icons.build_rounded, onActionTap: () => Navigator.pop(context)),
-                const SizedBox(height: 32),
-                CaptureMethodSelector(onManualFill: () => setState(() => isScanning = false), onScan: () => setState(() => isScanning = true)),
-                const SizedBox(height: 32),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  child: isScanning 
-                    ? Container(height: 400, color: Colors.black, child: const Center(child: Icon(Icons.qr_code_scanner, color: Colors.white, size: 80)))
-                    : Column(
-                        children: [
-                          const InformationGeneralEquipo(),
-                          const SizedBox(height: 32),
-                          PrensaInspectionTable(items: templateItems),
-                          const SizedBox(height: 32),
-                          // WIDGET INDEPENDIENTE
-                          const LoanAndInspectorSection(),
-                        ],
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFC62828)),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  CustomHeader(
+                    title: "Inspección de Prensas",
+                    actionIcon: Icons.build_rounded,
+                    onActionTap: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(height: 32),
+                  CaptureMethodSelector(
+                    onManualFill: () => setState(() => isScanning = false),
+                    onScan: () => setState(() => isScanning = true),
+                  ),
+                  const SizedBox(height: 32),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: isScanning
+                        ? Container(
+                            height: 400,
+                            color: Colors.black,
+                            child: const Center(
+                              child: Icon(
+                                Icons.qr_code_scanner,
+                                color: Colors.white,
+                                size: 80,
+                              ),
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              const InformationGeneralEquipo(),
+                              const SizedBox(height: 32),
+                              PrensaInspectionTable(items: templateItems),
+                              const SizedBox(height: 32),
+                              const LoanAndInspectorSection(),
+                            ],
+                          ),
+                  ),
+                  const SizedBox(height: 40),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _actionBtn(
+                          "VISTA PREVIA PDF",
+                          Colors.blueGrey,
+                          Icons.picture_as_pdf,
+                          () => _showPdfPreview(context),
+                        ),
                       ),
-                ),
-                const SizedBox(height: 40),
-                Row(
-                  children: [
-                    Expanded(child: _actionBtn("VISTA PREVIA PDF", Colors.blueGrey, Icons.picture_as_pdf, () => _showPdfPreview(context))),
-                    const SizedBox(width: 16),
-                    Expanded(child: _actionBtn("FINALIZAR REPORTE", const Color(0xFFC62828), Icons.check_circle, _guardarInspeccion)),
-                  ],
-                ),
-                const SizedBox(height: 60),
-              ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _actionBtn(
+                          "FINALIZAR REPORTE",
+                          const Color(0xFFC62828),
+                          Icons.check_circle,
+                          _guardarInspeccion,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 60),
+                ],
+              ),
             ),
-          ),
     );
   }
 
-  Widget _actionBtn(String l, Color c, IconData i, VoidCallback t) => ElevatedButton.icon(
-    onPressed: t, icon: Icon(i, color: Colors.white, size: 20), label: Text(l, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-    style: ElevatedButton.styleFrom(backgroundColor: c, minimumSize: const Size(double.infinity, 60), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-  );
+  Widget _actionBtn(String l, Color c, IconData i, VoidCallback t) =>
+      ElevatedButton.icon(
+        onPressed: t,
+        icon: Icon(i, color: Colors.white, size: 20),
+        label: Text(
+          l,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: c,
+          minimumSize: const Size(double.infinity, 60),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
+      );
 }

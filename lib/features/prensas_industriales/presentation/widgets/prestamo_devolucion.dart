@@ -112,6 +112,7 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                 TextField(
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   decoration: _inputStyle(hint: "Nombre completo del responsable"),
+                  onChanged: (value) => notifier.updateSolicitantsName(value),
                 ),
 
                 const SizedBox(height: 20),
@@ -120,6 +121,7 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                   maxLines: 2,
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   decoration: _inputStyle(hint: "Notas adicionales..."),
+                  onChanged: (value) => notifier.updateObservations(value),
                 ),
               ],
             ),

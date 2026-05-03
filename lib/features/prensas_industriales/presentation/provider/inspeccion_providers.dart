@@ -10,8 +10,8 @@ import '../../domain/usecases/get_loan_areas_use_case.dart';
 import '../../domain/usecases/create_loan_use_case.dart';
 import '../notifier/inspeccion_notifier.dart';
 import 'inspeccion_state.dart';
+import '../../domain/usecases/get_latest_loan_status_use_case.dart';
 
-// --- DATA LAYER ---
 final inspeccionDataSourceProvider = Provider((ref) {
   final dio = ref.watch(dioProvider);
   return InspeccionRemoteDataSourceImpl(dio);
@@ -43,7 +43,10 @@ final createLoanAreaUseCaseProvider = Provider((ref) {
   final repo = ref.watch(inspeccionRepositoryProvider);
   return CreateLoanAreaUseCase(repo);
 });
-
+final getLatestLoanStatusUseCaseProvider = Provider((ref) {
+  final repo = ref.watch(inspeccionRepositoryProvider);
+  return GetLatestLoanStatusUseCase(repo);
+});
 // --- OTROS ---
 final allSeriesProvider = FutureProvider<List<String>>((ref) async {
   final repo = ref.watch(inspeccionRepositoryProvider);

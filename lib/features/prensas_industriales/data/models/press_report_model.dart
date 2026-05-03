@@ -7,6 +7,7 @@ class PressReportModel extends PressReportEntity {
     required super.area,
     required super.folio,
     required List<PressAnswerModel> super.answers,
+    super.loan,
   });
 
   Map<String, dynamic> toJson() => {
@@ -15,15 +16,24 @@ class PressReportModel extends PressReportEntity {
         "area": area,
         "folio": folio,
         "answers": answers.map((x) => (x as PressAnswerModel).toJson()).toList(),
+        "loan": loan != null ? {
+          "area_id": loan!.areaId,
+          "loan_date": loan!.loanDate.toIso8601String(),
+          "solicitants_name": loan!.solicitantsName,
+          "observations": loan!.observations,
+        } : null,
       };
 }
 
 class PressAnswerModel extends PressAnswerEntity {
+  final List<Map<String, String>> uploadedEvidences;
+
   PressAnswerModel({
     required super.componentId,
     required super.quantity,
     required super.status,
     required super.observation,
+    this.uploadedEvidences = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -31,6 +41,6 @@ class PressAnswerModel extends PressAnswerEntity {
         "quantity": quantity,
         "status": status,
         "observation": observation,
-        "evidences": [], // Se llena dinámicamente en el Repository/DataSource si es necesario
+        "evidences": uploadedEvidences, 
       };
 }
