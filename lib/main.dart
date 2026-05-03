@@ -14,6 +14,10 @@ Future<void> main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
+  final buckets = await Supabase.instance.client.storage.listBuckets();
+
+  print("Buckets: $buckets");
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
