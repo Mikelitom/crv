@@ -51,4 +51,20 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
 
     return data.map(ClientsConveyorModel.fromJson).toList();
   }
+
+  @override
+  Future<MineModel> createMine(CreateMineParams params) async {
+    final response = await dio.post(
+      "/mines/",
+      data: {
+        "client_id": params.clientId,
+        "name": params.name,
+        "address": params.address,
+        "phone": params.phone,
+        "email": params.email,
+      },
+    );
+
+    return MineModel.fromJson(response.data);
+  }
 }

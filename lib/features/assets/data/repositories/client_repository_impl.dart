@@ -59,4 +59,18 @@ class ClientRepositoryImpl implements ClientRepository {
       return Left(UnknownFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, Mine>> createMine(CreateMineParams params) async {
+    try {
+      final mine = await remote.createMine(params);
+      return Right(mine);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
 }

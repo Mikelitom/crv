@@ -11,3 +11,19 @@ class CreateClientParams {
     required this.email,
   });
 }
+
+class CreateMineParams {
+  final String clientId;
+  final String name;
+  final String? address;
+  final String? phone;
+  final String? email;
+
+  const CreateMineParams({
+    required this.clientId,
+    required this.name,
+    this.address,
+    this.phone,
+    this.email,
+  });
+}
