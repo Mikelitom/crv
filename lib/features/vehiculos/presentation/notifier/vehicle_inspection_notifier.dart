@@ -74,7 +74,6 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
     });
   }
 
-  // --- GUARDADO FINAL (Mapeo idéntico a Prensas) ---
   Future<String?> finalizarInspeccion() async {
     if (state.selectedVehicle == null) return null;
     state = state.copyWith(isLoading: true);
@@ -84,33 +83,26 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
     try {
       for (var item in state.items.where((i) => i.selectedOptionId != null)) {
         final List<Map<String, String>> uploadedEvidences = [];
+        
+        final allEvidences = [...item.evidenceBefore, ...item.evidenceAfter];
 
-        for (var ev in item.evidences) {
+        for (var ev in allEvidences) {
           final tempDir = await getTemporaryDirectory();
-          final file = File(
-            '${tempDir.path}/v_${DateTime.now().microsecondsSinceEpoch}.jpg',
-          );
+          final file = File('${tempDir.path}/v_${DateTime.now().microsecondsSinceEpoch}.jpg');
           await file.writeAsBytes(ev.bytes);
 
-          final uploadResult = await evidenceService.uploadEvidence(
-            file: file,
-            basePath: 'inspecciones/vehiculos',
-          );
-
-          uploadResult.fold(
-            (f) => null,
-            (dto) => uploadedEvidences.add({
-              "file_path": dto.filePath,
-              "file_type": dto.fileType,
-              "mime_type": dto.mimeType,
-              "file_size": dto.fileSize.toString(),
-            }),
-          );
+          final uploadResult = await evidenceService.uploadEvidence(file: file, basePath: 'inspecciones/vehiculos');
+          uploadResult.fold((f) => null, (dto) => uploadedEvidences.add({
+            "file_path": dto.filePath,
+            "file_type": dto.fileType,
+            "mime_type": dto.mimeType,
+            "file_size": dto.fileSize.toString(),
+          }));
         }
 
         answers.add({
           "component_id": item.id,
-          "option_id": item.selectedOptionId,
+          "option_id": item.selectedOptionId, // Según tu cURL
           "observation": item.observations,
           "evidences": uploadedEvidences,
         });
@@ -118,7 +110,7 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
 
       final reportRequest = {
         "vehicle_id": state.selectedVehicle!.id,
-        "inspection_date": state.inspectionDate.toIso8601String(),
+        "inspection_date": DateTime.now().toIso8601String(),
         "location": "Hermosillo",
         "mileage": int.tryParse(state.mileage) ?? 0,
         "requires_service": state.requiresService,
@@ -127,15 +119,10 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
         "answers": answers,
       };
 
-      final result = await ref
-          .read(createVehicleReportUseCaseProvider)
-          .call(reportRequest);
+      final result = await ref.read(createVehicleReportUseCaseProvider).call(reportRequest);
       return result.fold((f) => null, (id) => id);
-    } catch (e) {
-      return null;
-    } finally {
-      state = state.copyWith(isLoading: false);
-    }
+    } catch (e) { return null; }
+    finally { state = state.copyWith(isLoading: false); }
   }
 
   void reset() {

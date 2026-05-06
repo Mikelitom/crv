@@ -1,5 +1,6 @@
 import 'package:crv_reprosisa/features/vehiculos/presentation/provider/vehicle_inspection_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Para LogicalKeySet
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../provider/vehicle_inspection_provider.dart';
@@ -24,7 +25,7 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
 
   @override
   Widget build(BuildContext context) {
-    // Escuchamos los cambios de estado para actualizar los controladores de texto
+    // Sincronización de controladores con el estado
     ref.listen<VehicleInspectionState>(vehicleInspectionProvider, (previous, next) {
       if (next.selectedVehicle != null) {
         final v = next.selectedVehicle!;
@@ -47,65 +48,79 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
     final allPlatesAsync = ref.watch(allPlatesProvider);
     final String formattedDate = DateFormat('dd/MM/yyyy').format(state.inspectionDate);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isMobile = constraints.maxWidth < 800;
-
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Información General de la Unidad Móvil",
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  color: Color(0xFF1A1C1E),
-                ),
-              ),
-              const SizedBox(height: 24),
-              if (isMobile)
-                Column(
-                  children: [
-                    _buildPlateAutocomplete(allPlatesAsync, constraints.maxWidth),
-                    const SizedBox(height: 16),
-                    _buildField("Unidad (Marca Modelo Año)", _buildUnitTextField()),
-                    const SizedBox(height: 16),
-                    _buildReadOnlyField("Fecha", formattedDate),
-                    const SizedBox(height: 16),
-                    _buildMileageField(),
-                  ],
-                )
-              else
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _buildPlateAutocomplete(allPlatesAsync, constraints.maxWidth / 4)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildField("Unidad (Marca Modelo Año)", _buildUnitTextField())),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildReadOnlyField("Fecha", formattedDate)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildMileageField()),
-                  ],
-                ),
-            ],
-          ),
-        );
+    // --- ATAJOS DE TECLADO ---
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        // Ctrl + S para Finalizar/Guardar (Igual que en Neovim/Prensas)
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyS): () {
+          // Asumiendo que esta función está en tu Page o Notifier
+          // ref.read(vehicleInspectionProvider.notifier).finalizarInspeccion();
+        },
+        // Ctrl + P para Vista Previa
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyP): () {
+           // _showPdfPreview(context);
+        },
       },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          bool isMobile = constraints.maxWidth < 800;
+
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Información General de la Unidad Móvil",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    color: Color(0xFF1A1C1E),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                if (isMobile)
+                  Column(
+                    children: [
+                      _buildPlateAutocomplete(allPlatesAsync, constraints.maxWidth),
+                      const SizedBox(height: 16),
+                      _buildField("Unidad (Marca Modelo Año)", _buildUnitTextField()),
+                      const SizedBox(height: 16),
+                      _buildReadOnlyField("Fecha", formattedDate),
+                      const SizedBox(height: 16),
+                      _buildMileageField(),
+                    ],
+                  )
+                else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _buildPlateAutocomplete(allPlatesAsync, constraints.maxWidth / 4)),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildField("Unidad (Marca Modelo Año)", _buildUnitTextField())),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildReadOnlyField("Fecha", formattedDate)),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildMileageField()),
+                    ],
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -123,12 +138,14 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
       "Placas",
       allPlatesAsync.when(
         data: (plates) => Autocomplete<String>(
+          // MEJORA: Mostrar todas las opciones si el campo está vacío
           optionsBuilder: (TextEditingValue textValue) {
-            if (textValue.text == '') return const Iterable<String>.empty();
+            if (textValue.text == '') {
+              return plates; // Retorna la lista completa al hacer click
+            }
             return plates.where((p) => p.toUpperCase().contains(textValue.text.toUpperCase()));
           },
           onSelected: (selection) {
-            // Esto dispara el Notifier y ref.listen lo detectará arriba
             ref.read(vehicleInspectionProvider.notifier).onPlateSelected(selection);
           },
           fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
@@ -136,12 +153,16 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
               controller: controller,
               focusNode: focusNode,
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              decoration: _inputStyle(false, hint: "Buscar placa...", suffixIcon: Icons.search_rounded),
+              decoration: _inputStyle(
+                false, 
+                hint: "Escribe o selecciona...", 
+                suffixIcon: Icons.arrow_drop_down_circle_outlined // Icono de lista
+              ),
             );
           },
         ),
         loading: () => const LinearProgressIndicator(color: Color(0xFFC62828)),
-        error: (_, __) => const Text("Error"),
+        error: (_, __) => const Text("Error al cargar unidades"),
       ),
     );
   }
