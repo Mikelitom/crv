@@ -166,7 +166,7 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> {
                           
                           final filteredVehicles = vehicleState.vehicles.where((v) => 
                               v.brand!.toLowerCase().contains(_searchQuery.toLowerCase()) || 
-                              v.licensePlate.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+                              v.plate.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
 
                           final filteredPress = pressState.press.where((p) => 
                               p.serie.toLowerCase().contains(_searchQuery.toLowerCase()) || 
@@ -222,7 +222,7 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> {
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            title: Text(type == "cliente" ? item.name : (type == "vehiculo" ? item.licensePlate : item.serie), style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(type == "cliente" ? item.name : (type == "vehiculo" ? item.plate : item.serie), style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(type == "cliente" ? item.company : (type == "vehiculo" ? "${item.brand} ${item.model}" : item.type)),
             trailing: const Icon(Icons.arrow_forward_ios, size: 14),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => const GenericCatalogPage(type: AssetType.vehiculo))),
@@ -273,7 +273,7 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> {
         DataCell(Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(color: const Color(0xFFF1F3F4), borderRadius: BorderRadius.circular(8)),
-          child: Text(item.licensePlate, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace')),
+          child: Text(item.plate, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace')),
         )),
       ] else ...[
         DataCell(Text(item.serie, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD32F2F)))),

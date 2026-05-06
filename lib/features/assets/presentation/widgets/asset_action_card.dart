@@ -31,7 +31,6 @@ class _ActionCardActivoState extends State<ActionCardActivo> {
         duration: const Duration(milliseconds: 250),
         width: 280,
         curve: Curves.easeInOut,
-        // Elevación física del card completo
         transform: Matrix4.translationValues(0, isHovered ? -8 : 0, 0),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
