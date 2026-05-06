@@ -19,10 +19,6 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
         print("ITEM TYPE: ${item.runtimeType}");
         print("ITEM VALUE: $item");
       }
-
-      // final vehicles = response
-      //     .map((json) => VehicleModel.fromJson(json))
-      //     .toList();
       print(
         "DEBUG: Repo mapping success: ${response.first.plate}",
       ); // Verifica si el mapeo funcionó

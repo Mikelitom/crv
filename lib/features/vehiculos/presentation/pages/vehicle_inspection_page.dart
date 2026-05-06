@@ -15,39 +15,65 @@ class VehicleInspectionPage extends ConsumerStatefulWidget {
   const VehicleInspectionPage({super.key});
 
   @override
-  ConsumerState<VehicleInspectionPage> createState() => _VehicleInspectionPageState();
+  ConsumerState<VehicleInspectionPage> createState() =>
+      _VehicleInspectionPageState();
 }
 
 class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
-  
   void _showPdfPreview(BuildContext context) {
     final state = ref.read(vehicleInspectionProvider);
     if (state.selectedVehicle == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Selecciona un vehículo primero"), backgroundColor: Colors.orange)
+        const SnackBar(
+          content: Text("Selecciona un vehículo primero"),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
+
+    // Generamos el mapa de datos usando la función estática de la clase
     final pdfData = VehiculoPdfGenerator.mapStateToPdfData(state);
-    Navigator.push(context, MaterialPageRoute(builder: (context) => Scaffold(
-      appBar: AppBar(title: const Text("Vista Previa REPROSISA"), backgroundColor: const Color(0xFFC62828)),
-      body: PdfPreview(
-        build: (format) => VehiculoPdfGenerator.generateEsqueleto(pdfData),
-        initialPageFormat: PdfPageFormat.letter,
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text("Vista Previa REPROSISA"),
+            backgroundColor: const Color(0xFFC62828),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          body: PdfPreview(
+            build: (format) => VehiculoPdfGenerator.generateEsqueleto(pdfData),
+            initialPageFormat: PdfPageFormat.letter,
+          ),
+        ),
       ),
-    )));
+    );
   }
 
   Future<void> _finalizar() async {
-    final resultId = await ref.read(vehicleInspectionProvider.notifier).finalizarInspeccion();
+    final resultId = await ref
+        .read(vehicleInspectionProvider.notifier)
+        .finalizarInspeccion();
     if (resultId != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("¡Inspección guardada con éxito!"), backgroundColor: Colors.green)
+        const SnackBar(
+          content: Text("¡Inspección guardada con éxito!"),
+          backgroundColor: Colors.green,
+        ),
       );
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error al guardar el reporte"), backgroundColor: Colors.red)
+        const SnackBar(
+          content: Text("Error al guardar el reporte"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -59,13 +85,19 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: state.isLoading 
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
+      body: state.isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFC62828)),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  CustomHeader(title: "Inspección de Unidades", actionIcon: Icons.directions_car, onActionTap: () => Navigator.pop(context)),
+                  CustomHeader(
+                    title: "Inspección de Unidades",
+                    actionIcon: Icons.directions_car,
+                    onActionTap: () => Navigator.pop(context),
+                  ),
                   const SizedBox(height: 24),
                   CaptureMethodSelector(
                     onManualFill: () => notifier.setScanning(false),
@@ -74,24 +106,69 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                   const SizedBox(height: 24),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
-                    child: state.isScanning 
-                      ? const SizedBox(height: 300, child: Center(child: Icon(Icons.qr_code_scanner, size: 80, color: Colors.grey)))
-                      : Column(children: [
-                          const GeneralVehicleInfo(),
-                          const SizedBox(height: 24),
-                          ...state.templateSections.map((section) {
-                            final List<ComponentVehicleModel> sectionItems = (section['components'] as List).map((c) {
-                              return state.items.firstWhere((i) => i.id == c['id'], orElse: () => ComponentVehicleModel(id: c['id'], description: c['name']));
-                            }).toList();
-                            return VehicleInspectionSection(title: section['name'], items: sectionItems);
-                          }).toList(),
-                          const VehicleServiceRequired(),
-                        ]),
+                    child: state.isScanning
+                        ? const SizedBox(
+                            height: 300,
+                            child: Center(
+                              child: Icon(
+                                Icons.qr_code_scanner,
+                                size: 80,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              const GeneralVehicleInfo(),
+                              const SizedBox(height: 24),
+                              ...state.templateSections.map((section) {
+                                final List<ComponentVehicleModel> sectionItems =
+                                    (section['components'] as List).map((c) {
+                                      // CORRECCIÓN DEL ERROR DE TIPO:
+                                      // Usamos where().firstOrNull o manejamos el caso vacío manualmente
+                                      final existing = state.items.where(
+                                        (i) => i.id == c['id'],
+                                      );
+                                      if (existing.isNotEmpty) {
+                                        return existing.first;
+                                      } else {
+                                        return ComponentVehicleModel(
+                                          id: c['id'],
+                                          description: c['name'],
+                                        );
+                                      }
+                                    }).toList();
+                                return VehicleInspectionSection(
+                                  title: section['name'],
+                                  items: sectionItems,
+                                );
+                              }).toList(),
+                              const VehicleServiceRequired(),
+                            ],
+                          ),
                   ),
                   const SizedBox(height: 40),
-                  _actionBtn("VISTA PREVIA PDF", Colors.blueGrey, Icons.picture_as_pdf, () => _showPdfPreview(context)),
-                  const SizedBox(height: 16),
-                  _actionBtn("FINALIZAR INSPECCIÓN", const Color(0xFFC62828), Icons.check_circle, _finalizar),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _actionBtn(
+                          "VISTA PREVIA PDF",
+                          Colors.blueGrey,
+                          Icons.picture_as_pdf,
+                          () => _showPdfPreview(context),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _actionBtn(
+                          "FINALIZAR",
+                          const Color(0xFFC62828),
+                          Icons.check_circle,
+                          _finalizar,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 50),
                 ],
               ),
@@ -100,10 +177,23 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
   }
 
   Widget _actionBtn(String l, Color c, IconData i, VoidCallback t) => SizedBox(
-    width: double.infinity, height: 55,
+    height: 55,
     child: ElevatedButton.icon(
-      onPressed: t, icon: Icon(i, color: Colors.white), label: Text(l, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      style: ElevatedButton.styleFrom(backgroundColor: c, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+      onPressed: t,
+      icon: Icon(i, color: Colors.white),
+      label: Text(
+        l,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: c,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
     ),
   );
 }
+
