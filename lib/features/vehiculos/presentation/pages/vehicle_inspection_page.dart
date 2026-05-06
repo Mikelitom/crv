@@ -28,9 +28,16 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
       );
       return;
     }
+    
+    // Generamos el mapa de datos usando la función estática de la clase
     final pdfData = VehiculoPdfGenerator.mapStateToPdfData(state);
+
     Navigator.push(context, MaterialPageRoute(builder: (context) => Scaffold(
-      appBar: AppBar(title: const Text("Vista Previa REPROSISA"), backgroundColor: const Color(0xFFC62828)),
+      appBar: AppBar(
+        title: const Text("Vista Previa REPROSISA"), 
+        backgroundColor: const Color(0xFFC62828),
+        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+      ),
       body: PdfPreview(
         build: (format) => VehiculoPdfGenerator.generateEsqueleto(pdfData),
         initialPageFormat: PdfPageFormat.letter,
@@ -81,7 +88,14 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                           const SizedBox(height: 24),
                           ...state.templateSections.map((section) {
                             final List<ComponentVehicleModel> sectionItems = (section['components'] as List).map((c) {
-                              return state.items.firstWhere((i) => i.id == c['id'], orElse: () => ComponentVehicleModel(id: c['id'], description: c['name']));
+                              // CORRECCIÓN DEL ERROR DE TIPO:
+                              // Usamos where().firstOrNull o manejamos el caso vacío manualmente
+                              final existing = state.items.where((i) => i.id == c['id']);
+                              if (existing.isNotEmpty) {
+                                return existing.first;
+                              } else {
+                                return ComponentVehicleModel(id: c['id'], description: c['name']);
+                              }
                             }).toList();
                             return VehicleInspectionSection(title: section['name'], items: sectionItems);
                           }).toList(),
@@ -89,9 +103,17 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                         ]),
                   ),
                   const SizedBox(height: 40),
-                  _actionBtn("VISTA PREVIA PDF", Colors.blueGrey, Icons.picture_as_pdf, () => _showPdfPreview(context)),
-                  const SizedBox(height: 16),
-                  _actionBtn("FINALIZAR INSPECCIÓN", const Color(0xFFC62828), Icons.check_circle, _finalizar),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _actionBtn("VISTA PREVIA PDF", Colors.blueGrey, Icons.picture_as_pdf, () => _showPdfPreview(context)),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _actionBtn("FINALIZAR", const Color(0xFFC62828), Icons.check_circle, _finalizar),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 50),
                 ],
               ),
@@ -100,10 +122,15 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
   }
 
   Widget _actionBtn(String l, Color c, IconData i, VoidCallback t) => SizedBox(
-    width: double.infinity, height: 55,
+    height: 55,
     child: ElevatedButton.icon(
-      onPressed: t, icon: Icon(i, color: Colors.white), label: Text(l, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      style: ElevatedButton.styleFrom(backgroundColor: c, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+      onPressed: t, 
+      icon: Icon(i, color: Colors.white), 
+      label: Text(l, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: c, 
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+      ),
     ),
   );
 }

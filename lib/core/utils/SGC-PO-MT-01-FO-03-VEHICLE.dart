@@ -24,13 +24,21 @@ class VehiculoPdfGenerator {
         return {
           "name": sec['name'],
           "items": (sec['components'] as List).map((c) {
-            final resp = state.items.firstWhere((i) => i.id == c['id'], orElse: () => null);
-            final option = state.templateOptions.firstWhere((opt) => opt['id'] == resp?.selectedOptionId, orElse: () => {'code': ''});
+            // Buscamos la respuesta correspondiente al componente
+            final responses = state.items.where((i) => i.id == c['id']);
+            final resp = responses.isNotEmpty ? responses.first : null;
+            
+            // Buscamos la opción seleccionada (BUENA, MALA, etc)
+            final options = state.templateOptions.where((opt) => opt['id'] == resp?.selectedOptionId);
+            final option = options.isNotEmpty ? options.first : {'code': ''};
+
             return {
               "name": c['name'],
               "status": option['code'].toString().toUpperCase(),
               "observation": resp?.observations ?? "",
-              "fotos": resp?.evidences.map((e) => e.bytes).toList() ?? [],
+              // Mapeo de fotos antes y después
+              "foto_antes_bytes": resp?.evidences.where((e) => e.type == 'before' || e.type == 'antes').firstOrNull?.bytes,
+              "foto_despues_bytes": resp?.evidences.where((e) => e.type == 'after' || e.type == 'despues').firstOrNull?.bytes,
             };
           }).toList(),
         };
@@ -43,13 +51,17 @@ class VehiculoPdfGenerator {
     pw.ImageProvider? logoImage;
     try {
       logoImage = pw.MemoryImage((await rootBundle.load('assets/images/logo_reprosisa.png')).buffer.asUint8List());
-    } catch (e) { print("Error logo: $e"); }
+    } catch (e) {
+      print("Error logo: $e");
+    }
 
     final List<dynamic> evidenciasAnexo = [];
     if (data['secciones'] != null) {
       for (var sec in data['secciones']) {
         for (var item in sec['items']) {
-          if (item['fotos'] != null && (item['fotos'] as List).isNotEmpty) evidenciasAnexo.add(item);
+          if (item['foto_antes_bytes'] != null || item['foto_despues_bytes'] != null) {
+            evidenciasAnexo.add(item);
+          }
         }
       }
     }
@@ -62,7 +74,8 @@ class VehiculoPdfGenerator {
         pw.SizedBox(height: 10),
         _buildGeneralInfo(data),
         pw.SizedBox(height: 10),
-        if (data['secciones'] != null) ...(data['secciones'] as List).map((sec) => _buildInspectionTable(sec['name'], sec['items'])),
+        if (data['secciones'] != null)
+          ...(data['secciones'] as List).map((sec) => _buildInspectionTable(sec['name'], sec['items'])),
         _buildServiceSection(data),
         pw.SizedBox(height: 20),
         _buildSignatureSection(),
@@ -70,7 +83,7 @@ class VehiculoPdfGenerator {
           pw.NewPage(),
           pw.Center(child: pw.Text("ANEXO DE EVIDENCIAS FOTOGRÁFICAS", style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.red900))),
           pw.SizedBox(height: 20),
-          ...evidenciasAnexo.map((ev) => _buildComponentEvidencia(ev)),
+          ...evidenciasAnexo.map((ev) => _buildComponentEvidenciaGrande(ev)),
         ]
       ],
     ));
@@ -108,23 +121,42 @@ class VehiculoPdfGenerator {
 
   static pw.Widget _buildInspectionTable(String title, List<dynamic> items) => pw.Table(
     border: pw.TableBorder.all(width: 0.5),
-    columnWidths: {0: const pw.FlexColumnWidth(3), 1: const pw.FixedColumnWidth(35), 2: const pw.FixedColumnWidth(35), 3: const pw.FixedColumnWidth(35), 4: const pw.FixedColumnWidth(35), 5: const pw.FixedColumnWidth(110)},
+    columnWidths: {
+      0: const pw.FlexColumnWidth(3),
+      1: const pw.FixedColumnWidth(28),
+      2: const pw.FixedColumnWidth(28),
+      3: const pw.FixedColumnWidth(28),
+      4: const pw.FixedColumnWidth(28),
+      5: const pw.FixedColumnWidth(80),
+      6: const pw.FixedColumnWidth(30),
+      7: const pw.FixedColumnWidth(30),
+    },
     children: [
       pw.TableRow(decoration: const pw.BoxDecoration(color: PdfColors.grey200), children: [
         pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(title, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))),
-        _tH("BUENA"), _tH("MALA"), _tH("REPO."), _tH("REPA."), _tH("OBS."),
+        _tH("BUENA"), _tH("MALA"), _tH("REPO."), _tH("REPA."), _tH("OBS."), _tH("ANT"), _tH("DES"),
       ]),
       ...items.map((item) => pw.TableRow(children: [
         pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(item['name'] ?? "", style: const pw.TextStyle(fontSize: 7))),
-        _tC(item['status'] == 'GOOD' ? "V" : ""), _tC(item['status'] == 'BAD' ? "X" : ""),
-        _tC(item['status'] == 'REPOSITION' ? "V" : ""), _tC(item['status'] == 'REPARATION' ? "V" : ""),
+        _tC(item['status'] == 'GOOD' ? "V" : ""),
+        _tC(item['status'] == 'BAD' ? "X" : ""),
+        _tC(item['status'] == 'REPOSITION' ? "V" : ""),
+        _tC(item['status'] == 'REPARATION' ? "V" : ""),
         pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(item['observation'] ?? "", style: const pw.TextStyle(fontSize: 6.5))),
+        _buildEvidenciaMini(item['foto_antes_bytes']),
+        _buildEvidenciaMini(item['foto_despues_bytes']),
       ])),
     ],
   );
 
   static pw.Widget _tH(String l) => pw.Center(child: pw.Text(l, style: pw.TextStyle(fontSize: 5, fontWeight: pw.FontWeight.bold)));
   static pw.Widget _tC(String v) => pw.Center(child: pw.Text(v, style: const pw.TextStyle(fontSize: 7.5)));
+
+  static pw.Widget _buildEvidenciaMini(Uint8List? bytes) => pw.Container(
+    height: 15, width: 15,
+    alignment: pw.Alignment.center,
+    child: bytes != null ? pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain) : pw.SizedBox()
+  );
 
   static pw.Widget _buildServiceSection(Map<String, dynamic> data) => pw.Column(children: [
     pw.Table(border: pw.TableBorder.all(width: 0.5), children: [pw.TableRow(children: [
@@ -147,9 +179,34 @@ class VehiculoPdfGenerator {
     pw.Text(l, style: const pw.TextStyle(fontSize: 7)),
   ]);
 
-  static pw.Widget _buildComponentEvidencia(dynamic item) => pw.Container(margin: const pw.EdgeInsets.only(bottom: 20), child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-    pw.Text("COMPONENTE: ${item['name']}", style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
-    pw.SizedBox(height: 10),
-    pw.Wrap(spacing: 15, runSpacing: 15, children: (item['fotos'] as List).map((f) => pw.Container(width: 250, height: 160, decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey400)), child: pw.Image(pw.MemoryImage(f), fit: pw.BoxFit.contain))).toList()),
-  ]));
+  static pw.Widget _buildComponentEvidenciaGrande(dynamic item) => pw.Container(
+    margin: const pw.EdgeInsets.only(bottom: 15),
+    decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey400)),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Container(width: double.infinity, padding: const pw.EdgeInsets.all(4), color: PdfColors.grey200, child: pw.Text("COMPONENTE: ${item['name']}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
+        pw.Padding(
+          padding: const pw.EdgeInsets.all(8),
+          child: pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+            children: [
+              _fotoGrande("ANTES", item['foto_antes_bytes']),
+              _fotoGrande("DESPUÉS", item['foto_despues_bytes']),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  static pw.Widget _fotoGrande(String label, Uint8List? bytes) => pw.Column(children: [
+    pw.Text(label, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+    pw.SizedBox(height: 4),
+    pw.Container(
+      width: 240, height: 150,
+      decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey300)),
+      child: bytes != null ? pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain) : pw.Center(child: pw.Text("Sin evidencia", style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey400))),
+    ),
+  ]);
 }

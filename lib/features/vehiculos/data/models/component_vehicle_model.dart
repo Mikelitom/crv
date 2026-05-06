@@ -9,17 +9,20 @@ class EvidenceFile {
 }
 
 class ComponentVehicleModel {
-  final String id; // component_id (UUID)
+  final String id; 
   final String description;
   String? selectedOptionId; // UUID de la opción (good, bad, etc.)
   String observations;
-  List<EvidenceFile> evidences;
+  List<EvidenceFile> evidenceBefore;
+  List<EvidenceFile> evidenceAfter;
 
   ComponentVehicleModel({
     required this.id,
     required this.description,
     this.selectedOptionId,
     this.observations = "",
-    List<EvidenceFile>? evidences,
-  }) : evidences = evidences ?? [];
+    List<EvidenceFile>? evidenceBefore,
+    List<EvidenceFile>? evidenceAfter,
+  }) : evidenceBefore = evidenceBefore ?? [],
+       evidenceAfter = evidenceAfter ?? [];
 }
