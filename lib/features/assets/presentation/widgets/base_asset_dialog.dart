@@ -5,7 +5,7 @@ class BaseAssetDialog extends StatelessWidget {
   final List<Widget> children;
   final VoidCallback? onConfirm;
   final bool isLoading;
-  final bool isSuccess; // 🔥 NUEVO
+  final bool isSuccess; 
 
   const BaseAssetDialog({
     required this.title,
@@ -24,10 +24,8 @@ class BaseAssetDialog extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       titlePadding: EdgeInsets.zero,
 
-      /// 🔥 HEADER DINÁMICO
       title: _buildHeader(),
 
-      /// 🔥 CONTENIDO DINÁMICO
       content: SizedBox(
         width: 480,
         child: AnimatedSwitcher(
@@ -44,7 +42,6 @@ class BaseAssetDialog extends StatelessWidget {
         ),
       ),
 
-      /// 🔥 ACCIONES DINÁMICAS
       actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
       actions: isSuccess ? [] : _buildActions(context),
     );

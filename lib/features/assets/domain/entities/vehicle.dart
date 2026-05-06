@@ -3,9 +3,11 @@ class Vehicle {
   final String typeId;
   final String brand;
   final String model;
+  final int unit;
   final int year;
-  final String licensePlate;
+  final String plate;
   final DateTime createdAt;
+  final DateTime? updatedAt;
   final bool isActive;
 
   Vehicle({
@@ -13,9 +15,11 @@ class Vehicle {
     required this.typeId,
     required this.brand,
     required this.model,
+    required this.unit,
     required this.year,
-    required this.licensePlate,
+    required this.plate,
     required this.createdAt,
+    this.updatedAt,
     required this.isActive,
   });
 }

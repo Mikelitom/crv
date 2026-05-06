@@ -8,8 +8,9 @@ class VehicleModel extends Vehicle {
     required super.typeId,
     required super.brand,
     required super.model,
+    required super.unit,
     required super.year,
-    required super.licensePlate,
+    required super.plate,
     required super.createdAt,
     required super.isActive,
   });
@@ -20,8 +21,9 @@ class VehicleModel extends Vehicle {
       typeId: json['type_id'] ?? '',
       brand: json['brand'] ?? '',
       model: json['model'] ?? '',
+      unit: json['unit'] ?? '',
       year: json['year'] ?? 0,
-      licensePlate: json['plate'] ?? '',
+      plate: json['plate'] ?? '',
       createdAt: DateTime.parse(json['created_at']),
       isActive: json['is_active'] ?? true,
     );

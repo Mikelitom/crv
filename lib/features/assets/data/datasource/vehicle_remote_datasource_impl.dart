@@ -15,8 +15,9 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
         "type_id": params.typeId,
         "brand": params.brand,
         "model": params.model,
+        "unit": params.unit,
         "year": params.year,
-        "plate": params.licensePlate.toUpperCase(),
+        "plate": params.plate.toUpperCase(),
       };
 
       print("REQUEST BODY:");
@@ -44,8 +45,9 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
         "type_id": params.typeId,
         "brand": params.brand,
         "model": params.model,
+        "unit": params.unit,
         "year": params.year,
-        "plate": params.licensePlate.toUpperCase(),
+        "plate": params.plate.toUpperCase(),
       },
     );
 
@@ -54,7 +56,7 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
 
   @override
   Future<List<VehicleModel>> getAllVehicle() async {
-    final response = await dio.get("/vehicles/");
+    final response = await dio.get("/vehicles/active");
 
     final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(
       response.data,

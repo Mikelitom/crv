@@ -1,11 +1,29 @@
-class InspectionItemModel {
-  final String description;
-  int? status; // 0: Buena, 1: Mala, 2: Reposición, 3: Reparación
-  String observations;
+import '../../domain/entities/vehicle_entity.dart';
 
-  InspectionItemModel({
-    required this.description,
-    this.status,
-    this.observations = "",
+class VehicleModel extends Vehicle{
+  VehicleModel({
+    required super.id,
+    required super.typeId,
+    required super.brand,
+    required super.model,
+    required super.unit,
+    required super.year,
+    required super.plate,
+    
   });
+
+  factory VehicleModel.fromJson(Map<String, dynamic> json) {
+    return VehicleModel(
+      id: json['id'],
+      typeId: json['type_id'],
+      brand: json['brand'],
+      model: json['model'],
+      unit: json['unit'],
+      year: json['year'],
+      plate: json['plate'],
+
+    );
+  }
+  String get unitDetail => "$brand $model $year";
 }
+
