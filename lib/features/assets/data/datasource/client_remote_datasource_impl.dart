@@ -17,7 +17,6 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
         "company": params.company,
         "phone": params.phone,
         "email": params.email,
-        "address": params.address,
       },
     );
 
@@ -36,7 +35,6 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
         "company": params.company,
         "phone": params.phone,
         "email": params.email,
-        "address": params.address,
       },
     );
 
