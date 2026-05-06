@@ -26,3 +26,28 @@ class ClientsConveyorModel extends ClientsConveyor {
     );
   }
 }
+
+class MineModel extends Mine {
+  MineModel({
+    required super.id,
+    required super.clientId,
+    required super.name,
+    required super.address,
+    required super.email,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.isActive,
+  });
+  factory MineModel.fromJson(Map<String, dynamic> json) {
+    return MineModel(
+      id: json['id'],
+      clientId: json['client_id'],
+      name: json['name'],
+      address: json['address'],
+      email: json['email'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      isActive: json['is_active'],
+    );
+  }
+}
