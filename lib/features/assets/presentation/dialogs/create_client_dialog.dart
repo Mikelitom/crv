@@ -21,7 +21,6 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
   final companyController = TextEditingController();
   final phoneController = TextEditingController();
   final emailController = TextEditingController();
-  final addressController = TextEditingController();
 
   bool _success = false;
 
@@ -73,7 +72,6 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
                 company: companyController.text.trim(),
                 phone: phoneController.text.trim(),
                 email: emailController.text.trim(),
-                address: addressController.text.trim(),
               );
 
               await ref.read(createClientProvider.notifier).create(client);
@@ -134,8 +132,9 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
             validator: (value) {
               if (value == null || value.isEmpty) return null;
 
-
-              final exists = clientsState.clients.any((c) => c.email == emailController.text.trim());
+              final exists = clientsState.clients.any(
+                (c) => c.email == emailController.text.trim(),
+              );
 
               if (exists) return "Email ya registrado";
 
@@ -145,13 +144,6 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
               }
               return null;
             },
-          ),
-
-          buildField(
-            addressController,
-            "Dirección / Minas",
-            "Mina Santa Fe, Mina Norte",
-            maxLines: 2,
           ),
         ],
       ),
@@ -186,10 +178,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
             const SizedBox(height: 16),
             const Text(
               "Cliente registrado",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
