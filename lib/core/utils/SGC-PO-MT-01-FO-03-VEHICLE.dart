@@ -24,14 +24,12 @@ class VehiculoPdfGenerator {
         return {
           "name": sec['name'],
           "items": (sec['components'] as List).map((c) {
-            // Buscamos la respuesta en el estado
             final responses = state.items.where((i) => i.id == c['id']);
             final resp = responses.isNotEmpty ? responses.first : null;
             
             final options = state.templateOptions.where((opt) => opt['id'] == resp?.selectedOptionId);
             final option = options.isNotEmpty ? options.first : {'code': ''};
 
-            // Mapeo seguro de evidencias usando evidenceBefore y evidenceAfter
             return {
               "name": c['name'],
               "status": option['code'].toString().toUpperCase(),
@@ -80,11 +78,14 @@ class VehiculoPdfGenerator {
         if (data['secciones'] != null)
           ...(data['secciones'] as List).map((sec) => _buildInspectionTable(sec['name'], sec['items'])),
         _buildServiceSection(data),
-        pw.SizedBox(height: 50),
-        _buildSimpleSignatureSection(),
         if (evidenciasAnexo.isNotEmpty) ...[
           pw.NewPage(),
-          pw.Center(child: pw.Text("ANEXO DE EVIDENCIAS FOTOGRÁFICAS", style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold))),
+          pw.Center(
+            child: pw.Text(
+              "ANEXO DE EVIDENCIAS FOTOGRÁFICAS", 
+              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)
+            )
+          ),
           pw.SizedBox(height: 20),
           ...evidenciasAnexo.map((ev) => _buildComponentEvidenciaGrande(ev)),
         ]
@@ -141,10 +142,10 @@ class VehiculoPdfGenerator {
       ]),
       ...items.map((item) => pw.TableRow(children: [
         pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(item['name'] ?? "", style: const pw.TextStyle(fontSize: 7))),
-        _tC(item['status'] == 'GOOD' ? "V" : ""),
+        _tC(item['status'] == 'GOOD' ? "X" : ""),
         _tC(item['status'] == 'BAD' ? "X" : ""),
-        _tC(item['status'] == 'REPOSITION' ? "V" : ""),
-        _tC(item['status'] == 'REPARATION' ? "V" : ""),
+        _tC(item['status'] == 'REPOSITION' ? "X" : ""),
+        _tC(item['status'] == 'REPARATION' ? "X" : ""),
         pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(item['observation'] ?? "", style: const pw.TextStyle(fontSize: 6.5))),
         _buildEvidenciaMini(item['foto_antes_bytes']),
         _buildEvidenciaMini(item['foto_despues_bytes']),
@@ -162,42 +163,41 @@ class VehiculoPdfGenerator {
   );
 
   static pw.Widget _buildServiceSection(Map<String, dynamic> data) => pw.Column(children: [
-    pw.Table(border: pw.TableBorder.all(width: 1.0), children: [pw.TableRow(children: [
-      pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text("SERVICIO: REQUIERE SERVICIO", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))),
-      pw.Container(height: 18, child: pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceAround, children: [
-        pw.Text("SI: ${data['requiere_servicio'] == true ? 'V' : ''}", style: const pw.TextStyle(fontSize: 7)),
-        pw.Text("NO: ${data['requiere_servicio'] == false ? 'V' : ''}", style: const pw.TextStyle(fontSize: 7)),
-      ])),
-      pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text("OBSERVACIONES", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))),
-    ])]),
+    pw.Table(
+      border: pw.TableBorder.all(width: 1.0), 
+      columnWidths: {
+        0: const pw.FlexColumnWidth(2),
+        1: const pw.FlexColumnWidth(1),
+        2: const pw.FlexColumnWidth(2),
+      },
+      children: [
+        pw.TableRow(children: [
+          pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text("SERVICIO: REQUIERE SERVICIO", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))),
+          pw.Container(
+            height: 18, 
+            alignment: pw.Alignment.center,
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceAround, 
+              children: [
+                pw.Text("SI: ${data['requiere_servicio'] == true ? 'X' : ''}", style: const pw.TextStyle(fontSize: 7)),
+                pw.Text("NO: ${data['requiere_servicio'] == false ? 'X' : ''}", style: const pw.TextStyle(fontSize: 7)),
+              ]
+            )
+          ),
+          // Aquí he corregido para que el texto de observaciones aparezca alineado al centro de la celda
+          pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text("OBSERVACIONES", textAlign: pw.TextAlign.center, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))),
+        ])
+      ]
+    ),
+    // Este contenedor muestra el texto guardado en data['notas']
     pw.Container(
       width: double.infinity, 
       constraints: const pw.BoxConstraints(minHeight: 40), 
       padding: const pw.EdgeInsets.all(5), 
       decoration: pw.BoxDecoration(border: pw.Border.all(width: 1.0)), 
-      child: pw.Text("NOTAS: ${data['notas'] ?? ''}", style: const pw.TextStyle(fontSize: 7))
+      child: pw.Text("${data['notas'] ?? ''}", style: const pw.TextStyle(fontSize: 7))
     ),
   ]);
-
-  static pw.Widget _buildSimpleSignatureSection() => pw.Row(
-    mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
-    children: [
-      _signatureLine("RESPONSABLE DE LA UNIDAD"),
-      _signatureLine("REALIZÓ INSPECCIÓN"),
-    ]
-  );
-
-  static pw.Widget _signatureLine(String label) => pw.Column(
-    children: [
-      pw.Container(
-        width: 180,
-        decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(width: 1.0)))
-      ),
-      pw.SizedBox(height: 4),
-      pw.Text(label, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
-      pw.Text("NOMBRE Y FIRMA", style: const pw.TextStyle(fontSize: 7)),
-    ]
-  );
 
   static pw.Widget _buildComponentEvidenciaGrande(dynamic item) => pw.Container(
     margin: const pw.EdgeInsets.only(bottom: 20),

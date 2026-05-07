@@ -56,18 +56,26 @@ class _InformationGeneralEquipoState extends ConsumerState<InformationGeneralEqu
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 12,
               children: [
-                Text(
-                  "Información General del Equipo",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900, 
-                    fontSize: isMobile ? 18 : 22,
-                    color: const Color(0xFF1A1C1E),
+                Container(
+                  constraints: BoxConstraints(
+                    maxWidth: isMobile ? constraints.maxWidth : constraints.maxWidth * 0.7,
+                  ),
+                  child: Text(
+                    "Información General del Equipo",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900, 
+                      fontSize: isMobile ? 18 : 22,
+                      color: const Color(0xFF1A1C1E),
+                    ),
+                    softWrap: true,
                   ),
                 ),
-                // COMENTARIO DE ESTADO VISUAL (NUEVO)
                 if (state.status.isNotEmpty) _buildStatusChip(state.status),
               ],
             ),
