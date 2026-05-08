@@ -18,6 +18,7 @@ class UsersAdminPage extends ConsumerStatefulWidget {
 class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
   String _searchQuery = '';
   String _selectedStatus = 'Todos los Estados';
+  String _selectedRole = 'Todos los Roles';
 
   @override
   void initState() {
@@ -31,15 +32,14 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
       barrierColor: Colors.black54,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 10),
         child: Container(
           width: double.infinity,
           constraints: const BoxConstraints(maxWidth: 1000),
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(32),
-            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 20, offset: const Offset(0, 10))],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -47,50 +47,37 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Solicitudes Pendientes", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, size: 28)),
+                  const Expanded(child: Text("Solicitudes Pendientes", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
                 ],
               ),
-              const Divider(height: 40),
+              const Divider(),
               Flexible(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.black12),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(minWidth: 900),
-                        child: UserDataTable(
-                          users: pending,
-                          onToggleStatus: (id, v) => ref.read(userManagementProvider.notifier).toggleUserStatus(id, v),
-                          onRoleChanged: (id, r) => ref.read(userManagementProvider.notifier).updateUserField(userId: id, role: r),
-                          onScopeChanged: (id, s) async {
-                            await ref.read(userManagementProvider.notifier).updateUserField(userId: id, scope: s);
-                            if (mounted) Navigator.pop(context); 
-                          },
-                        ),
-                      ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 500),
+                  child: SingleChildScrollView(
+                    child: UserDataTable(
+                      users: pending,
+                      onToggleStatus: (id, v) => ref.read(userManagementProvider.notifier).toggleUserStatus(id, v),
+                      onRoleChanged: (id, r) => ref.read(userManagementProvider.notifier).updateUserField(userId: id, role: r),
+                      onScopeChanged: (id, s) async {
+                        await ref.read(userManagementProvider.notifier).updateUserField(userId: id, scope: s);
+                        if (mounted) Navigator.pop(context); 
+                      },
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF1F3F4),
-                    foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text("Cerrar", style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text("Cerrar"),
                 ),
               )
             ],
@@ -108,18 +95,28 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
     final pendingUsers = allUsers.where((u) => u.scope.toUpperCase() == 'NONE').toList();
     final verifiedUsers = allUsers.where((u) => u.scope.toUpperCase() != 'NONE').toList();
 
+    // LÓGICA DE FILTRADO COMPLETA
     final filteredUsers = verifiedUsers.where((user) {
       final matchesSearch = user.name.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesStatus = _selectedStatus == 'Todos los Estados' || (user.isActive && _selectedStatus == 'Habilitados') || (!user.isActive && _selectedStatus == 'Deshabilitados');
-      return matchesSearch && matchesStatus;
+      
+      final matchesStatus = _selectedStatus == 'Todos los Estados' || 
+          (user.isActive && _selectedStatus == 'Habilitados') || 
+          (!user.isActive && _selectedStatus == 'Deshabilitados');
+      
+      final matchesRole = _selectedRole == 'Todos los Roles' || 
+          user.role.contains(_selectedRole.toLowerCase());
+
+      return matchesSearch && matchesStatus && matchesRole;
     }).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: LayoutBuilder(
         builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 600;
+
           return SingleChildScrollView(
-            padding: EdgeInsets.all(constraints.maxWidth > 600 ? 32 : 16),
+            padding: EdgeInsets.all(isMobile ? 16 : 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -127,17 +124,59 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
                 const SizedBox(height: 32),
                 _buildResponsiveStatsGrid(constraints.maxWidth, allUsers),
                 const SizedBox(height: 48),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 16,
+                  runSpacing: 12,
                   children: [
-                    const Text("Personal Verificado", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                    const Text("Personal Verificado", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                     _buildRequestButton(pendingUsers),
                   ],
                 ),
+                
                 const SizedBox(height: 24),
-                UserSearchField(width: double.infinity, query: _searchQuery, onChanged: (v) => setState(() => _searchQuery = v), onClear: () => setState(() => _searchQuery = '')),
+                
+                // BARRA DE BÚSQUEDA
+                UserSearchField(
+                  width: double.infinity, 
+                  query: _searchQuery, 
+                  onChanged: (v) => setState(() => _searchQuery = v), 
+                  onClear: () => setState(() => _searchQuery = '')
+                ),
+                
+                const SizedBox(height: 12),
+
+                // BARRA DE FILTROS (ESTADO Y ROL)
+                UserFilterBar(
+                  selectedStatus: _selectedStatus,
+                  selectedRole: _selectedRole,
+                  onStatusChanged: (val) => setState(() => _selectedStatus = val!),
+                  onRoleChanged: (val) => setState(() => _selectedRole = val!),
+                  onReset: () => setState(() {
+                    _searchQuery = '';
+                    _selectedStatus = 'Todos los Estados';
+                    _selectedRole = 'Todos los Roles';
+                  }),
+                ),
+
                 const SizedBox(height: 16),
-                _tableCard(constraints.maxWidth, filteredUsers),
+                
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white, 
+                    borderRadius: BorderRadius.circular(28), 
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 25)]
+                  ),
+                  child: UserDataTable(
+                    users: filteredUsers,
+                    onToggleStatus: (id, v) => ref.read(userManagementProvider.notifier).toggleUserStatus(id, v),
+                    onRoleChanged: (id, r) => ref.read(userManagementProvider.notifier).updateUserField(userId: id, role: r),
+                    onScopeChanged: (id, s) => ref.read(userManagementProvider.notifier).updateUserField(userId: id, scope: s),
+                  ),
+                ),
               ],
             ),
           );
@@ -151,45 +190,20 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
     return InkWell(
       onTap: () => _openRequestsTray(pending),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: hasRequests ? const Color(0xFFC62828) : Colors.white,
           borderRadius: BorderRadius.circular(15),
           border: hasRequests ? null : Border.all(color: Colors.black12),
-          boxShadow: hasRequests ? [BoxShadow(color: const Color(0xFFC62828).withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 5))] : [],
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.notifications_active_rounded, color: hasRequests ? Colors.white : Colors.grey, size: 20),
+            Icon(Icons.notifications_active_rounded, color: hasRequests ? Colors.white : Colors.grey, size: 18),
             const SizedBox(width: 8),
-            Text("${pending.length} SOLICITUDES", style: TextStyle(color: hasRequests ? Colors.white : Colors.grey[700], fontWeight: FontWeight.bold, fontSize: 12)),
+            Text("${pending.length} SOLICITUDES", 
+              style: TextStyle(color: hasRequests ? Colors.white : Colors.grey[700], fontWeight: FontWeight.bold, fontSize: 11)),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _tableCard(double maxWidth, List<User> users) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white, 
-        borderRadius: BorderRadius.circular(28), 
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 25)]
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: maxWidth < 1000 ? 1000 : maxWidth - 64),
-            child: UserDataTable(
-              users: users,
-              onToggleStatus: (id, v) => ref.read(userManagementProvider.notifier).toggleUserStatus(id, v),
-              onRoleChanged: (id, r) => ref.read(userManagementProvider.notifier).updateUserField(userId: id, role: r),
-              onScopeChanged: (id, s) => ref.read(userManagementProvider.notifier).updateUserField(userId: id, scope: s),
-            ),
-          ),
         ),
       ),
     );

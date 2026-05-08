@@ -9,7 +9,7 @@ import 'package:crv_reprosisa/features/inspections/presentation/widgets/quick_ac
 import 'package:crv_reprosisa/features/catalogo/presentation/page/generic_catalog_page.dart';
 import 'package:crv_reprosisa/features/servicios/page/prensas/press_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:crv_reprosisa/features/bandas_transportadoras/pages/banda_inspection_page.dart';
+import 'package:crv_reprosisa/features/bandas_transportadoras/presentation/pages/banda_inspection_page.dart';
 import 'package:crv_reprosisa/features/prensas_industriales/presentation/Pages/prensa_inspection.dart';
 import 'package:crv_reprosisa/features/vehiculos/presentation/pages/vehicle_inspection_page.dart';
 import 'package:crv_reprosisa/features/user_management/presentation/pages/users_admin_page.dart';

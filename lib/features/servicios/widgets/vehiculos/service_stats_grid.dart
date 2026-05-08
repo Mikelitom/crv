@@ -7,12 +7,17 @@ class ServiceStatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      // Cálculo para que las 3 tarjetas ocupen todo el ancho sin huecos blancos
-      final double cardWidth = (constraints.maxWidth - 24) / 3;
+      // Si el ancho es menor a 600px (móvil), usamos 1 columna. 
+      // Si es mayor, usamos 3 columnas.
+      final bool isMobile = constraints.maxWidth < 600;
+      final double spacing = 12.0;
+      final double cardWidth = isMobile 
+          ? constraints.maxWidth // Ancho total en móvil
+          : (constraints.maxWidth - (spacing * 2)) / 3; // 3 columnas en desktop
 
       return Wrap(
-        spacing: 12,
-        runSpacing: 12,
+        spacing: spacing,
+        runSpacing: spacing,
         children: [
           _StatCard(
             label: "Servicios Totales",
@@ -60,7 +65,7 @@ class _StatCardState extends State<_StatCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: widget.width,
-        height: 100, // ALTURA GRANDE: Como en Gestión de Usuarios
+        height: 100, 
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -70,23 +75,30 @@ class _StatCardState extends State<_StatCard> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(widget.value, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-                Text(widget.label, style: const TextStyle(color: Color(0xFFC62828), fontSize: 13, fontWeight: FontWeight.bold)),
-              ],
+            // Usamos Flexible para que el texto no empuje al icono fuera de la tarjeta
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(widget.value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                  Text(
+                    widget.label, 
+                    style: const TextStyle(color: Color(0xFFC62828), fontSize: 12, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis, // Si el texto es muy largo, pone puntos suspensivos
+                  ),
+                ],
+              ),
             ),
-            // Icono sintonizado a la derecha con animación focalizada
+            const SizedBox(width: 8),
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isHovered ? const Color(0xFFC62828) : const Color(0xFFFDECEA),
                 shape: BoxShape.circle,
               ),
-              child: Icon(widget.icon, color: isHovered ? Colors.white : const Color(0xFFC62828), size: 28),
+              child: Icon(widget.icon, color: isHovered ? Colors.white : const Color(0xFFC62828), size: 24),
             ),
           ],
         ),
