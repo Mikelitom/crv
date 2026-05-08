@@ -26,11 +26,33 @@ class BandaSectionTable extends ConsumerStatefulWidget {
 class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
   final ImagePicker _picker = ImagePicker();
   final Color _kRed = const Color(0xFFB71C1C);
-  final Color _kLabelBg = const Color(0xFFF1F5F9);
-  final Color _kBorder = const Color(0xFFCCCCCC);
+  final Color _kBorder = const Color(0xFFE2E8F0);
 
-  Future<void> _captureImage(BandaComponent item, bool isBefore) async {
-    final XFile? photo = await _picker.pickImage(source: ImageSource.camera, imageQuality: 40);
+  // --- LÓGICA DE IMAGEN ---
+  Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Cámara'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galería'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    final XFile? photo = await _picker.pickImage(source: source, imageQuality: 50);
     if (photo != null) {
       final bytes = await photo.readAsBytes();
       final evidence = EvidenceFile(bytes: bytes, type: 'image', mimeType: 'image/jpeg');
@@ -38,166 +60,122 @@ class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
     }
   }
 
-  void _viewImage(Uint8List bytes) {
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.black,
-        child: Stack(
-          children: [
-            InteractiveViewer(child: Image.memory(bytes)),
-            Positioned(top: 10, right: 10, child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context))),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 700;
     return Column(
       children: [
-        _buildInstitutionalHeader(),
-        const SizedBox(height: 12),
-        isMobile ? _buildMobileStack() : _buildDesktopTable(),
+        _buildInstitutionalHeader(), // El header con el botón dentro
+        const SizedBox(height: 16),
+        isMobile ? _buildMobileList() : _buildDesktopTable(),
       ],
     );
   }
 
+  // --- HEADER CON BOTÓN DE VOLVER INTEGRADO ---
   Widget _buildInstitutionalHeader() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: _kBorder)),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kBorder),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8)],
+      ),
       child: Row(
         children: [
+          // Icono decorativo de sección
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: _kRed, borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.settings_outlined, color: Colors.white, size: 22),
+            decoration: BoxDecoration(color: _kRed.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+            child: Icon(Icons.settings_suggest_rounded, color: _kRed, size: 24),
           ),
           const SizedBox(width: 16),
+          // Título de la sección
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Sección ${widget.sectionNumber}: ${widget.sectionTitle}", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                Text("${widget.items.length} componentes a evaluar", style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                Text(
+                  "SECCIÓN ${widget.sectionNumber}",
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade500),
+                ),
+                Text(
+                  widget.sectionTitle.toUpperCase(),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
+                ),
               ],
             ),
           ),
+          // BOTÓN DE VOLVER INTEGRADO (TIPO AL DE LA IMAGEN)
+          _buildBackActionBtn(),
         ],
       ),
     );
   }
 
-  Widget _buildMobileStack() {
-    return Column(
-      children: widget.items.map((item) => Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        decoration: BoxDecoration(border: Border.all(color: _kBorder), borderRadius: BorderRadius.circular(4)),
-        child: Column(
-          children: [
-            IntrinsicHeight(
-              child: Row(
-                children: [
-                  Expanded(child: _cellBox(label: "DIMENSIÓN", child: _buildDimInput(item))),
-                  Expanded(flex: 2, child: _cellBox(label: "ACCESORIO", child: Text(item.name, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)))),
-                ],
-              ),
-            ),
-            _cellBox(label: "OBSERVACIONES", child: _buildRadios(item)),
-            IntrinsicHeight(
-              child: Row(
-                children: [
-                  Expanded(flex: 2, child: _cellBox(label: "ACCIONES Y\nRECOMENDACIONES", child: _buildObsInput(item))),
-                  Expanded(child: _cellBox(label: "EVIDENCIA\nFOTOGRÁFICA", child: _buildMobileEvidButtons(item))),
-                ],
-              ),
-            ),
-          ],
+  Widget _buildBackActionBtn() {
+    return InkWell(
+      onTap: () => Navigator.pop(context),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: _kRed,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: _kRed.withOpacity(0.3), blurRadius: 6, offset: const Offset(0, 3))],
         ),
-      )).toList(),
-    );
-  }
-
-  Widget _cellBox({required String label, required Widget child}) {
-    return Container(
-      decoration: BoxDecoration(border: Border.all(color: _kBorder, width: 0.5)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            color: _kLabelBg,
-            child: Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900)),
-          ),
-          Padding(padding: const EdgeInsets.all(8), child: Center(child: child)),
-        ],
+        child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
       ),
     );
   }
 
-  Widget _buildRadios(BandaComponent item) {
-    return Wrap(
-      children: item.options.map((opt) => SizedBox(
-        width: 140,
-        child: RadioListTile<String>(
-          title: Text(opt.label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-          value: opt.id, groupValue: item.selectedOptionId, activeColor: _kRed,
-          onChanged: (v) => ref.read(bandaInspectionProvider.notifier).updateComponentOption(widget.sectionId, item.id, v!),
-          dense: true, contentPadding: EdgeInsets.zero,
-        ),
-      )).toList(),
-    );
-  }
+  // --- DISEÑO DE EVIDENCIAS (MINIATURA + ELIMINAR) ---
+  Widget _buildEvidenceThumbnail(BandaComponent item, bool isBefore) {
+    final files = isBefore ? item.evidenceBefore : item.evidenceAfter;
+    final bool hasData = files.isNotEmpty;
 
-  Widget _buildDimInput(BandaComponent item) {
-    return TextField(
-      textAlign: TextAlign.center,
-      onChanged: (v) => ref.read(bandaInspectionProvider.notifier).updateComponentDimension(widget.sectionId, item.id, v),
-      decoration: const InputDecoration(hintText: "0", border: InputBorder.none, isDense: true),
-    );
-  }
-
-  Widget _buildObsInput(BandaComponent item) {
-    return TextField(
-      maxLines: null, style: const TextStyle(fontSize: 11),
-      onChanged: (v) => ref.read(bandaInspectionProvider.notifier).updateComponentObservation(widget.sectionId, item.id, v),
-      decoration: const InputDecoration(hintText: "Nota...", border: InputBorder.none, isDense: true),
-    );
-  }
-
-  Widget _buildMobileEvidButtons(BandaComponent item) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Stack(
+      clipBehavior: Clip.none,
       children: [
-        _camBtn(item.evidenceBefore, () => _captureImage(item, true)),
-        const SizedBox(width: 5),
-        _camBtn(item.evidenceAfter, () => _captureImage(item, false)),
+        GestureDetector(
+          onTap: () => hasData ? _viewImage(files.first.bytes) : _handleImageSelection(item, isBefore),
+          child: Container(
+            width: 46, height: 46,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: hasData ? _kRed : Colors.grey.shade300, width: 1.5),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(9),
+              child: hasData 
+                ? Image.memory(files.first.bytes, fit: BoxFit.cover)
+                : Icon(Icons.camera_alt_outlined, size: 20, color: Colors.grey.shade400),
+            ),
+          ),
+        ),
+        if (hasData)
+          Positioned(
+            top: -6, right: -6,
+            child: GestureDetector(
+              onTap: () => ref.read(bandaInspectionProvider.notifier).removeEvidence(widget.sectionId, item.id, isBefore),
+              child: CircleAvatar(
+                radius: 10,
+                backgroundColor: _kRed,
+                child: const Icon(Icons.close, size: 12, color: Colors.white),
+              ),
+            ),
+          ),
       ],
     );
   }
 
-  Widget _camBtn(List<EvidenceFile> files, VoidCallback onTap) {
-    bool hasData = files.isNotEmpty;
-    return GestureDetector(
-      onTap: hasData ? () => _viewImage(files.first.bytes) : onTap,
-      child: Container(
-        width: 38, height: 38,
-        decoration: BoxDecoration(
-          color: hasData ? _kRed : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: _kRed, width: 1.5),
-        ),
-        child: Icon(Icons.camera_alt_outlined, size: 20, color: hasData ? Colors.white : _kRed),
-      ),
-    );
-  }
-
+  // --- TABLA DESKTOP ---
   Widget _buildDesktopTable() {
     return Container(
-      decoration: BoxDecoration(color: Colors.white, border: Border.all(color: _kBorder), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: Colors.white, border: Border.all(color: _kBorder), borderRadius: BorderRadius.circular(16)),
       child: Column(
         children: [
           _buildTableHead(),
@@ -209,14 +187,15 @@ class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
 
   Widget _buildTableHead() {
     return Container(
-      color: _kLabelBg, padding: const EdgeInsets.symmetric(vertical: 12),
+      color: const Color(0xFFF8F9FA),
+      padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         children: const [
           Expanded(flex: 4, child: Center(child: Text("ACCESORIO", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
           Expanded(flex: 5, child: Center(child: Text("OBSERVACIONES", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
           Expanded(flex: 1, child: Center(child: Text("DIM.", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
           Expanded(flex: 5, child: Center(child: Text("RECOMENDACIONES", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
-          Expanded(flex: 2, child: Center(child: Text("EVID.", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
+          Expanded(flex: 2, child: Center(child: Text("EVID. (A/D)", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
         ],
       ),
     );
@@ -225,26 +204,112 @@ class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
   Widget _buildDesktopRow(BandaComponent item) {
     return IntrinsicHeight(
       child: Container(
-        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: _kBorder.withOpacity(0.5)))),
+        decoration: BoxDecoration(border: Border(top: BorderSide(color: _kBorder.withOpacity(0.5)))),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(flex: 4, child: _cell(child: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)))),
-            Expanded(flex: 5, child: _cell(child: _buildRadios(item))),
-            Expanded(flex: 1, child: _cell(child: _buildDimInput(item))),
-            Expanded(flex: 5, child: _cell(child: _buildObsInput(item))),
-            Expanded(flex: 2, child: _buildMobileEvidButtons(item)),
+            Expanded(flex: 4, child: _cell(Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)))),
+            Expanded(flex: 5, child: _cell(_buildRadios(item))),
+            Expanded(flex: 1, child: _cell(_buildDimInput(item))),
+            Expanded(flex: 5, child: _cell(_buildObsInput(item))),
+            Expanded(flex: 2, child: _cell(Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildEvidenceThumbnail(item, true),
+                const SizedBox(width: 8),
+                _buildEvidenceThumbnail(item, false),
+              ],
+            ))),
           ],
         ),
       ),
     );
   }
 
-  Widget _cell({required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(border: Border(right: BorderSide(color: _kBorder.withOpacity(0.5)))),
-      alignment: Alignment.center, child: child,
+  // --- MÓVIL ---
+  Widget _buildMobileList() {
+    return Column(
+      children: widget.items.map((item) => Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(color: Colors.white, border: Border.all(color: _kBorder), borderRadius: BorderRadius.circular(16)),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              color: const Color(0xFFF8F9FA),
+              width: double.infinity,
+              child: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w900), textAlign: TextAlign.center),
+            ),
+            _buildRadios(item),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(child: _buildDimInput(item)),
+                  const SizedBox(width: 16),
+                  _buildEvidenceThumbnail(item, true),
+                  const SizedBox(width: 8),
+                  _buildEvidenceThumbnail(item, false),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: _buildObsInput(item),
+            ),
+          ],
+        ),
+      )).toList(),
+    );
+  }
+
+  // --- AUXILIARES ---
+  Widget _cell(Widget child) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(border: Border(right: BorderSide(color: _kBorder.withOpacity(0.5)))),
+    alignment: Alignment.center, child: child,
+  );
+
+  Widget _buildRadios(BandaComponent item) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      children: item.options.map((opt) => SizedBox(
+        width: 130,
+        child: RadioListTile<String>(
+          title: Text(opt.label, style: const TextStyle(fontSize: 11)),
+          value: opt.id, groupValue: item.selectedOptionId, activeColor: _kRed,
+          onChanged: (v) => ref.read(bandaInspectionProvider.notifier).updateComponentOption(widget.sectionId, item.id, v!),
+          dense: true, contentPadding: EdgeInsets.zero,
+        ),
+      )).toList(),
+    );
+  }
+
+  Widget _buildDimInput(BandaComponent item) => TextField(
+    textAlign: TextAlign.center,
+    keyboardType: TextInputType.number,
+    onChanged: (v) => ref.read(bandaInspectionProvider.notifier).updateComponentDimension(widget.sectionId, item.id, v),
+    decoration: InputDecoration(hintText: "Dim.", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+  );
+
+  Widget _buildObsInput(BandaComponent item) => TextField(
+    maxLines: 2,
+    onChanged: (v) => ref.read(bandaInspectionProvider.notifier).updateComponentObservation(widget.sectionId, item.id, v),
+    decoration: InputDecoration(hintText: "Nota...", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+  );
+
+  void _viewImage(Uint8List bytes) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            InteractiveViewer(child: Center(child: Image.memory(bytes))),
+            Positioned(top: 10, right: 10, child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context))),
+          ],
+        ),
+      ),
     );
   }
 }

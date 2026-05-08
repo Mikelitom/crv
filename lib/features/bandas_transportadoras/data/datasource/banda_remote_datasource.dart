@@ -36,7 +36,7 @@ class BandaRemoteDataSourceImpl implements BandaRemoteDataSource {
 
   @override
   Future<String> saveBandaReport(Map<String, dynamic> reportData) async {
-    final response = await dio.post('/banda-reports', data: reportData);
+    final response = await dio.post('/full-conveyor-reports', data: reportData);
     return response.data['id'].toString();
   }
 }
