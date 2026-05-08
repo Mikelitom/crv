@@ -17,7 +17,6 @@ class _PressCatalogPageState extends ConsumerState<PressCatalogPage> {
   @override
   void initState() {
     super.initState();
-    // DISPARA LA CARGA IGUAL QUE EN VEHÍCULOS
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(pressListProvider.notifier).loadPress();
     });
@@ -35,7 +34,6 @@ class _PressCatalogPageState extends ConsumerState<PressCatalogPage> {
             children: [
               _buildHeader(),
               const SizedBox(height: 32),
-              // STATS CON LÓGICA DE PRENSAS
               const CatalogStats(isVehiculo: false),
               const SizedBox(height: 40),
               const Text(
@@ -45,8 +43,6 @@ class _PressCatalogPageState extends ConsumerState<PressCatalogPage> {
               const SizedBox(height: 20),
               _buildSearchBar(),
               const SizedBox(height: 32),
-
-              // AQUÍ ESTABA EL ERROR: AHORA LLAMAMOS A LA TABLA REAL
               const PressCatalogList(),
             ],
           ),
@@ -88,7 +84,7 @@ class _PressCatalogPageState extends ConsumerState<PressCatalogPage> {
       ),
       child: const TextField(
         decoration: InputDecoration(
-          hintText: "Buscar en el catálogo...",
+          hintText: "Buscar por ID, Solicitante o Área...",
           prefixIcon: Icon(Icons.search, color: Color(0xFFC62828)),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 18),

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../data/models/vehicle_state_model.dart';
 
-class VehicleDetailsDialog extends StatelessWidget {
-  final VehicleStateModel vehicle;
+class PressDetailsDialog extends StatelessWidget {
+  final Map<String, dynamic> press;
 
-  const VehicleDetailsDialog({super.key, required this.vehicle});
+  const PressDetailsDialog({super.key, required this.press});
 
   @override
   Widget build(BuildContext context) {
@@ -17,12 +16,17 @@ class VehicleDetailsDialog extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            )
           ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Header
             Container(
               padding: const EdgeInsets.all(24),
               decoration: const BoxDecoration(
@@ -31,22 +35,35 @@ class VehicleDetailsDialog extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.local_shipping, color: Colors.white, size: 32),
+                  const Icon(Icons.precision_manufacturing, color: Colors.white, size: 32),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Placa: ${vehicle.plate}",
-                          style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                        Text(vehicle.isActive ? "UNIDAD EN OPERACIÓN" : "UNIDAD EN MANTENIMIENTO",
-                          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11, letterSpacing: 1.2)),
+                        Text(
+                          "ID: ${press['id']}",
+                          style: const TextStyle(
+                            color: Colors.white, 
+                            fontSize: 22, 
+                            fontWeight: FontWeight.bold
+                          ),
+                        ),
+                        Text(
+                          press['estado'] == 'EN CURSO' ? "UNIDAD EN PRÉSTAMO" : "UNIDAD DISPONIBLE",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8), 
+                            fontSize: 11, 
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.w500
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: Colors.white)
+                    icon: const Icon(Icons.close, color: Colors.white),
                   ),
                 ],
               ),
@@ -57,29 +74,30 @@ class VehicleDetailsDialog extends StatelessWidget {
               child: Column(
                 children: [
                   _buildPrimaryCard(
-                    vehicle.isActive ? Icons.person_pin_rounded : Icons.build_circle,
-                    vehicle.isActive ? "RESPONSABLE ASIGNADO" : "TALLER / SERVICIO",
-                    vehicle.responsibleName,
-                    Colors.black87
+                    Icons.account_circle_outlined,
+                    "SOLICITANTE ASIGNADO",
+                    press['sol'] ?? "SIN ASIGNAR",
                   ),
 
                   const SizedBox(height: 20),
 
                   Row(
                     children: [
-                      Expanded(child: _buildSecondaryTile(
-                        Icons.logout_rounded,
-                        "HORA SALIDA",
-                        vehicle.checkout != null
-                          ? "${vehicle.checkout!.hour}:${vehicle.checkout!.minute.toString().padLeft(2,'0')}"
-                          : "08:30 AM"
-                      )),
+                      Expanded(
+                        child: _buildSecondaryTile(
+                          Icons.calendar_today_outlined,
+                          "FECHA PRÉSTAMO",
+                          press['fecha'] ?? "---",
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildSecondaryTile(
-                        Icons.phone_android,
-                        "CONTACTO",
-                        vehicle.isActive ? "662-123-4567" : "Taller Central"
-                      )),
+                      Expanded(
+                        child: _buildSecondaryTile(
+                          Icons.phone_android_outlined,
+                          "CONTACTO",
+                          press['contacto'] ?? "662-000-0000",
+                        ),
+                      ),
                     ],
                   ),
 
@@ -87,17 +105,21 @@ class VehicleDetailsDialog extends StatelessWidget {
 
                   Row(
                     children: [
-                      Expanded(child: _buildSecondaryTile(
-                        Icons.map_rounded,
-                        "UBICACIÓN ACTUAL",
-                        vehicle.location ?? "Ruta Mina"
-                      )),
+                      Expanded(
+                        child: _buildSecondaryTile(
+                          Icons.business_center_outlined, // CORREGIDO: Minúscula
+                          "ÁREA DE USO",
+                          press['area'] ?? "GENERAL",
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildSecondaryTile(
-                        Icons.shutter_speed_rounded,
-                        "KM ACTUAL",
-                        "${vehicle.mileage ?? 12450} KM"
-                      )),
+                      Expanded(
+                        child: _buildSecondaryTile(
+                          Icons.event_available_outlined,
+                          "RETORNO EXP.",
+                          press['retorno'] ?? "PENDIENTE",
+                        ),
+                      ),
                     ],
                   ),
 
@@ -105,16 +127,24 @@ class VehicleDetailsDialog extends StatelessWidget {
 
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 54,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFC62828),
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
                       ),
                       onPressed: () => Navigator.pop(context),
-                      child: const Text("CERRAR CONSULTA", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.1)),
+                      child: const Text(
+                        "CERRAR CONSULTA",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold, 
+                          letterSpacing: 1.1
+                        ),
+                      ),
                     ),
                   )
                 ],
@@ -126,7 +156,7 @@ class VehicleDetailsDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildPrimaryCard(IconData icon, String label, String value, Color valueColor) {
+  Widget _buildPrimaryCard(IconData icon, String label, String value) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -142,8 +172,14 @@ class VehicleDetailsDialog extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-                Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: valueColor)),
+                Text(
+                  label, 
+                  style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)
+                ),
+                Text(
+                  value, 
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)
+                ),
               ],
             ),
           ),
@@ -164,9 +200,13 @@ class VehicleDetailsDialog extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: const Color(0xFFC62828).withOpacity(0.7)),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold)),
+          Text(
+            label, 
+            style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold)
+          ),
           const SizedBox(height: 4),
-          Text(value,
+          Text(
+            value,
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
             overflow: TextOverflow.ellipsis,
           ),

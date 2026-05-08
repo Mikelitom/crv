@@ -1,9 +1,7 @@
 import 'package:crv_reprosisa/features/catalogo/presentation/providers/catalogo_notifier_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:crv_reprosisa/features/assets/presentation/model/asset_models.dart';
-
 
 import '../widgets/catalogo_stats.dart';
 import '../widgets/vehicle_catalog_list.dart';
@@ -17,9 +15,7 @@ class GenericCatalogPage extends ConsumerStatefulWidget {
   ConsumerState<GenericCatalogPage> createState() => _GenericCatalogPageState();
 }
 
-// AQUÍ ESTABA EL ERROR: El nombre debe ser _GenericCatalogPageState
 class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
-
   @override
   void initState() {
     super.initState();
@@ -42,7 +38,7 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
       backgroundColor: const Color(0xFFF8F9FA),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -50,9 +46,6 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
               const SizedBox(height: 32),
               CatalogStats(isVehiculo: isVehiculo),
               const SizedBox(height: 40),
-
-
-
               const Text(
                 "Listado de Catálogo",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E)),
@@ -63,7 +56,6 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
               isVehiculo
                 ? const VehicleCatalogList()
                 : const PressCatalogList(),
-
             ],
           ),
         ),
@@ -74,7 +66,7 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
   Widget _buildHeader(String title, IconData icon) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -83,10 +75,19 @@ class _GenericCatalogPageState extends ConsumerState<GenericCatalogPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))
+          Expanded( 
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold, 
+                color: Color(0xFF1A1C1E)
+              ),
+              softWrap: true,
+              overflow: TextOverflow.visible,
+            ),
           ),
+          const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(

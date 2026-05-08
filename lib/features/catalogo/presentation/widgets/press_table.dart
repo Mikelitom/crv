@@ -1,35 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/catalogo_notifier_provider.dart';
-// ESTE IMPORT ES VITAL PARA QUE RECONOZCA SOLICITANTSNAME, STATUS, ETC.
-import '../../data/models/press_loan_model.dart'; 
-
-class PressTable extends ConsumerWidget {
+import '../widgets/press_detail_dialog.dart';
+class PressTable extends StatelessWidget {
   const PressTable({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(catalogoNotifierProvider);
-    final List<PressLoanModel> loans = state.presses; 
-
-    if (loans.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 60),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey),
-              SizedBox(height: 16),
-              Text(
-                "No hay préstamos de prensas registrados",
-                style: TextStyle(color: Colors.grey, fontSize: 16),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+  Widget build(BuildContext context) {
+    // DATOS ESTÁTICOS COMPLETOS PARA PRENSAS
+    final List<Map<String, String>> staticPressLoans = [
+      {
+        'id': 'PRN-2024-001',
+        'sol': 'ING. RICARDO LOERA',
+        'area': 'MANTENIMIENTO MINA',
+        'fecha': '10/05/2024',
+        'retorno': '15/05/2024',
+        'estado': 'EN CURSO',
+        'contacto': '662-555-0199'
+      },
+      {
+        'id': 'PRN-2024-045',
+        'sol': 'TEC. MARIO SANDOVAL',
+        'area': 'PRODUCCIÓN A',
+        'fecha': '01/05/2024',
+        'retorno': '05/05/2024',
+        'estado': 'ATRASADO',
+        'contacto': '662-555-0244'
+      },
+      {
+        'id': 'PRN-2024-012',
+        'sol': 'SISTEMA AUTOMÁTICO',
+        'area': 'TALLER CENTRAL',
+        'fecha': '12/05/2024',
+        'retorno': '20/05/2024',
+        'estado': 'PENDIENTE',
+        'contacto': 'N/A'
+      },
+    ];
 
     return Container(
       width: double.infinity,
@@ -56,43 +61,31 @@ class PressTable extends ConsumerWidget {
               DataColumn(label: Text('ID PRENSA', style: TextStyle(fontWeight: FontWeight.bold))),
               DataColumn(label: Text('SOLICITANTE', style: TextStyle(fontWeight: FontWeight.bold))),
               DataColumn(label: Text('ÁREA', style: TextStyle(fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('PRÉSTAMO', style: TextStyle(fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('RETORNO EXP.', style: TextStyle(fontWeight: FontWeight.bold))),
               DataColumn(label: Text('ESTADO', style: TextStyle(fontWeight: FontWeight.bold))),
               DataColumn(label: Text('ACCIONES', style: TextStyle(fontWeight: FontWeight.bold))),
             ],
-            rows: loans.map((l) {
+            rows: staticPressLoans.map((l) {
               return DataRow(cells: [
-                // Cortamos el ID si es muy largo (UUID)
-                DataCell(Text(l.pressId.length > 8 ? "${l.pressId.substring(0, 8)}..." : l.pressId)),
-                
-                DataCell(Text(l.solicitantsName ?? 'N/A')),
-                
-                DataCell(Text(l.area ?? 'S/A')),
-                
-                // Formateo simple de fecha (YYYY-MM-DD)
-                DataCell(Text(l.loanDate != null 
-                    ? l.loanDate!.toString().split(' ').first 
-                    : "-")),
-                
-                DataCell(Text(l.expectedReturnDate != null 
-                    ? l.expectedReturnDate!.toString().split(' ').first 
-                    : "-")),
-                
-                DataCell(_buildStatusChip(l.status ?? "pendiente")),
-                
+                DataCell(Text(l['id']!, style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataCell(Text(l['sol']!)),
+                DataCell(Text(l['area']!)),
+                DataCell(_buildStatusChip(l['estado']!)),
                 DataCell(Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: Colors.blueGrey, size: 20),
+                      icon: const Icon(Icons.info_outline, color: Colors.blueGrey, size: 20),
                       onPressed: () {
-                        // Implementar edición de préstamo
+                        // AQUÍ SE ABRE EL DIÁLOGO TIPO LA IMAGEN QUE PASASTE
+                        showDialog(
+                          context: context,
+                          builder: (context) => PressDetailsDialog(press: l),
+                        );
                       },
                     ),
                     IconButton(
                       icon: const Icon(Icons.assignment_return_outlined, color: Colors.blue, size: 20),
                       onPressed: () {
-                        // Implementar devolución de prensa
+                        // Lógica para devolver prensa
                       },
                     ),
                   ],
@@ -109,10 +102,12 @@ class PressTable extends ConsumerWidget {
     Color color = Colors.orange;
     String label = status.toUpperCase();
 
-    if (label == 'DEVUELTO' || label == 'COMPLETO') {
+    if (label == 'COMPLETO' || label == 'DEVUELTO') {
       color = Colors.green;
     } else if (label == 'ATRASADO') {
       color = Colors.red;
+    } else if (label == 'EN CURSO') {
+      color = Colors.blue;
     }
 
     return Container(

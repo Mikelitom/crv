@@ -1,5 +1,5 @@
 import 'package:crv_reprosisa/core/models/inspection_models.dart';
-import 'package:crv_reprosisa/features/bandas_transportadoras/pages/banda_inspection_page.dart';
+import 'package:crv_reprosisa/features/bandas_transportadoras/presentation/pages/banda_inspection_page.dart';
 import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/widgets/dynamic_stats_row.dart';
