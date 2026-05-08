@@ -8,187 +8,138 @@ class HistoryInspectionsFeed extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text("Reportes de Inspección", 
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            _buildDateFilter(),
-          ],
+        const Text(
+          "Historial de Reportes e Inspecciones",
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E)),
         ),
-        const SizedBox(height: 24),
-        // Los contenedores ahora abarcan el ancho completo del flex asignado
-        _buildFullWidthCard(
-          status: "CRÍTICO", 
-          color: Colors.red, 
-          note: "Falla en suspensión trasera reportada. Se requiere atención inmediata en el eje posterior.", 
-          user: "Juan Pérez", 
-          ref: "INS-102-A", 
-          photos: ["p1", "p2"], 
-          showButton: true
+        const SizedBox(height: 32),
+        
+        // Reporte Crítico con botón de Orden de Servicio
+        _buildTimelineItem(
+          status: "CRÍTICO",
+          color: Colors.red,
+          date: "26 May 2026",
+          user: "Ing. Miguel Fajardo",
+          note: "Falla en motor principal. Sobrecalentamiento detectado.",
+          showServiceOrder: true, // Esto activa el botón
         ),
-        _buildFullWidthCard(
-          status: "OPERATIVO", 
-          color: Colors.green, 
-          note: "Unidad en buen estado tras mantenimiento preventivo.", 
-          user: "Sistema", 
-          ref: "PRV-001-B", 
-          photos: ["p3"], 
-          showButton: false
+
+        _buildTimelineItem(
+          status: "OPERATIVO",
+          color: Colors.green,
+          date: "15 May 2026",
+          user: "Sistema Central",
+          note: "Mantenimiento preventivo mensual completado con éxito.",
+          showServiceOrder: false,
         ),
       ],
     );
   }
 
-  Widget _buildFullWidthCard({
-    required String status, 
-    required Color color, 
-    required String note, 
-    required String user, 
-    required String ref, 
-    required List<String> photos,
-    required bool showButton,
+  Widget _buildTimelineItem({
+    required String status,
+    required Color color,
+    required String date,
+    required String user,
+    required String note,
+    required bool showServiceOrder,
   }) {
-    return Container(
-      width: double.infinity, // Mantiene el contenedor abarcando todo el espacio
-      margin: const EdgeInsets.only(bottom: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))
-        ],
-      ),
-      child: Column(
-        children: [
-          // HEADER CON BOTÓN COMPACTO A LA DERECHA
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.05), 
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24))
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Indicador lateral (Línea de tiempo)
+        Column(
+          children: [
+            Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _statusBadge(status, color),
-                if (showButton) const _HoverActionButton(), // Botón interactivo
-              ],
-            ),
-          ),
-          Padding(
+            Container(width: 2, height: 220, color: const Color(0xFFECEFF1)),
+          ],
+        ),
+        const SizedBox(width: 20),
+        
+        // Contenedor del reporte (El "Documento")
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 24),
             padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFF1F3F5)),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(note, style: const TextStyle(fontSize: 14, height: 1.5, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 20),
-                
-                const Text("EVIDENCIA FOTOGRÁFICA", 
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 0.5)),
-                const SizedBox(height: 12),
-                
-                // Mantiene el grid de evidencias sin recortar el container
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: photos.map((p) => _buildPhotoItem()).toList(),
-                ),
-
-                const Divider(height: 40),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(user, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                    Text("Ref: $ref", style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                    _statusBadge(status, color),
+                    Text(date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(note, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 20),
+                
+                // Evidencia (Imágenes)
+                const Text("EVIDENCIA FOTOGRÁFICA", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _photoPlaceholder(),
+                    const SizedBox(width: 8),
+                    _photoPlaceholder(),
+                  ],
+                ),
+                
+                const Divider(height: 32),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Auditor: $user", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    
+                    // BOTÓN GENERAR ORDEN (Solo si es crítico)
+                    if (showServiceOrder)
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFC62828),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () {
+                          print("Generando Orden de Servicio...");
+                        },
+                        icon: const Icon(Icons.add_task, size: 16),
+                        label: const Text("GENERAR ORDEN", style: TextStyle(fontSize: 11)),
+                      ),
                   ],
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _statusBadge(String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
       child: Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildPhotoItem() {
+  Widget _photoPlaceholder() {
     return Container(
-      width: 85,
-      height: 85,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      child: const Icon(Icons.image_outlined, color: Colors.grey, size: 24),
-    );
-  }
-
-  Widget _buildDateFilter() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: const Color(0xFFC62828), borderRadius: BorderRadius.circular(12)),
-      child: const Row(children: [Icon(Icons.calendar_month, color: Colors.white, size: 16), SizedBox(width: 8), Text("Filtrar", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))]),
-    );
-  }
-}
-
-// COMPONENTE DE BOTÓN CON EFECTO HOVER
-class _HoverActionButton extends StatefulWidget {
-  const _HoverActionButton();
-
-  @override
-  State<_HoverActionButton> createState() => _HoverActionButtonState();
-}
-
-class _HoverActionButtonState extends State<_HoverActionButton> {
-  bool isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 34,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          // Inicia blanco con borde rojo, cambia a rojo sólido
-          color: isHovered ? const Color(0xFFC62828) : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFC62828), width: 1.2),
-        ),
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.add_circle_outline_rounded, 
-                size: 14, 
-                color: isHovered ? Colors.white : const Color(0xFFC62828)
-              ),
-              const SizedBox(width: 6),
-              Text(
-                "ORDEN DE SERVICIO",
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  color: isHovered ? Colors.white : const Color(0xFFC62828),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(color: const Color(0xFFF8F9FA), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFECEFF1))),
+      child: const Icon(Icons.image, color: Colors.grey, size: 20),
     );
   }
 }
