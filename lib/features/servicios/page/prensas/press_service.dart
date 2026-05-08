@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../dashboard/presentation/widgets/header.dart'; // Ajusta según tu header
+import '../../../dashboard/presentation/widgets/header.dart'; 
 import '../../widgets/vehiculos/service_stats_grid.dart';
 import '../../widgets/vehiculos/service_Data_table.dart';
 
@@ -15,7 +15,6 @@ class PressServicePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header estilo blanco con icono a la derecha
             CustomHeader(
               title: "Servicios de Prensas Industriales",
               actionIcon: Icons.precision_manufacturing_rounded,
@@ -24,7 +23,6 @@ class PressServicePage extends StatelessWidget {
             
             const SizedBox(height: 32),
             
-            // Stats de tamaño grande (100px)
             const ServiceStatsGrid(isVehiculo: false), 
             
             const SizedBox(height: 40),
@@ -36,12 +34,10 @@ class PressServicePage extends StatelessWidget {
             
             const SizedBox(height: 20),
 
-            // Buscador proporcional para llenar el espacio
             _buildSearchSection(),
 
             const SizedBox(height: 24),
 
-            // LA TABLA (Sin 'const' para que no de error)
             ServiceDataTable(isVehiculo: false), 
           ],
         ),

@@ -12,7 +12,6 @@ class VehicleServicePage extends StatelessWidget {
       backgroundColor: const Color(0xFFF8F9FA),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Ajustamos el padding dinámicamente
           double horizontalPadding = constraints.maxWidth > 600 ? 32 : 16;
 
           return SingleChildScrollView(
@@ -28,6 +27,7 @@ class VehicleServicePage extends StatelessWidget {
                 
                 const SizedBox(height: 32),
                 
+                // Estos ya incluyen los datos estáticos (42 totales, 5 en taller, etc)
                 const ServiceStatsGrid(isVehiculo: true), 
 
                 const SizedBox(height: 40),
@@ -42,6 +42,7 @@ class VehicleServicePage extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
+                // La tabla ahora renderiza los datos de las placas SON-442-A, etc.
                 ServiceDataTable(isVehiculo: true),
               ],
             ),

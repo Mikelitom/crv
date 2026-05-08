@@ -24,7 +24,7 @@ class ServiceTimelineItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border(left: BorderSide(color: Color(0xFFC62828), width: 4)), // Indicador de línea de tiempo
+        border: const Border(left: BorderSide(color: Color(0xFFC62828), width: 4)),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 8))
         ],
@@ -35,7 +35,7 @@ class ServiceTimelineItem extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(date, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+              Text(date, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
               const SizedBox(height: 4),
               Text(workshop, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ],
@@ -45,16 +45,16 @@ class ServiceTimelineItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(description, style: const TextStyle(color: Colors.black87)),
+                Text(description, style: const TextStyle(color: Colors.black87, fontSize: 13)),
                 const SizedBox(height: 8),
-                Text("Kilometraje: $km", style: const TextStyle(fontSize: 12, color: Colors.blueGrey)),
+                Text("Kilometraje/Horas: $km", style: const TextStyle(fontSize: 12, color: Colors.blueGrey)),
               ],
             ),
           ),
           if (hasInvoice)
             IconButton(
               icon: const Icon(Icons.description_outlined, color: Color(0xFFC62828)),
-              onPressed: () {}, // Ver factura
+              onPressed: () {},
               tooltip: "Ver Comprobante",
             ),
         ],

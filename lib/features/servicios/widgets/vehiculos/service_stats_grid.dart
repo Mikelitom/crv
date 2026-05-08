@@ -7,13 +7,11 @@ class ServiceStatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      // Si el ancho es menor a 600px (móvil), usamos 1 columna. 
-      // Si es mayor, usamos 3 columnas.
       final bool isMobile = constraints.maxWidth < 600;
       final double spacing = 12.0;
       final double cardWidth = isMobile 
-          ? constraints.maxWidth // Ancho total en móvil
-          : (constraints.maxWidth - (spacing * 2)) / 3; // 3 columnas en desktop
+          ? constraints.maxWidth 
+          : (constraints.maxWidth - (spacing * 2)) / 3;
 
       return Wrap(
         spacing: spacing,
@@ -21,19 +19,19 @@ class ServiceStatsGrid extends StatelessWidget {
         children: [
           _StatCard(
             label: "Servicios Totales",
-            value: "0",
+            value: isVehiculo ? "42" : "18", // Datos estáticos
             icon: isVehiculo ? Icons.history_edu_rounded : Icons.precision_manufacturing_rounded,
             width: cardWidth,
           ),
           _StatCard(
             label: isVehiculo ? "En Taller" : "En Reparación",
-            value: "0",
+            value: isVehiculo ? "5" : "2", // Datos estáticos
             icon: isVehiculo ? Icons.car_repair_outlined : Icons.handyman_outlined,
             width: cardWidth,
           ),
           _StatCard(
             label: "Finalizados",
-            value: "0",
+            value: isVehiculo ? "37" : "16", // Datos estáticos
             icon: Icons.check_circle_outline_rounded,
             width: cardWidth,
           ),
@@ -75,7 +73,6 @@ class _StatCardState extends State<_StatCard> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Usamos Flexible para que el texto no empuje al icono fuera de la tarjeta
             Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +82,7 @@ class _StatCardState extends State<_StatCard> {
                   Text(
                     widget.label, 
                     style: const TextStyle(color: Color(0xFFC62828), fontSize: 12, fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis, // Si el texto es muy largo, pone puntos suspensivos
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
