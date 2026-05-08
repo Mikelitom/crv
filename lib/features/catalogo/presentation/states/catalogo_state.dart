@@ -1,10 +1,10 @@
-import '../../data/models/vehicle_state_model.dart';
+import '../../data/models/vehicle_catalog_model.dart';
 import '../../data/models/press_loan_model.dart';
 
 enum CatalogoStatus { initial, loading, success, error }
 
 class CatalogoState {
-  final List<VehicleStateModel> vehicles;
+  final List<VehicleCatalogModel> vehicles;
   final List<PressLoanModel> presses;
   final CatalogoStatus status;
   final String? errorMessage;
@@ -19,7 +19,7 @@ class CatalogoState {
   });
 
   CatalogoState copyWith({
-    List<VehicleStateModel>? vehicles,
+    List<VehicleCatalogModel>? vehicles,
     List<PressLoanModel>? presses,
     CatalogoStatus? status,
     String? errorMessage,
@@ -34,23 +34,30 @@ class CatalogoState {
     );
   }
 
-List<VehicleStateModel> get filteredVehicles {
-  if (searchQuery != null && searchQuery!.isNotEmpty) {
-    final query = searchQuery!.toLowerCase();
-    return vehicles.where((v) =>
-      v.plate.toLowerCase().contains(query) ||
-      (v.responsibleName.toLowerCase().contains(query))
-    ).toList();
+  List<VehicleCatalogModel> get filteredVehicles {
+    if (searchQuery != null && searchQuery!.isNotEmpty) {
+      final query = searchQuery!.toLowerCase();
+      return vehicles
+          .where(
+            (v) =>
+                v.plate.toLowerCase().contains(query) ||
+                (v.responsible?.toLowerCase().contains(query) ?? false),
+          )
+          .toList();
+    }
+    return vehicles;
   }
-  return vehicles;
-}
+
   List<PressLoanModel> get filteredPresses {
     if (searchQuery != null && searchQuery!.isNotEmpty) {
       final query = searchQuery!.toLowerCase();
-      return presses.where((p) =>
-        p.pressId.toLowerCase().contains(query) ||
-        (p.solicitantsName?.toLowerCase().contains(query) ?? false)
-      ).toList();
+      return presses
+          .where(
+            (p) =>
+                p.pressId.toLowerCase().contains(query) ||
+                (p.solicitantsName?.toLowerCase().contains(query) ?? false),
+          )
+          .toList();
     }
     return presses;
   }

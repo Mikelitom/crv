@@ -16,7 +16,10 @@ class VehicleServicePage extends StatelessWidget {
           double horizontalPadding = constraints.maxWidth > 600 ? 32 : 16;
 
           return SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 32),
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: 32,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -25,16 +28,20 @@ class VehicleServicePage extends StatelessWidget {
                   actionIcon: Icons.car_repair_rounded,
                   onActionTap: () {},
                 ),
-                
+
                 const SizedBox(height: 32),
-                
-                const ServiceStatsGrid(isVehiculo: true), 
+
+                const ServiceStatsGrid(isVehiculo: true),
 
                 const SizedBox(height: 40),
-                
+
                 const Text(
-                  "Monitoreo de Unidades", 
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))
+                  "Monitoreo de Unidades",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1C1E),
+                  ),
                 ),
                 const SizedBox(height: 20),
 
@@ -46,7 +53,7 @@ class VehicleServicePage extends StatelessWidget {
               ],
             ),
           );
-        }
+        },
       ),
     );
   }
@@ -59,10 +66,10 @@ class VehicleServicePage extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02), 
-            blurRadius: 10, 
-            offset: const Offset(0, 4)
-          )
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: const TextField(
@@ -76,3 +83,4 @@ class VehicleServicePage extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,4 @@
-import 'package:crv_reprosisa/features/catalogo/data/models/vehicle_state_model.dart';
+import 'package:crv_reprosisa/features/catalogo/data/models/vehicle_catalog_model.dart';
 import 'package:dio/dio.dart';
 import 'package:dartz/dartz.dart';
 import './catalogo_remote_datasource.dart';
@@ -9,39 +9,34 @@ class CatalogoRemoteDataSourceImpl implements CatalogoRemoteDataSource {
   CatalogoRemoteDataSourceImpl(this.dio);
 
   @override
-  Future<List<VehicleStateModel>> getVehicles() async {
-    final response = await dio.get("/vehicle_full_state/"); 
+  Future<List<VehicleCatalogModel>> getVehicles() async {
+    final response = await dio.get("/catalog/vehicle");
     return (response.data as List)
-        .map((json) => VehicleStateModel.fromJson(json))
+        .map((json) => VehicleCatalogModel.fromJson(json))
         .toList();
   }
-@override
-Future<List<PressLoanModel>> getPresses() async {
-  final response = await dio.get("loans/"); 
-  
-  if (response.data != null && response.data is List) {
-    return (response.data as List)
-        .map((json) => PressLoanModel.fromJson(json))
-        .toList();
+
+  @override
+  Future<List<PressLoanModel>> getPresses() async {
+    final response = await dio.get("loans/");
+
+    if (response.data != null && response.data is List) {
+      return (response.data as List)
+          .map((json) => PressLoanModel.fromJson(json))
+          .toList();
+    }
+    return [];
   }
-  return [];
-}
 
   @override
   Future<Unit> updateVehicleStatus(String id, bool isActive) async {
-    await dio.patch(
-      "/activos/vehicles/$id",
-      data: {'is_active': isActive},
-    );
+    await dio.patch("/activos/vehicles/$id", data: {'is_active': isActive});
     return unit;
   }
 
   @override
   Future<Unit> updatePressStatus(String id, bool isActive) async {
-    await dio.patch(
-      "/activos/presses/$id",
-      data: {'is_active': isActive},
-    );
+    await dio.patch("/activos/presses/$id", data: {'is_active': isActive});
     return unit;
   }
 
@@ -57,3 +52,4 @@ Future<List<PressLoanModel>> getPresses() async {
     return unit;
   }
 }
+

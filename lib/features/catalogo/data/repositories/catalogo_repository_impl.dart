@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
 import '../datasource/catalogo_remote_datasource.dart';
 import '../../domain/repositories/catalogo_repositories.dart';
-import '../models/vehicle_state_model.dart'; 
+import '../models/vehicle_catalog_model.dart';
 import '../models/press_loan_model.dart';
 
 class CatalogoRepositoryImpl implements CatalogoRepository {
@@ -12,7 +12,7 @@ class CatalogoRepositoryImpl implements CatalogoRepository {
   CatalogoRepositoryImpl(this.remote);
 
   @override
-  Future<Either<Failure, List<VehicleStateModel>>> getVehicles() async {
+  Future<Either<Failure, List<VehicleCatalogModel>>> getVehicles() async {
     try {
       final res = await remote.getVehicles();
       return Right(res);
@@ -32,7 +32,10 @@ class CatalogoRepositoryImpl implements CatalogoRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> updateVehicleStatus({required String id, required bool isActive}) async {
+  Future<Either<Failure, Unit>> updateVehicleStatus({
+    required String id,
+    required bool isActive,
+  }) async {
     try {
       await remote.updateVehicleStatus(id, isActive);
       return const Right(unit);
@@ -42,7 +45,10 @@ class CatalogoRepositoryImpl implements CatalogoRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> updatePressStatus({required String id, required bool isActive}) async {
+  Future<Either<Failure, Unit>> updatePressStatus({
+    required String id,
+    required bool isActive,
+  }) async {
     try {
       await remote.updatePressStatus(id, isActive);
       return const Right(unit);
@@ -71,3 +77,4 @@ class CatalogoRepositoryImpl implements CatalogoRepository {
     }
   }
 }
+

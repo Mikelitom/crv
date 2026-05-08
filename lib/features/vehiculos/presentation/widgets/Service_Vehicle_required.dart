@@ -6,15 +6,19 @@ class VehicleServiceRequired extends ConsumerStatefulWidget {
   const VehicleServiceRequired({super.key});
 
   @override
-  ConsumerState<VehicleServiceRequired> createState() => _VehicleServiceRequiredState();
+  ConsumerState<VehicleServiceRequired> createState() =>
+      _VehicleServiceRequiredState();
 }
 
-class _VehicleServiceRequiredState extends ConsumerState<VehicleServiceRequired> {
+class _VehicleServiceRequiredState
+    extends ConsumerState<VehicleServiceRequired> {
   // Manejamos el estado localmente para que el diseño funcione sin errores de Notifier
   bool requiresService = false;
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(vehicleInspectionProvider);
+    final notifier = ref.read(vehicleInspectionProvider.notifier);
     const primaryRed = Color(0xFFC62828);
 
     return Container(
@@ -25,10 +29,10 @@ class _VehicleServiceRequiredState extends ConsumerState<VehicleServiceRequired>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05), 
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -36,7 +40,11 @@ class _VehicleServiceRequiredState extends ConsumerState<VehicleServiceRequired>
         children: [
           const Text(
             "Servicio",
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF1A1C1E)),
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              color: Color(0xFF1A1C1E),
+            ),
           ),
           const Text(
             "Condiciones del servicio requerido",
@@ -45,36 +53,44 @@ class _VehicleServiceRequiredState extends ConsumerState<VehicleServiceRequired>
           const SizedBox(height: 16),
           const Text(
             "Requiere Servicio",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF444444)),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: Color(0xFF444444),
+            ),
           ),
           const SizedBox(height: 8),
-          
+
           // Selectores SI / NO
           Row(
             children: [
               _buildOption(
                 label: "Si",
-                isSelected: requiresService == true,
-                onTap: () => setState(() => requiresService = true),
+                isSelected: state.requiresService,
+                onTap: () => notifier.toggleService(true),
                 activeColor: primaryRed,
               ),
               const SizedBox(width: 24),
               _buildOption(
                 label: "No",
-                isSelected: requiresService == false,
-                onTap: () => setState(() => requiresService = false),
+                isSelected: !state.requiresService,
+                onTap: () => notifier.toggleService(false),
                 activeColor: primaryRed,
               ),
             ],
           ),
-          
+
           const SizedBox(height: 20),
           const Text(
             "Observaciones",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF444444)),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: Color(0xFF444444),
+            ),
           ),
           const SizedBox(height: 8),
-          
+
           // Campo de texto de observaciones
           TextField(
             maxLines: 2,
@@ -84,7 +100,10 @@ class _VehicleServiceRequiredState extends ConsumerState<VehicleServiceRequired>
               hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
               filled: true,
               fillColor: const Color(0xFFF8F9FB),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: Color(0xFFDDE1E6)),
@@ -121,11 +140,13 @@ class _VehicleServiceRequiredState extends ConsumerState<VehicleServiceRequired>
                 color: isSelected ? activeColor : Colors.grey.shade400,
                 width: 2,
               ),
-              color: isSelected ? activeColor.withOpacity(0.05) : Colors.transparent,
+              color: isSelected
+                  ? activeColor.withOpacity(0.05)
+                  : Colors.transparent,
             ),
-            child: isSelected 
-              ? Center(child: Icon(Icons.check, size: 12, color: activeColor)) 
-              : null,
+            child: isSelected
+                ? Center(child: Icon(Icons.check, size: 12, color: activeColor))
+                : null,
           ),
           const SizedBox(width: 8),
           Text(
@@ -133,7 +154,9 @@ class _VehicleServiceRequiredState extends ConsumerState<VehicleServiceRequired>
             style: TextStyle(
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? const Color(0xFF1A1C1E) : Colors.grey.shade600,
+              color: isSelected
+                  ? const Color(0xFF1A1C1E)
+                  : Colors.grey.shade600,
             ),
           ),
         ],
@@ -141,3 +164,4 @@ class _VehicleServiceRequiredState extends ConsumerState<VehicleServiceRequired>
     );
   }
 }
+

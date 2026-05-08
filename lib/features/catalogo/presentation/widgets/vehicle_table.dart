@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../providers/catalogo_notifier_provider.dart';
-import '../../data/models/vehicle_state_model.dart';
+import '../states/catalogo_state.dart';
+import '../../data/models/vehicle_catalog_model.dart';
 import '../widgets/details_dialog.dart';
 
 class VehicleTable extends ConsumerWidget {
@@ -9,36 +11,46 @@ class VehicleTable extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // LISTA ESTÁTICA DETALLADA
-    final List<Map<String, dynamic>> staticVehicles = [
-      {
-        'id': 'V-001',
-        'plate': 'SON-442-A', 
-        'resp': 'JUAN PÉREZ SOTO', 
-        'loc': 'PLANTA REPROSISA', 
-        'active': true, 
-        'status_text': 'EN USO',
-        'out_time': '07:00 AM'
-      },
-      {
-        'id': 'V-002',
-        'plate': 'SON-110-B', 
-        'resp': 'TALLER MECÁNICO "GARCÍA"', 
-        'loc': 'CALLE 12 SUR #45', 
-        'active': false, 
-        'status_text': 'EN TALLER',
-        'out_time': '09:15 AM'
-      },
-      {
-        'id': 'V-003',
-        'plate': 'SON-998-C', 
-        'resp': 'CARLOS VILLA', 
-        'loc': 'MINA LA CARIDAD', 
-        'active': true, 
-        'status_text': 'EN USO',
-        'out_time': '06:30 AM'
-      },
-    ];
+    final state = ref.watch(catalogoNotifierProvider);
+
+    // LOADING
+    if (state.status == CatalogoStatus.loading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // ERROR
+    if (state.status == CatalogoStatus.error) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Text(
+            state.errorMessage ?? 'Error al cargar vehículos',
+            style: const TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // EMPTY
+    if (state.vehicles.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Text(
+            'No hay vehículos registrados',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+      );
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -59,47 +71,103 @@ class VehicleTable extends ConsumerWidget {
                   columnSpacing: 30,
                   headingRowHeight: 56,
                   dataRowMaxHeight: 70,
-                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F9FA)),
+                  headingRowColor: WidgetStateProperty.all(
+                    const Color(0xFFF8F9FA),
+                  ),
                   columns: const [
-                    DataColumn(label: Text('PLACA', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('RESPONSABLE / TALLER', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('UBICACIÓN', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ESTADO', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ACCIONES', style: TextStyle(fontWeight: FontWeight.bold))),
-                  ],
-                  rows: staticVehicles.map((v) {
-                    return DataRow(cells: [
-                      DataCell(Text(v['plate'], style: const TextStyle(fontWeight: FontWeight.bold))),
-                      DataCell(Text(v['resp'])),
-                      DataCell(Text(v['loc'])),
-                      DataCell(_buildStatusChip(v['active'], v['status_text'])),
-                      DataCell(
-                        ElevatedButton(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => VehicleDetailsDialog(
-                                vehicle: VehicleStateModel(
-                                  id: v['id'], // CAMBIO AQUÍ: Ya no falta el ID
-                                  plate: v['plate'],
-                                  responsibleName: v['resp'],
-                                  isActive: v['active'],
-                                  location: v['loc'],
-                                  mileage: 12500,
-                                  checkout: DateTime.now(),
-                                ),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC62828),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          child: const Text("DETALLES", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                        ),
+                    DataColumn(
+                      label: Text(
+                        'PLACA',
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                    ]);
+                    ),
+                    DataColumn(
+                      label: Text(
+                        'RESPONSABLE',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    DataColumn(
+                      label: Text(
+                        'UBICACIÓN',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    DataColumn(
+                      label: Text(
+                        'ESTADO',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    DataColumn(
+                      label: Text(
+                        'ACCIONES',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                  rows: state.vehicles.map((vehicle) {
+                    final bool isAvailable =
+                        vehicle.state?.toUpperCase() == 'AVAILABLE';
+
+                    final bool isWorkshop =
+                        vehicle.state?.toUpperCase() == 'WORKSHOP';
+
+                    return DataRow(
+                      cells: [
+                        // PLACA
+                        DataCell(
+                          Text(
+                            vehicle.plate,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+
+                        // RESPONSABLE
+                        DataCell(
+                          Text(vehicle.responsible ?? 'Sin responsable'),
+                        ),
+
+                        // UBICACIÓN
+                        DataCell(Text(vehicle.location ?? 'Sin ubicación')),
+
+                        // ESTADO
+                        DataCell(
+                          _buildStatusChip(
+                            isAvailable,
+                            isWorkshop,
+                            vehicle.state ?? 'SIN ESTADO',
+                          ),
+                        ),
+
+                        // ACCIONES
+                        DataCell(
+                          ElevatedButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) =>
+                                    VehicleDetailsDialog(vehicle: vehicle),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFC62828),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              "DETALLES",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
                   }).toList(),
                 ),
               ),
@@ -110,8 +178,17 @@ class VehicleTable extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusChip(bool isActive, String text) {
-    Color color = isActive ? Colors.green : (text == 'EN TALLER' ? Colors.orange : Colors.red);
+  Widget _buildStatusChip(bool isAvailable, bool isWorkshop, String text) {
+    Color color;
+
+    if (isAvailable) {
+      color = Colors.green;
+    } else if (isWorkshop) {
+      color = Colors.orange;
+    } else {
+      color = Colors.red;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -120,8 +197,13 @@ class VehicleTable extends ConsumerWidget {
       ),
       child: Text(
         text,
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
 }
+
