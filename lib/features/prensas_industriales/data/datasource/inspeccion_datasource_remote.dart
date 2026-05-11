@@ -11,11 +11,7 @@ abstract class InspeccionRemoteDataSource {
   Future<List<dynamic>> getAllLoanAreas();
   Future<Map<String, dynamic>> createLoanArea(Map<String, String> areaData);
   Future<void> createLoan(Map<String, dynamic> loanData);
-  
-  // 1. Declarar el método en la interfaz para que sea visible
   Future<Uint8List> getInspectionPdfFile(String id);
-  
-  // 2. Declarar el método de filtros para el estado de la prensa
   Future<List<dynamic>> getLoansMultiFilter(Map<String, dynamic> body);
 }
 
@@ -25,7 +21,6 @@ class InspeccionRemoteDataSourceImpl implements InspeccionRemoteDataSource {
 
   @override
   Future<List<dynamic>> getLoansMultiFilter(Map<String, dynamic> body) async {
-    // POST /api/v1/loans/multi-filter según imagen_80.png
     final response = await dio.post(
       '/loans/multi-filter',
       queryParameters: {

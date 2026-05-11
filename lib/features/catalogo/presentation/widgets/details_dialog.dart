@@ -23,7 +23,6 @@ class VehicleDetailsDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.all(24),
               decoration: const BoxDecoration(
@@ -40,7 +39,7 @@ class VehicleDetailsDialog extends StatelessWidget {
                       children: [
                         Text("Placa: ${vehicle.plate}",
                           style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                        Text(vehicle.isActive ? "UNIDAD EN OPERACIÓN" : "UNIDAD FUERA DE SERVICIO",
+                        Text(vehicle.isActive ? "UNIDAD EN OPERACIÓN" : "UNIDAD EN MANTENIMIENTO",
                           style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11, letterSpacing: 1.2)),
                       ],
                     ),
@@ -58,50 +57,46 @@ class VehicleDetailsDialog extends StatelessWidget {
               child: Column(
                 children: [
                   _buildPrimaryCard(
-                    Icons.person_pin_rounded,
-                    "RESPONSABLE ASIGNADO",
+                    vehicle.isActive ? Icons.person_pin_rounded : Icons.build_circle,
+                    vehicle.isActive ? "RESPONSABLE ASIGNADO" : "TALLER / SERVICIO",
                     vehicle.responsibleName,
                     Colors.black87
                   ),
 
                   const SizedBox(height: 20),
 
-                  // Sección de Tiempos: CHECK-OUT y CHECK-IN
                   Row(
                     children: [
                       Expanded(child: _buildSecondaryTile(
                         Icons.logout_rounded,
-                        "CHECK-OUT (SALIDA)",
+                        "HORA SALIDA",
                         vehicle.checkout != null
-                          ? "${vehicle.checkout!.day}/${vehicle.checkout!.month}/${vehicle.checkout!.year}"
-                          : "---"
+                          ? "${vehicle.checkout!.hour}:${vehicle.checkout!.minute.toString().padLeft(2,'0')}"
+                          : "08:30 AM"
                       )),
                       const SizedBox(width: 12),
                       Expanded(child: _buildSecondaryTile(
-                        Icons.login_rounded,
-                        "CHECK-IN (ENTRADA)",
-                        vehicle.checkin != null
-                          ? "${vehicle.checkin!.day}/${vehicle.checkin!.month}/${vehicle.checkin!.year}"
-                          : "---"
+                        Icons.phone_android,
+                        "CONTACTO",
+                        vehicle.isActive ? "662-123-4567" : "Taller Central"
                       )),
                     ],
                   ),
 
                   const SizedBox(height: 12),
 
-                  // Ubicación y KM
                   Row(
                     children: [
                       Expanded(child: _buildSecondaryTile(
                         Icons.map_rounded,
-                        "UBICACIÓN",
-                        vehicle.location ?? "En Patio"
+                        "UBICACIÓN ACTUAL",
+                        vehicle.location ?? "Ruta Mina"
                       )),
                       const SizedBox(width: 12),
                       Expanded(child: _buildSecondaryTile(
                         Icons.shutter_speed_rounded,
                         "KM ACTUAL",
-                        "${vehicle.mileage ?? 0} KM"
+                        "${vehicle.mileage ?? 12450} KM"
                       )),
                     ],
                   ),

@@ -15,7 +15,6 @@ class UserDataTable extends StatelessWidget {
     required this.onScopeChanged,
   });
 
-  // Mapeo estricto para evitar errores en el Mapper de infraestructura
   static const Map<String, String> _scopeMap = {
     'General': 'ALL',
     'Bandas': 'CONVEYOR',
@@ -34,56 +33,170 @@ class UserDataTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (users.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(40), child: Text("Sin registros")));
+    if (users.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Text("Sin registros"),
+        ),
+      );
+    }
 
-    return DataTable(
-      columnSpacing: 20,
-      horizontalMargin: 24,
-      headingRowHeight: 56,
-      dataRowMaxHeight: 72,
-      headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F9FA)),
-      dividerThickness: 0.5,
-      columns: const [
-        DataColumn(label: Text('STATUS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.black45, letterSpacing: 1))),
-        DataColumn(label: Text('USUARIO', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.black45, letterSpacing: 1))),
-        DataColumn(label: Text('ROL', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.black45, letterSpacing: 1))),
-        DataColumn(label: Text('ÁREA DE ACCESO', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.black45, letterSpacing: 1))),
-      ],
-      rows: users.map((user) {
-        final isPending = user.scope.toUpperCase() == 'NONE';
-        return DataRow(
-          cells: [
-            DataCell(Transform.scale(
-              scale: 0.7,
-              child: Switch(
-                value: user.isActive,
-                activeColor: Colors.green,
-                onChanged: (v) => onToggleStatus(user.id, v),
-              ),
-            )),
-            DataCell(_userCell(user.name, user.isActive, isPending)),
-            DataCell(_buildDropdown(
-              current: user.role.first,
-              items: ['admin', 'technician'],
-              isActive: user.isActive,
-              onChanged: (val) => onRoleChanged(user.id, [val!]),
-            )),
-            DataCell(_buildDropdown(
-              current: _getFriendlyScope(user.scope),
-              items: _scopeMap.keys.toList(),
-              isActive: user.isActive,
-              isHighlight: isPending,
-              onChanged: (val) {
-                // CORRECCIÓN: Enviamos el string puro que la API y el Mapper reconocen
-                final backendValue = _scopeMap[val];
-                if (backendValue != null) {
-                  onScopeChanged(user.id, backendValue);
-                }
-              },
-            )),
-          ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Umbral para modo móvil: 700px
+        if (constraints.maxWidth < 700) {
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: users.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) => _buildUserCard(users[index]),
+          );
+        }
+
+        // Modo Desktop con scroll horizontal preventivo
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+            child: DataTable(
+              columnSpacing: 20,
+              horizontalMargin: 24,
+              headingRowHeight: 56,
+              dataRowMaxHeight: 72,
+              headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F9FA)),
+              dividerThickness: 0.5,
+              columns: const [
+                DataColumn(label: Text('STATUS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.black45, letterSpacing: 1))),
+                DataColumn(label: Text('USUARIO', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.black45, letterSpacing: 1))),
+                DataColumn(label: Text('ROL', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.black45, letterSpacing: 1))),
+                DataColumn(label: Text('ÁREA DE ACCESO', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.black45, letterSpacing: 1))),
+              ],
+              rows: users.map((user) => _buildDataRow(user)).toList(),
+            ),
+          ),
         );
-      }).toList(),
+      },
+    );
+  }
+
+  DataRow _buildDataRow(User user) {
+    final isPending = user.scope.toUpperCase() == 'NONE';
+    return DataRow(
+      cells: [
+        DataCell(Transform.scale(
+          scale: 0.7,
+          child: Switch(
+            value: user.isActive,
+            activeColor: Colors.green,
+            onChanged: (v) => onToggleStatus(user.id, v),
+          ),
+        )),
+        DataCell(_userCell(user.name, user.isActive, isPending)),
+        DataCell(_buildDropdown(
+          current: user.role.first,
+          items: ['admin', 'technician'],
+          isActive: user.isActive,
+          onChanged: (val) => onRoleChanged(user.id, [val!]),
+        )),
+        DataCell(_buildDropdown(
+          current: _getFriendlyScope(user.scope),
+          items: _scopeMap.keys.toList(),
+          isActive: user.isActive,
+          isHighlight: isPending,
+          onChanged: (val) {
+            final backendValue = _scopeMap[val];
+            if (backendValue != null) onScopeChanged(user.id, backendValue);
+          },
+        )),
+      ],
+    );
+  }
+
+  Widget _buildUserCard(User user) {
+    final isPending = user.scope.toUpperCase() == 'NONE';
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _avatar(user.name, isPending),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(user.isActive ? "Activo" : "Inactivo", style: TextStyle(color: user.isActive ? Colors.green : Colors.grey, fontSize: 11)),
+                  ],
+                ),
+              ),
+              Transform.scale(
+                scale: 0.8,
+                child: Switch(
+                  value: user.isActive,
+                  activeColor: Colors.green,
+                  onChanged: (v) => onToggleStatus(user.id, v),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDropdown(
+                  current: user.role.first,
+                  items: ['admin', 'technician'],
+                  isActive: user.isActive,
+                  onChanged: (val) => onRoleChanged(user.id, [val!]),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildDropdown(
+                  current: _getFriendlyScope(user.scope),
+                  items: _scopeMap.keys.toList(),
+                  isActive: user.isActive,
+                  isHighlight: isPending,
+                  onChanged: (val) => onScopeChanged(user.id, _scopeMap[val]!),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _avatar(String name, bool isPending) {
+    return Container(
+      width: 36, height: 36,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: isPending 
+            ? [Colors.orange, Colors.orangeAccent] 
+            : [const Color(0xFFC62828), const Color(0xFFE53935)]
+        ),
+      ),
+      child: Center(
+        child: Text(name.isNotEmpty ? name[0].toUpperCase() : "?", 
+          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  Widget _userCell(String name, bool isActive, bool isPending) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _avatar(name, isPending),
+        const SizedBox(width: 12),
+        Text(name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isActive ? Colors.black87 : Colors.grey)),
+      ],
     );
   }
 
@@ -109,32 +222,6 @@ class UserDataTable extends StatelessWidget {
           onChanged: isActive ? onChanged : null,
         ),
       ),
-    );
-  }
-
-  Widget _userCell(String name, bool isActive, bool isPending) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 36, height: 36,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: isPending 
-                ? [Colors.orange, Colors.orangeAccent] 
-                : [const Color(0xFFC62828), const Color(0xFFE53935)]
-            ),
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, 2))],
-          ),
-          child: Center(
-            child: Text(name.isNotEmpty ? name[0].toUpperCase() : "?", 
-              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isActive ? Colors.black87 : Colors.grey)),
-      ],
     );
   }
 }

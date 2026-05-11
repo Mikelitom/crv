@@ -13,4 +13,5 @@ abstract class ClientRepository {
     CreateClientParams params,
   );
   Future<Either<Failure, List<ClientsConveyor>>> getAllClients();
+  Future<Either<Failure, Mine>> createMine(CreateMineParams params);
 }

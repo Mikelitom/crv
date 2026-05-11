@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 
 class InspectorAndActionsFooter extends StatelessWidget {
-  const InspectorAndActionsFooter({super.key});
+  // SOLUCIÓN: Definimos el parámetro onSave para recibir la función de la Page
+  final VoidCallback onSave;
+
+  const InspectorAndActionsFooter({
+    super.key, 
+    required this.onSave,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +25,6 @@ class InspectorAndActionsFooter extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text("Inspector Responsable", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-              const Text("Información del técnico que realizó la inspección", style: TextStyle(color: Colors.grey, fontSize: 13)),
               const SizedBox(height: 20),
               const Text("Nombre del Inspector", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
@@ -38,19 +43,28 @@ class InspectorAndActionsFooter extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE0E0E0), foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              onPressed: () {}, 
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE0E0E0), 
+                foregroundColor: Colors.black, 
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), 
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+              ),
               child: const Text("Vista Previa PDF"),
             ),
             const SizedBox(width: 16),
             ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              onPressed: onSave, // Se dispara la función al presionar
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC62828), 
+                foregroundColor: Colors.white, 
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), 
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+              ),
               child: const Text("Guardar Inspección"),
             ),
           ],
         ),
-        const SizedBox(height: 40),
       ],
     );
   }
