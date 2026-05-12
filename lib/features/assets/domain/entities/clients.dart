@@ -1,21 +1,21 @@
-class ClientsConveyor {
+class Clients {
   final String id;
   final String name;
   final String company;
   final String? phone;
   final String? email;
   final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
   final bool isActive;
 
-  ClientsConveyor({
+  Clients({
     required this.id,
     required this.name,
     required this.company,
     this.phone,
     this.email,
     required this.createdAt,
-    required this.updatedAt,
+    this.updatedAt,
     required this.isActive,
   });
 }
@@ -25,6 +25,7 @@ class Mine {
   final String clientId;
   final String name;
   final String? address;
+  final String? phone;
   final String? email;
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -35,6 +36,7 @@ class Mine {
     required this.clientId,
     required this.name,
     this.address,
+    this.phone,
     this.email,
     required this.createdAt,
     this.updatedAt,
