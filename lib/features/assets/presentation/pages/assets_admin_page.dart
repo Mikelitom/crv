@@ -1,8 +1,3 @@
-import 'package:crv_reprosisa/features/assets/domain/entities/clients_conveyor.dart';
-import 'package:crv_reprosisa/features/assets/domain/entities/press.dart';
-import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
-import 'package:crv_reprosisa/features/assets/presentation/dialogs/update_client_dialog.dart';
-import 'package:crv_reprosisa/features/assets/presentation/dialogs/update_press_dialog.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/client_list_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_list_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_list_notifier_provider.dart';
