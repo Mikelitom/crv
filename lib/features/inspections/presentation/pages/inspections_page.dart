@@ -1,5 +1,5 @@
 import 'package:crv_reprosisa/core/models/inspection_models.dart';
-import 'package:crv_reprosisa/features/bandas_transportadoras/pages/banda_inspection_page.dart';
+import 'package:crv_reprosisa/features/bandas_transportadoras/presentation/pages/banda_inspection_page.dart';
 import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/widgets/dynamic_stats_row.dart';
@@ -9,7 +9,7 @@ import 'package:crv_reprosisa/features/prensas_industriales/presentation/Pages/p
 import 'package:crv_reprosisa/features/vehiculos/presentation/pages/vehicle_inspection_page.dart';
 import 'package:flutter/material.dart';
 
-class InspectionPage extends StatelessWidget {
+class InspectionPage extends StatefulWidget {
   final List<StatsModel> stats;
   final List<dynamic> actions;
   final List<InspectionRowUI> inspections;
@@ -20,6 +20,31 @@ class InspectionPage extends StatelessWidget {
     required this.actions,
     required this.inspections,
   });
+
+  @override
+  State<InspectionPage> createState() => _InspectionPageState();
+}
+
+class _InspectionPageState extends State<InspectionPage> {
+  late List<InspectionRowUI> filteredInspections;
+  String searchQuery = "";
+
+  @override
+  void initState() {
+    super.initState();
+    filteredInspections = widget.inspections;
+  }
+
+  void _filterInspections(String query) {
+    setState(() {
+      searchQuery = query;
+      filteredInspections = widget.inspections
+          .where((item) =>
+              item.equipment.toLowerCase().contains(query.toLowerCase()) ||
+              item.id.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,26 +61,20 @@ class InspectionPage extends StatelessWidget {
                 children: [
                   const CustomHeader(title: 'Inspecciones', actionIcon: Icons.print_rounded),
                   const SizedBox(height: 32),
-
-                  // Contadores animados seguidos
-                  DynamicStatsRow(stats: stats),
-
+                  DynamicStatsRow(stats: widget.stats),
                   const SizedBox(height: 48),
                   const Text('Realizar Una Inspección',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
                   const SizedBox(height: 24),
-
-                  // Grid responsivo forzado a fila única en PC
                   _buildQuickActionGrid(context),
-
                   const SizedBox(height: 56),
-
-                  // Buscador y título de tabla
+                  
+                  // Encabezado de tabla responsivo
                   _buildTableTopActions(),
 
                   const SizedBox(height: 16),
 
-                  // Tabla de inspecciones
+                  // Contenedor de la tabla
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -67,10 +86,7 @@ class InspectionPage extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(24),
-                      child: TableInspector(
-                        items: inspections,
-                        onSearch: (v) => debugPrint("Buscando: $v"),
-                      ),
+                      child: TableInspector(items: filteredInspections),
                     ),
                   ),
                 ],
@@ -82,6 +98,50 @@ class InspectionPage extends StatelessWidget {
     );
   }
 
+  Widget _buildTableTopActions() {
+    return LayoutBuilder(builder: (context, constraints) {
+      if (constraints.maxWidth < 700) {
+        // En móvil, ponemos el buscador debajo del título para que no choque
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Mis inspecciones',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
+            const SizedBox(height: 16),
+            _buildSearchField(double.infinity),
+          ],
+        );
+      }
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text('Mis inspecciones',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
+          _buildSearchField(380),
+        ],
+      );
+    });
+  }
+
+  Widget _buildSearchField(double width) {
+    return SizedBox(
+      width: width,
+      child: TextField(
+        onChanged: _filterInspections,
+        decoration: InputDecoration(
+          hintText: "Buscar por ID o equipo...",
+          prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFC62828)),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade200)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.5)),
+        ),
+      ),
+    );
+  }
+
+  // ... (Mantiene tu _buildQuickActionGrid y _buildActionItem igual)
   Widget _buildQuickActionGrid(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -98,7 +158,6 @@ class InspectionPage extends StatelessWidget {
             ),
           );
         }
-
         return Column(
           children: [
             _buildActionItem(context, "Inspección de Prensas", "Administrar checklists", Icons.build_circle_outlined,  PrensaInspectionPage()),
@@ -118,30 +177,6 @@ class InspectionPage extends StatelessWidget {
       description: desc,
       icon: icon,
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => target)),
-    );
-  }
-
-  Widget _buildTableTopActions() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text('Mis inspecciones',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
-        SizedBox(
-          width: 380,
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: "Buscar inspección...",
-              prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFC62828)),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade200)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.5)),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

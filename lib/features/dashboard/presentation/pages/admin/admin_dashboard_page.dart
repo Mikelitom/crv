@@ -9,13 +9,15 @@ import 'package:crv_reprosisa/features/inspections/presentation/widgets/quick_ac
 import 'package:crv_reprosisa/features/catalogo/presentation/page/generic_catalog_page.dart';
 import 'package:crv_reprosisa/features/servicios/page/prensas/press_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:crv_reprosisa/features/bandas_transportadoras/pages/banda_inspection_page.dart';
+import 'package:crv_reprosisa/features/bandas_transportadoras/presentation/pages/banda_inspection_page.dart';
 import 'package:crv_reprosisa/features/prensas_industriales/presentation/Pages/prensa_inspection.dart';
 import 'package:crv_reprosisa/features/vehiculos/presentation/pages/vehicle_inspection_page.dart';
 import 'package:crv_reprosisa/features/user_management/presentation/pages/users_admin_page.dart';
 import 'package:crv_reprosisa/features/profile/presentation/page/profile_page.dart';
 import 'package:crv_reprosisa/features/servicios/page/vehiculos/vehicle_service_page.dart';
 import 'package:flutter/material.dart';
+
+// Importación de widgets de layout y UI
 import '../../layout/responsive_dashboard_layout.dart';
 import '../../widgets/sidebar/sidebar_admin.dart';
 import '../../widgets/header.dart';
@@ -35,14 +37,14 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Obtain user from authState
     final authState = ref.watch(authNotifierProvider);
     final user = authState.user;
 
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    // Definición de páginas con el tipo explícito para evitar errores de parámetro
+
+    // Listado de navegación
     final pages = [
       _AdminHomePage(user: user),
       InspectionPage(
@@ -57,7 +59,6 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
       GenericCatalogPage(type: AssetType.press),
       const VehicleServicePage(),
       const PressServicePage(),
-      // Tipo definido para evitar errores
       const ProfilePage(),
     ];
 
@@ -68,10 +69,8 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
         selectedIndex: selectedIndex,
         onItemSelected: (i) => setState(() => selectedIndex = i),
       ),
-      content: Padding(
-        padding: const EdgeInsets.all(24),
-        child: pages[selectedIndex],
-      ),
+      // Se eliminó el Padding fijo aquí para manejarlo dentro de cada página si es necesario
+      content: pages[selectedIndex],
     );
   }
 }
@@ -83,6 +82,7 @@ class _AdminHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -104,51 +104,13 @@ class _AdminHomePage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
+          // GRID DE ESTADÍSTICAS RESPONSIVO
           _buildStatsGrid(context),
 
           const SizedBox(height: 32),
 
           // Layout de Gráficas Responsivo
-          LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 900) {
-                return Column(
-                  children: [
-                    _buildChartPlaceholder(
-                      "Inspecciones por Tipo",
-                      Icons.pie_chart_outline,
-                    ),
-                    const SizedBox(height: 20),
-                    _buildChartPlaceholder(
-                      "Rendimiento Semanal",
-                      Icons.bar_chart_rounded,
-                    ),
-                  ],
-                );
-              } else {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: _buildChartPlaceholder(
-                        "Inspecciones por Tipo",
-                        Icons.pie_chart_outline,
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      flex: 4,
-                      child: _buildChartPlaceholder(
-                        "Rendimiento Semanal",
-                        Icons.bar_chart_rounded,
-                      ),
-                    ),
-                  ],
-                );
-              }
-            },
-          ),
+          _buildChartsLayout(),
 
           const SizedBox(height: 40),
 
@@ -161,6 +123,7 @@ class _AdminHomePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          
           _buildQuickActionGrid(context),
 
           const SizedBox(height: 40),
@@ -171,51 +134,88 @@ class _AdminHomePage extends StatelessWidget {
     );
   }
 
+  // --- WIDGETS DE CONSTRUCCIÓN ---
+
   Widget _buildStatsGrid(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         double maxWidth = constraints.maxWidth;
 
-        // Ajuste de columnas según el ancho disponible
+        // 1. Decidir número de columnas
         int crossAxisCount = maxWidth < 750 ? 2 : 4;
 
-        // ASPECT RATIO CORREGIDO: Mayor valor vertical para evitar desbordamiento inferior
-        double aspectRatio = maxWidth < 750 ? 3.0 : 1.8;
+        // 2. Calcular Ratio dinámico para evitar overflows
+        double aspectRatio;
+        if (maxWidth < 400) {
+          aspectRatio = 2.6; // Pantallas mini
+        } else if (maxWidth < 750) {
+          aspectRatio = 2.3; // Celulares estándar
+        } else {
+          aspectRatio = 1.8; // Escritorio/Tablet
+        }
 
         return GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 20,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
           childAspectRatio: aspectRatio,
-          children: const [
-            DashboardStatsCard(
-              value: "0",
-              sublabel: "0%",
-              label: "Inspecciones Hoy",
-              icon: Icons.assignment_outlined,
-            ),
-            DashboardStatsCard(
-              value: "0/0",
-              sublabel: "0%",
-              label: "Prensas Activas",
-              icon: Icons.settings_input_component_rounded,
-            ),
-            DashboardStatsCard(
-              value: "0/0",
-              sublabel: "0%",
-              label: "Vehículos OK",
-              icon: Icons.check_circle_outline_rounded,
-            ),
-            DashboardStatsCard(
-              value: "0",
-              sublabel: "0",
-              label: "Reportes Pendientes",
-              icon: Icons.error_outline_rounded,
-            ),
+          children: [
+            _statItem("0", "0%", "Inspecciones Hoy", Icons.assignment_outlined),
+            _statItem("0/0", "0%", "Prensas Activas", Icons.settings_input_component_rounded),
+            _statItem("0/0", "0%", "Vehículos OK", Icons.check_circle_outline_rounded),
+            _statItem("0", "0", "Reportes Pendientes", Icons.error_outline_rounded),
           ],
         );
+      },
+    );
+  }
+
+  // Función para envolver la tarjeta en un FittedBox preventivo
+  Widget _statItem(String val, String sub, String lab, IconData ic) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: SizedBox(
+        width: 160,
+        height: 70,
+        child: DashboardStatsCard(
+          value: val,
+          sublabel: sub,
+          label: lab,
+          icon: ic,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartsLayout() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 900) {
+          return Column(
+            children: [
+              _buildChartPlaceholder("Inspecciones por Tipo", Icons.pie_chart_outline),
+              const SizedBox(height: 20),
+              _buildChartPlaceholder("Rendimiento Semanal", Icons.bar_chart_rounded),
+            ],
+          );
+        } else {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 3,
+                child: _buildChartPlaceholder("Inspecciones por Tipo", Icons.pie_chart_outline),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                flex: 4,
+                child: _buildChartPlaceholder("Rendimiento Semanal", Icons.bar_chart_rounded),
+              ),
+            ],
+          );
+        }
       },
     );
   }
@@ -223,96 +223,47 @@ class _AdminHomePage extends StatelessWidget {
   Widget _buildQuickActionGrid(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth > 900) {
+        bool isWide = constraints.maxWidth > 900;
+        
+        final actions = [
+          _buildActionItem(context, "Inspección de Prensas", "Checlists industriales", Icons.build_circle_outlined, PrensaInspectionPage()),
+          _buildActionItem(context, "Inspección de Vehículos", "Gestión de flota", Icons.local_shipping_outlined, VehicleInspectionPage()),
+          _buildActionItem(context, "Inspección de Bandas", "Sistemas de transporte", Icons.camera_alt_outlined, const BandaInspectionPage()),
+        ];
+
+        if (isWide) {
           return IntrinsicHeight(
             child: Row(
-              children: [
-                Expanded(
-                  child: _buildActionItem(
-                    context,
-                    "Inspección de Prensas",
-                    "Administrar checklists industriales",
-                    Icons.build_circle_outlined,
-                    PrensaInspectionPage(),
-                  ),
-                ),
-                const SizedBox(width: 24),
-                Expanded(
-                  child: _buildActionItem(
-                    context,
-                    "Inspección de Vehículos",
-                    "Gestión de flota corporativa",
-                    Icons.local_shipping_outlined,
-                    VehicleInspectionPage(),
-                  ),
-                ),
-                const SizedBox(width: 24),
-                Expanded(
-                  child: _buildActionItem(
-                    context,
-                    "Inspección de Bandas",
-                    "Control de sistemas de transporte",
-                    Icons.camera_alt_outlined,
-                    const BandaInspectionPage(),
-                  ),
-                ),
-              ],
+              children: actions.map((a) => Expanded(child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: a,
+              ))).toList(),
             ),
           );
         }
 
         return Column(
-          children: [
-            _buildActionItem(
-              context,
-              "Inspección de Prensas",
-              "Administrar checklists",
-              Icons.build_circle_outlined,
-              PrensaInspectionPage(),
-            ),
-            const SizedBox(height: 16),
-            _buildActionItem(
-              context,
-              "Inspección de Vehículos",
-              "Gestión de flota",
-              Icons.local_shipping_outlined,
-              VehicleInspectionPage(),
-            ),
-            const SizedBox(height: 16),
-            _buildActionItem(
-              context,
-              "Inspección de Bandas",
-              "Control de transporte",
-              Icons.camera_alt_outlined,
-              const BandaInspectionPage(),
-            ),
-          ],
+          children: actions.map((a) => Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: a,
+          )).toList(),
         );
       },
     );
   }
 
-  Widget _buildActionItem(
-    BuildContext context,
-    String title,
-    String desc,
-    IconData icon,
-    Widget target,
-  ) {
+  Widget _buildActionItem(BuildContext context, String title, String desc, IconData icon, Widget target) {
     return QuickActionCard(
       title: title,
       description: desc,
       icon: icon,
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => target),
-      ),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => target)),
     );
   }
 
   Widget _buildChartPlaceholder(String title, IconData icon) {
     return Container(
-      height: 320, // Altura aumentada para evitar Bottom Overflow
+      height: 320, 
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -328,17 +279,10 @@ class _AdminHomePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const Expanded(
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Expanded(
             child: Center(
-              child: Icon(
-                Icons.analytics_outlined,
-                size: 80,
-                color: Color(0xFFFDECEA),
-              ),
+              child: Icon(icon, size: 80, color: const Color(0xFFFDECEA)),
             ),
           ),
         ],
@@ -347,7 +291,7 @@ class _AdminHomePage extends StatelessWidget {
   }
 }
 
-// Listas inicializadas como vacías para evitar el error de RangeError
+// --- DATOS INICIALES ---
 final List<StatsModel> _adminStats = [
   StatsModel(value: "0", label: "Totales", color: Colors.grey),
   StatsModel(value: "0", label: "Pendientes", color: Colors.grey),

@@ -8,24 +8,18 @@ class CatalogStats extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final vehicleState = ref.watch(vehicleListProvider);
-
-    // Datos reales del provider
-    final int total = vehicleState.vehicles.length;
-    final int enOperacion = vehicleState.vehicles.where((v) => v.isActive).length;
-    final int enTaller = total - enOperacion;
-
-    final labels = isVehiculo
+    // DATOS ESTÁTICOS PARA VISUALIZACIÓN
+    final List<String> labels = isVehiculo
         ? ["Total Vehículos", "En Operación", "En Taller"]
         : ["Total Prensas", "Activas", "Mantenimiento"];
 
-    final icons = isVehiculo
+    final List<IconData> icons = isVehiculo
         ? [Icons.inventory_2_outlined, Icons.local_shipping_outlined, Icons.build_circle_outlined]
         : [Icons.precision_manufacturing, Icons.settings_suggest, Icons.handyman_outlined];
 
-    final values = isVehiculo
-        ? [total.toString(), enOperacion.toString(), enTaller.toString()]
-        : ["0", "0", "0"];
+    final List<String> values = isVehiculo
+        ? ["12", "10", "2"] // Datos estáticos vehículos
+        : ["8", "6", "2"];  // Datos estáticos prensas
 
     return LayoutBuilder(builder: (context, constraints) {
       int crossAxisCount = constraints.maxWidth > 800 ? 3 : 1;
@@ -67,11 +61,7 @@ class _StatCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          )
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 8))
         ],
       ),
       child: Row(

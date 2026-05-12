@@ -7,16 +7,42 @@ class VehicleStatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      double cardWidth = (constraints.maxWidth - 40) / 3;
+      // Ajuste dinámico de columnas según el ancho disponible
+      double spacing = 20.0;
+      int columns = constraints.maxWidth > 900 ? 3 : (constraints.maxWidth > 600 ? 2 : 1);
+      double cardWidth = (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+
       return Wrap(
-        spacing: 20,
+        spacing: spacing,
+        runSpacing: spacing,
         children: [
-          SizedBox(width: cardWidth, child: const DashboardStatsCard(
-            label: "Vehículos OK", value: "10", sublabel: "Estatus OK", icon: Icons.check_circle_rounded)),
-          SizedBox(width: cardWidth, child: const DashboardStatsCard(
-            label: "En Inspección", value: "3", sublabel: "Pendientes", icon: Icons.fact_check_outlined)),
-          SizedBox(width: cardWidth, child: const DashboardStatsCard(
-            label: "Fuera de Servicio", value: "2", sublabel: "Taller/Falla", icon: Icons.warning_amber_rounded)),
+          SizedBox(
+            width: cardWidth, 
+            child: const DashboardStatsCard(
+              label: "Unidades Activas", 
+              value: "24", 
+              sublabel: "En ruta / Operación", 
+              icon: Icons.check_circle_rounded
+            )
+          ),
+          SizedBox(
+            width: cardWidth, 
+            child: const DashboardStatsCard(
+              label: "Inspecciones Hoy", 
+              value: "08", 
+              sublabel: "4 pendientes de revisión", 
+              icon: Icons.fact_check_outlined
+            )
+          ),
+          SizedBox(
+            width: cardWidth, 
+            child: const DashboardStatsCard(
+              label: "Baja Temporal", 
+              value: "03", 
+              sublabel: "Correctivos en curso", 
+              icon: Icons.warning_amber_rounded
+            )
+          ),
         ],
       );
     });
