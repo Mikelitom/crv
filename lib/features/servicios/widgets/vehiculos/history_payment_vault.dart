@@ -9,61 +9,66 @@ class HistoryPaymentVault extends StatelessWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 30, offset: const Offset(0, 15)),
-        ],
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Comprobantes y Pagos", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text("Bóveda de Documentos", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          _buildSearchField(),
-          const SizedBox(height: 24),
-          _docItem("Factura_Amortiguadores.pdf", "Ref: INS-102-A", "26/01/2026"),
-          _docItem("Checklist_Mensual.pdf", "Mensual", "01/01/2026"),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchField() {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: "Buscar documento...",
-        prefixIcon: const Icon(Icons.search, color: Color(0xFFC62828)),
-        filled: true,
-        fillColor: const Color(0xFFF8F9FA),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-      ),
-    );
-  }
-
-  Widget _docItem(String name, String ref, String date) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F3F5)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.picture_as_pdf, color: Color(0xFFC62828), size: 24),
-          const SizedBox(width: 16),
-          Expanded(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              Text("$date • $ref", style: const TextStyle(fontSize: 10, color: Colors.grey)),
+          
+          // EJEMPLO: Una Orden de Servicio con múltiples archivos dentro
+          _buildDocumentFolder(
+            title: "Orden de Servicio #8821",
+            date: "26 May 2026",
+            files: [
+              {'name': 'Factura_Repuesto.pdf', 'type': 'pdf'},
+              {'name': 'Evidencia_Motor.jpg', 'type': 'img'},
+              {'name': 'Comprobante_Pago.pdf', 'type': 'pdf'},
             ],
-          )),
-          IconButton(icon: const Icon(Icons.visibility_outlined, size: 18), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.file_download_outlined, color: Color(0xFFC62828), size: 18), onPressed: () {}),
+          ),
+          
+          const SizedBox(height: 16),
+
+          _buildDocumentFolder(
+            title: "Checklist Preventivo Mensual",
+            date: "01 May 2026",
+            files: [
+              {'name': 'Reporte_Final.pdf', 'type': 'pdf'},
+            ],
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDocumentFolder({required String title, required String date, required List<Map<String, String>> files}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFECEFF1)),
+      ),
+      child: ExpansionTile(
+        leading: const Icon(Icons.folder_zip_rounded, color: Colors.amber, size: 28),
+        title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        subtitle: Text("$date • ${files.length} archivos", style: const TextStyle(fontSize: 11)),
+        children: files.map((file) => _buildFileItem(file['name']!, file['type']!)).toList(),
+      ),
+    );
+  }
+
+  Widget _buildFileItem(String name, String type) {
+    return ListTile(
+      leading: Icon(
+        type == 'pdf' ? Icons.picture_as_pdf : Icons.image,
+        color: type == 'pdf' ? Colors.red : Colors.blue,
+        size: 18,
+      ),
+      title: Text(name, style: const TextStyle(fontSize: 12)),
+      trailing: const Icon(Icons.download_rounded, size: 16, color: Colors.grey),
+      dense: true,
     );
   }
 }

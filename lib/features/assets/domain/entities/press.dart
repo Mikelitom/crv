@@ -8,6 +8,7 @@ class Press {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
+  final List<Map>? mines; 
 
   Press({
     required this.id,
@@ -19,5 +20,6 @@ class Press {
     required this.createdAt,
     required this.updatedAt,
     required this.isActive,
+    this.mines,
   });
 }

@@ -3,6 +3,7 @@ import '../../../dashboard/presentation/widgets/header.dart';
 import '../../widgets/vehiculos/document_vault_panel.dart';
 import '../../widgets/vehiculos/history_inspections_feed.dart';
 import '../../widgets/vehiculos/history_tech_info.dart';
+import '../../widgets/vehiculos/history_payment_vault.dart'; // Import nuevo
 
 class VehicleHistoryPage extends StatelessWidget {
   final String vehicleId;
@@ -43,10 +44,10 @@ class VehicleHistoryPage extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // SECCIÓN IZQUIERDA: Tus Reportes de Inspección (Área principal)
+        // SECCIÓN IZQUIERDA: Feed de inspecciones (60% del ancho aprox)
         const Expanded(flex: 3, child: HistoryInspectionsFeed()),
         const SizedBox(width: 32),
-        // SECCIÓN DERECHA: Info técnica y Carpetas de documentos
+        // SECCIÓN DERECHA: Datos técnicos y bovedas (40% del ancho aprox)
         Expanded(
           flex: 2, 
           child: Column(
@@ -54,6 +55,8 @@ class VehicleHistoryPage extends StatelessWidget {
               HistoryTechInfo(), 
               SizedBox(height: 24), 
               HistoryDocumentsPanel(),
+              SizedBox(height: 24),
+              HistoryPaymentVault(), // Añadido para completar la información
             ]
           )
         ),
@@ -66,6 +69,8 @@ class VehicleHistoryPage extends StatelessWidget {
       HistoryTechInfo(), 
       SizedBox(height: 24), 
       HistoryDocumentsPanel(), 
+      SizedBox(height: 24),
+      HistoryPaymentVault(),
       SizedBox(height: 32), 
       HistoryInspectionsFeed()
     ]);

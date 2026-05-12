@@ -1,0 +1,55 @@
+import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
+import '../../../../core/error/failure.dart';
+import '../../domain/repositories/banda_repository.dart';
+import '../datasource/banda_remote_datasource.dart';
+import '../../domain/entities/banda_template.dart';
+import '../../domain/entities/client_mine.dart';
+
+class BandaRepositoryImpl implements BandaRepository {
+  final BandaRemoteDataSource dataSource;
+
+  BandaRepositoryImpl(this.dataSource);
+
+  @override
+  Future<Either<Failure, List<BandaSection>>> getBandaTemplate() async {
+    try {
+      final result = await dataSource.getBandaTemplate();
+      return Right(result);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? "Error al cargar template"));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<Client>>> getActiveClients() async {
+    try {
+      final result = await dataSource.getActiveClients();
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure("Error al obtener clientes"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<Mine>>> getActiveMines() async {
+    try {
+      final result = await dataSource.getActiveMines();
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure("Error al obtener minas"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> createBandaReport(Map<String, dynamic> reportData) async {
+    try {
+      final id = await dataSource.saveBandaReport(reportData);
+      return Right(id);
+    } catch (e) {
+      return Left(ServerFailure("Error al guardar reporte de banda"));
+    }
+  }
+}

@@ -3,8 +3,6 @@ import '../../../dashboard/presentation/widgets/header.dart';
 import '../../widgets/vehiculos/service_stats_grid.dart';
 import '../../widgets/vehiculos/service_Data_table.dart';
 
-
-
 class VehicleServicePage extends StatelessWidget {
   const VehicleServicePage({super.key});
 
@@ -12,40 +10,44 @@ class VehicleServicePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // HEADER EN SINTONÍA: Blanco con icono a la derecha
-            CustomHeader(
-              title: "Control de Servicios de Flota",
-              actionIcon: Icons.car_repair_rounded,
-              onActionTap: () {},
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          double horizontalPadding = constraints.maxWidth > 600 ? 32 : 16;
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CustomHeader(
+                  title: "Control de Servicios de Flota",
+                  actionIcon: Icons.car_repair_rounded,
+                  onActionTap: () {},
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Estos ya incluyen los datos estáticos (42 totales, 5 en taller, etc)
+                const ServiceStatsGrid(isVehiculo: true), 
+
+                const SizedBox(height: 40),
+                
+                const Text(
+                  "Monitoreo de Unidades", 
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))
+                ),
+                const SizedBox(height: 20),
+
+                _buildSearchField(),
+
+                const SizedBox(height: 24),
+
+                // La tabla ahora renderiza los datos de las placas SON-442-A, etc.
+                ServiceDataTable(isVehiculo: true),
+              ],
             ),
-            
-            const SizedBox(height: 32),
-            
-            // STATS GRANDES: 100px de altura para llenar la pantalla
-            const ServiceStatsGrid(isVehiculo: true), 
-
-            const SizedBox(height: 40),
-            
-            const Text(
-              "Monitoreo de Unidades", 
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))
-            ),
-            const SizedBox(height: 20),
-
-            // BUSCADOR PROPORCIONAL: 56px de alto para tablets
-            _buildSearchField(),
-
-            const SizedBox(height: 24),
-
-            // TABLA DE DATOS: Sin 'const' para evitar errores de compilación
-            ServiceDataTable(isVehiculo: true),
-          ],
-        ),
+          );
+        }
       ),
     );
   }
@@ -64,12 +66,12 @@ class VehicleServicePage extends StatelessWidget {
           )
         ],
       ),
-      child: TextField(
+      child: const TextField(
         decoration: InputDecoration(
-          hintText: "Buscar unidad, placa o folio de servicio...",
-          prefixIcon: const Icon(Icons.search, color: Color(0xFFC62828), size: 24),
+          hintText: "Buscar unidad, placa o folio...",
+          prefixIcon: Icon(Icons.search, color: Color(0xFFC62828), size: 24),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 18),
+          contentPadding: EdgeInsets.symmetric(vertical: 18),
         ),
       ),
     );

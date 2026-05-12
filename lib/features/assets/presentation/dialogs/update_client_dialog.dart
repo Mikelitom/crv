@@ -1,4 +1,4 @@
-import 'package:crv_reprosisa/features/assets/domain/entities/clients_conveyor.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/clients.dart';
 import 'package:crv_reprosisa/features/assets/domain/params/create_clients_params.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/client_list_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/update_client_notifier_provider.dart';
@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class UpdateClientDialog extends ConsumerStatefulWidget {
-  final ClientsConveyor client;
+  final Clients client;
 
   const UpdateClientDialog({super.key, required this.client});
 
@@ -24,7 +24,6 @@ class _UpdateClientDialogState extends ConsumerState<UpdateClientDialog> {
   late TextEditingController companyController;
   late TextEditingController phoneController;
   late TextEditingController emailController;
-  late TextEditingController addressController;
 
   bool _success = false;
 
@@ -37,7 +36,6 @@ class _UpdateClientDialogState extends ConsumerState<UpdateClientDialog> {
     companyController = TextEditingController(text: widget.client.company);
     phoneController = TextEditingController(text: widget.client.phone);
     emailController = TextEditingController(text: widget.client.email);
-    addressController = TextEditingController(text: widget.client.address);
 
     ref.listenManual(updateClientProvider, (previous, next) async {
       if (!mounted) return;
@@ -83,7 +81,7 @@ class _UpdateClientDialogState extends ConsumerState<UpdateClientDialog> {
                 company: companyController.text.trim(),
                 phone: phoneController.text.trim(),
                 email: emailController.text.trim(),
-                address: addressController.text.trim(),
+                mines: [],
               );
 
               await ref
@@ -111,32 +109,44 @@ class _UpdateClientDialogState extends ConsumerState<UpdateClientDialog> {
             "Nombre Completo",
             "Ej. Juan Perez",
             validator: (value) {
-              if (value == null || value.trim().isEmpty) return "El nombre es obligatorio";
+              if (value == null || value.trim().isEmpty)
+                return "El nombre es obligatorio";
               if (value.length < 3) return "Mínimo 3 caracteres";
               return null;
             },
           ),
           buildField(companyController, "Empresa", "Minera del Norte"),
-          buildField(phoneController, "Teléfono", "+52 444...", validator: (value) {
-            if (value == null || value.isEmpty) return null;
-            final regex = RegExp(r'^\+?[0-9]{10,15}$');
-            if (!regex.hasMatch(value)) return "Teléfono inválido";
-            return null;
-          }),
-          buildField(emailController, "Email", "cliente@ejemplo.com", validator: (value) {
-            if (value == null || value.isEmpty) return null;
+          buildField(
+            phoneController,
+            "Teléfono",
+            "+52 444...",
+            validator: (value) {
+              if (value == null || value.isEmpty) return null;
+              final regex = RegExp(r'^\+?[0-9]{10,15}$');
+              if (!regex.hasMatch(value)) return "Teléfono inválido";
+              return null;
+            },
+          ),
+          buildField(
+            emailController,
+            "Email",
+            "cliente@ejemplo.com",
+            validator: (value) {
+              if (value == null || value.isEmpty) return null;
 
-            // Si cambió el email, validar que no esté duplicado
-            if (value.trim() != widget.client.email) {
-              final exists = clientsState.clients.any((c) => c.email == value.trim());
-              if (exists) return "Email ya registrado";
-            }
+              // Si cambió el email, validar que no esté duplicado
+              if (value.trim() != widget.client.email) {
+                final exists = clientsState.clients.any(
+                  (c) => c.email == value.trim(),
+                );
+                if (exists) return "Email ya registrado";
+              }
 
-            final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-            if (!regex.hasMatch(value)) return "Email inválido";
-            return null;
-          }),
-          buildField(addressController, "Dirección / Minas", "Mina Santa Fe, Mina Norte", maxLines: 2),
+              final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+              if (!regex.hasMatch(value)) return "Email inválido";
+              return null;
+            },
+          ),
         ],
       ),
     );
@@ -159,7 +169,11 @@ class _UpdateClientDialogState extends ConsumerState<UpdateClientDialog> {
                   color: Colors.green.shade100,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.check, size: 60, color: Colors.green.shade600),
+                child: Icon(
+                  Icons.check,
+                  size: 60,
+                  color: Colors.green.shade600,
+                ),
               ),
             ),
             const SizedBox(height: 16),

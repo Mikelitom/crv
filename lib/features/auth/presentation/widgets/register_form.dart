@@ -50,7 +50,10 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
     setState(() {
       nameErr = nameController.text.trim().isEmpty ? "El nombre es obligatorio" : null;
       emailErr = !emailRegex.hasMatch(emailController.text.trim()) ? "Formato de correo incorrecto" : null;
-      phoneErr = phoneController.text.trim().length < 10 ? "Mínimo 10 dígitos" : null;
+      
+      final pVal = phoneController.text.trim();
+      // Si hay algo escrito, validamos que sean 10. Si está vacío, está bien.
+      phoneErr = (pVal.isNotEmpty && pVal.length < 10) ? "Mínimo 10 dígitos" : null;
       
       String pass = passwordController.text;
       if (pass.isEmpty) {
@@ -119,8 +122,8 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () {
-                  Navigator.pop(context); // Cierra modal
-                  Navigator.pop(context); // Regresa al Login
+                  Navigator.pop(context);
+                  Navigator.pop(context);
                 },
                 child: const Text("IR A INICIAR SESIÓN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
@@ -139,40 +142,41 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
       phoneErr = null;
     });
 
+    // LÓGICA DE ENVÍO: 
+    // Si el campo está vacío, mandamos una cadena que el backend ignore o null.
+    // La mayoría de los backends de FastAPI esperan que si el campo es opcional, 
+    // simplemente no se envíe o sea null real.
+    final String? phoneVal = phoneController.text.trim().isEmpty ? null : phoneController.text.trim();
+
     await ref.read(authNotifierProvider.notifier).register(
       name: nameController.text.trim(),
-      phone: phoneController.text.trim(),
       email: emailController.text.trim(),
       password: passwordController.text,
+      // Usamos una verificación aquí. Si tu función register no acepta null, 
+      // manda un String vacío, pero lo ideal es que el notifier maneje el null.
+      phone: phoneVal ?? "", 
     );
 
     final authState = ref.read(authNotifierProvider);
 
     if (authState.status == AuthStatus.authenticated) {
-      // SI ES EXITOSO: Forzamos logout para que no entre al Dashboard
       await ref.read(authNotifierProvider.notifier).logout();
       if (mounted) _showSuccessSheet();
     } 
     else if (authState.error != null) {
-      // BUSCAMOS EL MENSAJE REAL DEL SERVIDOR
       final String msg = authState.error!.message.toLowerCase();
 
       setState(() {
         if (msg.contains('email')) {
-          emailErr = "Correo inválido"; // Mensaje debajo del campo
-          phoneErr = null; 
+          emailErr = "Correo ya registrado";
           _showToast("El correo ya existe", true);
         } 
         else if (msg.contains('phone') || msg.contains('teléfono') || msg.contains('telefono')) {
-          phoneErr = "Teléfono inválido"; // Mensaje debajo del campo
-          emailErr = null;
+          phoneErr = "Teléfono ya registrado";
           _showToast("El teléfono ya existe", true);
         } 
         else {
-          // Si el servidor manda un error genérico (500), pero sabemos que es conflicto:
-          _showToast("Error en el registro: Datos ya registrados", true);
-          emailErr = "Correo inválido";
-          phoneErr = "Teléfono inválido";
+          _showToast("Error: ${authState.error!.message}", true);
         }
       });
     }
@@ -201,7 +205,7 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
                 _label('Correo electrónico'),
                 EmailField(controller: emailController, errorText: emailErr),
                 const SizedBox(height: 20),
-                _label('Teléfono'),
+                _label('Teléfono (Opcional)'),
                 _buildField(phoneController, "10 dígitos", Icons.phone_android_outlined, phoneErr, isPhone: true),
                 const SizedBox(height: 20),
                 _label('Contraseña'),

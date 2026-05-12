@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class CustomHeader extends StatelessWidget {
   final String title;
-  final String? userName; // Opcional: Si viene, muestra el saludo
+  final String? userName;
   final IconData? actionIcon;
   final VoidCallback? onActionTap;
 
@@ -16,35 +16,64 @@ class CustomHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Lógica: Si hay userName, dice "Bienvenido, Juan". Si no, usa el title.
-          Text(
-            userName != null ? "Bienvenido, $userName" : title,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Determinamos si es compacto basándonos en el ancho disponible
+        bool isCompact = constraints.maxWidth < 400;
+
+        return Container(
+          // Definimos un padding simétrico, permitiendo que el alto crezca solo si es necesario
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20), // Un poco más redondeado para un look moderno
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              )
+            ],
           ),
-          if (actionIcon != null)
-            InkWell(
-              onTap: onActionTap,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE53935), // Rojo del diseño
-                  borderRadius: BorderRadius.circular(10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center, // Alinea el icono al centro del texto multi-línea
+            children: [
+              Expanded(
+                child: Text(
+                  userName != null ? "Bienvenido, $userName" : title,
+                  style: TextStyle(
+                    fontSize: isCompact ? 18 : 22,
+                    fontWeight: FontWeight.w900, // Un poco más de peso visual
+                    color: const Color(0xFF1A1C1E),
+                    height: 1.2, // Mejora la legibilidad si el texto se divide en dos líneas
+                  ),
+                  // Eliminamos TextOverflow.ellipsis para permitir que el texto baje
+                  softWrap: true, 
+                  overflow: TextOverflow.visible,
                 ),
-                child: Icon(actionIcon, color: Colors.white),
               ),
-            ),
-        ],
-      ),
+              if (actionIcon != null) ...[
+                const SizedBox(width: 16),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onActionTap,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFC62828), // Rojo institucional
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(actionIcon, color: Colors.white, size: 24),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -35,147 +35,240 @@ class _InformationGeneralEquipoState extends ConsumerState<InformationGeneralEqu
       _areaController.clear();
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Información General del Equipo", 
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-          const SizedBox(height: 24),
-          
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Columna de campos: Aumentamos el flex para que ocupen el espacio necesario sin empujar la foto lejos
-              Expanded(
-                flex: 4, 
-                child: Wrap(
-                  spacing: 16, // Espacio horizontal entre campos reducido
-                  runSpacing: 16, // Espacio vertical entre filas
-                  children: [
-                    _buildReadOnlyField("Fecha de Inspección", formattedDate),
+    return LayoutBuilder(builder: (context, constraints) {
+      bool isDesktop = constraints.maxWidth >= 1000;
+      bool isMobile = constraints.maxWidth < 700;
 
-                    // --- BUSCADOR DE SERIE ---
-                    SizedBox(
-                      width: 300, // Ancho ligeramente reducido para compactar
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Serie", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 8),
-                          allSeriesAsync.when(
-                            data: (series) => Autocomplete<String>(
-                              optionsBuilder: (TextEditingValue textValue) {
-                                if (textValue.text == '') return series;
-                                return series.where((s) => s.toLowerCase().contains(textValue.text.toLowerCase()));
-                              },
-                              onSelected: (selection) {
-                                ref.read(inspeccionProvider.notifier).onSerieSelected(selection);
-                              },
-                              fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
-                                return TextField(
-                                  controller: controller,
-                                  focusNode: focusNode,
-                                  onChanged: (v) => ref.read(inspeccionProvider.notifier).onSerieChanged(v),
-                                  decoration: _inputStyle(
-                                    false, 
-                                    suffixIcon: Icons.search,
-                                    onIconTap: () {
-                                      controller.clear();
-                                      ref.read(inspeccionProvider.notifier).onSerieChanged('');
-                                    }
-                                  ),
-                                );
-                              },
-                            ),
-                            loading: () => const SizedBox(height: 48, child: Center(child: CircularProgressIndicator())),
-                            error: (_, __) => const Text("Error"),
-                          ),
-                        ],
-                      ),
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(isMobile ? 20 : 32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04), 
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                Container(
+                  constraints: BoxConstraints(
+                    maxWidth: isMobile ? constraints.maxWidth : constraints.maxWidth * 0.7,
+                  ),
+                  child: Text(
+                    "Información General del Equipo",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900, 
+                      fontSize: isMobile ? 18 : 22,
+                      color: const Color(0xFF1A1C1E),
                     ),
-
-                    _buildReadOnlyField("Modelo", state.selectedPress?.model ?? ""),
-                    _buildReadOnlyField("VOLTS", state.selectedPress?.voltz ?? ""),
-                    _buildReadOnlyField("Tipo", state.selectedPress?.type ?? ""),
-                    
-                    // --- CAMPO ÁREA ---
-                    SizedBox(
-                      width: 300,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Área", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _areaController,
-                            onChanged: (v) => ref.read(inspeccionProvider.notifier).updateArea(v),
-                            decoration: _inputStyle(false),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            
-              Container(
-                width: 350, // Ancho fijo para la imagen
-                height: 220,
-                margin: const EdgeInsets.only(left: 20), // Margen controlado
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFDDE1E6)),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: Image.asset(
-                    'assets/images/press.png', 
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.broken_image, size: 40)),
+                    softWrap: true,
                   ),
                 ),
+                if (state.status.isNotEmpty) _buildStatusChip(state.status),
+              ],
+            ),
+            const SizedBox(height: 24),
+            
+            if (isDesktop) 
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 8,
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(child: _buildField("Fecha de Inspección", _buildReadOnlyTextField(formattedDate))),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildSerieAutocomplete(allSeriesAsync)),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildField("Modelo", _buildReadOnlyTextField(state.selectedPress?.model ?? "---"))),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildField("VOLTS", _buildReadOnlyTextField(state.selectedPress?.voltz ?? "---"))),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(child: _buildField("Tipo", _buildReadOnlyTextField(state.selectedPress?.type ?? "---"))),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildAreaField()),
+                            const SizedBox(width: 16),
+                            const Spacer(flex: 2), 
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 32),
+                  Expanded(
+                    flex: 3,
+                    child: _buildPressImage(false),
+                  ),
+                ],
+              )
+            else
+              Column(
+                children: [
+                  Wrap(
+                    spacing: 20,
+                    runSpacing: 20,
+                    children: [
+                      _buildField("Fecha de Inspección", _buildReadOnlyTextField(formattedDate), width: isMobile ? constraints.maxWidth : 280),
+                      _buildSerieAutocomplete(allSeriesAsync, width: isMobile ? constraints.maxWidth : 280),
+                      _buildField("Modelo", _buildReadOnlyTextField(state.selectedPress?.model ?? "---"), width: isMobile ? constraints.maxWidth : 280),
+                      _buildField("VOLTS", _buildReadOnlyTextField(state.selectedPress?.voltz ?? "---"), width: isMobile ? constraints.maxWidth : 280),
+                      _buildField("Tipo", _buildReadOnlyTextField(state.selectedPress?.type ?? "---"), width: isMobile ? constraints.maxWidth : 280),
+                      _buildAreaField(width: isMobile ? constraints.maxWidth : 280),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  Center(child: _buildPressImage(true)),
+                ],
               ),
-            ],
-          ),
-        ],
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildStatusChip(String status) {
+    Color color;
+    String label;
+
+    switch (status.toUpperCase()) {
+      case 'AVAILABLE':
+        color = Colors.green;
+        label = "DISPONIBLE";
+        break;
+      case 'LOANED':
+        color = const Color(0xFFC62828);
+        label = "PRESTADA";
+        break;
+      case 'IN_SERVICE':
+        color = Colors.orange;
+        label = "EN SERVICIO";
+        break;
+      default:
+        color = Colors.grey;
+        label = status;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color, width: 1.5),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 11),
       ),
     );
   }
 
-  Widget _buildReadOnlyField(String label, String value) {
+  Widget _buildSerieAutocomplete(AsyncValue allSeriesAsync, {double? width}) {
+    return _buildField(
+      "Número de Serie",
+      allSeriesAsync.when(
+        data: (series) => Autocomplete<String>(
+          optionsBuilder: (TextEditingValue textValue) {
+            if (textValue.text == '') return series;
+            return series.where((s) => s.toLowerCase().contains(textValue.text.toLowerCase()));
+          },
+          onSelected: (selection) => ref.read(inspeccionProvider.notifier).onSerieSelected(selection),
+          fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
+            return TextField(
+              controller: controller,
+              focusNode: focusNode,
+              onChanged: (v) => ref.read(inspeccionProvider.notifier).onSerieChanged(v),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              decoration: _inputStyle(false, hint: "Buscar serie...", suffixIcon: Icons.search_rounded),
+            );
+          },
+        ),
+        loading: () => const LinearProgressIndicator(color: Color(0xFFC62828)),
+        error: (_, __) => const Text("Error"),
+      ),
+      width: width,
+    );
+  }
+
+  Widget _buildAreaField({double? width}) {
+    return _buildField(
+      "Área de Ubicación",
+      TextField(
+        controller: _areaController,
+        onChanged: (v) => ref.read(inspeccionProvider.notifier).updateArea(v),
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        decoration: _inputStyle(false, hint: "Ej: Taller 1"),
+      ),
+      width: width,
+    );
+  }
+
+  Widget _buildField(String label, Widget child, {double? width}) {
     return SizedBox(
-      width: 300,
+      width: width,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF444444))),
           const SizedBox(height: 8),
-          TextField(
-            controller: TextEditingController(text: value),
-            readOnly: true,
-            decoration: _inputStyle(true),
-          ),
+          child,
         ],
       ),
     );
   }
 
-  InputDecoration _inputStyle(bool readOnly, {IconData? suffixIcon, VoidCallback? onIconTap}) {
+  Widget _buildReadOnlyTextField(String value) {
+    return TextField(
+      controller: TextEditingController(text: value),
+      readOnly: true,
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1A1C1E)),
+      decoration: _inputStyle(true),
+    );
+  }
+
+  Widget _buildPressImage(bool isCentered) {
+    return Container(
+      height: 220,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(19),
+        child: Image.asset(
+          'assets/images/press.png', 
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported_outlined, size: 40, color: Colors.grey),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputStyle(bool readOnly, {IconData? suffixIcon, String? hint}) {
     return InputDecoration(
+      hintText: hint,
       filled: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      suffixIcon: suffixIcon != null 
-        ? IconButton(icon: Icon(suffixIcon, color: const Color(0xFFC62828), size: 20), onPressed: onIconTap) 
-        : null,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: const Color(0xFFC62828), size: 18) : null,
       fillColor: readOnly ? const Color(0xFFF1F3F4) : const Color(0xFFF8F9FA),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
