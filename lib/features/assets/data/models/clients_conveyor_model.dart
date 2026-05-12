@@ -10,6 +10,8 @@ class ClientsConveyorModel extends ClientsConveyor {
     required super.createdAt,
     required super.updatedAt,
     required super.isActive,
+    
+    
   });
   factory ClientsConveyorModel.fromJson(Map<String, dynamic> json) {
     return ClientsConveyorModel(
