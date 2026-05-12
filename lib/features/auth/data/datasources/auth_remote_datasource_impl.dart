@@ -5,8 +5,9 @@ import 'auth_remote_datasource.dart';
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final Dio dio;
+  final Dio refreshDio;
 
-  AuthRemoteDataSourceImpl(this.dio);
+  AuthRemoteDataSourceImpl(this.dio, this.refreshDio);
 
   @override
   Future<UserModel> register({
@@ -44,7 +45,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<AuthTokensModel> refresh(String refreshToken) async {
-    final response = await dio.post(
+    final response = await refreshDio.post(
       '/auth/refresh',
       data: {"refresh_token": refreshToken},
     );
@@ -81,12 +82,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     return response.statusCode == 200;
   }
+
   @override
   Future<void> requestPasswordReset(String email) async {
-    await dio.post(
-      '/auth/password-reset/request',
-      data: {"email": email},
-    );
+    await dio.post('/auth/password-reset/request', data: {"email": email});
   }
 
   @override
@@ -96,10 +95,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }) async {
     await dio.post(
       '/auth/password-reset/confirm',
-      data: {
-        "token": token,
-        "new_password": newPassword,
-      },
+      data: {"token": token, "new_password": newPassword},
     );
   }
 }

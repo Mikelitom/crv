@@ -18,7 +18,10 @@ import '../../domain/usecases/request_password_reset_use_cases.dart';
 
 // DataSource
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
-  return AuthRemoteDataSourceImpl(ref.read(dioProvider));
+  return AuthRemoteDataSourceImpl(
+    ref.read(dioProvider),
+    ref.read(refreshDioProvider),
+  );
 });
 
 // Repositories
@@ -66,12 +69,14 @@ final saveTokensUseCaseProvider = Provider<SaveTokensUseCase>((ref) {
 // ... tus otros providers ...
 
 // UseCases para Recuperación de Contraseña
-final requestPasswordResetUseCaseProvider = Provider<RequestPasswordResetUseCase>((ref) {
-  final repository = ref.read(authRepositoryProvider);
-  return RequestPasswordResetUseCase(repository);
-});
+final requestPasswordResetUseCaseProvider =
+    Provider<RequestPasswordResetUseCase>((ref) {
+      final repository = ref.read(authRepositoryProvider);
+      return RequestPasswordResetUseCase(repository);
+    });
 
-final confirmPasswordResetUseCaseProvider = Provider<ConfirmPasswordResetUseCase>((ref) {
-  final repository = ref.read(authRepositoryProvider);
-  return ConfirmPasswordResetUseCase(repository);
-});
+final confirmPasswordResetUseCaseProvider =
+    Provider<ConfirmPasswordResetUseCase>((ref) {
+      final repository = ref.read(authRepositoryProvider);
+      return ConfirmPasswordResetUseCase(repository);
+    });

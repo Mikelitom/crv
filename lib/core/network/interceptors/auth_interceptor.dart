@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/auth/domain/repositories/token_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -36,5 +37,51 @@ class AuthInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     final requestOptions = err.requestOptions;
+
+    final alreadyRetried = requestOptions.extra['retried'] == true;
+
+    final isAuthRoute =
+        requestOptions.path.contains('/auth/login') ||
+        requestOptions.path.contains('/auth/refresh');
+
+    if (err.response?.statusCode == 401 && !alreadyRetried && !isAuthRoute) {
+      requestOptions.extra['retried'] = true;
+
+      try {
+        final tokenRepository = ref.read(tokenRepositoryProvider);
+
+        final authRepository = ref.read(authRepositoryProvider);
+
+        final tokens = await tokenRepository.get();
+
+        if (tokens == null) {
+          return handler.next(err);
+        }
+
+        final result = await authRepository.refreshToken();
+
+        final newTokens = result.fold(
+          (failure) => throw Exception('Refresh failed'),
+          (tokens) => tokens,
+        );
+
+        await tokenRepository.save(newTokens);
+
+        requestOptions.headers['Authorization'] =
+            'Bearer ${newTokens.accessToken}';
+
+        final response = await dio.fetch(requestOptions);
+
+        return handler.resolve(response);
+      } catch (e) {
+        final tokenRepository = ref.read(tokenRepositoryProvider);
+
+        await tokenRepository.clear();
+
+        return handler.next(err);
+      }
+    }
+
+    handler.next(err);
   }
 }
