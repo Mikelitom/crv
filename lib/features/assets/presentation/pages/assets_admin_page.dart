@@ -1,3 +1,8 @@
+import 'package:crv_reprosisa/features/assets/domain/entities/clients.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/press.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
+import 'package:crv_reprosisa/features/assets/presentation/dialogs/update_client_dialog.dart';
+import 'package:crv_reprosisa/features/assets/presentation/dialogs/update_press_dialog.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
