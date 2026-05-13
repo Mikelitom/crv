@@ -24,6 +24,18 @@ class _SidebarAdminState extends ConsumerState<SidebarAdmin> {
   bool _isCatalogExpanded = false;
   bool _isServicesExpanded = false;
 
+  void _handleNavigation(int index) {
+    widget.onItemSelected(index);
+    
+    // 1. Obtenemos el Scaffold más cercano
+    final scaffold = Scaffold.of(context);
+    
+    // 2. Solo hacemos pop si el Drawer está abierto (evita el error en Desktop)
+    if (scaffold.hasDrawer && scaffold.isDrawerOpen) {
+      Navigator.pop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authNotifierProvider).user;
@@ -42,25 +54,25 @@ class _SidebarAdminState extends ConsumerState<SidebarAdmin> {
               icon: Icons.home_outlined,
               label: 'Dashboard',
               isActive: widget.selectedIndex == 0,
-              onTap: () => widget.onItemSelected(0),
+              onTap: () => _handleNavigation(0),
             ),
             SidebarItem(
               icon: Icons.assignment_outlined,
               label: 'Inspecciones',
               isActive: widget.selectedIndex == 1,
-              onTap: () => widget.onItemSelected(1),
+              onTap: () => _handleNavigation(1),
             ),
             SidebarItem(
               icon: Icons.report_outlined,
               label: 'Reportes',
               isActive: widget.selectedIndex == 2,
-              onTap: () => widget.onItemSelected(2),
+              onTap: () => _handleNavigation(2),
             ),
             SidebarItem(
               icon: Icons.assessment_outlined,
               label: 'Activos',
               isActive: widget.selectedIndex == 3,
-              onTap: () => widget.onItemSelected(3),
+              onTap: () => _handleNavigation(3),
             ),
             _buildSubMenu(
               label: 'Catálogo',
@@ -92,7 +104,7 @@ class _SidebarAdminState extends ConsumerState<SidebarAdmin> {
               icon: Icons.person_add_alt_outlined,
               label: 'Gestión de Usuarios',
               isActive: widget.selectedIndex == 4,
-              onTap: () => widget.onItemSelected(4),
+              onTap: () => _handleNavigation(4),
             ),
           ],
 
@@ -101,7 +113,7 @@ class _SidebarAdminState extends ConsumerState<SidebarAdmin> {
             icon: Icons.person_outline,
             label: 'Perfil',
             isActive: widget.selectedIndex == 9,
-            onTap: () => widget.onItemSelected(9),
+            onTap: () => _handleNavigation(9),
           ),
 
           const Spacer(),
@@ -137,7 +149,7 @@ class _SidebarAdminState extends ConsumerState<SidebarAdmin> {
                         icon: item.icon,
                         label: item.label,
                         isActive: widget.selectedIndex == item.index,
-                        onTap: () => widget.onItemSelected(item.index),
+                        onTap: () => _handleNavigation(item.index),
                       ))
                   .toList(),
             ),
