@@ -6,6 +6,7 @@ class CreateClientRequest {
   final String company;
   final String? phone;
   final String? email;
+  final String? rfc; 
   final List<CreateMineRequest> mines;
 
   const CreateClientRequest({
@@ -13,6 +14,7 @@ class CreateClientRequest {
     required this.company,
     this.phone,
     this.email,
+    this.rfc, 
     required this.mines,
   });
 
@@ -21,6 +23,7 @@ class CreateClientRequest {
       name: params.name,
       company: params.company,
       phone: params.phone,
+      rfc: params.rfc,
       mines: params.mines.map(CreateMineRequest.fromParams).toList(),
     );
   }
@@ -31,6 +34,7 @@ class CreateClientRequest {
       'company': company,
       'phone': phone,
       'email': email,
+      'rfc': rfc?.toUpperCase().trim(), 
       'mines': mines.map((e) => e.toJson()).toList(),
     };
   }

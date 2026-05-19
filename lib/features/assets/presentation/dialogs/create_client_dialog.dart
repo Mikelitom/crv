@@ -44,6 +44,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
   // CLIENTE
   final nameController = TextEditingController();
   final companyController = TextEditingController();
+  final rfcController = TextEditingController(); // <-- Agregado para el cliente
   final phoneController = TextEditingController();
   final emailController = TextEditingController();
 
@@ -89,6 +90,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
   void dispose() {
     nameController.dispose();
     companyController.dispose();
+    rfcController.dispose(); // <-- Limpieza del nuevo controlador
     phoneController.dispose();
     emailController.dispose();
 
@@ -118,6 +120,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
                 company: companyController.text.trim(),
                 phone: phoneController.text.trim(),
                 email: emailController.text.trim(),
+                rfc: rfcController.text.trim().toUpperCase(), // <-- Enviado en los parámetros
 
                 mines: mines.map((mine) {
                   return CreateMineParams(
@@ -189,6 +192,25 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
         ),
 
         buildField(companyController, "Empresa", "Minera del Norte"),
+
+        // <-- Nuevo campo RFC integrado con la validación oficial mexicana
+        buildField(
+          rfcController,
+          "RFC",
+          "XAXX010101000",
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return "El RFC es obligatorio";
+            }
+            
+            final regex = RegExp(r'^([A-ZÑ&]{3,4}) ?(?:- ?)?(\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])) ?(?:- ?)?([A-Z\d]{2})([A\d])$');
+            if (!regex.hasMatch(value.trim().toUpperCase())) {
+              return "Formato de RFC inválido";
+            }
+            
+            return null;
+          },
+        ),
 
         buildField(
           phoneController,

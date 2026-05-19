@@ -4,6 +4,7 @@ class Clients {
   final String company;
   final String? phone;
   final String? email;
+  final String? rfc; 
   final DateTime createdAt;
   final DateTime? updatedAt;
   final bool isActive;
@@ -14,6 +15,7 @@ class Clients {
     required this.company,
     this.phone,
     this.email,
+    this.rfc, 
     required this.createdAt,
     this.updatedAt,
     required this.isActive,

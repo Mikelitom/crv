@@ -50,7 +50,7 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
       InspectionPage(
         stats: _adminStats,
         actions: _adminActions,
-        inspections: _adminInspections,
+        // inspections: _adminInspections,
       ),
       const ReportsPage(),
       const AssetsAdminPage(),

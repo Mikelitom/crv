@@ -25,7 +25,7 @@ class DashboardNavbar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // BOTÓN DE MENÚ: Aparece solo si NO es escritorio
+          // BOTÓN DE MENÚ: Aparece solo si NO es escritorio (móvil/tablet)
           if (!isDesktop)
             IconButton(
               icon: const Icon(Icons.menu, color: Colors.black87),
@@ -34,46 +34,54 @@ class DashboardNavbar extends StatelessWidget {
 
           if (!isDesktop) const SizedBox(width: 8),
 
-
-            Expanded(
-              flex: 3,
-              child: Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const TextField(
-                  decoration: InputDecoration(
-                    hintText: "Buscar...",
-                    prefixIcon: Icon(Icons.search, size: 20),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.only(top: 5),
-                  ),
-                ),
-              ),
+          // TÍTULO O MARCA DEL SISTEMA
+          const Text(
+            "REPROSISA",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFC62828),
+              letterSpacing: 1.2,
             ),
+          ),
 
           const Spacer(),
 
-          // PERFIL Y NOTIFICACIONES
-          IconButton(icon: const Icon(Icons.notifications_none), onPressed: () {}),
+          // NOTIFICACIONES
+          IconButton(
+            icon: const Icon(Icons.notifications_none, color: Colors.black87),
+            onPressed: () {},
+          ),
           
           const SizedBox(width: 8),
 
-          // El nombre solo se ve en pantallas medianas/grandes
+          // INFORMACIÓN DEL USUARIO
           if (width > 600)
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(userName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                Text(userRole, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                Text(
+                  userName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  userRole,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey,
+                  ),
+                ),
               ],
             ),
 
           const SizedBox(width: 10),
           
+          // AVATAR
           const CircleAvatar(
             backgroundColor: Color(0xFFC62828),
             radius: 18,
