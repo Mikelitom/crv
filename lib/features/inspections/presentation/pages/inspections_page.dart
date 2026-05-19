@@ -1,182 +1,182 @@
-import 'package:crv_reprosisa/core/models/inspection_models.dart';
-import 'package:crv_reprosisa/features/bandas_transportadoras/presentation/pages/banda_inspection_page.dart';
-import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dart';
-import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
-import 'package:crv_reprosisa/features/inspections/presentation/widgets/dynamic_stats_row.dart';
-import 'package:crv_reprosisa/features/inspections/presentation/widgets/quick_actions_i.dart';
-import 'package:crv_reprosisa/features/inspections/presentation/widgets/table_inspector.dart';
-import 'package:crv_reprosisa/features/prensas_industriales/presentation/Pages/prensa_inspection.dart';
-import 'package:crv_reprosisa/features/vehiculos/presentation/pages/vehicle_inspection_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:crv_reprosisa/core/models/inspection_models.dart';
+import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dart';
+import '../models/inspector_row_ui.dart';
+import '../widgets/dynamic_stats_row.dart';
+import '../widgets/quick_actions_i.dart';
+import '../widgets/table_inspector.dart';
+import '../provider/inspection_providers.dart';
 
-class InspectionPage extends StatefulWidget {
+class InspectionPage extends ConsumerStatefulWidget {
   final List<StatsModel> stats;
   final List<dynamic> actions;
-  final List<InspectionRowUI> inspections;
 
   const InspectionPage({
     super.key,
     required this.stats,
     required this.actions,
-    required this.inspections,
   });
 
   @override
-  State<InspectionPage> createState() => _InspectionPageState();
+  ConsumerState<InspectionPage> createState() => _InspectionPageState();
 }
 
-class _InspectionPageState extends State<InspectionPage> {
-  late List<InspectionRowUI> filteredInspections;
-  String searchQuery = "";
+class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final Color primaryRed = const Color(0xFFC62828);
 
   @override
   void initState() {
     super.initState();
-    filteredInspections = widget.inspections;
+    _tabController = TabController(length: 3, vsync: this);
+    
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
+
+    Future.microtask(() => 
+      ref.read(inspectionProvider.notifier).loadInspections()
+    );
   }
 
-  void _filterInspections(String query) {
-    setState(() {
-      searchQuery = query;
-      filteredInspections = widget.inspections
-          .where((item) =>
-              item.equipment.toLowerCase().contains(query.toLowerCase()) ||
-              item.id.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-    });
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  List<InspectionRowUI> _getFilteredItemsByTab(List<InspectionRowUI> allItems) {
+    return allItems.where((item) {
+      final type = item.reportType.toUpperCase();
+      switch (_tabController.index) {
+        case 0: // PRENSAS
+          return type == 'PRESS';
+        case 1: // VEHÍCULOS
+          return type == 'VEHICLE';
+        case 2: // BANDAS
+          return type == 'CONVEYOR';
+        default:
+          return true;
+      }
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final inspectionState = ref.watch(inspectionProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1600),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const CustomHeader(title: 'Inspecciones', actionIcon: Icons.print_rounded),
-                  const SizedBox(height: 32),
-                  DynamicStatsRow(stats: widget.stats),
-                  const SizedBox(height: 48),
-                  const Text('Realizar Una Inspección',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
-                  const SizedBox(height: 24),
-                  _buildQuickActionGrid(context),
-                  const SizedBox(height: 56),
-                  
-                  // Encabezado de tabla responsivo
-                  _buildTableTopActions(),
-
-                  const SizedBox(height: 16),
-
-                  // Contenedor de la tabla
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 25, offset: const Offset(0, 12))
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: TableInspector(items: filteredInspections),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const CustomHeader(title: 'Inspecciones', actionIcon: Icons.print_rounded),
+              const SizedBox(height: 32),
+              
+              DynamicStatsRow(stats: inspectionState.stats),
+              
+              const SizedBox(height: 48),
+              const Text('Realizar Una Inspección',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
+              const SizedBox(height: 24),
+              _buildQuickActionGrid(),
+              const SizedBox(height: 56),
+              _buildInventoryStyleTableSection(inspectionState),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTableTopActions() {
-    return LayoutBuilder(builder: (context, constraints) {
-      if (constraints.maxWidth < 700) {
-        // En móvil, ponemos el buscador debajo del título para que no choque
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Mis inspecciones',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
-            const SizedBox(height: 16),
-            _buildSearchField(double.infinity),
-          ],
-        );
-      }
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text('Mis inspecciones',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1A1C1E))),
-          _buildSearchField(380),
-        ],
-      );
-    });
-  }
+  Widget _buildInventoryStyleTableSection(inspectionState) {
+    final bool isDataLoading = inspectionState.isLoading ?? false;
+    final searchFilteredItems = inspectionState.filteredInspections;
+    final finalTabFilteredItems = _getFilteredItemsByTab(searchFilteredItems);
 
-  Widget _buildSearchField(double width) {
-    return SizedBox(
-      width: width,
-      child: TextField(
-        onChanged: _filterInspections,
-        decoration: InputDecoration(
-          hintText: "Buscar por ID o equipo...",
-          prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFC62828)),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade200)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.5)),
-        ),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 25)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Mis inspecciones', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+                SizedBox(
+                  width: 380,
+                  child: TextField(
+                    onChanged: (val) => ref.read(inspectionProvider.notifier).filterInspections(val),
+                    decoration: InputDecoration(
+                      hintText: "Buscar registros...",
+                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                      prefixIcon: Icon(Icons.search_rounded, color: primaryRed),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      filled: true,
+                      fillColor: const Color(0xFFF3F4F6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: primaryRed,
+              indicatorWeight: 3,
+              labelColor: primaryRed,
+              unselectedLabelColor: const Color(0xFF6B7280),
+              labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.5),
+              dividerColor: const Color(0xFFE5E7EB),
+              tabs: const [
+                Tab(text: 'PRENSAS'),
+                Tab(text: 'VEHÍCULOS'),
+                Tab(text: 'BANDAS'),
+              ],
+            ),
+          ),
+
+          ClipRRect(
+            borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+            child: isDataLoading 
+                ? const SizedBox(height: 250, child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))))
+                : TableInspector(items: finalTabFilteredItems), 
+          ),
+        ],
       ),
     );
   }
 
-  // ... (Mantiene tu _buildQuickActionGrid y _buildActionItem igual)
-  Widget _buildQuickActionGrid(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth > 900) {
-          return IntrinsicHeight(
-            child: Row(
-              children: [
-                Expanded(child: _buildActionItem(context, "Inspección de Prensas", "Administrar checklists industriales", Icons.build_circle_outlined,  PrensaInspectionPage())),
-                const SizedBox(width: 24),
-                Expanded(child: _buildActionItem(context, "Inspección de Vehículos", "Gestión de flota corporativa", Icons.local_shipping_outlined, VehicleInspectionPage())),
-                const SizedBox(width: 24),
-                Expanded(child: _buildActionItem(context, "Inspección de Bandas", "Control de sistemas de transporte", Icons.camera_alt_outlined, const BandaInspectionPage())),
-              ],
-            ),
-          );
-        }
-        return Column(
-          children: [
-            _buildActionItem(context, "Inspección de Prensas", "Administrar checklists", Icons.build_circle_outlined,  PrensaInspectionPage()),
-            const SizedBox(height: 16),
-            _buildActionItem(context, "Inspección de Vehículos", "Gestión de flota", Icons.local_shipping_outlined, VehicleInspectionPage()),
-            const SizedBox(height: 16),
-            _buildActionItem(context, "Inspección de Bandas", "Control de transporte", Icons.camera_alt_outlined, const BandaInspectionPage()),
-          ],
-        );
-      }
-    );
-  }
-
-  Widget _buildActionItem(BuildContext context, String title, String desc, IconData icon, Widget target) {
-    return QuickActionCard(
-      title: title,
-      description: desc,
-      icon: icon,
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => target)),
+  Widget _buildQuickActionGrid() {
+    return Row(
+      children: [
+        Expanded(child: QuickActionCard(title: "Prensas", description: "Checklists", icon: Icons.build, onTap: () => _tabController.animateTo(0))),
+        const SizedBox(width: 16),
+        Expanded(child: QuickActionCard(title: "Vehículos", description: "Flota", icon: Icons.local_shipping, onTap: () => _tabController.animateTo(1))),
+        const SizedBox(width: 16),
+        Expanded(child: QuickActionCard(title: "Bandas", description: "Transporte", icon: Icons.settings, onTap: () => _tabController.animateTo(2))),
+      ],
     );
   }
 }

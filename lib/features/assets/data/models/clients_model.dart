@@ -7,6 +7,7 @@ class ClientsModel extends Clients {
     required super.company,
     required super.phone,
     required super.email,
+    super.rfc, 
     required super.createdAt,
     required super.updatedAt,
     required super.isActive,
@@ -19,6 +20,7 @@ class ClientsModel extends Clients {
       company: json['company'],
       phone: json['phone'],
       email: json['email'],
+      rfc: json['rfc'], 
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'])
@@ -34,6 +36,7 @@ class ClientsModel extends Clients {
       company: company,
       phone: phone,
       email: email,
+      rfc: rfc, 
       createdAt: createdAt,
       updatedAt: updatedAt,
       isActive: isActive,

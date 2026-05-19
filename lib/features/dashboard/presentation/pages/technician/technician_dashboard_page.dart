@@ -22,20 +22,28 @@ class _TechnicianDashboardPageState
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authNotifierProvider).user;
-    if (user == null)
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-    // Validación de seguridad
+    // Validación de seguridad para técnicos no verificados
     final bool isVerified = user.scope.trim().toUpperCase() != 'NONE';
     final int activeIndex = isVerified
         ? _internalIndex
-        : 3; // Forzamos 3 (Perfil) si no es verificado
+        : 3; // Forzamos el índice 3 (Perfil) si no tiene permisos
 
     final pages = [
-      const Center(child: Text("Dashboard")), // 0
-      const InspectionPage(stats: [], actions: [], inspections: []), // 1
-      const ReportsPage(), // 2
-      const ProfilePage(), // 3
+      const Center(child: Text("Dashboard")), // Índice 0
+      const InspectionPage(
+        stats: [], 
+        actions: [],
+        // SE ELIMINÓ: inspections: [], ya que el constructor actualizado no lo requiere
+      ), // Índice 1
+      const ReportsPage(), // Índice 2
+      const ProfilePage(), // Índice 3
     ];
 
     return ResponsiveDashboardLayout(
@@ -44,7 +52,10 @@ class _TechnicianDashboardPageState
       sidebar: SidebarTechnician(
         selectedIndex: activeIndex,
         onItemSelected: (i) {
-          if (isVerified) setState(() => _internalIndex = i);
+          // Solo permitimos cambiar de pestaña si el usuario está verificado
+          if (isVerified) {
+            setState(() => _internalIndex = i);
+          }
         },
       ),
       content: Padding(
