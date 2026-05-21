@@ -1,13 +1,13 @@
 class Clients {
-  final String id;
+  final String id; // Será mapeado desde 'client_id'
   final String name;
   final String company;
   final String? phone;
   final String? email;
-  final String? rfc; 
-  final DateTime createdAt;
+  final DateTime createdAt; // Se usará para registro temporal si no viene
   final DateTime? updatedAt;
   final bool isActive;
+  final List<Mine>? mines; // Lista de minas anidada
 
   Clients({
     required this.id,
@@ -15,10 +15,10 @@ class Clients {
     required this.company,
     this.phone,
     this.email,
-    this.rfc, 
     required this.createdAt,
     this.updatedAt,
     required this.isActive,
+    this.mines,
   });
 }
 
@@ -29,9 +29,8 @@ class Mine {
   final String? address;
   final String? phone;
   final String? email;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
   final bool isActive;
+  final DateTime createdAt; 
 
   Mine({
     required this.id,
@@ -40,8 +39,7 @@ class Mine {
     this.address,
     this.phone,
     this.email,
-    required this.createdAt,
-    this.updatedAt,
     required this.isActive,
+    required this.createdAt,
   });
 }

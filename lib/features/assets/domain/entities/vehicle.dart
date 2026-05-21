@@ -1,25 +1,37 @@
 class Vehicle {
-  final String id;
-  final String typeId;
+  final String vehicleId;
+  final String plate;
   final String brand;
   final String model;
-  final int unit;
   final int year;
-  final String plate;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
+  final int unit;
   final bool isActive;
+  final String type;
+  final String operationState;
+  final String currentLocation;
+  final String responsible;
+  final int mileage;
+  final String? serviceReason;
+  final String? phone;
+  final String? serviceDate;
+  final String? checkoutDate;
 
   Vehicle({
-    required this.id,
-    required this.typeId,
+    required this.vehicleId,
+    required this.plate,
     required this.brand,
     required this.model,
-    required this.unit,
     required this.year,
-    required this.plate,
-    required this.createdAt,
-    this.updatedAt,
+    required this.unit,
     required this.isActive,
+    required this.type,
+    required this.operationState,
+    required this.currentLocation,
+    required this.responsible,
+    required this.mileage,
+    this.serviceReason,
+    this.phone,
+    this.serviceDate,
+    this.checkoutDate,
   });
 }

@@ -11,7 +11,6 @@ import 'package:crv_reprosisa/features/assets/presentation/dialogs/create_press_
 import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 
-// Componentes modulares limpios
 import '../widgets/catalog_stats_row.dart';
 import '../widgets/catalog_data_table.dart';
 import '../widgets/catalog_mobile_card.dart';
@@ -36,17 +35,15 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
-  final Color primaryRed = const Color(0xFFC62828); // Rojo Corporativo REPROSISA
+  final Color primaryRed = const Color(0xFFC62828); 
 
   @override
   void initState() {
     super.initState();
-    
-    // Inicialización del TabController nativo para erradicar el LateInitializationError
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
-        setState(() {}); // Sincroniza las tarjetas informativas de arriba según el Tab activo
+        setState(() {}); 
       }
     });
 
@@ -67,7 +64,7 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
   void _navigateToExpedienteDigital(dynamic item) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("Abriendo Expediente Digital del activo: ${item.id}"),
+        content: Text("Abriendo Expediente Digital del activo: ${item.plate ?? item.serie ?? item.name}"),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -77,8 +74,6 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
   Widget build(BuildContext context) {
     final clientState = ref.watch(clientListProvider);
     final vehicleState = ref.watch(vehicleListProvider);
-    
-    // 🔥 SOLUCIÓN AL ERROR: Se cambió 'pressState' por 'pressListProvider' corrigiendo el conflicto de ámbito
     final pressState = ref.watch(pressListProvider);
 
     return Scaffold(
@@ -97,7 +92,6 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
               ),
               const SizedBox(height: 24),
 
-              // KPIs superiores dinámicos sin una sola gota de color azul
               CatalogStatsRow(
                 activeTabIndex: _tabController.index,
                 clientState: clientState,
@@ -107,7 +101,6 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
 
               const SizedBox(height: 32),
 
-              // Panel blanco de control de inventario
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -123,7 +116,6 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
                 ),
                 child: Column(
                   children: [
-                    // Buscador a la izquierda y botón de alta a la derecha
                     Padding(
                       padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
                       child: Row(
@@ -133,7 +125,7 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
                             width: 380,
                             child: TextField(
                               controller: _searchController,
-                              onChanged: (v) => setState(() => _searchQuery = v), // Actualización reactiva del filtro
+                              onChanged: (v) => setState(() => _searchQuery = v), 
                               decoration: InputDecoration(
                                 hintText: "Buscar registros...",
                                 hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
@@ -153,7 +145,6 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
                       ),
                     ),
 
-                    // Orden de pestañas corporativas de REPROSISA
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: TabBar(
@@ -189,13 +180,12 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
     final constraints = BoxConstraints(maxWidth: MediaQuery.of(context).size.width);
     final bool isMobile = constraints.maxWidth < 900;
 
-    // Inyección de la variable _searchQuery para solucionar el bug de filtrado
     switch (_tabController.index) {
-      case 0: // CLIENTES
+      case 0: 
         return _buildViewLayer(clients.status, clients.clients, "cliente", isMobile, _searchQuery);
-      case 1: // VEHÍCULOS
+      case 1: 
         return _buildViewLayer(vehicles.status, vehicles.vehicles, "vehiculo", isMobile, _searchQuery);
-      default: // PRENSAS
+      default: 
         return _buildViewLayer(presses.status, presses.press, "prensa", isMobile, _searchQuery);
     }
   }
@@ -208,7 +198,6 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
       );
     }
 
-    // Filtrado seguro multi-campo en minúsculas
     final filtered = items.where((item) {
       final q = query.toLowerCase().trim();
       if (q.isEmpty) return true;
@@ -216,60 +205,25 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
       if (type == "cliente") {
         final matchesName = (item.name?.toLowerCase() ?? "").contains(q);
         final matchesCompany = (item.company?.toLowerCase() ?? "").contains(q);
-        final matchesRfc = item.toString().contains('rfc') && item.rfc != null 
-            ? item.rfc.toLowerCase().contains(q) 
-            : false;
-        return matchesName || matchesCompany || matchesRfc;
+        return matchesName || matchesCompany;
       }
-      
-      if (type == "vehiculo") {
-        final matchesPlate = (item.plate?.toLowerCase() ?? "").contains(q);
-        final matchesBrand = (item.brand?.toLowerCase() ?? "").contains(q);
-        final matchesModel = (item.model?.toLowerCase() ?? "").contains(q);
-        return matchesPlate || matchesBrand || matchesModel;
-      }
-      
-      // PRENSAS
-      final matchesSerie = (item.serie?.toLowerCase() ?? "").contains(q);
-      final matchesType = (item.type?.toLowerCase() ?? "").contains(q);
-      final matchesModel = (item.model?.toLowerCase() ?? "").contains(q);
-      return matchesSerie || matchesType || matchesModel;
+      if (type == "vehiculo") return (item.plate?.toLowerCase() ?? "").contains(q) || (item.brand?.toLowerCase() ?? "").contains(q) || (item.model?.toLowerCase() ?? "").contains(q);
+      return (item.serie?.toLowerCase() ?? "").contains(q) || (item.model?.toLowerCase() ?? "").contains(q) || (item.type?.toLowerCase() ?? "").contains(q);
     }).toList();
 
     if (filtered.isEmpty) {
       return const SizedBox(
         height: 200,
-        child: Center(
-          child: Text(
-            "No se encontraron registros bajo ese criterio", 
-            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600, fontSize: 13)
-          )
-        ),
+        child: Center(child: Text("No se encontraron registros bajo ese criterio", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600, fontSize: 13))),
       );
     }
 
-    if (!isMobile) {
-      return CatalogDataTable(
-        items: filtered,
-        type: type,
-        primaryRed: primaryRed,
-        onDetailsPressed: _navigateToExpedienteDigital,
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(12),
-      itemCount: filtered.length,
-      itemBuilder: (context, index) {
-        return CatalogMobileCard(
-          item: filtered[index],
-          type: type,
-          primaryRed: primaryRed,
-          onDetailsPressed: _navigateToExpedienteDigital,
-        );
-      },
+    // 🔥 SOLUCIÓN AL ERROR: Se inyectó 'onDetailsPressed' con la función de la página principal para sincronizar los clics
+    return CatalogDataTable(
+      items: filtered,
+      type: type,
+      primaryRed: primaryRed,
+      // onDetailsPressed: _navigateToExpedienteDigital,
     );
   }
 

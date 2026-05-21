@@ -10,6 +10,7 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
 
   @override
   Future<ClientsModel> createClient(CreateClientRequest request) async {
+    // Usamos el endpoint para crear cliente + minas
     final response = await dio.post('/clients/mines', data: request.toJson());
 
     return ClientsModel.fromJson(response.data);
@@ -20,19 +21,18 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
     String id,
     CreateClientRequest request,
   ) async {
-    final response = await dio.put('/clients/$id', data: {request.toJson()});
+    // Aseguramos que el cuerpo esté bien estructurado para el put
+    final response = await dio.put('/clients/$id', data: request.toJson());
 
     return ClientsModel.fromJson(response.data);
   }
 
   @override
   Future<List<ClientsModel>> getAllClients() async {
-    final response = await dio.get("/clients/");
+    final response = await dio.get("/asset/clients");
 
-    final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(
-      response.data,
-    );
+    final List<dynamic> data = response.data as List<dynamic>;
 
-    return data.map(ClientsModel.fromJson).toList();
+    return data.map((json) => ClientsModel.fromJson(json as Map<String, dynamic>)).toList();
   }
 }
