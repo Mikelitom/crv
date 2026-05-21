@@ -120,7 +120,6 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
                 company: companyController.text.trim(),
                 phone: phoneController.text.trim(),
                 email: emailController.text.trim(),
-                rfc: rfcController.text.trim().toUpperCase(), // <-- Enviado en los parámetros
 
                 mines: mines.map((mine) {
                   return CreateMineParams(

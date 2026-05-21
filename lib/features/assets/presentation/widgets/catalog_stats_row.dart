@@ -27,8 +27,7 @@ class CatalogStatsRow extends StatelessWidget {
     IconData iconKpi1 = Icons.play_circle_fill_rounded;
     IconData iconKpi2 = Icons.build_circle_rounded;
 
-    // Sincronizado exactamente con el orden oficial de pestañas de REPROSISA
-    if (activeTabIndex == 0) { // CLIENTES
+    if (activeTabIndex == 0) { 
       total = clientState.clients.length;
       kpi1Value = clientState.clients.where((c) => c.isActive == true).length;
       kpi2Value = clientState.clients.where((c) => c.isActive == false).length;
@@ -38,7 +37,7 @@ class CatalogStatsRow extends StatelessWidget {
       iconTotal = Icons.business_rounded;
       iconKpi1 = Icons.check_circle_rounded;
       iconKpi2 = Icons.cancel_rounded;
-    } else if (activeTabIndex == 1) { // VEHÍCULOS
+    } else if (activeTabIndex == 1) { 
       total = vehicleState.vehicles.length;
       kpi1Value = 18; 
       kpi2Value = 7;
@@ -48,7 +47,7 @@ class CatalogStatsRow extends StatelessWidget {
       iconTotal = Icons.directions_car_rounded;
       iconKpi1 = Icons.trending_up_rounded;
       iconKpi2 = Icons.handyman_rounded;
-    } else { // PRENSAS
+    } else { 
       total = pressState.press.length;
       kpi1Value = 6;
       kpi2Value = 2;
@@ -67,7 +66,6 @@ class CatalogStatsRow extends StatelessWidget {
           spacing: 16,
           runSpacing: 16,
           children: [
-            // Corregido: Se usa el Rojo Corporativo REPROSISA y se elimina el azul por completo
             _buildStatCard(labelTotal, total.toString(), iconTotal, const Color(0xFFC62828), isWide, constraints.maxWidth, isRedTheme: true),
             _buildStatCard(labelKpi1, kpi1Value.toString(), iconKpi1, const Color(0xFF2E7D32), isWide, constraints.maxWidth),
             _buildStatCard(labelKpi2, kpi2Value.toString(), iconKpi2, const Color(0xFFEF6C00), isWide, constraints.maxWidth),
@@ -101,7 +99,6 @@ class CatalogStatsRow extends StatelessWidget {
               Text(
                 label, 
                 style: TextStyle(
-                  // 🔥 CORRECCIÓN AL ERROR: Se cambió 'whiteAA' por un withOpacity reglamentario de Flutter
                   color: isRedTheme ? Colors.white.withOpacity(0.7) : const Color(0xFF6B7280), 
                   fontSize: 13, 
                   fontWeight: FontWeight.bold

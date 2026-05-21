@@ -42,12 +42,10 @@ class PressRemoteDatasourceImpl implements PressRemoteDatasource {
 
   @override
   Future<List<PressModel>> getAllPress() async {
-    final response = await dio.get("/presses/");
+    final response = await dio.get("/asset/press");
 
-    final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(
-      response.data,
-    );
-
-    return data.map(PressModel.fromJson).toList();
+    final List<dynamic> data = response.data;
+    
+    return data.map((json) => PressModel.fromJson(json as Map<String, dynamic>)).toList();
   }
 }

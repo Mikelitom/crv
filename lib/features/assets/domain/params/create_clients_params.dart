@@ -3,7 +3,6 @@ class CreateClientParams {
   final String company;
   final String? phone;
   final String email;
-  final String? rfc; // <-- Nuevo campo RFC
   final List<CreateMineParams> mines;
 
   const CreateClientParams({
@@ -11,7 +10,6 @@ class CreateClientParams {
     required this.company,
     this.phone,
     required this.email,
-    this.rfc, // <-- Agregado al constructor
     required this.mines,
   });
 }

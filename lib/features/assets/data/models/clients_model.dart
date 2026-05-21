@@ -7,39 +7,27 @@ class ClientsModel extends Clients {
     required super.company,
     required super.phone,
     required super.email,
-    super.rfc, 
     required super.createdAt,
-    required super.updatedAt,
+    super.updatedAt,
     required super.isActive,
+    super.mines, // Ahora aceptamos minas
   });
 
   factory ClientsModel.fromJson(Map<String, dynamic> json) {
     return ClientsModel(
-      id: json['id'],
-      name: json['name'],
-      company: json['company'],
-      phone: json['phone'],
-      email: json['email'],
-      rfc: json['rfc'], 
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
-          : null,
-      isActive: json['is_active'],
-    );
-  }
-
-  Clients toEntity() {
-    return Clients(
-      id: id,
-      name: name,
-      company: company,
-      phone: phone,
-      email: email,
-      rfc: rfc, 
-      createdAt: createdAt,
-      updatedAt: updatedAt,
-      isActive: isActive,
+      id: json['client_id']?.toString() ?? '', 
+      name: json['name']?.toString() ?? '',
+      company: json['company']?.toString() ?? '',
+      phone: json['phone']?.toString(),
+      email: json['email']?.toString(),
+      // El JSON no trae createdAt/updatedAt para el cliente principal, 
+      // si los necesitas, ajústalos aquí. Si no, usamos DateTime.now()
+      createdAt: DateTime.now(), 
+      isActive: json['is_active'] ?? true,
+      // Mapeo de la lista de minas que viene en el JSON
+      mines: (json['mines'] as List?)
+          ?.map((m) => MineModel.fromJson(m as Map<String, dynamic>))
+          .toList(),
     );
   }
 }
@@ -49,41 +37,25 @@ class MineModel extends Mine {
     required super.id,
     required super.clientId,
     required super.name,
-    required super.address,
-    required super.phone,
-    required super.email,
-    required super.createdAt,
-    required super.updatedAt,
+    super.address,
+    super.phone,
+    super.email,
     required super.isActive,
+    required super.createdAt,
   });
 
   factory MineModel.fromJson(Map<String, dynamic> json) {
     return MineModel(
-      id: json['id'],
-      clientId: json['client_id'],
-      name: json['name'],
-      address: json['address'],
-      phone: json['phone'],
-      email: json['email'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
-          : null,
-      isActive: json['is_active'],
-    );
-  }
-
-  Mine toEntity() {
-    return Mine(
-      id: id,
-      clientId: clientId,
-      name: name,
-      address: address,
-      phone: phone,
-      email: email,
-      createdAt: createdAt,
-      updatedAt: updatedAt,
-      isActive: isActive,
+      id: json['id']?.toString() ?? '',
+      clientId: json['client_id']?.toString() ?? '', // Si lo recibes en la mina
+      name: json['name']?.toString() ?? '',
+      address: json['address']?.toString(),
+      phone: json['phone']?.toString(),
+      email: json['email']?.toString(),
+      isActive: json['is_active'] ?? true,
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at']) 
+          : DateTime.now(),
     );
   }
 }

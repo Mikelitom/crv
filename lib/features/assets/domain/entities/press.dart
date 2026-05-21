@@ -2,24 +2,38 @@ class Press {
   final String id;
   final String type;
   final String model;
-  final String voltz;
+  final String volts;
   final String serie;
   final String size;
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
-  final List<Map>? mines; 
+  final String? operationState;
+  final String? currentLocation;
+  final String? responsible;
+  final String? phone;
+  final String? serviceReason;
+  final String? loanComment;
+  final DateTime? serviceDate;
+  final DateTime? checkoutDate;
 
   Press({
     required this.id,
     required this.type,
     required this.model,
-    required this.voltz,
+    required this.volts,
     required this.serie,
     required this.size,
     required this.createdAt,
     required this.updatedAt,
     required this.isActive,
-    this.mines,
+    this.operationState,
+    this.currentLocation,
+    this.responsible,
+    this.phone,
+    this.serviceReason,
+    this.loanComment,
+    this.serviceDate,
+    this.checkoutDate,
   });
 }
