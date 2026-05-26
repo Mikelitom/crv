@@ -11,4 +11,11 @@ abstract class ClientRepository {
     CreateClientParams params,
   );
   Future<Either<Failure, List<Clients>>> getAllClients();
-}
+  Future<Either<Failure, void>> activateClient(String id);
+  
+  Future<Either<Failure, void>> deleteClient(String id);
+  
+  Future<Either<Failure, void>> activateMine(String mineId);
+  
+  Future<Either<Failure, void>> deleteMine(String mineId);
+Future<Either<Failure, void>> createMine(String clientId, CreateMineParams params);}

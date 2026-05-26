@@ -42,7 +42,6 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
     final response = await dio.put(
       '/vehicles/$id',
       data: {
-        "type_id": params.typeId,
         "brand": params.brand,
         "model": params.model,
         "unit": params.unit,
@@ -56,14 +55,24 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
 
   @override
   Future<List<VehicleModel>> getAllVehicle() async {
-    // 🔥 CORRECCIÓN CRÍTICA: Apuntamos al endpoint oficial dinámico que entrega todos los detalles
     final response = await dio.get("/asset/vehicles");
 
-    // Parsers seguro contra caídas de casteo de listas crudas de Dio
     final List<dynamic> rawList = response.data;
 
     return rawList.map((json) {
       return VehicleModel.fromJson(json as Map<String, dynamic>);
     }).toList();
+  }
+
+  @override
+  Future<void> activateVehicle(String id) async {
+    // Corregido según tu curl: PATCH /api/v1/vehicles/restore/{id}
+    await dio.patch("/vehicles/restore/$id");
+  }
+
+  @override
+  Future<void> deactivateVehicle(String id) async {
+    // Corregido según tu curl: DELETE /api/v1/vehicles/{id}
+    await dio.delete("/vehicles/$id");
   }
 }

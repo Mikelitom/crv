@@ -5,4 +5,6 @@ abstract class VehicleRemoteDatasource {
   Future<VehicleModel> createVehicle(CreateVehicleParams params);
   Future<VehicleModel> updateVehicle(String id, CreateVehicleParams params);
   Future<List<VehicleModel>> getAllVehicle();
+  Future<void> activateVehicle(String id);
+  Future<void> deactivateVehicle(String id);
 }

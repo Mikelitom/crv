@@ -6,14 +6,16 @@ import 'package:crv_reprosisa/features/assets/presentation/providers/client_list
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_list_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_list_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/dialogs/create_client_dialog.dart';
+import 'package:crv_reprosisa/features/assets/presentation/dialogs/update_client_dialog.dart'; // Import nuevo
 import 'package:crv_reprosisa/features/assets/presentation/dialogs/create_vehicle_dialog.dart';
+import '../dialogs/update_vehicle_dialog.dart';
+import 'package:crv_reprosisa/features/assets/presentation/dialogs/update_press_dialog.dart'; 
 import 'package:crv_reprosisa/features/assets/presentation/dialogs/create_press_dialog.dart';
 import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 
 import '../widgets/catalog_stats_row.dart';
 import '../widgets/catalog_data_table.dart';
-import '../widgets/catalog_mobile_card.dart';
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
   @override
@@ -42,9 +44,7 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        setState(() {}); 
-      }
+      if (!_tabController.indexIsChanging) setState(() {}); 
     });
 
     Future.microtask(() {
@@ -59,15 +59,6 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
-  }
-
-  void _navigateToExpedienteDigital(dynamic item) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Abriendo Expediente Digital del activo: ${item.plate ?? item.serie ?? item.name}"),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   @override
@@ -86,34 +77,18 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CustomHeader(
-                title: "Catálogo Operativo",
-                actionIcon: Icons.analytics_rounded,
-              ),
+              const CustomHeader(title: "Catálogo Operativo", actionIcon: Icons.analytics_rounded),
               const SizedBox(height: 24),
-
               CatalogStatsRow(
                 activeTabIndex: _tabController.index,
                 clientState: clientState,
                 vehicleState: vehicleState,
                 pressState: pressState,
               ),
-
               const SizedBox(height: 32),
-
               Container(
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
-                      blurRadius: 25,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 25, offset: const Offset(0, 6))]),
                 child: Column(
                   children: [
                     Padding(
@@ -130,13 +105,9 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
                                 hintText: "Buscar registros...",
                                 hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
                                 prefixIcon: Icon(Icons.search_rounded, color: primaryRed, size: 20),
-                                filled: true,
-                                fillColor: const Color(0xFFF3F4F6),
+                                filled: true, fillColor: const Color(0xFFF3F4F6),
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  borderSide: BorderSide.none,
-                                ),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                               ),
                             ),
                           ),
@@ -144,7 +115,6 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
                         ],
                       ),
                     ),
-
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: TabBar(
@@ -157,14 +127,9 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
                         labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
                         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.5),
                         dividerColor: const Color(0xFFE5E7EB),
-                        tabs: const [
-                          Tab(text: "CLIENTES"),
-                          Tab(text: "VEHÍCULOS"),
-                          Tab(text: "PRENSAS"),
-                        ],
+                        tabs: const [Tab(text: "CLIENTES"), Tab(text: "VEHÍCULOS"), Tab(text: "PRENSAS")],
                       ),
                     ),
-
                     _buildTabContent(clientState, vehicleState, pressState),
                   ],
                 ),
@@ -179,80 +144,52 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage> with SingleTi
   Widget _buildTabContent(dynamic clients, dynamic vehicles, dynamic presses) {
     final constraints = BoxConstraints(maxWidth: MediaQuery.of(context).size.width);
     final bool isMobile = constraints.maxWidth < 900;
-
     switch (_tabController.index) {
-      case 0: 
-        return _buildViewLayer(clients.status, clients.clients, "cliente", isMobile, _searchQuery);
-      case 1: 
-        return _buildViewLayer(vehicles.status, vehicles.vehicles, "vehiculo", isMobile, _searchQuery);
-      default: 
-        return _buildViewLayer(presses.status, presses.press, "prensa", isMobile, _searchQuery);
+      case 0: return _buildViewLayer(clients.status, clients.clients, "cliente", isMobile, _searchQuery);
+      case 1: return _buildViewLayer(vehicles.status, vehicles.vehicles, "vehiculo", isMobile, _searchQuery);
+      default: return _buildViewLayer(presses.status, presses.press, "prensa", isMobile, _searchQuery);
     }
   }
 
   Widget _buildViewLayer(Status status, List<dynamic> items, String type, bool isMobile, String query) {
-    if (status == Status.loading) {
-      return SizedBox(
-        height: 250,
-        child: Center(child: CircularProgressIndicator(color: primaryRed)),
-      );
-    }
-
+    if (status == Status.loading) return SizedBox(height: 250, child: Center(child: CircularProgressIndicator(color: primaryRed)));
     final filtered = items.where((item) {
       final q = query.toLowerCase().trim();
       if (q.isEmpty) return true;
-
       if (type == "cliente") {
-        final matchesName = (item.name?.toLowerCase() ?? "").contains(q);
-        final matchesCompany = (item.company?.toLowerCase() ?? "").contains(q);
-        return matchesName || matchesCompany;
+        final nameMatch = (item.name?.toLowerCase() ?? "").contains(q);
+        final companyMatch = (item.company?.toLowerCase() ?? "").contains(q);
+        final minesMatch = (item.mines as List?)?.any((m) => (m.name?.toLowerCase() ?? "").contains(q) || (m.address?.toLowerCase() ?? "").contains(q)) ?? false;
+        return nameMatch || companyMatch || minesMatch;
       }
-      if (type == "vehiculo") return (item.plate?.toLowerCase() ?? "").contains(q) || (item.brand?.toLowerCase() ?? "").contains(q) || (item.model?.toLowerCase() ?? "").contains(q);
-      return (item.serie?.toLowerCase() ?? "").contains(q) || (item.model?.toLowerCase() ?? "").contains(q) || (item.type?.toLowerCase() ?? "").contains(q);
+      if (type == "vehiculo") return (item.plate?.toLowerCase() ?? "").contains(q) || (item.brand?.toLowerCase() ?? "").contains(q);
+      return (item.serie?.toLowerCase() ?? "").contains(q) || (item.model?.toLowerCase() ?? "").contains(q);
     }).toList();
 
-    if (filtered.isEmpty) {
-      return const SizedBox(
-        height: 200,
-        child: Center(child: Text("No se encontraron registros bajo ese criterio", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600, fontSize: 13))),
-      );
-    }
-
-    // 🔥 SOLUCIÓN AL ERROR: Se inyectó 'onDetailsPressed' con la función de la página principal para sincronizar los clics
     return CatalogDataTable(
-      items: filtered,
-      type: type,
-      primaryRed: primaryRed,
-      // onDetailsPressed: _navigateToExpedienteDigital,
+      items: filtered, type: type, primaryRed: primaryRed,
+      onEdit: (item) {
+        if (type == "vehiculo") {
+          showDialog(context: context, builder: (_) => UpdateVehicleDialog(vehicle: item));
+        } else if (type == "prensa") {
+          showDialog(context: context, builder: (_) => UpdatePressDialog(press: item));
+        } else if (type == "cliente") {
+          showDialog(context: context, builder: (_) => UpdateClientDialog(client: item));
+        }
+      },
+      onToggleStatus: (item, isActive) {},
     );
   }
 
   Widget _buildDynamicCreateButton() {
-    String text = "";
-    Widget dialog;
-
-    if (_tabController.index == 0) {
-      text = "Nuevo Cliente";
-      dialog = const CreateClientDialog();
-    } else if (_tabController.index == 1) {
-      text = "Nuevo Vehículo";
-      dialog = const CreateVehicleDialog();
-    } else {
-      text = "Nueva Prensa";
-      dialog = const CreatePressDialog();
-    }
-
+    String text = ""; Widget dialog;
+    if (_tabController.index == 0) { text = "Nuevo Cliente"; dialog = const CreateClientDialog(); }
+    else if (_tabController.index == 1) { text = "Nuevo Vehículo"; dialog = const CreateVehicleDialog(); }
+    else { text = "Nueva Prensa"; dialog = const CreatePressDialog(); }
     return ElevatedButton.icon(
       onPressed: () => showDialog(context: context, builder: (context) => dialog),
-      icon: const Icon(Icons.add, size: 18),
-      label: Text("+ $text", style: const TextStyle(fontWeight: FontWeight.bold)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: primaryRed,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
+      icon: const Icon(Icons.add, size: 18), label: Text("+ $text", style: const TextStyle(fontWeight: FontWeight.bold)),
+      style: ElevatedButton.styleFrom(backgroundColor: primaryRed, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
     );
   }
 }

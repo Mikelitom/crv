@@ -10,4 +10,6 @@ abstract class PressRepository {
     CreatePressParams params,
   );
   Future<Either<Failure, List<Press>>> getAllPress();
+  Future<Either<Failure, Unit>> activatePress(String id);
+  Future<Either<Failure, Unit>> deactivatePress(String id);
 }

@@ -245,8 +245,6 @@ class AssetDetailModal extends StatelessWidget {
   }
 
   Widget _buildClientLayout() {
-    // Obtenemos la lista de minas desde el objeto item
-    // _val('mines') nos devuelve la lista de objetos MineModel
     final List<dynamic> mines = (_val('mines') as List<dynamic>?) ?? [];
     
     return Column(
@@ -264,38 +262,73 @@ class AssetDetailModal extends StatelessWidget {
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
           ),
         ),
-        // Si no hay minas, mostramos un mensaje amigable
         if (mines.isEmpty) 
           const Padding(
             padding: EdgeInsets.only(bottom: 8.0),
             child: Text("No hay minas registradas", style: TextStyle(fontSize: 12)),
           ),
         
-        // Iteramos sobre la lista de minas
         ...mines.map((mina) {
-          // Si la mina viene como Map (JSON puro) o como Objeto MineModel
           final name = (mina is Map) ? (mina['name'] ?? 'Sin nombre') : (mina.name ?? 'Sin nombre');
           final address = (mina is Map) ? (mina['address'] ?? 'Sin dirección') : (mina.address ?? 'Sin dirección');
           final phone = (mina is Map) ? (mina['phone'] ?? '-') : (mina.phone ?? '-');
-          final email = (mina is Map) ? (mina['email'] ?? '-') : (mina.email ?? '-');
           
           return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(12),
-            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue.shade100),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.blue.shade50,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const SizedBox(height: 4),
-                Text("📍 $address", style: const TextStyle(fontSize: 11)),
-                Text("📞 $phone | ✉️ $email", style: const TextStyle(fontSize: 11)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.blue.shade100, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.shade50.withOpacity(0.5),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
               ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.landscape_rounded, color: Colors.blue.shade700, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            name.toUpperCase(),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900, 
+                              fontSize: 14, 
+                              color: Colors.blue.shade900
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 20),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Expanded(child: Text(address, style: TextStyle(fontSize: 12, color: Colors.grey.shade700))),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.phone_outlined, size: 14, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Text(phone, style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
         }).toList(),

@@ -7,6 +7,8 @@ import 'package:crv_reprosisa/features/assets/presentation/widgets/base_asset_di
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+// Clase contenedora para la gestión de los controladores de cada mina
+// Permite que cada formulario tenga su propio ciclo de vida y validación
 class MineFormData {
   final TextEditingController nameController;
   final TextEditingController addressController;
@@ -18,11 +20,12 @@ class MineFormData {
     TextEditingController? addressController,
     TextEditingController? phoneController,
     TextEditingController? emailController,
-  }) : nameController = nameController ?? TextEditingController(),
-       addressController = addressController ?? TextEditingController(),
-       phoneController = phoneController ?? TextEditingController(),
-       emailController = emailController ?? TextEditingController();
+  })  : nameController = nameController ?? TextEditingController(),
+        addressController = addressController ?? TextEditingController(),
+        phoneController = phoneController ?? TextEditingController(),
+        emailController = emailController ?? TextEditingController();
 
+  // Método dedicado para liberar los controladores y prevenir fugas de memoria
   void dispose() {
     nameController.dispose();
     addressController.dispose();
@@ -41,38 +44,31 @@ class CreateClientDialog extends ConsumerStatefulWidget {
 class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
   final _formKey = GlobalKey<FormState>();
 
-  // CLIENTE
   final nameController = TextEditingController();
   final companyController = TextEditingController();
-  final rfcController = TextEditingController(); // <-- Agregado para el cliente
   final phoneController = TextEditingController();
   final emailController = TextEditingController();
 
-  // MINAS
+  // Lista dinámica de formularios para minas
   final List<MineFormData> mines = [];
-
   bool _success = false;
 
   @override
   void initState() {
     super.initState();
-
-    // Mina inicial
+    // Inicializamos con al menos un formulario de mina vacío
     mines.add(MineFormData());
 
+    // Listener del estado para manejar el éxito o error del registro
     ref.listenManual(createClientProvider, (previous, next) async {
       if (!mounted) return;
 
       if (next.status == Status.success) {
         setState(() => _success = true);
-
+        // Recargar lista global tras creación
         ref.read(clientListProvider.notifier).loadClients();
-
         await Future.delayed(const Duration(seconds: 1));
-
-        if (!mounted) return;
-
-        Navigator.pop(context, true);
+        if (mounted) Navigator.pop(context, true);
       }
 
       if (next.status == Status.error) {
@@ -80,6 +76,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
           SnackBar(
             content: Text(next.error ?? "Error al registrar cliente"),
             behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.redAccent,
           ),
         );
       }
@@ -90,14 +87,13 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
   void dispose() {
     nameController.dispose();
     companyController.dispose();
-    rfcController.dispose(); // <-- Limpieza del nuevo controlador
     phoneController.dispose();
     emailController.dispose();
 
+    // Liberación de recursos de la lista dinámica de minas
     for (final mine in mines) {
       mine.dispose();
     }
-
     super.dispose();
   }
 
@@ -111,6 +107,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
       onConfirm: _success
           ? null
           : () async {
+              // Validar todo el formulario antes de enviar
               if (!_formKey.currentState!.validate()) {
                 return;
               }
@@ -119,9 +116,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
                 name: nameController.text.trim(),
                 company: companyController.text.trim(),
                 phone: phoneController.text.trim(),
-                email: emailController.text.trim(),
-
-                mines: mines.map((mine) {
+                email: emailController.text.trim(),                mines: mines.map((mine) {
                   return CreateMineParams(
                     name: mine.nameController.text.trim(),
                     address: mine.addressController.text.trim(),
@@ -131,6 +126,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
                 }).toList(),
               );
 
+              // Llamada al proveedor de creación
               await ref.read(createClientProvider.notifier).create(params);
             },
       isLoading: state.status == Status.loading && !_success,
@@ -143,6 +139,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
     );
   }
 
+  // Estructura principal del formulario
   Widget _buildForm(ClientsListState clientsState) {
     return Form(
       key: _formKey,
@@ -152,9 +149,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildClientSection(clientsState),
-
             const SizedBox(height: 24),
-
             _buildMinesSection(),
           ],
         ),
@@ -162,97 +157,45 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
     );
   }
 
+  // Sección de datos del cliente con validadores de email y teléfono
   Widget _buildClientSection(ClientsListState clientsState) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Información del cliente",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-
+        const Text("Información del cliente", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
-
         buildField(
           nameController,
           "Nombre Completo",
           "Ej. Juan Perez",
           validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return "El nombre es obligatorio";
-            }
-
-            if (value.length < 3) {
-              return "Mínimo 3 caracteres";
-            }
-
+            if (value == null || value.trim().isEmpty) return "El nombre es obligatorio";
+            if (value.length < 3) return "Mínimo 3 caracteres";
             return null;
           },
         ),
-
         buildField(companyController, "Empresa", "Minera del Norte"),
-
-        // <-- Nuevo campo RFC integrado con la validación oficial mexicana
-        buildField(
-          rfcController,
-          "RFC",
-          "XAXX010101000",
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return "El RFC es obligatorio";
-            }
-            
-            final regex = RegExp(r'^([A-ZÑ&]{3,4}) ?(?:- ?)?(\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])) ?(?:- ?)?([A-Z\d]{2})([A\d])$');
-            if (!regex.hasMatch(value.trim().toUpperCase())) {
-              return "Formato de RFC inválido";
-            }
-            
-            return null;
-          },
-        ),
-
         buildField(
           phoneController,
           "Teléfono",
           "+52 444...",
           validator: (value) {
-            if (value == null || value.isEmpty) {
-              return null;
-            }
-
-            final regex = RegExp(r'^\+?[0-9]{10,15}$');
-
-            if (!regex.hasMatch(value)) {
+            if (value != null && value.isNotEmpty && !RegExp(r'^\+?[0-9]{10,15}$').hasMatch(value)) {
               return "Teléfono inválido";
             }
-
             return null;
           },
         ),
-
         buildField(
           emailController,
           "Email",
           "cliente@ejemplo.com",
           validator: (value) {
-            if (value == null || value.isEmpty) {
-              return null;
-            }
-
-            final exists = clientsState.clients.any(
-              (c) => c.email == emailController.text.trim(),
-            );
-
-            if (exists) {
-              return "Email ya registrado";
-            }
-
-            final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-
-            if (!regex.hasMatch(value)) {
-              return "Email inválido";
-            }
-
+            if (value == null || value.isEmpty) return null;
+            // Validación de unicidad de email
+            final exists = clientsState.clients.any((c) => c.email == emailController.text.trim());
+            if (exists) return "Email ya registrado";
+            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) return "Email inválido";
             return null;
           },
         ),
@@ -260,6 +203,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
     );
   }
 
+  // Sección de minas con botones de adición y eliminación
   Widget _buildMinesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,43 +211,29 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              "Minas",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-
+            const Text("Minas", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             IconButton(
-              onPressed: () {
-                setState(() {
-                  mines.add(MineFormData());
-                });
-              },
-              icon: const Icon(Icons.add),
+              onPressed: () => setState(() => mines.add(MineFormData())),
+              icon: const Icon(Icons.add_circle_outline),
             ),
           ],
         ),
-
         const SizedBox(height: 8),
-
         ...List.generate(mines.length, (index) {
           return MineFormWidget(
             mine: mines[index],
             index: index,
-
-            onRemove: mines.length == 1
-                ? null
-                : () {
-                    setState(() {
-                      mines[index].dispose();
-                      mines.removeAt(index);
-                    });
-                  },
+            onRemove: mines.length == 1 ? null : () => setState(() {
+                  mines[index].dispose();
+                  mines.removeAt(index);
+                }),
           );
         }),
       ],
     );
   }
 
+  // Pantalla de éxito post-registro
   Widget _buildSuccessState() {
     return SizedBox(
       key: const ValueKey("success"),
@@ -317,24 +247,12 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
               duration: const Duration(milliseconds: 300),
               child: Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade100,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check,
-                  size: 60,
-                  color: Colors.green.shade600,
-                ),
+                decoration: BoxDecoration(color: Colors.green.shade100, shape: BoxShape.circle),
+                child: Icon(Icons.check, size: 60, color: Colors.green.shade600),
               ),
             ),
-
             const SizedBox(height: 16),
-
-            const Text(
-              "Cliente registrado",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text("Cliente registrado", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -342,6 +260,7 @@ class _CreateClientDialogState extends ConsumerState<CreateClientDialog> {
   }
 }
 
+// Widget componente para cada tarjeta de mina
 class MineFormWidget extends StatelessWidget {
   final MineFormData mine;
   final int index;
@@ -358,6 +277,7 @@ class MineFormWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -365,38 +285,15 @@ class MineFormWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "Mina ${index + 1}",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-
+                Text("Mina ${index + 1}", style: const TextStyle(fontWeight: FontWeight.bold)),
                 if (onRemove != null)
-                  IconButton(
-                    onPressed: onRemove,
-                    icon: const Icon(Icons.delete),
-                  ),
+                  IconButton(onPressed: onRemove, icon: const Icon(Icons.delete_outline, color: Colors.red)),
               ],
             ),
-
             const SizedBox(height: 12),
-
-            buildField(
-              mine.nameController,
-              "Nombre de mina",
-              "Mina Norte",
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return "Nombre obligatorio";
-                }
-
-                return null;
-              },
-            ),
-
+            buildField(mine.nameController, "Nombre de mina", "Mina Norte", validator: (v) => (v == null || v.trim().isEmpty) ? "Obligatorio" : null),
             buildField(mine.addressController, "Dirección", "Dirección..."),
-
             buildField(mine.phoneController, "Teléfono", "+52..."),
-
             buildField(mine.emailController, "Email", "mina@empresa.com"),
           ],
         ),
@@ -404,3 +301,4 @@ class MineFormWidget extends StatelessWidget {
     );
   }
 }
+

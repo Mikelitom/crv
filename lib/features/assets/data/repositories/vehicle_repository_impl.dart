@@ -45,7 +45,33 @@ class VehicleRepositoryImpl implements VehicleRepository {
       return Left(UnknownFailure(e.toString()));
     }
   }
+@override
+  Future<Either<Failure, Unit>> activateVehicle(String id) async {
+    try {
+      await remote.activateVehicle(id);
+      return const Right(unit);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
 
+  @override
+  Future<Either<Failure, Unit>> deactivateVehicle(String id) async {
+    try {
+      await remote.deactivateVehicle(id);
+      return const Right(unit);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
   @override
   Future<Either<Failure, List<Vehicle>>> getAllVehicle() async {
     try {

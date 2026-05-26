@@ -5,30 +5,45 @@ class CatalogMobileCard extends StatelessWidget {
   final dynamic item;
   final String type;
   final Color primaryRed;
+  final Function(dynamic) onEdit;
+  final Function(dynamic, bool) onToggleStatus;
 
   const CatalogMobileCard({
     super.key,
     required this.item,
     required this.type,
     required this.primaryRed,
+    required this.onEdit,
+    required this.onToggleStatus,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool isActive = item.isActive ?? true;
+
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFFE5E7EB))),
+      // Si está inactivo, el borde se ve grisáceo para indicar estado
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16), 
+        side: BorderSide(color: isActive ? const Color(0xFFE5E7EB) : Colors.grey.shade300)
+      ),
+      color: isActive ? Colors.white : Colors.grey.shade50,
       child: ExpansionTile(
         iconColor: primaryRed,
         leading: Icon(
           type == "cliente" ? Icons.business_rounded : (type == "vehiculo" ? Icons.directions_car_rounded : Icons.precision_manufacturing_rounded),
-          color: primaryRed,
+          color: isActive ? primaryRed : Colors.grey,
           size: 22,
         ),
         title: Text(
           type == "cliente" ? (item.name ?? "-") : (type == "vehiculo" ? (item.plate ?? "-") : (item.serie ?? "-")),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF111827)),
+          style: TextStyle(
+            fontWeight: FontWeight.bold, 
+            fontSize: 15, 
+            color: isActive ? const Color(0xFF111827) : Colors.grey
+          ),
         ),
         children: [
           Padding(
@@ -36,22 +51,33 @@ class CatalogMobileCard extends StatelessWidget {
             child: Column(
               children: [
                 _infoRow("Estatus del Activo:", item.operationState ?? 'Disponible'),
+                _infoRow("Ubicación:", item.currentLocation ?? 'Sin asignar'),
                 const Divider(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    // Botón Detalles
                     TextButton.icon(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AssetDetailModal(item: item, type: type, primaryRed: primaryRed),
-                        );
-                      },
+                      onPressed: () => showDialog(
+                        context: context, 
+                        builder: (_) => AssetDetailModal(item: item, type: type, primaryRed: primaryRed)
+                      ),
                       icon: const Icon(Icons.visibility, size: 16, color: Color(0xFF2E7D32)),
-                      label: const Text("Mas Detalles", style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold)),
+                      label: const Text("Detalles", style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold)),
                     ),
-                    TextButton(onPressed: () {}, child: const Text("Editar")),
-                    TextButton(onPressed: () {}, child: Text("Borrar", style: TextStyle(color: primaryRed))),
+                    // Botón Editar
+                    TextButton(
+                      onPressed: () => onEdit(item),
+                      child: const Text("Editar", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    // Botón Activar/Desactivar
+                    TextButton(
+                      onPressed: () => onToggleStatus(item, !isActive),
+                      child: Text(
+                        isActive ? "Desactivar" : "Activar", 
+                        style: TextStyle(color: isActive ? primaryRed : Colors.green, fontWeight: FontWeight.bold)
+                      ),
+                    ),
                   ],
                 ),
               ],

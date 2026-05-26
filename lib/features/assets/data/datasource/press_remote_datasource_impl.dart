@@ -1,51 +1,66 @@
-import 'package:crv_reprosisa/features/assets/data/datasource/press_remote_datasource.dart';
-import 'package:crv_reprosisa/features/assets/data/models/press_model.dart';
-import 'package:crv_reprosisa/features/assets/domain/params/create_press_params.dart';
-import 'package:dio/dio.dart';
+  import 'package:crv_reprosisa/features/assets/data/datasource/press_remote_datasource.dart';
+  import 'package:crv_reprosisa/features/assets/data/models/press_model.dart';
+  import 'package:crv_reprosisa/features/assets/domain/params/create_press_params.dart';
+  import 'package:dio/dio.dart';
 
-class PressRemoteDatasourceImpl implements PressRemoteDatasource {
-  final Dio dio;
+  class PressRemoteDatasourceImpl implements PressRemoteDatasource {
+    final Dio dio;
 
-  PressRemoteDatasourceImpl(this.dio);
+    PressRemoteDatasourceImpl(this.dio);
 
+    @override
+    Future<PressModel> createPress(CreatePressParams params) async {
+      final response = await dio.post(
+        '/presses/',
+        data: {
+          "type": params.type,
+          "model": params.model,
+          "voltz": params.voltz,
+          "serie": params.serie.toUpperCase(),
+          "size": params.size,
+        },
+      );
+
+      return PressModel.fromJson(response.data);
+    }
+
+    @override
+    Future<PressModel> updatePress(String id, CreatePressParams params) async {
+      print("DEBUG: Intentando PUT a: /api/v1/presses/$id");
+  
+      if (id.isEmpty || id == "null") {
+        throw Exception("El ID de la prensa es nulo o vacío");
+      }
+      
+      final response = await dio.put(
+        '/presses/$id',
+        data: {
+          "type": params.type,
+          "model": params.model,
+          "voltz": params.voltz,
+          "serie": params.serie.toUpperCase(),
+          "size": params.size,
+        },
+      );
+
+      return PressModel.fromJson(response.data);
+    }
   @override
-  Future<PressModel> createPress(CreatePressParams params) async {
-    final response = await dio.post(
-      '/presses/',
-      data: {
-        "type": params.type,
-        "model": params.model,
-        "voltz": params.voltz,
-        "serie": params.serie.toUpperCase(),
-        "size": params.size,
-      },
-    );
+    Future<void> activatePress(String id) async {
+      await dio.patch("/presses/restore/$id");
+    }
 
-    return PressModel.fromJson(response.data);
+    @override
+    Future<void> deactivatePress(String id) async {
+      await dio.delete("/presses/$id");
+    }
+
+    @override
+    Future<List<PressModel>> getAllPress() async {
+      final response = await dio.get("/asset/press");
+
+      final List<dynamic> data = response.data;
+      
+      return data.map((json) => PressModel.fromJson(json as Map<String, dynamic>)).toList();
+    }
   }
-
-  @override
-  Future<PressModel> updatePress(String id, CreatePressParams params) async {
-    final response = await dio.put(
-      '/presses/$id',
-      data: {
-        "type": params.type,
-        "model": params.model,
-        "voltz": params.voltz,
-        "serie": params.serie.toUpperCase(),
-        "size": params.size,
-      },
-    );
-
-    return PressModel.fromJson(response.data);
-  }
-
-  @override
-  Future<List<PressModel>> getAllPress() async {
-    final response = await dio.get("/asset/press");
-
-    final List<dynamic> data = response.data;
-    
-    return data.map((json) => PressModel.fromJson(json as Map<String, dynamic>)).toList();
-  }
-}
