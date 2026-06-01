@@ -17,6 +17,7 @@ class VehicleInspectionLocalDataSourceImpl
   @override
   Future<void> saveVehicles(List<VehicleModel> vehicles) async {
     for (final vehicle in vehicles) {
+      print('Guardando ${vehicle.id}');
       await db
           .into(db.vehiclesTable)
           .insertOnConflictUpdate(
@@ -32,6 +33,10 @@ class VehicleInspectionLocalDataSourceImpl
             ),
           );
     }
+
+    final rows = await db.select(db.vehiclesTable).get();
+
+    print('VEHICULOS GUARDADOS: ${rows.length}');
   }
 
   @override
