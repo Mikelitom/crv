@@ -1,6 +1,6 @@
 import '../../domain/entities/vehicle_entity.dart';
 
-class VehicleModel extends Vehicle{
+class VehicleModel extends Vehicle {
   VehicleModel({
     required super.id,
     required super.typeId,
@@ -9,7 +9,6 @@ class VehicleModel extends Vehicle{
     required super.unit,
     required super.year,
     required super.plate,
-    
   });
 
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
@@ -21,9 +20,7 @@ class VehicleModel extends Vehicle{
       unit: json['unit'],
       year: json['year'],
       plate: json['plate'],
-
     );
   }
   String get unitDetail => "$brand $model $year";
 }
-
