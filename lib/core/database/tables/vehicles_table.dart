@@ -11,6 +11,9 @@ class VehiclesTable extends Table {
 
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
 
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }

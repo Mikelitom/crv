@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/vehiculos/data/datasource/vehicle_inspection_local_datasource.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/vehicle_entity.dart';
@@ -6,29 +7,33 @@ import '../datasource/vehicle_inspection_remote_datasource.dart';
 import '../models/inspection_vehicle_model.dart';
 
 class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
-  final VehicleInspectionRemoteDataSource dataSource;
-  VehicleInspectionRepositoryImpl(this.dataSource);
+  final VehicleInspectionRemoteDataSource remoteDataSource;
+  final VehicleInspectionLocalDatasource localDataSource;
+
+  VehicleInspectionRepositoryImpl({
+    required this.remoteDataSource,
+    required this.localDataSource,
+  });
 
   @override
   Future<Either<Failure, List<Vehicle>>> getActiveVehicles() async {
     try {
-      final response = await dataSource.getActiveVehicles();
-      print("DEBUG: Repo data received: ${response.length} items");
-
-      for (var item in response) {
-        print("ITEM TYPE: ${item.runtimeType}");
-        print("ITEM VALUE: $item");
-      }
-      print(
-        "DEBUG: Repo mapping success: ${response.first.plate}",
-      ); // Verifica si el mapeo funcionó
-
+      final response = await remoteDataSource.getActiveVehicles();
       return Right(response);
     } catch (e) {
-      print(
-        "DEBUG: Repo Mapping Error: $e",
-      ); // Esto te dirá qué campo del JSON está mal
-      return const Left(ServerFailure("Error al mapear vehículos"));
+      try {
+        final localVehicles = await localDataSource.getVehicles();
+
+        if (localVehicles.isNotEmpty) {
+          return Right(localVehicles);
+        }
+
+        return const Left(
+          ServerFailure("No hay vehículos disponibles sin conexion"),
+        );
+      } catch (_) {
+        return const Left(ServerFailure("Error al mapear vehículos"));
+      }
     }
   }
 
