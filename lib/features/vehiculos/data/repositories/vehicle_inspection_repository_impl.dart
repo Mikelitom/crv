@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:crv_reprosisa/features/vehiculos/data/datasource/vehicle_inspection_local_datasource.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failure.dart';
@@ -81,11 +83,36 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
   ) async {
     try {
       final id = await remoteDataSource.saveVehicleReport(reportData);
+
       return Right(id);
     } catch (e) {
-      return const Left(
-        ServerFailure("Error al enviar el reporte de inspección"),
-      );
+      try {
+        await localDataSource.saveOfflineReport(reportData);
+
+        return const Right(
+          'Reporte guardado localmente. Pendiente de sincronización.',
+        );
+      } catch (localError) {
+        return const Left(
+          ServerFailure('No fue posible guardar el reporte localmente.'),
+        );
+      }
+    }
+  }
+
+  Future<void> testSync() async {
+    final pending = await localDataSource.getPendingReports();
+
+    print("Pendientes: ${pending.length}");
+
+    for (final report in pending) {
+      final payload = jsonDecode(report.payload);
+
+      print("Sincronizando ${report.folio}");
+
+      await remoteDataSource.saveVehicleReport(payload);
+
+      await localDataSource.markReportAsSynced(report.id);
     }
   }
 }

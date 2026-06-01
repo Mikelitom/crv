@@ -4,6 +4,10 @@ import '../entities/vehicle_entity.dart';
 
 abstract class VehicleInspectionRepository {
   Future<Either<Failure, List<Vehicle>>> getActiveVehicles();
-  Future<Either<Failure, String>> saveVehicleReport(Map<String, dynamic> reportData);
+  Future<Either<Failure, String>> saveVehicleReport(
+    Map<String, dynamic> reportData,
+  );
   Future<Either<Failure, Map<String, dynamic>>> getVehicleTemplate();
+  Future<void> testSync();
 }
+

@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:crv_reprosisa/features/vehiculos/data/models/inspection_vehicle_model.dart';
 import 'package:crv_reprosisa/core/database/app_database.dart';
 import 'package:drift/drift.dart';
 import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
 
 abstract class VehicleInspectionLocalDatasource {
   Future<void> saveVehicles(List<VehicleModel> vehicles);
@@ -9,6 +12,11 @@ abstract class VehicleInspectionLocalDatasource {
   Future<List<VehicleModel>> getVehicles();
   Future<void> saveVehicleTemplate(Map<String, dynamic> template);
   Future<Map<String, dynamic>> getVehicleTemplate();
+
+  Future<void> saveOfflineReport(Map<String, dynamic> reportData);
+
+  Future<List<PendingVehicleReportsTableData>> getPendingReports();
+  Future<void> deletePendingReport(String reportId);
 }
 
 class VehicleInspectionLocalDataSourceImpl
@@ -76,5 +84,41 @@ class VehicleInspectionLocalDataSourceImpl
     }
 
     return Map<String, dynamic>.from(data);
+  }
+
+  @override
+  Future<void> saveOfflineReport(Map<String, dynamic> reportData) async {
+    await db
+        .into(db.pendingVehicleReportsTable)
+        .insert(
+          PendingVehicleReportsTableCompanion.insert(
+            id: const Uuid().v4(),
+            vehicleId: reportData['vehicle_id'],
+            folio: reportData['folio'],
+            payload: jsonEncode(reportData),
+          ),
+        );
+
+    final reports = await db.select(db.pendingVehicleReportsTable).get();
+
+    print("REPORTES PENDIENTES GUARDADOS: ${reports.length}");
+
+    for (final report in reports) {
+      print(report.folio);
+    }
+  }
+
+  @override
+  Future<List<PendingVehicleReportsTableData>> getPendingReports() {
+    return (db.select(
+      db.pendingVehicleReportsTable,
+    )..where((t) => t.isSynced.equals(false))).get();
+  }
+
+  @override
+  Future<void> deletePendingReport(String reportId) async {
+    await (db.delete(
+      db.pendingVehicleReportsTable,
+    )..where((t) => t.id.equals(reportId))).go();
   }
 }
