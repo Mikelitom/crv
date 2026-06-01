@@ -52,9 +52,26 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
   Future<Either<Failure, Map<String, dynamic>>> getVehicleTemplate() async {
     try {
       final data = await remoteDataSource.getVehicleTemplate();
+
+      await localDataSource.saveVehicleTemplate(data);
+
       return Right(data);
     } catch (e) {
-      return const Left(ServerFailure("Error al cargar template de vehículos"));
+      try {
+        final localData = await localDataSource.getVehicleTemplate();
+
+        if (localData.isNotEmpty) {
+          return Right(localData);
+        }
+
+        return const Left(
+          ServerFailure("No hay template disponible sin conexión"),
+        );
+      } catch (_) {
+        return const Left(
+          ServerFailure("Error al cargar template de vehículos"),
+        );
+      }
     }
   }
 

@@ -11,6 +11,7 @@ import '../../domain/usecases/create_vehicle_report_use_case.dart';
 import 'vehicle_inspection_state.dart';
 import '../notifier/vehicle_inspection_notifier.dart';
 import '../../domain/repositories/vehicle_inspeccion_repository.dart';
+import 'package:hive/hive.dart';
 
 final vehicleDataSourceProvider = Provider<VehicleInspectionRemoteDataSource>((
   ref,
@@ -20,9 +21,11 @@ final vehicleDataSourceProvider = Provider<VehicleInspectionRemoteDataSource>((
 
 final vehicleLocalDatasourceProvider =
     Provider<VehicleInspectionLocalDatasource>((ref) {
-      return VehicleInspectionLocalDataSourceImpl(
-        ref.read(appDatabaseProvider),
-      );
+      final db = ref.read(appDatabaseProvider);
+
+      final box = Hive.box('vehicle_cache');
+
+      return VehicleInspectionLocalDataSourceImpl(db, box);
     });
 
 final vehicleRepositoryProvider = Provider<VehicleInspectionRepository>((ref) {
@@ -62,4 +65,3 @@ final allPlatesProvider = FutureProvider<List<String>>((ref) async {
     (vehicles) => vehicles.map((v) => v.plate).toList(),
   );
 });
-
