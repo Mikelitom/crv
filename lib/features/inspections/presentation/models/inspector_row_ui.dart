@@ -1,5 +1,6 @@
 class InspectionRowUI {
-  final String id;
+  final String id;           // report_id
+  final String versionId;    // 🔥 NUEVO: ID para llamar al detalle de versión
   final String reportType;
   final String title;
   final String description;
@@ -9,9 +10,9 @@ class InspectionRowUI {
   final String userName;
   final String date;
 
-  // Constructor intacto
   InspectionRowUI({
     required this.id,
+    required this.versionId, // 🔥 Actualizado
     required this.reportType,
     required this.title,
     required this.description,
@@ -42,31 +43,30 @@ class InspectionRowUI {
   factory InspectionRowUI.fromJson(Map<String, dynamic> json) {
     final String titleText = json['title'] ?? '';
     
-    // 🔥 Lógica para extraer la versión del texto si viene pegada en el título (ej: "Reporte Banda v2")
+    // Lógica de versión (la que ya tenías)
     int extractedVersion = 0;
     final match = RegExp(r'v(\d+)$', caseSensitive: false).firstMatch(titleText);
     if (match != null) {
       extractedVersion = int.tryParse(match.group(1) ?? '0') ?? 0;
     }
 
-    // Leemos el version_number que venga del JSON. Si viene null o no es válido, usa la extraída del string.
     int finalVersion = 0;
     if (json['version_number'] is int) {
       finalVersion = json['version_number'];
     } else if (json['version_number'] != null) {
       finalVersion = int.tryParse(json['version_number'].toString()) ?? extractedVersion;
     } else {
-      finalVersion = extractedVersion; // Resguardo seguro
+      finalVersion = extractedVersion;
     }
 
     return InspectionRowUI(
       id: json['report_id'] ?? '',
-      reportType: json['report_type'] ?? '',
+versionId: json['version_id']?.toString() ?? json['report_id']?.toString() ?? '',      reportType: json['report_type'] ?? '',
       title: titleText,
       description: json['description'] ?? '',
       folio: json['folio'] ?? '',
       state: json['state'] ?? '',
-      versionNumber: finalVersion, // 🔥 Ahora asigna la versión real calculada
+      versionNumber: finalVersion,
       userName: json['user_name'] ?? '',
       date: json['inspection_date']?.toString().split('T')[0] ?? '',
     );

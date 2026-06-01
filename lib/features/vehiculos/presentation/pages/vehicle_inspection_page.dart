@@ -12,7 +12,10 @@ import '../../../prensas_industriales/presentation/widgets/capture_method_select
 import '../../data/models/component_vehicle_model.dart';
 
 class VehicleInspectionPage extends ConsumerStatefulWidget {
-  const VehicleInspectionPage({super.key});
+  // Definición del parámetro para evitar el error 'isReadOnly isn't defined'
+  final bool isReadOnly;
+
+  const VehicleInspectionPage({super.key, this.isReadOnly = false});
 
   @override
   ConsumerState<VehicleInspectionPage> createState() =>
@@ -20,6 +23,22 @@ class VehicleInspectionPage extends ConsumerStatefulWidget {
 }
 
 class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
+  // Controlador para el campo de Notas
+  late TextEditingController _notesController;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = ref.read(vehicleInspectionProvider);
+    _notesController = TextEditingController(text: state.generalNotes);
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+
   void _showPdfPreview(BuildContext context) {
     final state = ref.read(vehicleInspectionProvider);
     if (state.selectedVehicle == null) {
@@ -32,7 +51,6 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
       return;
     }
 
-    // Generamos el mapa de datos usando la función estática de la clase
     final pdfData = VehiculoPdfGenerator.mapStateToPdfData(state);
 
     Navigator.push(
@@ -124,8 +142,6 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                               ...state.templateSections.map((section) {
                                 final List<ComponentVehicleModel> sectionItems =
                                     (section['components'] as List).map((c) {
-                                      // CORRECCIÓN DEL ERROR DE TIPO:
-                                      // Usamos where().firstOrNull o manejamos el caso vacío manualmente
                                       final existing = state.items.where(
                                         (i) => i.id == c['id'],
                                       );
@@ -144,6 +160,21 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                                 );
                               }).toList(),
                               const VehicleServiceRequired(),
+                              
+                              // CAMPO DE NOTAS AGREGADO AQUÍ
+                              const SizedBox(height: 24),
+                              TextField(
+                                controller: _notesController,
+                                maxLines: 4,
+                                decoration: InputDecoration(
+                                  labelText: "NOTAS:",
+                                  alignLabelWithHint: true,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                ),
+                                onChanged: (value) => notifier.setGeneralNotes(value),
+                              ),
                             ],
                           ),
                   ),
@@ -191,9 +222,8 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: c,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),
   );
 }
-

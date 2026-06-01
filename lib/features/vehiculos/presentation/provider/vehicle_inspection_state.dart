@@ -13,6 +13,7 @@ class VehicleInspectionState {
   final bool isLoading;
   final bool isScanning;
   final String serviceObservations;
+  final String generalNotes;        
 
   VehicleInspectionState({
     this.selectedVehicle,
@@ -26,6 +27,7 @@ class VehicleInspectionState {
     this.isLoading = false,
     this.isScanning = false,
     this.serviceObservations = '',
+    this.generalNotes = "",
   });
 
   VehicleInspectionState copyWith({
@@ -41,6 +43,7 @@ class VehicleInspectionState {
     bool? isLoading,
     bool? isScanning,
     String? serviceObservations,
+    String? generalNotes,
   }) {
     return VehicleInspectionState(
       selectedVehicle: clearVehicle ? null : (selectedVehicle ?? this.selectedVehicle),
@@ -54,6 +57,7 @@ class VehicleInspectionState {
       isLoading: isLoading ?? this.isLoading,
       isScanning: isScanning ?? this.isScanning,
       serviceObservations: serviceObservations ?? this.serviceObservations,
+      generalNotes: generalNotes ?? this.generalNotes,
     );
   }
 }

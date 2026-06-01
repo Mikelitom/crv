@@ -9,7 +9,6 @@ import '../../../../features/evidence/presentation/providers/evidence_service_pr
 class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
   @override
   VehicleInspectionState build() {
-    // Carga automática del template al iniciar
     Future.microtask(() {
       loadTemplate();
       loadVehicles();
@@ -37,7 +36,7 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
   void setScanning(bool value) => state = state.copyWith(isScanning: value);
   void updateServiceObservations(String v) =>
       state = state.copyWith(serviceObservations: v);
-
+void setGeneralNotes(String v) => state = state.copyWith(generalNotes: v);
   // --- AUTOCOMPLETADO AL SELECCIONAR PLACA ---
   void onPlateSelected(String plate) {
     try {
@@ -116,6 +115,7 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
         "requires_service": state.requiresService,
         "observation": state.serviceObservations,
         "folio": "V-${DateTime.now().millisecondsSinceEpoch}",
+        "general_notes": state.generalNotes,
         "answers": answers,
       };
 

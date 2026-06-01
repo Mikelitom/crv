@@ -29,7 +29,15 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() => setState(() {}));
+    
+    // Mejora: Limpiar búsqueda al cambiar de pestaña
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        ref.read(inspectionProvider.notifier).filterInspections("");
+      }
+      setState(() {});
+    });
+
     Future.microtask(() => ref.read(inspectionProvider.notifier).loadInspections());
   }
 
@@ -46,6 +54,15 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
 
   @override
   Widget build(BuildContext context) {
+    // Escucha global de errores para mostrar SnackBar
+    ref.listen(inspectionProvider.select((state) => state.errorMessage), (prev, next) {
+      if (next != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next), backgroundColor: primaryRed),
+        );
+      }
+    });
+
     final inspectionState = ref.watch(inspectionProvider);
 
     return Scaffold(
@@ -112,7 +129,6 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
         children: [
           Padding(
             padding: const EdgeInsets.all(24),
-            // RESPONSIVIDAD: Usamos Wrap para que el buscador baje si no hay espacio horizontal
             child: Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -143,7 +159,7 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
             labelColor: primaryRed,
             tabs: const [Tab(text: 'PRENSAS'), Tab(text: 'VEHÍCULOS'), Tab(text: 'BANDAS')],
           ),
-          (inspectionState.isLoading ?? false) 
+          (inspectionState.isLoading) 
             ? const SizedBox(height: 250, child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))))
             : TableInspector(items: filtered),
         ],

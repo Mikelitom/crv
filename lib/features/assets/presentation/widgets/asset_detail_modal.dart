@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-
-class AssetDetailModal extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_history_provider.dart';
+import '../pages/history_page_vehicle.dart';
+class AssetDetailModal extends ConsumerWidget {
   final dynamic item;
   final String type; // "vehiculo", "prensa", "cliente"
   final Color primaryRed;
@@ -16,6 +18,8 @@ class AssetDetailModal extends StatelessWidget {
   dynamic _val(String key) {
     if (item is Map) return item[key];
     try {
+      if (key == 'vehicleId') return (item.vehicleId ?? '');
+      if (key == 'id') return (item.id ?? '');
       if (key == 'plate') return (item.plate ?? '-');
       if (key == 'serie') return (item.serie ?? '-');
       if (key == 'name') return (item.name ?? '-');
@@ -58,7 +62,7 @@ class AssetDetailModal extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final String state = _normalizeState(_val('operationState').toString());
 
     String title = "";
@@ -77,9 +81,9 @@ class AssetDetailModal extends StatelessWidget {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: const EdgeInsets.all(16),
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 450),
+        constraints: const BoxConstraints(maxWidth: 450, maxHeight: 850),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
@@ -130,9 +134,9 @@ class AssetDetailModal extends StatelessWidget {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(24),
+            Flexible(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -149,7 +153,23 @@ class AssetDetailModal extends StatelessWidget {
                             borderRadius: BorderRadius.circular(15),
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () async {
+                          final String id = type == "vehiculo" ? _val('vehicleId') : _val('id');
+                          
+                          if (id != '-' && id.isNotEmpty) {
+                            // Cargar datos y navegar a página de historial
+                            await ref.read(vehicleHistoryProvider.notifier).loadHistory(id);
+                            
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => HistoryPage(assetId: id, title: title),
+                                ),
+                              );
+                            }
+                          }
+                        },
                         child: const Text(
                           "HISTORIAL",
                           style: TextStyle(fontWeight: FontWeight.bold),
