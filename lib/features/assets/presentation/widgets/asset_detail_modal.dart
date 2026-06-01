@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-
-class AssetDetailModal extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_history_provider.dart';
+import '../pages/history_page_vehicle.dart';
+class AssetDetailModal extends ConsumerWidget {
   final dynamic item;
   final String type; // "vehiculo", "prensa", "cliente"
   final Color primaryRed;
@@ -16,6 +18,8 @@ class AssetDetailModal extends StatelessWidget {
   dynamic _val(String key) {
     if (item is Map) return item[key];
     try {
+      if (key == 'vehicleId') return (item.vehicleId ?? '');
+      if (key == 'id') return (item.id ?? '');
       if (key == 'plate') return (item.plate ?? '-');
       if (key == 'serie') return (item.serie ?? '-');
       if (key == 'name') return (item.name ?? '-');
@@ -58,7 +62,7 @@ class AssetDetailModal extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final String state = _normalizeState(_val('operationState').toString());
 
     String title = "";
@@ -77,9 +81,9 @@ class AssetDetailModal extends StatelessWidget {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: const EdgeInsets.all(16),
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 450),
+        constraints: const BoxConstraints(maxWidth: 450, maxHeight: 850),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
@@ -130,9 +134,9 @@ class AssetDetailModal extends StatelessWidget {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(24),
+            Flexible(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -149,7 +153,23 @@ class AssetDetailModal extends StatelessWidget {
                             borderRadius: BorderRadius.circular(15),
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () async {
+                          final String id = type == "vehiculo" ? _val('vehicleId') : _val('id');
+                          
+                          if (id != '-' && id.isNotEmpty) {
+                            // Cargar datos y navegar a página de historial
+                            await ref.read(vehicleHistoryProvider.notifier).loadHistory(id);
+                            
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => HistoryPage(assetId: id, title: title),
+                                ),
+                              );
+                            }
+                          }
+                        },
                         child: const Text(
                           "HISTORIAL",
                           style: TextStyle(fontWeight: FontWeight.bold),
@@ -245,8 +265,6 @@ class AssetDetailModal extends StatelessWidget {
   }
 
   Widget _buildClientLayout() {
-    // Obtenemos la lista de minas desde el objeto item
-    // _val('mines') nos devuelve la lista de objetos MineModel
     final List<dynamic> mines = (_val('mines') as List<dynamic>?) ?? [];
     
     return Column(
@@ -264,38 +282,73 @@ class AssetDetailModal extends StatelessWidget {
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
           ),
         ),
-        // Si no hay minas, mostramos un mensaje amigable
         if (mines.isEmpty) 
           const Padding(
             padding: EdgeInsets.only(bottom: 8.0),
             child: Text("No hay minas registradas", style: TextStyle(fontSize: 12)),
           ),
         
-        // Iteramos sobre la lista de minas
         ...mines.map((mina) {
-          // Si la mina viene como Map (JSON puro) o como Objeto MineModel
           final name = (mina is Map) ? (mina['name'] ?? 'Sin nombre') : (mina.name ?? 'Sin nombre');
           final address = (mina is Map) ? (mina['address'] ?? 'Sin dirección') : (mina.address ?? 'Sin dirección');
           final phone = (mina is Map) ? (mina['phone'] ?? '-') : (mina.phone ?? '-');
-          final email = (mina is Map) ? (mina['email'] ?? '-') : (mina.email ?? '-');
           
           return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(12),
-            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue.shade100),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.blue.shade50,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const SizedBox(height: 4),
-                Text("📍 $address", style: const TextStyle(fontSize: 11)),
-                Text("📞 $phone | ✉️ $email", style: const TextStyle(fontSize: 11)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.blue.shade100, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.shade50.withOpacity(0.5),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
               ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.landscape_rounded, color: Colors.blue.shade700, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            name.toUpperCase(),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900, 
+                              fontSize: 14, 
+                              color: Colors.blue.shade900
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 20),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Expanded(child: Text(address, style: TextStyle(fontSize: 12, color: Colors.grey.shade700))),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.phone_outlined, size: 14, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Text(phone, style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
         }).toList(),

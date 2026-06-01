@@ -17,13 +17,12 @@ import '../widgets/prestamo_devolucion.dart';
 import '../../../dashboard/presentation/widgets/header.dart';
 
 class PrensaInspectionPage extends ConsumerStatefulWidget {
-  const PrensaInspectionPage({super.key});
+ final bool isReadOnly;
+  const PrensaInspectionPage({super.key, this.isReadOnly = false});
 
   @override
-  ConsumerState<PrensaInspectionPage> createState() =>
-      _PrensaInspectionPageState();
+  ConsumerState<PrensaInspectionPage> createState() => _PrensaInspectionPageState();
 }
-
 class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
   bool isScanning = false;
   bool isLoading = true;

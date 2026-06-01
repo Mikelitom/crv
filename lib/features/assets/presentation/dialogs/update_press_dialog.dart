@@ -36,7 +36,7 @@ class _UpdatePressDialogState extends ConsumerState<UpdatePressDialog> {
 
     typeController = TextEditingController(text: widget.press.type);
     modelController = TextEditingController(text: widget.press.model);
-    voltzController = TextEditingController(text: widget.press.voltz);
+    voltzController = TextEditingController(text: widget.press.volts);
     serieController = TextEditingController(text: widget.press.serie);
     sizeController = TextEditingController(text: widget.press.size);
 

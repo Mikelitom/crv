@@ -32,7 +32,7 @@ class PressModel extends Press {
     String translatedType = _mapTypeToSpanish(rawType);
 
     return PressModel(
-      id: json['id']?.toString() ?? '',
+      id: json['press_id']?.toString() ?? '',
       type: translatedType, // Usamos el tipo traducido
       model: json['model']?.toString() ?? 'N/A',
       volts: json['volts']?.toString() ?? 'N/A',

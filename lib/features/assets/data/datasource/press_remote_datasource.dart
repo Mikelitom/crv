@@ -5,4 +5,6 @@ abstract class PressRemoteDatasource {
   Future<PressModel> createPress(CreatePressParams params);
   Future<PressModel> updatePress(String id, CreatePressParams params);
   Future<List<PressModel>> getAllPress();
+  Future<void> activatePress(String id);
+  Future<void> deactivatePress(String id);
 }

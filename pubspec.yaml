@@ -45,12 +45,14 @@ dependencies:
   image_picker: ^1.2.1
   file_picker: ^8.0.0
   pdf: ^3.11.0
+  http: ^1.2.0
   printing: ^5.11.0
   supabase_flutter: ^2.5.0
   flutter_dotenv: ^5.0.2
   mime: ^1.0.4
   uuid: ^4.0.0
   camera: ^0.11.0
+  google_fonts: ^6.1.0 # Opcional, pero recomendado por el paquete pdf
   permission_handler: ^11.3.1
   drift: ^2.29.0
   sqlite3_flutter_libs: ^0.5.39

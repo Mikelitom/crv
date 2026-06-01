@@ -18,7 +18,7 @@ class VehicleModel extends Vehicle {
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
     return VehicleModel(
       id: json['id'] ?? '',
-      typeId: json['type_id'] ?? '',
+typeId: json['type_id'] ?? '',
       brand: json['brand'] ?? '',
       model: json['model'] ?? '',
       unit: json['unit'] ?? '',

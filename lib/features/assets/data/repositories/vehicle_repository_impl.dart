@@ -1,5 +1,5 @@
- import 'dart:io';
-
+import 'dart:io';
+import 'package:crv_reprosisa/features/assets/domain/entities/vehicle_history.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:crv_reprosisa/features/assets/data/datasource/vehicle_remote_datasource.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
@@ -7,6 +7,7 @@ import 'package:crv_reprosisa/features/assets/domain/params/create_vehicle_param
 import 'package:crv_reprosisa/features/assets/domain/repositories/vehicle_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import '../../domain/entities/vehicle_report_detail_entity.dart';
 
 class VehicleRepositoryImpl implements VehicleRepository {
   final VehicleRemoteDatasource remote;
@@ -47,10 +48,72 @@ class VehicleRepositoryImpl implements VehicleRepository {
   }
 
   @override
+  Future<Either<Failure, List<VehicleHistory>>> getVehicleHistory(
+    String vehicleId,
+  ) async {
+    try {
+      final history = await remote.getVehicleHistory(vehicleId);
+      return Right(history);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> activateVehicle(String id) async {
+    try {
+      await remote.activateVehicle(id);
+      return const Right(unit);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> deactivateVehicle(String id) async {
+    try {
+      await remote.deactivateVehicle(id);
+      return const Right(unit);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<Vehicle>>> getAllVehicle() async {
     try {
       final vehicle = await remote.getAllVehicle();
       return Right(vehicle);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on SocketException catch (e) {
+      return Left(NetworkFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+ @override
+  Future<Either<Failure, VehicleReportDetailEntity>> getVehicleReportDetail(
+    String reportId,
+  ) async {
+    try {
+      // Llamamos al método renombrado en el datasource
+      final reportModel = await remote.getVehicleReportDetail(reportId);
+      
+      return Right(reportModel);
     } on DioException catch (e) {
       return Left(ServerFailure(e.toString()));
     } on SocketException catch (e) {

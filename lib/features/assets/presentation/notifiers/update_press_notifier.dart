@@ -24,6 +24,7 @@ class UpdatePressNotifier extends Notifier<PressState> {
 
     try {
       final result = await _updatePress(id, params);
+      print("Press ID: " + id);
 
       result.fold(
         (failure) {

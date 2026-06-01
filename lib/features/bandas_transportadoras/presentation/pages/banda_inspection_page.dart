@@ -16,7 +16,8 @@ import '../../../../core/utils/banda_pdf_generator.dart';
 import '../../../../features/evidence/presentation/providers/evidence_service_provider.dart';
 
 class BandaInspectionPage extends ConsumerStatefulWidget {
-  const BandaInspectionPage({super.key});
+  final bool isReadOnly; // <--- Parámetro de edición
+  const BandaInspectionPage({super.key, this.isReadOnly = false});
 
   @override
   ConsumerState<BandaInspectionPage> createState() => _BandaInspectionPageState();

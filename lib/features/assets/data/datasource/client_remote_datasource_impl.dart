@@ -2,6 +2,8 @@ import 'package:crv_reprosisa/features/assets/data/datasource/client_remote_data
 import 'package:crv_reprosisa/features/assets/data/models/create_client_request.dart';
 import 'package:crv_reprosisa/features/assets/data/models/clients_model.dart';
 import 'package:dio/dio.dart';
+import '../../data/models/create_mine_request.dart';
+
 
 class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
   final Dio dio;
@@ -10,10 +12,14 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
 
   @override
   Future<ClientsModel> createClient(CreateClientRequest request) async {
-    // Usamos el endpoint para crear cliente + minas
     final response = await dio.post('/clients/mines', data: request.toJson());
 
     return ClientsModel.fromJson(response.data);
+  }
+
+  @override
+  Future<void> createMine(String clientId, CreateMineRequest request) async {
+    await dio.post('/api/v1/mines/', data: request.toJson());
   }
 
   @override
@@ -21,12 +27,30 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
     String id,
     CreateClientRequest request,
   ) async {
-    // Aseguramos que el cuerpo esté bien estructurado para el put
-    final response = await dio.put('/clients/$id', data: request.toJson());
+    final response = await dio.put('/clients/mines/$id', data: request.toJson());
 
     return ClientsModel.fromJson(response.data);
   }
 
+  @override
+  Future<void> activateClient(String id) async {
+    await dio.patch('/clients/restore/$id');
+  }
+
+  @override
+  Future<void> deleteClient(String id) async {
+    await dio.delete('/clients/$id');
+  }
+
+  @override
+  Future<void> activateMine(String mineId) async {
+    await dio.patch('/mines/restore/$mineId');
+  }
+
+  @override
+  Future<void> deleteMine(String mineId) async {
+    await dio.delete('/mines/$mineId');
+  }
   @override
   Future<List<ClientsModel>> getAllClients() async {
     final response = await dio.get("/asset/clients");
@@ -35,4 +59,5 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
 
     return data.map((json) => ClientsModel.fromJson(json as Map<String, dynamic>)).toList();
   }
+  
 }
