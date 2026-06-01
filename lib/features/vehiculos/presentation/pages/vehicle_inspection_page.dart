@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/vehiculos/data/services/vehicle_sync_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
@@ -103,6 +104,14 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await ref.read(vehicleSyncServiceProvider).syncPendingReports();
+        },
+        child: const Icon(Icons.sync),
+      ),
+
       body: state.isLoading
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFFC62828)),
@@ -160,7 +169,7 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                                 );
                               }).toList(),
                               const VehicleServiceRequired(),
-                              
+
                               // CAMPO DE NOTAS AGREGADO AQUÍ
                               const SizedBox(height: 24),
                               TextField(
@@ -169,11 +178,14 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                                 decoration: InputDecoration(
                                   labelText: "NOTAS:",
                                   alignLabelWithHint: true,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                   filled: true,
                                   fillColor: Colors.white,
                                 ),
-                                onChanged: (value) => notifier.setGeneralNotes(value),
+                                onChanged: (value) =>
+                                    notifier.setGeneralNotes(value),
                               ),
                             ],
                           ),
