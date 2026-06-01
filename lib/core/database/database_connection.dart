@@ -11,6 +11,8 @@ LazyDatabase openConnection() {
 
     final file = File(p.join(dir.path, 'crv_database.sqlite'));
 
+    print('DATABASE PATH: ${file.path}');
+
     return NativeDatabase(file);
   });
 }

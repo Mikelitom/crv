@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:crv_reprosisa/features/vehiculos/data/datasource/vehicle_inspection_local_datasource.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failure.dart';
@@ -19,20 +21,31 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
   Future<Either<Failure, List<Vehicle>>> getActiveVehicles() async {
     try {
       final response = await remoteDataSource.getActiveVehicles();
+
+      await localDataSource.saveVehicles(response.cast<VehicleModel>());
+
+      print("Vehiculos guardados localmente: ${response.length}");
+
       return Right(response);
     } catch (e) {
+      print("Error remoto: $e");
+
       try {
         final localVehicles = await localDataSource.getVehicles();
+
+        print("Vehiculos encontrados localmente: ${localVehicles.length}");
 
         if (localVehicles.isNotEmpty) {
           return Right(localVehicles);
         }
 
         return const Left(
-          ServerFailure("No hay vehículos disponibles sin conexion"),
+          ServerFailure("No hay vehículos disponibles sin conexión"),
         );
-      } catch (_) {
-        return const Left(ServerFailure("Error al mapear vehículos"));
+      } catch (localError) {
+        print("Error local: $localError");
+
+        return const Left(ServerFailure("Error al obtener vehículos locales"));
       }
     }
   }
@@ -40,10 +53,27 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
   @override
   Future<Either<Failure, Map<String, dynamic>>> getVehicleTemplate() async {
     try {
-      final data = await dataSource.getVehicleTemplate();
+      final data = await remoteDataSource.getVehicleTemplate();
+
+      await localDataSource.saveVehicleTemplate(data);
+
       return Right(data);
     } catch (e) {
-      return const Left(ServerFailure("Error al cargar template de vehículos"));
+      try {
+        final localData = await localDataSource.getVehicleTemplate();
+
+        if (localData.isNotEmpty) {
+          return Right(localData);
+        }
+
+        return const Left(
+          ServerFailure("No hay template disponible sin conexión"),
+        );
+      } catch (_) {
+        return const Left(
+          ServerFailure("Error al cargar template de vehículos"),
+        );
+      }
     }
   }
 
@@ -52,12 +82,37 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
     Map<String, dynamic> reportData,
   ) async {
     try {
-      final id = await dataSource.saveVehicleReport(reportData);
+      final id = await remoteDataSource.saveVehicleReport(reportData);
+
       return Right(id);
     } catch (e) {
-      return const Left(
-        ServerFailure("Error al enviar el reporte de inspección"),
-      );
+      try {
+        await localDataSource.saveOfflineReport(reportData);
+
+        return const Right(
+          'Reporte guardado localmente. Pendiente de sincronización.',
+        );
+      } catch (localError) {
+        return const Left(
+          ServerFailure('No fue posible guardar el reporte localmente.'),
+        );
+      }
+    }
+  }
+
+  Future<void> testSync() async {
+    final pending = await localDataSource.getPendingReports();
+
+    print("Pendientes: ${pending.length}");
+
+    for (final report in pending) {
+      final payload = jsonDecode(report.payload);
+
+      print("Sincronizando ${report.folio}");
+
+      await remoteDataSource.saveVehicleReport(payload);
+
+      await localDataSource.markReportAsSynced(report.id);
     }
   }
 }
