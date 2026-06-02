@@ -31,20 +31,38 @@ class UserModel extends User {
       createdAt: DateTime.parse(json['created_at']),
       role: json['roles'] != null ? List<String>.from(json['roles']) : [],
       scope: json['scope'] ?? 'none',
-      permissions: json['permissions'] != null ? List<String>.from(json['permissions']) : [],
+      permissions: json['permissions'] != null
+          ? List<String>.from(json['permissions'])
+          : [],
     );
   }
 
   Map<String, dynamic> toJson() => {
-        "id": id,
-        "name": name,
-        "email": email,
-        "phone": phone,
-        "is_active": isActive,
-        "last_login": lastLogin?.toIso8601String(),
-        "created_at": createdAt.toIso8601String(),
-        "roles": role,
-        "scope": scope,
-        "permissions": permissions,
-      };
+    "id": id,
+    "name": name,
+    "email": email,
+    "phone": phone,
+    "is_active": isActive,
+    "last_login": lastLogin?.toIso8601String(),
+    "created_at": createdAt.toIso8601String(),
+    "roles": role,
+    "scope": scope,
+    "permissions": permissions,
+  };
+
+  factory UserModel.fromEntity(User user) {
+    return UserModel(
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt,
+      scope: user.scope,
+      role: user.role,
+      permissions: user.permissions,
+    );
+  }
 }
+

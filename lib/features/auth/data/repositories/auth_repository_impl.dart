@@ -1,4 +1,5 @@
 import 'package:crv_reprosisa/features/auth/domain/repositories/token_repository.dart';
+import 'package:crv_reprosisa/features/auth/domain/repositories/user_session_repository.dart';
 import 'package:dartz/dartz.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/entities/auth_tokens.dart';
@@ -9,9 +10,15 @@ import 'package:crv_reprosisa/core/error/failure.dart';
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remote;
   final TokenRepository tokenRepository;
+  final UserSessionRepository sessionRepository;
 
-  AuthRepositoryImpl({required this.remote, required this.tokenRepository});
-@override
+  AuthRepositoryImpl({
+    required this.remote,
+    required this.tokenRepository,
+    required this.sessionRepository,
+  });
+
+  @override
   Future<Either<Failure, Unit>> requestPasswordReset(String email) async {
     try {
       await remote.requestPasswordReset(email);
@@ -28,15 +35,13 @@ class AuthRepositoryImpl implements AuthRepository {
     required String newPassword,
   }) async {
     try {
-      await remote.confirmPasswordReset(
-        token: token,
-        newPassword: newPassword,
-      );
+      await remote.confirmPasswordReset(token: token, newPassword: newPassword);
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
+
   @override
   Future<Either<Failure, User>> register({
     required String name,
@@ -69,6 +74,8 @@ class AuthRepositoryImpl implements AuthRepository {
       await tokenRepository.save(tokens);
 
       final user = await remote.getMe();
+
+      await sessionRepository.saveUser(user);
 
       return Right(user);
     } catch (e) {
@@ -111,6 +118,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await remote.logout();
       await tokenRepository.clear();
+      await sessionRepository.clear();
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -143,5 +151,4 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
-  
 }
