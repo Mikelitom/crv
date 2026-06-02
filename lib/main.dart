@@ -22,6 +22,7 @@ Future<void> main() async {
   // Hive local cache
   await Hive.initFlutter();
   await Hive.openBox('vehicle_cache');
+  await Hive.openBox('session');
 
   runApp(const ProviderScope(child: AppBootstrap()));
 }
