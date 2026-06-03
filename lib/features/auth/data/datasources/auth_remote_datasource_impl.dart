@@ -47,7 +47,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<AuthTokensModel> refresh(String refreshToken) async {
     final response = await refreshDio.post(
       '/auth/refresh',
-      data: {"refresh_token": refreshToken},
+      options: Options(headers: {'Authorization': 'Bearer $refreshToken'}),
     );
 
     return AuthTokensModel.fromJson(response.data);

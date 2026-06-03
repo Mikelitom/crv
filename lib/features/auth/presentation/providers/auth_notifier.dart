@@ -193,4 +193,3 @@ class AuthNotifier extends Notifier<AuthState> {
     );
   }
 }
-
