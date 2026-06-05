@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dartz/dartz.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:crv_reprosisa/features/auth/presentation/di/auth_providers.dart';
+import 'package:crv_reprosisa/features/auth/presentation/providers/user_session_repository_provider.dart';
 
 class AuthNotifier extends Notifier<AuthState> {
   // Herramienta única para persistencia segura
@@ -20,17 +22,29 @@ class AuthNotifier extends Notifier<AuthState> {
 
   /// Revisa si hay un token guardado para entrar directo a la app
   Future<void> checkAuthStatus() async {
-    final token = await _storage.read(key: 'token');
-    
-    // Si no hay token guardado, no hacemos nada (el usuario debe loguearse)
-    if (token == null) return;
+    final tokens = await ref.read(tokenRepositoryProvider).get();
 
-    // Si hay token, ejecutamos getMe para validar si sigue vigente en el servidor
-    await getMe();
+    final user = await ref.read(userSessionRepositoryProvider).getUser();
+
+    if (tokens == null || user == null) {
+      state = state.copyWith(status: AuthStatus.unauthenticated);
+
+      return;
+    }
+
+    state = state.copyWith(
+      status: AuthStatus.authenticated,
+      user: user,
+      error: null,
+    );
   }
 
   /// Proceso de inicio de sesión con persistencia selectiva
-  Future<void> login(String email, String password, {bool rememberMe = false}) async {
+  Future<void> login(
+    String email,
+    String password, {
+    bool rememberMe = false,
+  }) async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
 
     final Either<Failure, User> result = await ref.read(loginUseCaseProvider)(
@@ -46,9 +60,6 @@ class AuthNotifier extends Notifier<AuthState> {
         );
       },
       (user) async {
-        // --- PERSISTENCIA DEL TOKEN ---
-        await _storage.write(key: 'token', value: user.id);
-
         // --- LÓGICA DE RECUÉRDAME ---
         // Usamos llaves fijas para que la nueva cuenta siempre sobrescriba a la anterior
         if (rememberMe) {
@@ -75,7 +86,8 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading, error: null);
 
     // Borramos el token físico al cerrar sesión voluntariamente
-    await _storage.delete(key: 'token');
+    await ref.read(userSessionRepositoryProvider).clear();
+    await ref.read(tokenRepositoryProvider).clear();
 
     final result = await ref.read(logoutUseCaseProvider)();
 
@@ -100,7 +112,6 @@ class AuthNotifier extends Notifier<AuthState> {
     result.fold(
       (failure) async {
         // Si getMe falla (token inválido o expirado), limpiamos el storage
-        await _storage.delete(key: 'token');
         state = state.copyWith(
           status: AuthStatus.unauthenticated,
           error: failure,
@@ -118,10 +129,15 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<Either<Failure, Unit>> requestPasswordReset(String email) async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
-    final result = await ref.read(authRepositoryProvider).requestPasswordReset(email);
+    final result = await ref
+        .read(authRepositoryProvider)
+        .requestPasswordReset(email);
     return result.fold(
       (failure) {
-        state = state.copyWith(status: AuthStatus.unauthenticated, error: failure);
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          error: failure,
+        );
         return Left(failure);
       },
       (unitValue) {
@@ -136,13 +152,15 @@ class AuthNotifier extends Notifier<AuthState> {
     required String newPassword,
   }) async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
-    final result = await ref.read(authRepositoryProvider).confirmPasswordReset(
-          token: token,
-          newPassword: newPassword,
-        );
+    final result = await ref
+        .read(authRepositoryProvider)
+        .confirmPasswordReset(token: token, newPassword: newPassword);
     return result.fold(
       (failure) {
-        state = state.copyWith(status: AuthStatus.unauthenticated, error: failure);
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          error: failure,
+        );
         return Left(failure);
       },
       (unitValue) {
@@ -163,8 +181,15 @@ class AuthNotifier extends Notifier<AuthState> {
       registerUseCaseProvider,
     )(name: name, phone: phone, email: email, password: password);
     result.fold(
-      (failure) => state = state.copyWith(status: AuthStatus.unauthenticated, error: failure),
-      (user) => state = state.copyWith(status: AuthStatus.authenticated, user: user, error: null),
+      (failure) => state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        error: failure,
+      ),
+      (user) => state = state.copyWith(
+        status: AuthStatus.authenticated,
+        user: user,
+        error: null,
+      ),
     );
   }
 }

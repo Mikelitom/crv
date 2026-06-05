@@ -11,6 +11,7 @@ import 'package:crv_reprosisa/features/auth/domain/usecases/logout_use_case.dart
 import 'package:crv_reprosisa/features/auth/domain/usecases/change_password_use_case.dart';
 import 'package:crv_reprosisa/features/auth/domain/usecases/get_me_use_case.dart';
 import 'package:crv_reprosisa/features/auth/domain/usecases/save_tokens_use_case.dart';
+import 'package:crv_reprosisa/features/auth/presentation/providers/user_session_repository_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/usecases/register_use_case.dart';
 import '../../domain/usecases/confirm_password_reset_use_case.dart';
@@ -34,6 +35,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(
     remote: ref.read(authRemoteDataSourceProvider),
     tokenRepository: ref.read(tokenRepositoryProvider),
+    sessionRepository: ref.read(userSessionRepositoryProvider),
   );
 });
 

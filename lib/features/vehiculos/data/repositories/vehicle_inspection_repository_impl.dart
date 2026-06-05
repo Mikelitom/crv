@@ -99,20 +99,4 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
       }
     }
   }
-
-  Future<void> testSync() async {
-    final pending = await localDataSource.getPendingReports();
-
-    print("Pendientes: ${pending.length}");
-
-    for (final report in pending) {
-      final payload = jsonDecode(report.payload);
-
-      print("Sincronizando ${report.folio}");
-
-      await remoteDataSource.saveVehicleReport(payload);
-
-      await localDataSource.markReportAsSynced(report.id);
-    }
-  }
 }

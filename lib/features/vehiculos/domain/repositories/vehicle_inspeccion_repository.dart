@@ -8,6 +8,4 @@ abstract class VehicleInspectionRepository {
     Map<String, dynamic> reportData,
   );
   Future<Either<Failure, Map<String, dynamic>>> getVehicleTemplate();
-  Future<void> testSync();
 }
-
