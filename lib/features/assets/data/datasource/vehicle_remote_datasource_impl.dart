@@ -69,7 +69,6 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
 
   @override
   Future<void> activateVehicle(String id) async {
-    // Corregido según tu curl: PATCH /api/v1/vehicles/restore/{id}
     await dio.patch("/vehicles/restore/$id");
   }
   @override
@@ -84,15 +83,15 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
       return VehicleHistoryModel.fromJson(json as Map<String, dynamic>);
     }).toList();
   }
-  @override
-  Future<VehicleReportDetailModel> getVehicleReportDetail(String reportId) async {
-    try {
-      final response = await dio.get('/asset/vehicle/$reportId');
-      return VehicleReportDetailModel.fromJson(response.data);
-    } catch (e) {
-      throw Exception("Error al obtener detalles del reporte: $e");
-    }
+ @override
+Future<VehicleReportDetailModel> getVehicleReportDetail(String versionId) async {
+  try {
+    final response = await dio.get('/asset/vehicle/$versionId');
+    return VehicleReportDetailModel.fromJson(response.data);
+  } catch (e) {
+    throw Exception("Error al obtener detalles por versión: $e");
   }
+}
 
   @override
   Future<void> deactivateVehicle(String id) async {

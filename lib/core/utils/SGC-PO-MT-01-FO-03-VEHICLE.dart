@@ -5,15 +5,23 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
-import 'package:crv_reprosisa/features/inspections/data/models/vehicle_report_detail_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:crv_reprosisa/features/inspections/data/models/vehicle_report_detail_model.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/vehicle_report_detail_entity.dart';
 
 class VehiculoPdfGenerator {
   
-  // --- ADAPTADOR PARA EL MODELO DE API ---
-  static Map<String, dynamic> mapDetailModelToPdfData(VehicleReportDetailModel model) {
-    final report = model.report;
-    final vehicle = model.vehicle;
+  // --- ADAPTADOR POLIMÓRFICO: Acepta Model o Entity ---
+  static Map<String, dynamic> mapDetailModelToPdfData(dynamic model) {
+    // Detectamos si es el modelo de inspecciones (es Map) o la entidad de assets
+    final bool isModel = model is VehicleReportDetailModel;
+    
+    final report = isModel ? model.report : model.report;
+    final vehicle = isModel ? model.vehicle : {
+      'brand': model.vehicle.brand,
+      'model': model.vehicle.model,
+      'plate': model.vehicle.plate
+    };
     final answers = model.answers;
 
     return {
@@ -22,7 +30,7 @@ class VehiculoPdfGenerator {
       "placas": vehicle['plate'] ?? "---",
       "kilometraje": report['mileage'] ?? 0,
       "requiere_servicio": report['requires_service'] ?? false,
-      "notas": report['general_notes'] ?? "", // Campo para General Notes
+      "notas": report['general_notes'] ?? "",
       "secciones": _agruparPorSecciones(answers),
     };
   }
@@ -30,23 +38,23 @@ class VehiculoPdfGenerator {
   static List<Map<String, dynamic>> _agruparPorSecciones(List<dynamic> answers) {
     Map<String, List<dynamic>> grouped = {};
     for (var a in answers) {
-      String secName = a['section']['name'] ?? "General";
-      final evidencias = a['evidences'] as List?;
+      final bool isMap = a is Map;
+      String secName = isMap ? (a['section']['name'] ?? "General") : (a as AnswerEntity).sectionName;
+      final evidencias = isMap ? (a['evidences'] as List?) : null;
       
       grouped.putIfAbsent(secName, () => []).add({
-        "name": a['component']['name'],
-        "status": a['option']['code']?.toString().toUpperCase() ?? "",
-        "observation": a['observation'] ?? "",
+        "name": isMap ? a['component']['name'] : (a as AnswerEntity).componentName,
+        "status": isMap ? (a['option']['code']?.toString().toUpperCase() ?? "") : (a as AnswerEntity).optionName,
+        "observation": isMap ? (a['observation'] ?? "") : (a as AnswerEntity).observation,
         "url_antes": (evidencias != null && evidencias.isNotEmpty) ? evidencias[0]['signed_url'] : null,
         "url_despues": (evidencias != null && evidencias.length > 1) ? evidencias[1]['signed_url'] : null,
-        "foto_antes_bytes": null,
+        "foto_antes_bytes": isMap ? null : (a as AnswerEntity).evidenceBytes,
         "foto_despues_bytes": null,
       });
     }
     return grouped.entries.map((e) => {"name": e.key, "items": e.value}).toList();
   }
 
-  // --- ADAPTADOR PARA EL ESTADO LOCAL (INSPECCION EN VIVO) ---
   static Map<String, dynamic> mapStateToPdfData(dynamic state) {
     final String fechaActual = DateFormat('dd/MM/yyyy').format(state.inspectionDate);
     return {
@@ -55,7 +63,7 @@ class VehiculoPdfGenerator {
       "placas": state.selectedVehicle?.plate ?? "---",
       "kilometraje": state.mileage,
       "requiere_servicio": state.requiresService,
-      "notas": state.generalNotes ?? "", // Aquí mapeamos las notas generales del estado
+      "notas": state.generalNotes ?? "",
       "secciones": state.templateSections.map((sec) {
         return {
           "name": sec['name'],

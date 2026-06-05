@@ -106,20 +106,14 @@ class VehicleRepositoryImpl implements VehicleRepository {
   }
 
  @override
-  Future<Either<Failure, VehicleReportDetailEntity>> getVehicleReportDetail(
-    String reportId,
-  ) async {
-    try {
-      // Llamamos al método renombrado en el datasource
-      final reportModel = await remote.getVehicleReportDetail(reportId);
-      
-      return Right(reportModel);
-    } on DioException catch (e) {
-      return Left(ServerFailure(e.toString()));
-    } on SocketException catch (e) {
-      return Left(NetworkFailure(e.toString()));
-    } catch (e) {
-      return Left(UnknownFailure(e.toString()));
-    }
+Future<Either<Failure, VehicleReportDetailEntity>> getVehicleReportDetail(String versionId) async {
+  try {
+    final reportModel = await remote.getVehicleReportDetail(versionId);
+    return Right(reportModel);
+  } on DioException catch (e) {
+    return Left(ServerFailure(e.toString()));
+  } catch (e) {
+    return Left(UnknownFailure(e.toString()));
   }
+}
 }

@@ -6,7 +6,7 @@ import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/pages/inspections_page.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/widgets/quick_actions_i.dart';
-import 'package:crv_reprosisa/features/catalogo/presentation/page/generic_catalog_page.dart';
+// SE ELIMINÓ EL IMPORT DEL CATÁLOGO AQUÍ
 import 'package:crv_reprosisa/features/servicios/page/prensas/press_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/presentation/pages/banda_inspection_page.dart';
@@ -44,19 +44,17 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Listado de navegación
+    // Listado de navegación modificado
     final pages = [
       _AdminHomePage(user: user),
       InspectionPage(
         stats: _adminStats,
         actions: _adminActions,
-        // inspections: _adminInspections,
       ),
       const ReportsPage(),
       const AssetsAdminPage(),
       const UsersAdminPage(),
-      GenericCatalogPage(type: AssetType.vehicle),
-      GenericCatalogPage(type: AssetType.press),
+      // SE ELIMINARON LAS PÁGINAS DE GENERICCATALOGPAGE AQUÍ
       const VehicleServicePage(),
       const PressServicePage(),
       const ProfilePage(),
@@ -69,7 +67,6 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
         selectedIndex: selectedIndex,
         onItemSelected: (i) => setState(() => selectedIndex = i),
       ),
-      // Se eliminó el Padding fijo aquí para manejarlo dentro de cada página si es necesario
       content: pages[selectedIndex],
     );
   }
@@ -91,9 +88,7 @@ class _AdminHomePage extends StatelessWidget {
             userName: user.name,
             actionIcon: Icons.admin_panel_settings_rounded,
           ),
-
           const SizedBox(height: 32),
-
           const Text(
             "Estadísticas Operativas",
             style: TextStyle(
@@ -103,17 +98,10 @@ class _AdminHomePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-
-          // GRID DE ESTADÍSTICAS RESPONSIVO
           _buildStatsGrid(context),
-
           const SizedBox(height: 32),
-
-          // Layout de Gráficas Responsivo
           _buildChartsLayout(),
-
           const SizedBox(height: 40),
-
           const Text(
             "Acciones Principales",
             style: TextStyle(
@@ -123,35 +111,27 @@ class _AdminHomePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          
           _buildQuickActionGrid(context),
-
           const SizedBox(height: 40),
-
           const NotificationPanel(children: []),
         ],
       ),
     );
   }
 
-  // --- WIDGETS DE CONSTRUCCIÓN ---
-
   Widget _buildStatsGrid(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         double maxWidth = constraints.maxWidth;
-
-        // 1. Decidir número de columnas
         int crossAxisCount = maxWidth < 750 ? 2 : 4;
 
-        // 2. Calcular Ratio dinámico para evitar overflows
         double aspectRatio;
         if (maxWidth < 400) {
-          aspectRatio = 2.6; // Pantallas mini
+          aspectRatio = 2.6;
         } else if (maxWidth < 750) {
-          aspectRatio = 2.3; // Celulares estándar
+          aspectRatio = 2.3;
         } else {
-          aspectRatio = 1.8; // Escritorio/Tablet
+          aspectRatio = 1.8;
         }
 
         return GridView.count(
@@ -172,7 +152,6 @@ class _AdminHomePage extends StatelessWidget {
     );
   }
 
-  // Función para envolver la tarjeta en un FittedBox preventivo
   Widget _statItem(String val, String sub, String lab, IconData ic) {
     return FittedBox(
       fit: BoxFit.scaleDown,
@@ -291,7 +270,6 @@ class _AdminHomePage extends StatelessWidget {
   }
 }
 
-// --- DATOS INICIALES ---
 final List<StatsModel> _adminStats = [
   StatsModel(value: "0", label: "Totales", color: Colors.grey),
   StatsModel(value: "0", label: "Pendientes", color: Colors.grey),

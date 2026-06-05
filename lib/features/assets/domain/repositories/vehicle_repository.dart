@@ -13,5 +13,4 @@ abstract class VehicleRepository {
   Future<Either<Failure, Unit>> activateVehicle(String id);
   Future<Either<Failure, Unit>> deactivateVehicle(String id);
   Future<Either<Failure, List<VehicleHistory>>> getVehicleHistory(String vehicleId);
-  Future<Either<Failure, VehicleReportDetailEntity>> getVehicleReportDetail(String reportId);
-}
+Future<Either<Failure, VehicleReportDetailEntity>> getVehicleReportDetail(String versionId);}

@@ -6,6 +6,7 @@ class HistoryCard extends StatelessWidget {
   final VoidCallback onDetailsPressed;
   final VoidCallback onDownloadPressed;
   final VoidCallback onPrintPressed;
+  final VoidCallback onPdfPreviewPressed;
 
   const HistoryCard({
     super.key,
@@ -13,6 +14,7 @@ class HistoryCard extends StatelessWidget {
     required this.onDetailsPressed,
     required this.onDownloadPressed,
     required this.onPrintPressed,
+    required this.onPdfPreviewPressed,
   });
 
   static const Color primaryRed = Color(0xFFC62828);
@@ -20,6 +22,9 @@ class HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Manejo seguro de la lista de evidencias
+    final List<String> paths = (item.evidencePaths is List) ? List<String>.from(item.evidencePaths) : [];
+    
     return Container(
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -46,26 +51,25 @@ class HistoryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-
-          // Notas Generales - Limpiamos posibles caracteres basura
           Text(
             (item.generalNotes != null && item.generalNotes.toString().trim().length > 1)
                 ? item.generalNotes.toString()
                 : "Sin observaciones adicionales registradas.",
-            style: const TextStyle(fontSize: 15, height: 1.6, fontWeight: FontWeight.w500, color: Colors.black87),
+            style: const TextStyle(
+              fontSize: 15, 
+              height: 1.6, 
+              fontWeight: FontWeight.w500, 
+              color: Colors.black87
+            ),
           ),
           const SizedBox(height: 20),
-
           _infoContainer(),
           const SizedBox(height: 20),
-
-          // SECCIÓN DE EVIDENCIAS MEJORADA
-          _evidenceSection(),
-          
+          _evidenceSection(paths),
           const SizedBox(height: 20),
           Divider(color: Colors.grey.shade200, thickness: 1.2),
           const SizedBox(height: 12),
-          _footer(context),
+          _footer(),
         ],
       ),
     );
@@ -95,45 +99,56 @@ class HistoryCard extends StatelessWidget {
     );
   }
 
-  Widget _evidenceSection() {
-    final List<String> paths = (item.evidencePaths is List) ? List<String>.from(item.evidencePaths) : [];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _evidenceSection(List<String> paths) {
+    return Row(
       children: [
-        Row(
-          children: [
-            Icon(Icons.image_outlined, size: 18, color: Colors.grey.shade600),
-            const SizedBox(width: 6),
-            const Text('EVIDENCIA FOTOGRÁFICA', style: TextStyle(color: Color(0xFF555555), fontWeight: FontWeight.w800, fontSize: 11)),
-            const SizedBox(width: 10),
-            CircleAvatar(radius: 12, backgroundColor: Colors.grey.shade200, child: Text("${paths.length}", style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold))),
-          ],
+        Icon(Icons.image_outlined, size: 18, color: Colors.grey.shade600),
+        const SizedBox(width: 6),
+        const Text(
+          'EVIDENCIA FOTOGRÁFICA', 
+          style: TextStyle(color: Color(0xFF555555), fontWeight: FontWeight.w800, fontSize: 11)
         ),
-        if (paths.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: paths.map((url) => ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(url, width: 60, height: 60, fit: BoxFit.cover, errorBuilder: (_,__,___) => const SizedBox()),
-              )).toList(),
-            ),
-          ),
+        const SizedBox(width: 10),
+        CircleAvatar(
+          radius: 12, 
+          backgroundColor: Colors.grey.shade200, 
+          child: Text(
+            "${paths.length}", 
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)
+          )
+        ),
       ],
     );
   }
 
-  Widget _footer(BuildContext context) {
+  Widget _footer() {
     return Row(
       children: [
         Icon(Icons.person_outline, size: 18, color: Colors.grey.shade500),
         const SizedBox(width: 8),
-        Expanded(child: Text(item.responsibleName ?? "Sin responsable", style: TextStyle(color: Colors.grey.shade800, fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis)),
-        IconButton(onPressed: onDetailsPressed, icon: const Icon(Icons.remove_red_eye_outlined, size: 20, color: primaryRed)),
-        IconButton(onPressed: onDownloadPressed, icon: const Icon(Icons.file_download_outlined, size: 20, color: Colors.blue)),
-        IconButton(onPressed: onPrintPressed, icon: const Icon(Icons.print_outlined, size: 20, color: Colors.teal)),
+        Expanded(
+          child: Text(
+            item.responsibleName ?? "Sin responsable", 
+            style: TextStyle(color: Colors.grey.shade800, fontWeight: FontWeight.w600, fontSize: 13), 
+            overflow: TextOverflow.ellipsis
+          )
+        ),
+        IconButton(
+          onPressed: onDetailsPressed, 
+          icon: const Icon(Icons.remove_red_eye_outlined, size: 20, color: primaryRed)
+        ),
+        IconButton(
+          onPressed: onPdfPreviewPressed, // Conectado correctamente
+          icon: const Icon(Icons.picture_as_pdf, size: 20, color: Colors.blue)
+        ),
+        IconButton(
+          onPressed: onDownloadPressed, 
+          icon: const Icon(Icons.file_download_outlined, size: 20, color: Colors.indigo)
+        ),
+        IconButton(
+          onPressed: onPrintPressed, 
+          icon: const Icon(Icons.print_outlined, size: 20, color: Colors.teal)
+        ),
       ],
     );
   }
@@ -142,16 +157,32 @@ class HistoryCard extends StatelessWidget {
     final bool isCompleted = state.toUpperCase().contains('COMPLETED') || state.toUpperCase().contains('FINALIZADO');
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(color: isCompleted ? Colors.green.shade50 : Colors.orange.shade50, borderRadius: BorderRadius.circular(30)),
-      child: Text(isCompleted ? 'COMPLETADO' : 'EN PROCESO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isCompleted ? Colors.green.shade700 : Colors.orange.shade800)),
+      decoration: BoxDecoration(
+        color: isCompleted ? Colors.green.shade50 : Colors.orange.shade50, 
+        borderRadius: BorderRadius.circular(30)
+      ),
+      child: Text(
+        isCompleted ? 'COMPLETADO' : 'EN PROCESO', 
+        style: TextStyle(
+          fontSize: 10, 
+          fontWeight: FontWeight.w900, 
+          color: isCompleted ? Colors.green.shade700 : Colors.orange.shade800
+        )
+      ),
     );
   }
 
   Widget _versionChip(String folio) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(color: const Color(0xFFFFEBEE), borderRadius: BorderRadius.circular(30)),
-      child: Text(folio, style: const TextStyle(color: primaryRed, fontWeight: FontWeight.w900, fontSize: 10)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFEBEE), 
+        borderRadius: BorderRadius.circular(30)
+      ),
+      child: Text(
+        folio, 
+        style: const TextStyle(color: primaryRed, fontWeight: FontWeight.w900, fontSize: 10)
+      ),
     );
   }
 }

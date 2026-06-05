@@ -6,7 +6,7 @@ import 'package:pdf/pdf.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 
-import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-08-PRESS.DART';
+import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-08-PRESS.dart';
 import '../../domain/entities/component_item.dart';
 import '../provider/inspeccion_providers.dart';
 import '../../../../features/evidence/presentation/providers/evidence_service_provider.dart';

@@ -5,6 +5,8 @@ import '../../domain/usecases/create_press.dart';
 import '../../domain/usecases/get_all_press.dart';
 import '../../domain/usecases/activate_press.dart';
 import '../../domain/usecases/deactivate_press.dart';
+import '../../domain/usecases/get_press_report_detail.dart';
+import '../../domain/usecases/get_press_history_use_case.dart';
 
 final createPressUseCaseProvider = Provider<CreatePress>((ref) {
   final repository = ref.read(pressRepositoryProvider);
@@ -28,4 +30,13 @@ final activatePressUseCaseProvider = Provider<ActivatePress>((ref) {
 final deactivatePressUseCaseProvider = Provider<DeactivatePress>((ref) {
   final repository = ref.read(pressRepositoryProvider);
   return DeactivatePress(repository);
+});
+final getPressHistoryUseCaseProvider = Provider<GetPressHistoryUseCase>((ref) {
+  final repository = ref.read(pressRepositoryProvider);
+  return GetPressHistoryUseCase(repository);
+});
+
+final getPressReportDetailUseCaseProvider = Provider<GetPressReportDetailUseCase>((ref) {
+  final repository = ref.read(pressRepositoryProvider);
+  return GetPressReportDetailUseCase(repository); 
 });

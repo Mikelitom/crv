@@ -1,7 +1,10 @@
+import 'package:crv_reprosisa/features/assets/presentation/pages/press_history_page.dart';
+import 'package:crv_reprosisa/features/assets/presentation/providers/press_history_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_history_provider.dart';
 import '../pages/history_page_vehicle.dart';
+
 class AssetDetailModal extends ConsumerWidget {
   final dynamic item;
   final String type; // "vehiculo", "prensa", "cliente"
@@ -154,19 +157,45 @@ class AssetDetailModal extends ConsumerWidget {
                           ),
                         ),
                         onPressed: () async {
-                          final String id = type == "vehiculo" ? _val('vehicleId') : _val('id');
-                          
-                          if (id != '-' && id.isNotEmpty) {
-                            // Cargar datos y navegar a página de historial
-                            await ref.read(vehicleHistoryProvider.notifier).loadHistory(id);
-                            
-                            if (context.mounted) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => HistoryPage(assetId: id, title: title),
-                                ),
-                              );
+                          final String id = type == "vehiculo"
+                              ? _val('vehicleId')
+                              : _val('id');
+
+                          if (type != "vehiculo") {
+                            print("type: " + type);
+                            if (id != '-' && id.isNotEmpty) {
+                              // Cargar datos y navegar a página de historial
+                              await ref
+                                  .read(pressHistoryProvider.notifier)
+                                  .loadHistory(id);
+
+                              if (context.mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+PressHistoryPage(pressId: id, title: title),
+                                  ),
+                                );
+                              }
+                            }
+                          } else {
+                            print("type: " + type);
+                            if (id != '-' && id.isNotEmpty) {
+                              // Cargar datos y navegar a página de historial
+                              await ref
+                                  .read(vehicleHistoryProvider.notifier)
+                                  .loadHistory(id);
+
+                              if (context.mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        HistoryPage(assetId: id, title: title),
+                                  ),
+                                );
+                              }
                             }
                           }
                         },
@@ -266,7 +295,7 @@ class AssetDetailModal extends ConsumerWidget {
 
   Widget _buildClientLayout() {
     final List<dynamic> mines = (_val('mines') as List<dynamic>?) ?? [];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -279,20 +308,33 @@ class AssetDetailModal extends ConsumerWidget {
           padding: EdgeInsets.symmetric(vertical: 8),
           child: Text(
             "MINAS ASOCIADAS",
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
           ),
         ),
-        if (mines.isEmpty) 
+        if (mines.isEmpty)
           const Padding(
             padding: EdgeInsets.only(bottom: 8.0),
-            child: Text("No hay minas registradas", style: TextStyle(fontSize: 12)),
+            child: Text(
+              "No hay minas registradas",
+              style: TextStyle(fontSize: 12),
+            ),
           ),
-        
+
         ...mines.map((mina) {
-          final name = (mina is Map) ? (mina['name'] ?? 'Sin nombre') : (mina.name ?? 'Sin nombre');
-          final address = (mina is Map) ? (mina['address'] ?? 'Sin dirección') : (mina.address ?? 'Sin dirección');
-          final phone = (mina is Map) ? (mina['phone'] ?? '-') : (mina.phone ?? '-');
-          
+          final name = (mina is Map)
+              ? (mina['name'] ?? 'Sin nombre')
+              : (mina.name ?? 'Sin nombre');
+          final address = (mina is Map)
+              ? (mina['address'] ?? 'Sin dirección')
+              : (mina.address ?? 'Sin dirección');
+          final phone = (mina is Map)
+              ? (mina['phone'] ?? '-')
+              : (mina.phone ?? '-');
+
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
@@ -316,15 +358,19 @@ class AssetDetailModal extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.landscape_rounded, color: Colors.blue.shade700, size: 20),
+                        Icon(
+                          Icons.landscape_rounded,
+                          color: Colors.blue.shade700,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             name.toUpperCase(),
                             style: TextStyle(
-                              fontWeight: FontWeight.w900, 
-                              fontSize: 14, 
-                              color: Colors.blue.shade900
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                              color: Colors.blue.shade900,
                             ),
                           ),
                         ),
@@ -333,17 +379,40 @@ class AssetDetailModal extends ConsumerWidget {
                     const Divider(height: 20),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade600),
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: Colors.grey.shade600,
+                        ),
                         const SizedBox(width: 6),
-                        Expanded(child: Text(address, style: TextStyle(fontSize: 12, color: Colors.grey.shade700))),
+                        Expanded(
+                          child: Text(
+                            address,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(Icons.phone_outlined, size: 14, color: Colors.grey.shade600),
+                        Icon(
+                          Icons.phone_outlined,
+                          size: 14,
+                          color: Colors.grey.shade600,
+                        ),
                         const SizedBox(width: 6),
-                        Text(phone, style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+                        Text(
+                          phone,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ],

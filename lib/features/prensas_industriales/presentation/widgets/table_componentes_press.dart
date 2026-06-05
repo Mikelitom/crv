@@ -47,7 +47,7 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      if (constraints.maxWidth < 900) {
+      if (constraints.maxWidth < 1100) { // Se subió para dar espacio al input de notas
         return _buildHighDesignMobileList(); 
       }
       return _buildDesktopTable();
@@ -74,6 +74,7 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
             DataColumn(label: _HeaderLabel('UNIDAD')),
             DataColumn(label: _HeaderLabel('DESCRIPCIÓN DEL COMPONENTE')),
             DataColumn(label: _HeaderLabel('CONDICIÓN')),
+            DataColumn(label: _HeaderLabel('OBSERVACIONES')), // Columna de Observaciones fija
             DataColumn(label: _HeaderLabel('EVIDENCIA (A / D)')),
           ],
           rows: widget.items.map((item) => DataRow(
@@ -81,10 +82,11 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
               DataCell(_qtyField(item)),
               DataCell(Text(item.measureUnit, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey))),
               DataCell(SizedBox(
-                width: 350,
+                width: 250,
                 child: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w700, color: kTextDark))
               )),
               DataCell(_desktopStatus(item)), 
+              DataCell(_desktopNoteField(item)), // <-- CAMPO INTEGRADO DIRECTO (Como tu imagen)
               DataCell(_evidenceDual(item, 44, true)),
             ],
           )).toList(),
@@ -160,7 +162,7 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
                   ),
                   child: Row(
                     children: [
-                      _noteActionBtn(item),
+                      _noteActionBtn(item), // Mantiene el botón tradicional en móvil para optimizar espacio
                       const Spacer(),
                       const Text("FOTOS (A / D)", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.blueGrey)),
                       const SizedBox(width: 12),
@@ -197,6 +199,37 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     ),
     child: Center(child: Text(unit, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13))),
   );
+
+  // Entrada de Texto limpia para Escritorio (idéntica a la imagen adjunta)
+  Widget _desktopNoteField(ComponentItem item) {
+    return SizedBox(
+      width: 250,
+      child: TextField(
+        onChanged: (v) => item.observation = v,
+        controller: TextEditingController(text: item.observation)..selection = TextSelection.collapsed(offset: item.observation.length),
+        maxLines: 2,
+        minLines: 1,
+        style: const TextStyle(fontSize: 13, color: kTextDark, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          hintText: "Nota...",
+          hintStyle: TextStyle(color: Colors.blueGrey.withOpacity(0.6), fontSize: 13),
+          filled: true,
+          fillColor: kHeaderGray.withOpacity(0.4), // Fondo gris suave de tu mockup
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+          // Estilo sin bordes toscos
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: kBorderSuave.withOpacity(0.3), width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: kRedReprosisa, width: 1.5),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _noteActionBtn(ComponentItem item) {
     bool hasNote = item.observation.isNotEmpty;
@@ -256,19 +289,24 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     );
   }
 
-  Widget _qtyField(ComponentItem item) => TextField(
-    onChanged: (v) => setState(() => item.quantity = int.tryParse(v)),
-    textAlign: TextAlign.center, keyboardType: TextInputType.number,
-    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-    decoration: InputDecoration(
-      hintText: "0", filled: true, fillColor: Colors.white, isDense: true, 
-      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: kBorderSuave, width: 1.5)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: kRedReprosisa, width: 2.0)),
+  Widget _qtyField(ComponentItem item) => SizedBox(
+    width: 60,
+    child: TextField(
+      onChanged: (v) => setState(() => item.quantity = int.tryParse(v)),
+      textAlign: TextAlign.center, keyboardType: TextInputType.number,
+      controller: TextEditingController(text: item.quantity?.toString() ?? "")..selection = TextSelection.collapsed(offset: item.quantity?.toString().length ?? 0),
+      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+      decoration: InputDecoration(
+        hintText: "0", filled: true, fillColor: Colors.white, isDense: true, 
+        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: kBorderSuave, width: 1.5)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: kRedReprosisa, width: 2.0)),
+      ),
     ),
   );
 
   Widget _evidenceDual(ComponentItem item, double size, bool showLabel) => Row(
+    mainAxisSize: MainAxisSize.min,
     children: [
       _mediaBox("A", item.evidenceBefore, () => _pick(item, true), () => setState(() => item.evidenceBefore = []), size),
       const SizedBox(width: 8),
@@ -335,13 +373,16 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     }
   }
 
-  Widget _desktopStatus(ComponentItem item) => Row(children: [
-    _stBtn(item, "GOOD", Colors.green, Icons.check, "BUENO"),
-    const SizedBox(width: 10),
-    _stBtn(item, "BAD", kRedReprosisa, Icons.close, "MALO"),
-    const SizedBox(width: 10),
-    _stBtn(item, "NOT_APPLICABLE", Colors.grey, Icons.remove, "N/A"),
-  ]);
+  Widget _desktopStatus(ComponentItem item) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      _stBtn(item, "GOOD", Colors.green, Icons.check, "BUENO"),
+      const SizedBox(width: 10),
+      _stBtn(item, "BAD", kRedReprosisa, Icons.close, "MALO"),
+      const SizedBox(width: 10),
+      _stBtn(item, "NOT_APPLICABLE", Colors.grey, Icons.remove, "N/A"),
+    ],
+  );
 
   Widget _stBtn(ComponentItem item, String val, Color c, IconData i, String l) {
     bool isSel = item.status == val;

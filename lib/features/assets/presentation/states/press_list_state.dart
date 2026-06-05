@@ -1,5 +1,6 @@
+// lib/features/assets/presentation/states/press_list_state.dart
 import 'package:crv_reprosisa/features/assets/domain/entities/press.dart';
-import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
+import 'status.dart';
 
 class PressListState {
   final Status status;
@@ -12,7 +13,11 @@ class PressListState {
     this.error,
   });
 
-  PressListState copyWith({Status? status, List<Press>? press, String? error}) {
+  PressListState copyWith({
+    Status? status,
+    List<Press>? press,
+    String? error,
+  }) {
     return PressListState(
       status: status ?? this.status,
       press: press ?? this.press,

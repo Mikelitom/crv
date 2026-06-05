@@ -21,16 +21,13 @@ class SidebarAdmin extends ConsumerStatefulWidget {
 }
 
 class _SidebarAdminState extends ConsumerState<SidebarAdmin> {
-  bool _isCatalogExpanded = false;
+  // SE ELIMINÓ LA VARIABLE DE ESTADO _isCatalogExpanded
   bool _isServicesExpanded = false;
 
   void _handleNavigation(int index) {
     widget.onItemSelected(index);
     
-    // 1. Obtenemos el Scaffold más cercano
     final scaffold = Scaffold.of(context);
-    
-    // 2. Solo hacemos pop si el Drawer está abierto (evita el error en Desktop)
     if (scaffold.hasDrawer && scaffold.isDrawerOpen) {
       Navigator.pop(context);
     }
@@ -74,37 +71,25 @@ class _SidebarAdminState extends ConsumerState<SidebarAdmin> {
               isActive: widget.selectedIndex == 3,
               onTap: () => _handleNavigation(3),
             ),
-            _buildSubMenu(
-              label: 'Catálogo',
-              icon: Icons.book_outlined,
-              isExpanded: _isCatalogExpanded,
-              onExpand: () => setState(() {
-                _isCatalogExpanded = !_isCatalogExpanded;
-                _isServicesExpanded = false;
-              }),
-              items: [
-                _SubItem(label: 'Vehículos', icon: Icons.local_shipping_outlined, index: 5),
-                _SubItem(label: 'Prensas', icon: Icons.settings_input_component_rounded, index: 6),
-              ],
+            SidebarItem(
+              icon: Icons.person_add_alt_outlined,
+              label: 'Gestión de Usuarios',
+              isActive: widget.selectedIndex == 4,
+              onTap: () => _handleNavigation(4),
             ),
+            // SE ELIMINÓ POR COMPLETO EL SUBMENÚ DE CATÁLOGO AQUÍ
             _buildSubMenu(
               label: 'Servicios',
               icon: Icons.build_outlined,
               isExpanded: _isServicesExpanded,
               onExpand: () => setState(() {
                 _isServicesExpanded = !_isServicesExpanded;
-                _isCatalogExpanded = false;
               }),
               items: [
-                _SubItem(label: 'Servicio Vehículos', icon: Icons.car_repair_outlined, index: 7),
-                _SubItem(label: 'Servicio Prensas', icon: Icons.precision_manufacturing_outlined, index: 8),
+                // Índices corregidos: antes eran 7 y 8, ahora pasan a ser 5 y 6
+                _SubItem(label: 'Servicio Vehículos', icon: Icons.car_repair_outlined, index: 5),
+                _SubItem(label: 'Servicio Prensas', icon: Icons.precision_manufacturing_outlined, index: 6),
               ],
-            ),
-            SidebarItem(
-              icon: Icons.person_add_alt_outlined,
-              label: 'Gestión de Usuarios',
-              isActive: widget.selectedIndex == 4,
-              onTap: () => _handleNavigation(4),
             ),
           ],
 
@@ -112,8 +97,8 @@ class _SidebarAdminState extends ConsumerState<SidebarAdmin> {
           SidebarItem(
             icon: Icons.person_outline,
             label: 'Perfil',
-            isActive: widget.selectedIndex == 9,
-            onTap: () => _handleNavigation(9),
+            isActive: widget.selectedIndex == 7, // Índice corregido: antes era 9, ahora es 7
+            onTap: () => _handleNavigation(7),
           ),
 
           const Spacer(),

@@ -1,3 +1,4 @@
+// lib/features/assets/presentation/states/press_state.dart
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 
 class PressState {
@@ -5,7 +6,11 @@ class PressState {
   final String? error;
   final String? message;
 
-  const PressState({this.status = Status.initial, this.error, this.message});
+  const PressState({
+    this.status = Status.initial,
+    this.error,
+    this.message,
+  });
 
   PressState copyWith({
     Status? status,
@@ -16,8 +21,8 @@ class PressState {
   }) {
     return PressState(
       status: status ?? this.status,
-      error: clearError ? null : error,
-      message: clearMessage ? null : message,
+      error: clearError ? null : (error ?? this.error),
+      message: clearMessage ? null : (message ?? this.message),
     );
   }
 }

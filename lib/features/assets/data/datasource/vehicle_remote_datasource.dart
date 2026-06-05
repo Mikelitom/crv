@@ -10,5 +10,4 @@ abstract class VehicleRemoteDatasource {
   Future<void> activateVehicle(String id);
   Future<void> deactivateVehicle(String id);
   Future<List<VehicleHistoryModel>> getVehicleHistory(String vehicleId);
-  Future<VehicleReportDetailModel> getVehicleReportDetail(String reportId);
-  }
+  Future<VehicleReportDetailModel> getVehicleReportDetail(String versionId);  }
