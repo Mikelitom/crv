@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +18,10 @@ Future<void> main() async {
   final buckets = await Supabase.instance.client.storage.listBuckets();
 
   print("Buckets: $buckets");
+
+  await Hive.initFlutter();
+
+  await Hive.openBox('vehicle_cache');
 
   runApp(const ProviderScope(child: MyApp()));
 }

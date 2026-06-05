@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crv_reprosisa/features/vehiculos/data/datasource/vehicle_inspection_local_datasource.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/vehicle_entity.dart';
@@ -6,39 +9,71 @@ import '../datasource/vehicle_inspection_remote_datasource.dart';
 import '../models/inspection_vehicle_model.dart';
 
 class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
-  final VehicleInspectionRemoteDataSource dataSource;
-  VehicleInspectionRepositoryImpl(this.dataSource);
+  final VehicleInspectionRemoteDataSource remoteDataSource;
+  final VehicleInspectionLocalDatasource localDataSource;
+
+  VehicleInspectionRepositoryImpl({
+    required this.remoteDataSource,
+    required this.localDataSource,
+  });
 
   @override
   Future<Either<Failure, List<Vehicle>>> getActiveVehicles() async {
     try {
-      final response = await dataSource.getActiveVehicles();
-      print("DEBUG: Repo data received: ${response.length} items");
+      final response = await remoteDataSource.getActiveVehicles();
 
-      for (var item in response) {
-        print("ITEM TYPE: ${item.runtimeType}");
-        print("ITEM VALUE: $item");
-      }
-      print(
-        "DEBUG: Repo mapping success: ${response.first.plate}",
-      ); // Verifica si el mapeo funcionó
+      await localDataSource.saveVehicles(response.cast<VehicleModel>());
+
+      print("Vehiculos guardados localmente: ${response.length}");
 
       return Right(response);
     } catch (e) {
-      print(
-        "DEBUG: Repo Mapping Error: $e",
-      ); // Esto te dirá qué campo del JSON está mal
-      return const Left(ServerFailure("Error al mapear vehículos"));
+      print("Error remoto: $e");
+
+      try {
+        final localVehicles = await localDataSource.getVehicles();
+
+        print("Vehiculos encontrados localmente: ${localVehicles.length}");
+
+        if (localVehicles.isNotEmpty) {
+          return Right(localVehicles);
+        }
+
+        return const Left(
+          ServerFailure("No hay vehículos disponibles sin conexión"),
+        );
+      } catch (localError) {
+        print("Error local: $localError");
+
+        return const Left(ServerFailure("Error al obtener vehículos locales"));
+      }
     }
   }
 
   @override
   Future<Either<Failure, Map<String, dynamic>>> getVehicleTemplate() async {
     try {
-      final data = await dataSource.getVehicleTemplate();
+      final data = await remoteDataSource.getVehicleTemplate();
+
+      await localDataSource.saveVehicleTemplate(data);
+
       return Right(data);
     } catch (e) {
-      return const Left(ServerFailure("Error al cargar template de vehículos"));
+      try {
+        final localData = await localDataSource.getVehicleTemplate();
+
+        if (localData.isNotEmpty) {
+          return Right(localData);
+        }
+
+        return const Left(
+          ServerFailure("No hay template disponible sin conexión"),
+        );
+      } catch (_) {
+        return const Left(
+          ServerFailure("Error al cargar template de vehículos"),
+        );
+      }
     }
   }
 
@@ -47,12 +82,37 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
     Map<String, dynamic> reportData,
   ) async {
     try {
-      final id = await dataSource.saveVehicleReport(reportData);
+      final id = await remoteDataSource.saveVehicleReport(reportData);
+
       return Right(id);
     } catch (e) {
-      return const Left(
-        ServerFailure("Error al enviar el reporte de inspección"),
-      );
+      try {
+        await localDataSource.saveOfflineReport(reportData);
+
+        return const Right(
+          'Reporte guardado localmente. Pendiente de sincronización.',
+        );
+      } catch (localError) {
+        return const Left(
+          ServerFailure('No fue posible guardar el reporte localmente.'),
+        );
+      }
+    }
+  }
+
+  Future<void> testSync() async {
+    final pending = await localDataSource.getPendingReports();
+
+    print("Pendientes: ${pending.length}");
+
+    for (final report in pending) {
+      final payload = jsonDecode(report.payload);
+
+      print("Sincronizando ${report.folio}");
+
+      await remoteDataSource.saveVehicleReport(payload);
+
+      await localDataSource.markReportAsSynced(report.id);
     }
   }
 }
