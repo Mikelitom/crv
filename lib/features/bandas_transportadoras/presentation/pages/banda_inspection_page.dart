@@ -225,15 +225,11 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(
-                  child: CustomHeader(title: "Inspección de Bandas"),
-                ),
-                const SizedBox(width: 16),
-                _buildNavigationBackButton(context),
-              ],
+            // --- CAMBIO AQUÍ: Integración del botón en el Header ---
+            CustomHeader(
+              title: "Inspección de Bandas",
+              actionIcon: Icons.arrow_back_ios_new_rounded,
+              onActionTap: () => Navigator.pop(context),
             ),
             const SizedBox(height: 24),
             CaptureMethodSelector(onManualFill: () {}, onScan: () {}),

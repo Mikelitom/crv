@@ -17,13 +17,16 @@ class CreatePressDialog extends ConsumerStatefulWidget {
 class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
   final _formKey = GlobalKey<FormState>();
 
-  final typeController = TextEditingController();
+  // Variable para el Dropdown
+  String? selectedType;
+  final List<String> pressTypes = ["Neumática (móvil)", "Hidráulica (fija)"];
+
   final modelController = TextEditingController();
   final voltzController = TextEditingController();
   final serieController = TextEditingController();
   final sizeController = TextEditingController();
 
-  bool _success = false; // 🔥 clave
+  bool _success = false;
 
   @override
   void initState() {
@@ -67,7 +70,7 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
               if (!_formKey.currentState!.validate()) return;
 
               final press = CreatePressParams(
-                type: typeController.text.trim(),
+                type: selectedType!, // Usamos la variable del dropdown
                 model: modelController.text.trim(),
                 voltz: voltzController.text.trim(),
                 serie: serieController.text.trim(),
@@ -86,24 +89,29 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
     );
   }
 
-  /// FORM
   Widget _buildForm(PressListState pressState) {
     return Form(
       key: _formKey,
       child: Column(
         key: const ValueKey("form"),
         children: [
-          buildField(
-            typeController,
-            "Tipo",
-            "Hidráulica / Mecánica",
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return "El tipo es obligatorio";
-              }
-              return null;
-            },
+          // DROPDOWN PARA TIPO
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(
+              labelText: "Tipo de prensa",
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+            ),
+            value: selectedType,
+            items: pressTypes.map((type) => DropdownMenuItem(
+              value: type,
+              child: Text(type),
+            )).toList(),
+            onChanged: (value) => setState(() => selectedType = value),
+            validator: (value) => value == null ? "Seleccione un tipo" : null,
           ),
+
+          const SizedBox(height: 16),
 
           buildField(
             modelController,
@@ -125,12 +133,10 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
               if (value == null || value.trim().isEmpty) {
                 return "El voltaje es obligatorio";
               }
-
               final regex = RegExp(r'^[0-9]+V$');
               if (!regex.hasMatch(value)) {
                 return "Formato inválido (ej: 220V)";
               }
-
               return null;
             },
           ),
@@ -143,13 +149,10 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
               if (value == null || value.trim().isEmpty) {
                 return "La serie es obligatoria";
               }
-
               final exists = pressState.press.any(
                 (p) => p.serie == serieController.text.trim(),
               );
-
               if (exists) return "Numero de serie ya registrado";
-
               return null;
             },
           ),
@@ -170,7 +173,6 @@ class _CreatePressDialogState extends ConsumerState<CreatePressDialog> {
     );
   }
 
-  /// SUCCESS UI (igual que client)
   Widget _buildSuccessState() {
     return SizedBox(
       key: const ValueKey("success"),

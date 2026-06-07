@@ -27,30 +27,35 @@ class CatalogStatsRow extends StatelessWidget {
     IconData iconKpi1 = Icons.play_circle_fill_rounded;
     IconData iconKpi2 = Icons.build_circle_rounded;
 
-    if (activeTabIndex == 0) { 
-      total = clientState.clients.length;
-      kpi1Value = clientState.clients.where((c) => c.isActive == true).length;
-      kpi2Value = clientState.clients.where((c) => c.isActive == false).length;
+    if (activeTabIndex == 0) { // --- CLIENTES ---
+      final List clients = clientState.clients ?? [];
+      total = clients.length;
+      kpi1Value = clients.where((c) => c.isActive == true).length;
+      kpi2Value = clients.where((c) => c.isActive == false).length;
       labelTotal = "Total de Clientes:";
       labelKpi1 = "Clientes Activos:";
       labelKpi2 = "Clientes Inactivos:";
       iconTotal = Icons.business_rounded;
       iconKpi1 = Icons.check_circle_rounded;
       iconKpi2 = Icons.cancel_rounded;
-    } else if (activeTabIndex == 1) { 
-      total = vehicleState.vehicles.length;
-      kpi1Value = 18; 
-      kpi2Value = 7;
+    } else if (activeTabIndex == 1) { // --- VEHÍCULOS ---
+      final List vehicles = vehicleState.vehicles ?? [];
+      total = vehicles.length;
+      // Asumiendo que operationState es "DISPONIBLE" o "EN_MANTENIMIENTO"
+      kpi1Value = vehicles.where((v) => (v.operationState ?? "").toUpperCase() == "DISPONIBLE").length;
+      kpi2Value = vehicles.where((v) => (v.operationState ?? "").toUpperCase() == "EN_MANTENIMIENTO").length;
       labelTotal = "Total de Vehículos:";
       labelKpi1 = "En Operación:";
       labelKpi2 = "En Mantenimiento:";
       iconTotal = Icons.directions_car_rounded;
       iconKpi1 = Icons.trending_up_rounded;
       iconKpi2 = Icons.handyman_rounded;
-    } else { 
-      total = pressState.press.length;
-      kpi1Value = 6;
-      kpi2Value = 2;
+    } else { // --- PRENSAS ---
+      final List presses = pressState.press ?? [];
+      total = presses.length;
+      // Contamos según estado operativo
+      kpi1Value = presses.where((p) => (p.operationState ?? "").toUpperCase() == "DISPONIBLE").length;
+      kpi2Value = presses.where((p) => (p.operationState ?? "").toUpperCase() == "EN_MANTENIMIENTO").length;
       labelTotal = "Total de Prensas:";
       labelKpi1 = "Prensas Activas:";
       labelKpi2 = "En Mantenimiento:";
@@ -75,6 +80,7 @@ class CatalogStatsRow extends StatelessWidget {
     );
   }
 
+  // --- El método _buildStatCard se mantiene igual ---
   Widget _buildStatCard(String label, String value, IconData icon, Color color, bool isWide, double maxWidth, {bool isRedTheme = false}) {
     return Container(
       width: isWide ? (maxWidth - 32) / 3 : maxWidth,

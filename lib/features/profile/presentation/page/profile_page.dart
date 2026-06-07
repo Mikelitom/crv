@@ -58,13 +58,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         _areaController.text = mapScope(next.user!.scope);
       }
 
-      if (next.status == ProfileStatus.error) {
+      if (next.status == ProfileStatus.error && next.error != null) {
+        final errorMessage = next.error.toString(); 
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error.toString())),
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red.shade700,
+          ),
         );
       }
     });
-
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA),
       // 👈 Añadimos un AppBar para que el usuario pueda desloguearse si está bloqueado
@@ -85,62 +89,47 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   Widget _buildBody(ProfileState state) {
+    // 1. Manejo de carga
     if (state.status == ProfileStatus.loading && state.user == null) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: Color(0xFFC62828)),
-            SizedBox(height: 16),
-            Text("Cargando perfil...", style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      );
+      return const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)));
     }
 
+    // 2. Manejo de error
     if (state.status == ProfileStatus.error && state.user == null) {
       return Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, size: 60, color: Colors.red),
-            const SizedBox(height: 16),
             Text("Error: ${state.error}"),
-            TextButton(
-              onPressed: () => ref.read(profileProvider.notifier).getUserProfile(),
-              child: const Text("Reintentar"),
-            ),
+            TextButton(onPressed: () => ref.read(profileProvider.notifier).getUserProfile(), child: const Text("Reintentar")),
           ],
         ),
       );
     }
 
-    final user = state.user!;
-    final bool isNotVerified = !user.isVerified; // 👈 Usamos el getter de tu Entidad
+    // 3. CAMBIO AQUÍ: Obtenemos el usuario de forma segura
+    final user = state.user; 
+    
+    // Si después de todas las validaciones sigue siendo null, no dibujamos la pantalla
+    if (user == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Ahora 'user' es tratado como no nulo gracias a la validación anterior
+    final bool isNotVerified = !user.isVerified;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         bool isDesktop = constraints.maxWidth > 1100;
-
         return SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 40 : 20,
-              vertical: 20,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 40 : 20, vertical: 20),
             child: Column(
               children: [
-                // 👈 BANNER DE APROBACIÓN PENDIENTE
                 if (isNotVerified) _buildVerificationBanner(),
-
                 if (state.status == ProfileStatus.loading)
-                  const LinearProgressIndicator(
-                    color: Color(0xFFC62828),
-                    minHeight: 2,
-                  ),
-
+                  const LinearProgressIndicator(color: Color(0xFFC62828), minHeight: 2),
                 const SizedBox(height: 10),
-
                 if (isDesktop)
                   _buildDesktopLayout(context, user)
                 else

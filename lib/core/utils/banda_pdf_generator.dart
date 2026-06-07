@@ -6,28 +6,29 @@ import '../../features/bandas_transportadoras/domain/entities/banda_template.dar
 
 class BandaPdfGenerator {
   static final _kBorderColor = PdfColors.black;
-  static final _kGreyHeader = PdfColors.grey200;
+  static final _kGreyHeader = PdfColor.fromHex("#D3D3D3");
 
   static Future<Uint8List> generateReport(Map<String, dynamic> data, List<BandaSection> sections) async {
     final pdf = pw.Document();
     
     pw.ImageProvider? fullHeaderImg;
-
     try {
       final headerBytes = await rootBundle.load('assets/images/bandas_pdf.png');
       fullHeaderImg = pw.MemoryImage(headerBytes.buffer.asUint8List());
-    } catch (e) { 
-      print("Error: No se encontro la imagen en assets/images/bandas_pdf.png"); 
+    } catch (e) {
+      print("Error: No se encontro la imagen en assets/images/bandas_pdf.png");
     }
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.letter.landscape,
-        margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 15), 
+        margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         header: (context) => _buildFullHeader(fullHeaderImg),
         build: (context) => [
           _buildInfoGrid(data),
+          pw.SizedBox(height: 5),
           _buildMainTable(sections),
+          pw.SizedBox(height: 10),
           _buildTechnicalFooter(data),
         ],
       ),
@@ -40,11 +41,11 @@ class BandaPdfGenerator {
       decoration: pw.BoxDecoration(border: pw.Border.all(color: _kBorderColor, width: 1)),
       child: pw.Column(
         children: [
-          if (img != null) 
+          if (img != null)
             pw.Container(
               width: double.infinity,
-              height: 75, // AJUSTE: Un poco mas alta para que quepa mejor
-              child: pw.Image(img, fit: pw.BoxFit.contain), // AJUSTE: contain para no deformar
+              height: 75,
+              child: pw.Image(img, fit: pw.BoxFit.contain),
             ),
           pw.Container(
             width: double.infinity,
@@ -54,8 +55,8 @@ class BandaPdfGenerator {
             ),
             padding: const pw.EdgeInsets.symmetric(vertical: 3),
             child: pw.Text(
-              "REPORTE DE INSPECCION DE BANDA TRANSPORTADORA", 
-              textAlign: pw.TextAlign.center, 
+              "REPORTE DE INSPECCION DE BANDA TRANSPORTADORA",
+              textAlign: pw.TextAlign.center,
               style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)
             ),
           ),
@@ -68,9 +69,9 @@ class BandaPdfGenerator {
     return pw.Table(
       border: pw.TableBorder.all(width: 1.0, color: _kBorderColor),
       columnWidths: {
-        0: const pw.FlexColumnWidth(1), 
-        1: const pw.FlexColumnWidth(2), 
-        2: const pw.FlexColumnWidth(1), 
+        0: const pw.FlexColumnWidth(1),
+        1: const pw.FlexColumnWidth(2),
+        2: const pw.FlexColumnWidth(1),
         3: const pw.FlexColumnWidth(2)
       },
       children: [
@@ -96,11 +97,11 @@ class BandaPdfGenerator {
     return pw.Table(
       border: pw.TableBorder.all(width: 1.0, color: _kBorderColor),
       columnWidths: {
-        0: const pw.FixedColumnWidth(40), 
-        1: const pw.FixedColumnWidth(110), 
-        2: const pw.FlexColumnWidth(),   
-        3: const pw.FixedColumnWidth(110), 
-        4: const pw.FixedColumnWidth(60), // NUEVA COLUMNA: Evidencias
+        0: const pw.FixedColumnWidth(40),
+        1: const pw.FixedColumnWidth(110),
+        2: const pw.FlexColumnWidth(),
+        3: const pw.FixedColumnWidth(110),
+        4: const pw.FixedColumnWidth(60),
       },
       children: [
         pw.TableRow(
@@ -110,7 +111,7 @@ class BandaPdfGenerator {
             _cell("ACCESORIOS", bold: true),
             _cell("OBSERVACIONES", bold: true),
             _cell("ACCIONES Y RECOMENDACIONES", bold: true),
-            _cell("EVIDENCIAS", bold: true), // TITULO NUEVA COLUMNA
+            _cell("EVIDENCIAS", bold: true),
           ],
         ),
         ...sections.map((s) {
@@ -146,7 +147,6 @@ class BandaPdfGenerator {
                   child: pw.Text(c.observation, style: const pw.TextStyle(fontSize: 6.5)),
                 )).toList(),
               ),
-              // NUEVA CELDA: Miniaturas de evidencias
               pw.Column(
                 children: s.components.map((c) => pw.Container(
                   height: 22,
@@ -176,7 +176,7 @@ class BandaPdfGenerator {
               fontSize: 5.8,
               fontWeight: isSelected ? pw.FontWeight.bold : pw.FontWeight.normal,
               decoration: isSelected ? pw.TextDecoration.underline : null,
-              color: isSelected ? PdfColors.red900 : PdfColors.black, // AJUSTE: Color ROJO para seleccion
+              color: isSelected ? PdfColors.red900 : PdfColors.black,
             ),
           ),
         );
@@ -184,11 +184,9 @@ class BandaPdfGenerator {
     );
   }
 
-  // FUNCION PARA DIBUJAR MINI FOTOS
   static pw.Widget _buildMiniEvidences(BandaComponent c) {
     final allEvidences = [...c.evidenceBefore, ...c.evidenceAfter];
     if (allEvidences.isEmpty) return pw.SizedBox();
-    
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.center,
       children: allEvidences.take(2).map((e) => pw.Padding(
