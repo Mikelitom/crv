@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dartz/dartz.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:crv_reprosisa/features/auth/presentation/di/auth_providers.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/user_session_repository_provider.dart';
 
 class AuthNotifier extends Notifier<AuthState> {
