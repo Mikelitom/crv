@@ -1,4 +1,5 @@
 import 'package:crv_reprosisa/features/user_management/presentation/provider/user_management_notifier_provider.dart';
+import 'package:crv_reprosisa/features/user_management/presentation/provider/user_management_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../dashboard/presentation/widgets/header.dart';
@@ -7,6 +8,7 @@ import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import '../widgets/user_search_field.dart';
 import '../widgets/user_filter_bar.dart';
 import '../widgets/user_data_table.dart';
+import '../provider/user_management_notifier_provider.dart';
 
 class UsersAdminPage extends ConsumerStatefulWidget {
   const UsersAdminPage({super.key});
@@ -90,7 +92,22 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(userManagementProvider);
-    final allUsers = state.users;
+    final allUsers = state.users;// --- PANTALLA DE CARGA ---
+    if (state.status == UserManagementStatus.loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8F9FA),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Color(0xFFC62828)),
+              SizedBox(height: 16),
+              Text("Cargando usuarios...", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      );
+    }
 
     final pendingUsers = allUsers.where((u) => u.scope.toUpperCase() == 'NONE').toList();
     final verifiedUsers = allUsers.where((u) => u.scope.toUpperCase() != 'NONE').toList();

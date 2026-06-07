@@ -3,11 +3,14 @@ import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:crv_reprosisa/features/assets/data/datasource/client_remote_datasource.dart';
 import 'package:crv_reprosisa/features/assets/data/models/create_client_request.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/clients.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/client_history.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/conveyor_report_detail.dart';
 import 'package:crv_reprosisa/features/assets/domain/params/create_clients_params.dart';
 import 'package:crv_reprosisa/features/assets/domain/repositories/client_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../data/models/create_mine_request.dart';
+
 class ClientRepositoryImpl implements ClientRepository {
   final ClientRemoteDatasource remote;
 
@@ -84,7 +87,28 @@ class ClientRepositoryImpl implements ClientRepository {
       return Left(UnknownFailure(e.toString()));
     }
   }
-
+@override
+Future<Either<Failure, List<ClientHistory>>> getClientHistory(String clientId) async {
+  try {
+    final history = await remote.getClientHistory(clientId); // Método actualizado
+    return Right(history);
+  } on DioException catch (e) {
+    return Left(ServerFailure(e.toString()));
+  } catch (e) {
+    return Left(UnknownFailure(e.toString()));
+  }
+}
+  @override
+  Future<Either<Failure, ConveyorReportDetail>> getReportDetail(String versionId) async {
+    try {
+      final detail = await remote.getReportDetail(versionId);
+      return Right(detail);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
   @override
   Future<Either<Failure, void>> activateMine(String mineId) async {
     try {

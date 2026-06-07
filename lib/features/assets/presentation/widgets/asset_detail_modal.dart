@@ -1,4 +1,6 @@
+import 'package:crv_reprosisa/features/assets/presentation/pages/client_history_page.dart';
 import 'package:crv_reprosisa/features/assets/presentation/pages/press_history_page.dart';
+import 'package:crv_reprosisa/features/assets/presentation/providers/client_actions_providers.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_history_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -161,7 +163,24 @@ class AssetDetailModal extends ConsumerWidget {
                               ? _val('vehicleId')
                               : _val('id');
 
-                          if (type != "vehiculo") {
+                              if (type == "cliente") {
+                                print("type: " + type);
+                                if (id != '-' && id.isNotEmpty) {
+                                  // Cargar datos y navegar a página de historial
+                                  await ref
+                                      .read(clientHistoryProvider.notifier)
+                                      .loadHistory(id);
+
+                                  if (context.mounted) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ClientHistoryPage(clientId: id),
+                                      ),
+                                    );
+                                  }
+                                }
+                              } else if (type != "vehiculo") {
                             print("type: " + type);
                             if (id != '-' && id.isNotEmpty) {
                               // Cargar datos y navegar a página de historial

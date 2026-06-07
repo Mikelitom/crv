@@ -1,4 +1,6 @@
 import 'package:crv_reprosisa/features/assets/data/datasource/client_remote_datasource.dart';
+import 'package:crv_reprosisa/features/assets/data/models/client_history_model.dart';
+import 'package:crv_reprosisa/features/assets/data/models/conveyor_report_detail_model.dart';
 import 'package:crv_reprosisa/features/assets/data/models/create_client_request.dart';
 import 'package:crv_reprosisa/features/assets/data/models/clients_model.dart';
 import 'package:dio/dio.dart';
@@ -50,6 +52,19 @@ class ClientRemoteDatasourceImpl implements ClientRemoteDatasource {
   @override
   Future<void> deleteMine(String mineId) async {
     await dio.delete('/mines/$mineId');
+  }
+ @override
+Future<List<ClientHistoryModel>> getClientHistory(String clientId) async {
+  final response = await dio.get('/asset/client-history?client_id=$clientId');
+  return (response.data as List)
+      .map((e) => ClientHistoryModel.fromJson(e as Map<String, dynamic>))
+      .toList();
+}
+
+  @override
+  Future<ConveyorReportDetailModel> getReportDetail(String versionId) async {
+    final response = await dio.get('/asset/conveyor/$versionId');
+    return ConveyorReportDetailModel.fromJson(response.data as Map<String, dynamic>);
   }
   @override
   Future<List<ClientsModel>> getAllClients() async {

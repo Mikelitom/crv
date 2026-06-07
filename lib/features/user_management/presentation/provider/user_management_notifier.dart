@@ -5,7 +5,6 @@ import '../../domain/usecases/get_users_use_cases.dart';
 
 import 'user_management_state.dart';
 
-
 class UserManagementNotifier extends Notifier<UserManagementState> {
   late final GetUsers _getUsers;
 
@@ -18,7 +17,6 @@ class UserManagementNotifier extends Notifier<UserManagementState> {
   Future<void> getUsers() async {
     state = state.copyWith(status: UserManagementStatus.loading);
     final result = await _getUsers();
-
     result.fold(
       (failure) => state = state.copyWith(status: UserManagementStatus.error, error: failure.message),
       (users) => state = state.copyWith(status: UserManagementStatus.success, users: users),
@@ -43,25 +41,14 @@ class UserManagementNotifier extends Notifier<UserManagementState> {
     );
   }
 
-  Future<void> updateUserField({
-    required String userId,
-    List<String>? role,
-    String? scope,
-  }) async {
-    final result = await ref.read(updateUserUseCaseProvider).call(
-      userId: userId,
-      role: role,
-      scope: scope,
-    );
+  Future<void> updateUserField({required String userId, List<String>? role, String? scope}) async {
+    state = state.copyWith(status: UserManagementStatus.loading);
+    final result = await ref.read(updateUserUseCaseProvider).call(userId: userId, role: role, scope: scope);
 
     result.fold(
       (failure) => state = state.copyWith(status: UserManagementStatus.error, error: failure.message),
       (updatedUser) {
-        // CORRECCIÓN DE TIPADO: map<User> evita el error de List<dynamic>
-        final updatedUsers = state.users.map<User>((u) {
-          return u.id == userId ? updatedUser : u;
-        }).toList();
-        
+        final updatedUsers = state.users.map<User>((u) => u.id == userId ? updatedUser : u).toList();
         state = state.copyWith(users: updatedUsers, status: UserManagementStatus.success);
       },
     );

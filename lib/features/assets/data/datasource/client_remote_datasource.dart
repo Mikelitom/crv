@@ -1,3 +1,5 @@
+import 'package:crv_reprosisa/features/assets/data/models/client_history_model.dart';
+import 'package:crv_reprosisa/features/assets/data/models/conveyor_report_detail_model.dart';
 import 'package:crv_reprosisa/features/assets/data/models/create_client_request.dart';
 import 'package:crv_reprosisa/features/assets/data/models/clients_model.dart';
 import '../../data/models/create_mine_request.dart';
@@ -11,4 +13,6 @@ abstract class ClientRemoteDatasource {
   Future<void> activateMine(String mineId);
   Future<void> deleteMine(String mineId);
   Future<void> createMine(String clientId, CreateMineRequest request);
+  Future<List<ClientHistoryModel>> getClientHistory(String clientId);
+  Future<ConveyorReportDetailModel> getReportDetail(String versionId);
 }

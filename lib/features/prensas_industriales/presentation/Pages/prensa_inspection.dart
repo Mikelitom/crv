@@ -28,24 +28,50 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
   bool isLoading = true;
   List<ComponentItem> templateItems = [];
 
-  @override
+ @override
   void initState() {
     super.initState();
-    _fetchTemplate();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.listenManual(inspeccionProvider, (previous, next) {
+        if (previous?.selectedPress?.id != next.selectedPress?.id) {
+          _fetchTemplate();
+        }
+      });
+      _fetchTemplate();
+    });
   }
 
-  Future<void> _fetchTemplate() async {
+ Future<void> _fetchTemplate() async {
+    setState(() => isLoading = true);
+    final state = ref.read(inspeccionProvider);
     final repo = ref.read(inspeccionRepositoryProvider);
     final result = await repo.getInspectionTemplate();
+    
+    final String tipoPrensa = state.selectedPress?.type?.toLowerCase() ?? "";
+
     result.fold(
       (failure) => setState(() => isLoading = false),
-      (components) => setState(() {
-        templateItems = components;
-        isLoading = false;
-      }),
+      (components) {
+        List<ComponentItem> itemsFiltrados = components;
+        
+        // Lógica de filtrado: si es neumatica o movil, excluimos estos componentes
+        if (tipoPrensa.contains("neumatica") || tipoPrensa.contains("movil")) {
+          // Palabras clave únicas para filtrar los items
+          final itemsAExcluir = ["aceite", "manometro", "manguera", "plato", "soldadura"];
+          
+          itemsFiltrados = components.where((c) {
+            final nombre = c.name.toLowerCase();
+            return !itemsAExcluir.any((excluido) => nombre.contains(excluido));
+          }).toList();
+        }
+
+        setState(() {
+          templateItems = itemsFiltrados;
+          isLoading = false;
+        });
+      },
     );
   }
-
   void _showPdfPreview(BuildContext context) {
     final state = ref.read(inspeccionProvider);
     final String fechaActual = DateFormat(
@@ -233,7 +259,7 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                 children: [
                   CustomHeader(
                     title: "Inspección de Prensas",
-                    actionIcon: Icons.build_rounded,
+                    actionIcon: Icons.arrow_back_ios_new_rounded,
                     onActionTap: () => Navigator.pop(context),
                   ),
                   const SizedBox(height: 32),

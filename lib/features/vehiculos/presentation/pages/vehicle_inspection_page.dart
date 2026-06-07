@@ -122,7 +122,7 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                 children: [
                   CustomHeader(
                     title: "Inspección de Unidades",
-                    actionIcon: Icons.directions_car,
+                    actionIcon: Icons.arrow_back_ios_new_rounded,
                     onActionTap: () => Navigator.pop(context),
                   ),
                   const SizedBox(height: 24),
