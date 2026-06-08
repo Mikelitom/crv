@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:crv_reprosisa/features/vehiculos/data/datasource/vehicle_inspection_local_datasource.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failure.dart';
@@ -23,17 +21,10 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
       final response = await remoteDataSource.getActiveVehicles();
 
       await localDataSource.saveVehicles(response.cast<VehicleModel>());
-
-      print("Vehiculos guardados localmente: ${response.length}");
-
       return Right(response);
     } catch (e) {
-      print("Error remoto: $e");
-
       try {
         final localVehicles = await localDataSource.getVehicles();
-
-        print("Vehiculos encontrados localmente: ${localVehicles.length}");
 
         if (localVehicles.isNotEmpty) {
           return Right(localVehicles);
@@ -43,8 +34,6 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
           ServerFailure("No hay vehículos disponibles sin conexión"),
         );
       } catch (localError) {
-        print("Error local: $localError");
-
         return const Left(ServerFailure("Error al obtener vehículos locales"));
       }
     }
