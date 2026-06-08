@@ -1,10 +1,10 @@
 import 'package:crv_reprosisa/features/vehiculos/data/datasource/vehicle_inspection_local_datasource.dart';
+import 'package:crv_reprosisa/features/vehiculos/domain/entities/vehicle_entity.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failure.dart';
-import '../../domain/entities/vehicle_entity.dart';
 import '../../domain/repositories/vehicle_inspeccion_repository.dart';
 import '../datasource/vehicle_inspection_remote_datasource.dart';
-import '../models/inspection_vehicle_model.dart';
+
 
 class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
   final VehicleInspectionRemoteDataSource remoteDataSource;
@@ -20,15 +20,14 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
     try {
       final response = await remoteDataSource.getActiveVehicles();
 
-      await localDataSource.saveVehicles(response.cast<VehicleModel>());
       return Right(response);
     } catch (e) {
       try {
         final localVehicles = await localDataSource.getVehicles();
 
-        if (localVehicles.isNotEmpty) {
-          return Right(localVehicles);
-        }
+        // if (localVehicles.isNotEmpty) {
+        //   return Right(localVehicles);
+        // }
 
         return const Left(
           ServerFailure("No hay vehículos disponibles sin conexión"),

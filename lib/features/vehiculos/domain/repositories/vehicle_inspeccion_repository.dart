@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failure.dart';
-import '../entities/vehicle_entity.dart';
+import 'package:crv_reprosisa/features/vehiculos/domain/entities/vehicle_entity.dart';
 
 abstract class VehicleInspectionRepository {
   Future<Either<Failure, List<Vehicle>>> getActiveVehicles();

@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/data/services/press_sync_service.dart';
 import 'package:crv_reprosisa/features/vehiculos/data/services/vehicle_sync_service.dart';
 import 'package:dio/dio.dart';
 
 class ConnectivitySyncService {
   final Connectivity connectivity;
-  final VehicleSyncService syncService;
+  final VehicleSyncService vehicleSyncService;
+  final PressSyncService pressSyncService;
   final Dio dio;
 
   StreamSubscription<List<ConnectivityResult>>? _subscription;
@@ -15,7 +17,8 @@ class ConnectivitySyncService {
 
   ConnectivitySyncService({
     required this.connectivity,
-    required this.syncService,
+    required this.vehicleSyncService,
+    required this.pressSyncService,
     required this.dio,
   });
 
@@ -59,7 +62,8 @@ class ConnectivitySyncService {
     _isSyncing = true;
 
     try {
-      await syncService.syncPendingReports();
+      await vehicleSyncService.syncPendingReports();
+      await pressSyncService.syncPendingReports();
     } finally {
       _isSyncing = false;
     }

@@ -13,8 +13,8 @@ class Vehicle {
   final int mileage;
   final String? serviceReason;
   final String? phone;
-  final String? serviceDate;
-  final String? checkoutDate;
+  final DateTime? serviceDate;
+  final DateTime? checkoutDate;
 
   Vehicle({
     required this.vehicleId,

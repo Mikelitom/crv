@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:crv_reprosisa/features/vehiculos/data/models/inspection_vehicle_model.dart';
+import 'package:crv_reprosisa/features/assets/data/models/vehicle_model.dart';
 import 'package:crv_reprosisa/core/database/app_database.dart';
 import 'package:drift/drift.dart';
 import 'package:hive/hive.dart';
@@ -31,19 +31,26 @@ class VehicleInspectionLocalDataSourceImpl
   @override
   Future<void> saveVehicles(List<VehicleModel> vehicles) async {
     for (final vehicle in vehicles) {
-      print('Guardando ${vehicle.id}');
+      print('Guardando ${vehicle.vehicleId}');
       await db
           .into(db.vehiclesTable)
           .insertOnConflictUpdate(
             VehiclesTableCompanion(
-              id: Value(vehicle.id),
-              typeId: Value(vehicle.typeId),
+              vehicleId: Value(vehicle.vehicleId),
+              type: Value(vehicle.type),
               brand: Value(vehicle.brand),
               model: Value(vehicle.model),
               unit: Value(vehicle.unit),
               year: Value(vehicle.year),
               plate: Value(vehicle.plate),
-              isActive: const Value(true),
+              operationState: Value(vehicle.operationState),
+              currentLocation: Value(vehicle.currentLocation),
+              responsible: Value(vehicle.responsible),
+              mileage: Value(vehicle.mileage),
+              serviceReason: Value(vehicle.serviceReason),
+              phone: Value(vehicle.phone),
+              serviceDate: Value(vehicle.serviceDate),
+              checkoutDate: Value(vehicle.checkoutDate),            
             ),
           );
     }
@@ -58,16 +65,25 @@ class VehicleInspectionLocalDataSourceImpl
     final rows = await db.select(db.vehiclesTable).get();
 
     return rows.map((row) {
-      return VehicleModel(
-        id: row.id,
-        typeId: row.typeId,
-        brand: row.brand,
-        model: row.model,
-        unit: row.unit,
-        year: row.year,
-        plate: row.plate,
-      );
-    }).toList();
+        return VehicleModel(
+          vehicleId: row.vehicleId,
+          plate: row.plate,
+          brand: row.brand,
+          model: row.model,
+          year: row.year,
+          unit: row.unit,
+          type: row.type,
+          operationState: row.operationState,
+          currentLocation: row.currentLocation,
+          responsible: row.responsible,
+          mileage: row.mileage ?? 0,
+          serviceReason: row.serviceReason,
+          phone: row.phone,
+          serviceDate: row.serviceDate,
+          checkoutDate: row.checkoutDate,
+          isActive: row.isActive,
+        );
+      }).toList();
   }
 
   @override

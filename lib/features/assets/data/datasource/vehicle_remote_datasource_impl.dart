@@ -3,7 +3,6 @@ import 'package:crv_reprosisa/features/assets/data/models/vehicle_model.dart';
 import 'package:crv_reprosisa/features/assets/domain/params/create_vehicle_params.dart';
 import 'package:dio/dio.dart';
 import '../models/vehicle_report_detail_model.dart';
-import '../../data/models/vehicle_report_detail_model.dart';
 import 'package:crv_reprosisa/features/assets/data/models/vehicle_history_model.dart';
 
 class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {

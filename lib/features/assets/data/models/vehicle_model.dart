@@ -37,8 +37,8 @@ class VehicleModel extends Vehicle {
       // Campos de auditoría dinámicos planos del endpoint
       serviceReason: json['service_reason'] != null ? _asString(json['service_reason']) : null,
       phone: json['phone'] != null ? _asString(json['phone']) : null,
-      serviceDate: json['service_date'] != null ? _asString(json['service_date']) : null,
-      checkoutDate: json['checkout_date'] != null ? _asString(json['checkout_date']) : null,
+      serviceDate: json['service_date'],
+      checkoutDate: json['checkout_date'],
     );
   }
 

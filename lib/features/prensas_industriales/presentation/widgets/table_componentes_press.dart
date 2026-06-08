@@ -379,8 +379,6 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
       _stBtn(item, "GOOD", Colors.green, Icons.check, "BUENO"),
       const SizedBox(width: 10),
       _stBtn(item, "BAD", kRedReprosisa, Icons.close, "MALO"),
-      const SizedBox(width: 10),
-      _stBtn(item, "NOT_APPLICABLE", Colors.grey, Icons.remove, "N/A"),
     ],
   );
 

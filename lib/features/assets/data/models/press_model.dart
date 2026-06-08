@@ -8,13 +8,10 @@ class PressModel extends Press {
     required super.volts,
     required super.serie,
     required super.size,
-    required super.createdAt,
-    required super.updatedAt,
     required super.isActive,
     super.operationState,
     super.currentLocation,
     super.responsible,
-    super.phone,
     super.loanComment,
     super.serviceReason,
     super.serviceDate,
@@ -38,12 +35,6 @@ class PressModel extends Press {
       volts: json['volts']?.toString() ?? 'N/A',
       serie: json['serie']?.toString() ?? 'N/A',
       size: json['size']?.toString() ?? 'N/A',
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : DateTime.now(),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
-          : DateTime.now(),
       isActive: json['is_active'] ?? true,
 
       operationState: translatedState, // Guardamos el estado traducido
@@ -52,7 +43,6 @@ class PressModel extends Press {
           json['responsible']?.toString() ??
           json['solicitants_name']?.toString() ??
           'N/A',
-      phone: json['phone']?.toString() ?? 'N/A',
       serviceReason: json['service_reason']?.toString(),
       loanComment: json['loan_comment']?.toString(),
       serviceDate: json['service_date'] != null

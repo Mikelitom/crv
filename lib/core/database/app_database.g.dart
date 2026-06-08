@@ -9,19 +9,21 @@ class $VehiclesTableTable extends VehiclesTable
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $VehiclesTableTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  static const VerificationMeta _vehicleIdMeta = const VerificationMeta(
+    'vehicleId',
+  );
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
+  late final GeneratedColumn<String> vehicleId = GeneratedColumn<String>(
+    'vehicle_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _typeIdMeta = const VerificationMeta('typeId');
+  static const VerificationMeta _plateMeta = const VerificationMeta('plate');
   @override
-  late final GeneratedColumn<String> typeId = GeneratedColumn<String>(
-    'type_id',
+  late final GeneratedColumn<String> plate = GeneratedColumn<String>(
+    'plate',
     aliasedName,
     false,
     type: DriftSqlType.string,
@@ -54,15 +56,6 @@ class $VehiclesTableTable extends VehiclesTable
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _plateMeta = const VerificationMeta('plate');
-  @override
-  late final GeneratedColumn<String> plate = GeneratedColumn<String>(
-    'plate',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
   static const VerificationMeta _unitMeta = const VerificationMeta('unit');
   @override
   late final GeneratedColumn<int> unit = GeneratedColumn<int>(
@@ -71,6 +64,79 @@ class $VehiclesTableTable extends VehiclesTable
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _operationStateMeta = const VerificationMeta(
+    'operationState',
+  );
+  @override
+  late final GeneratedColumn<String> operationState = GeneratedColumn<String>(
+    'operation_state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _currentLocationMeta = const VerificationMeta(
+    'currentLocation',
+  );
+  @override
+  late final GeneratedColumn<String> currentLocation = GeneratedColumn<String>(
+    'current_location',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _responsibleMeta = const VerificationMeta(
+    'responsible',
+  );
+  @override
+  late final GeneratedColumn<String> responsible = GeneratedColumn<String>(
+    'responsible',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mileageMeta = const VerificationMeta(
+    'mileage',
+  );
+  @override
+  late final GeneratedColumn<int> mileage = GeneratedColumn<int>(
+    'mileage',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _serviceReasonMeta = const VerificationMeta(
+    'serviceReason',
+  );
+  @override
+  late final GeneratedColumn<String> serviceReason = GeneratedColumn<String>(
+    'service_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+    'phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
     'isActive',
@@ -87,23 +153,23 @@ class $VehiclesTableTable extends VehiclesTable
     ),
     defaultValue: const Constant(true),
   );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
+  static const VerificationMeta _serviceDateMeta = const VerificationMeta(
+    'serviceDate',
   );
   @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
+  late final GeneratedColumn<DateTime> serviceDate = GeneratedColumn<DateTime>(
+    'service_date',
     aliasedName,
     true,
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
+  static const VerificationMeta _checkoutDateMeta = const VerificationMeta(
+    'checkoutDate',
   );
   @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
+  late final GeneratedColumn<DateTime> checkoutDate = GeneratedColumn<DateTime>(
+    'checkout_date',
     aliasedName,
     true,
     type: DriftSqlType.dateTime,
@@ -111,16 +177,22 @@ class $VehiclesTableTable extends VehiclesTable
   );
   @override
   List<GeneratedColumn> get $columns => [
-    id,
-    typeId,
+    vehicleId,
+    plate,
     brand,
     model,
     year,
-    plate,
     unit,
+    type,
+    operationState,
+    currentLocation,
+    responsible,
+    mileage,
+    serviceReason,
+    phone,
     isActive,
-    createdAt,
-    updatedAt,
+    serviceDate,
+    checkoutDate,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -134,18 +206,21 @@ class $VehiclesTableTable extends VehiclesTable
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('type_id')) {
+    if (data.containsKey('vehicle_id')) {
       context.handle(
-        _typeIdMeta,
-        typeId.isAcceptableOrUnknown(data['type_id']!, _typeIdMeta),
+        _vehicleIdMeta,
+        vehicleId.isAcceptableOrUnknown(data['vehicle_id']!, _vehicleIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_typeIdMeta);
+      context.missing(_vehicleIdMeta);
+    }
+    if (data.containsKey('plate')) {
+      context.handle(
+        _plateMeta,
+        plate.isAcceptableOrUnknown(data['plate']!, _plateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_plateMeta);
     }
     if (data.containsKey('brand')) {
       context.handle(
@@ -171,14 +246,6 @@ class $VehiclesTableTable extends VehiclesTable
     } else if (isInserting) {
       context.missing(_yearMeta);
     }
-    if (data.containsKey('plate')) {
-      context.handle(
-        _plateMeta,
-        plate.isAcceptableOrUnknown(data['plate']!, _plateMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_plateMeta);
-    }
     if (data.containsKey('unit')) {
       context.handle(
         _unitMeta,
@@ -187,40 +254,108 @@ class $VehiclesTableTable extends VehiclesTable
     } else if (isInserting) {
       context.missing(_unitMeta);
     }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('operation_state')) {
+      context.handle(
+        _operationStateMeta,
+        operationState.isAcceptableOrUnknown(
+          data['operation_state']!,
+          _operationStateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_operationStateMeta);
+    }
+    if (data.containsKey('current_location')) {
+      context.handle(
+        _currentLocationMeta,
+        currentLocation.isAcceptableOrUnknown(
+          data['current_location']!,
+          _currentLocationMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_currentLocationMeta);
+    }
+    if (data.containsKey('responsible')) {
+      context.handle(
+        _responsibleMeta,
+        responsible.isAcceptableOrUnknown(
+          data['responsible']!,
+          _responsibleMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_responsibleMeta);
+    }
+    if (data.containsKey('mileage')) {
+      context.handle(
+        _mileageMeta,
+        mileage.isAcceptableOrUnknown(data['mileage']!, _mileageMeta),
+      );
+    }
+    if (data.containsKey('service_reason')) {
+      context.handle(
+        _serviceReasonMeta,
+        serviceReason.isAcceptableOrUnknown(
+          data['service_reason']!,
+          _serviceReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    }
     if (data.containsKey('is_active')) {
       context.handle(
         _isActiveMeta,
         isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
       );
     }
-    if (data.containsKey('created_at')) {
+    if (data.containsKey('service_date')) {
       context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+        _serviceDateMeta,
+        serviceDate.isAcceptableOrUnknown(
+          data['service_date']!,
+          _serviceDateMeta,
+        ),
       );
     }
-    if (data.containsKey('updated_at')) {
+    if (data.containsKey('checkout_date')) {
       context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+        _checkoutDateMeta,
+        checkoutDate.isAcceptableOrUnknown(
+          data['checkout_date']!,
+          _checkoutDateMeta,
+        ),
       );
     }
     return context;
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {id};
+  Set<GeneratedColumn> get $primaryKey => {vehicleId};
   @override
   VehiclesTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return VehiclesTableData(
-      id: attachedDatabase.typeMapping.read(
+      vehicleId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}id'],
+        data['${effectivePrefix}vehicle_id'],
       )!,
-      typeId: attachedDatabase.typeMapping.read(
+      plate: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}type_id'],
+        data['${effectivePrefix}plate'],
       )!,
       brand: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -234,25 +369,49 @@ class $VehiclesTableTable extends VehiclesTable
         DriftSqlType.int,
         data['${effectivePrefix}year'],
       )!,
-      plate: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}plate'],
-      )!,
       unit: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}unit'],
       )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      operationState: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operation_state'],
+      )!,
+      currentLocation: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}current_location'],
+      )!,
+      responsible: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}responsible'],
+      )!,
+      mileage: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}mileage'],
+      ),
+      serviceReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}service_reason'],
+      ),
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      ),
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
       )!,
-      createdAt: attachedDatabase.typeMapping.read(
+      serviceDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
+        data['${effectivePrefix}service_date'],
       ),
-      updatedAt: attachedDatabase.typeMapping.read(
+      checkoutDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
+        data['${effectivePrefix}checkout_date'],
       ),
     );
   }
@@ -265,64 +424,100 @@ class $VehiclesTableTable extends VehiclesTable
 
 class VehiclesTableData extends DataClass
     implements Insertable<VehiclesTableData> {
-  final String id;
-  final String typeId;
+  final String vehicleId;
+  final String plate;
   final String brand;
   final String model;
   final int year;
-  final String plate;
   final int unit;
+  final String type;
+  final String operationState;
+  final String currentLocation;
+  final String responsible;
+  final int? mileage;
+  final String? serviceReason;
+  final String? phone;
   final bool isActive;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+  final DateTime? serviceDate;
+  final DateTime? checkoutDate;
   const VehiclesTableData({
-    required this.id,
-    required this.typeId,
+    required this.vehicleId,
+    required this.plate,
     required this.brand,
     required this.model,
     required this.year,
-    required this.plate,
     required this.unit,
+    required this.type,
+    required this.operationState,
+    required this.currentLocation,
+    required this.responsible,
+    this.mileage,
+    this.serviceReason,
+    this.phone,
     required this.isActive,
-    this.createdAt,
-    this.updatedAt,
+    this.serviceDate,
+    this.checkoutDate,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['type_id'] = Variable<String>(typeId);
+    map['vehicle_id'] = Variable<String>(vehicleId);
+    map['plate'] = Variable<String>(plate);
     map['brand'] = Variable<String>(brand);
     map['model'] = Variable<String>(model);
     map['year'] = Variable<int>(year);
-    map['plate'] = Variable<String>(plate);
     map['unit'] = Variable<int>(unit);
-    map['is_active'] = Variable<bool>(isActive);
-    if (!nullToAbsent || createdAt != null) {
-      map['created_at'] = Variable<DateTime>(createdAt);
+    map['type'] = Variable<String>(type);
+    map['operation_state'] = Variable<String>(operationState);
+    map['current_location'] = Variable<String>(currentLocation);
+    map['responsible'] = Variable<String>(responsible);
+    if (!nullToAbsent || mileage != null) {
+      map['mileage'] = Variable<int>(mileage);
     }
-    if (!nullToAbsent || updatedAt != null) {
-      map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || serviceReason != null) {
+      map['service_reason'] = Variable<String>(serviceReason);
+    }
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    map['is_active'] = Variable<bool>(isActive);
+    if (!nullToAbsent || serviceDate != null) {
+      map['service_date'] = Variable<DateTime>(serviceDate);
+    }
+    if (!nullToAbsent || checkoutDate != null) {
+      map['checkout_date'] = Variable<DateTime>(checkoutDate);
     }
     return map;
   }
 
   VehiclesTableCompanion toCompanion(bool nullToAbsent) {
     return VehiclesTableCompanion(
-      id: Value(id),
-      typeId: Value(typeId),
+      vehicleId: Value(vehicleId),
+      plate: Value(plate),
       brand: Value(brand),
       model: Value(model),
       year: Value(year),
-      plate: Value(plate),
       unit: Value(unit),
+      type: Value(type),
+      operationState: Value(operationState),
+      currentLocation: Value(currentLocation),
+      responsible: Value(responsible),
+      mileage: mileage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mileage),
+      serviceReason: serviceReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serviceReason),
+      phone: phone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phone),
       isActive: Value(isActive),
-      createdAt: createdAt == null && nullToAbsent
+      serviceDate: serviceDate == null && nullToAbsent
           ? const Value.absent()
-          : Value(createdAt),
-      updatedAt: updatedAt == null && nullToAbsent
+          : Value(serviceDate),
+      checkoutDate: checkoutDate == null && nullToAbsent
           ? const Value.absent()
-          : Value(updatedAt),
+          : Value(checkoutDate),
     );
   }
 
@@ -332,215 +527,322 @@ class VehiclesTableData extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return VehiclesTableData(
-      id: serializer.fromJson<String>(json['id']),
-      typeId: serializer.fromJson<String>(json['typeId']),
+      vehicleId: serializer.fromJson<String>(json['vehicleId']),
+      plate: serializer.fromJson<String>(json['plate']),
       brand: serializer.fromJson<String>(json['brand']),
       model: serializer.fromJson<String>(json['model']),
       year: serializer.fromJson<int>(json['year']),
-      plate: serializer.fromJson<String>(json['plate']),
       unit: serializer.fromJson<int>(json['unit']),
+      type: serializer.fromJson<String>(json['type']),
+      operationState: serializer.fromJson<String>(json['operationState']),
+      currentLocation: serializer.fromJson<String>(json['currentLocation']),
+      responsible: serializer.fromJson<String>(json['responsible']),
+      mileage: serializer.fromJson<int?>(json['mileage']),
+      serviceReason: serializer.fromJson<String?>(json['serviceReason']),
+      phone: serializer.fromJson<String?>(json['phone']),
       isActive: serializer.fromJson<bool>(json['isActive']),
-      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      serviceDate: serializer.fromJson<DateTime?>(json['serviceDate']),
+      checkoutDate: serializer.fromJson<DateTime?>(json['checkoutDate']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'typeId': serializer.toJson<String>(typeId),
+      'vehicleId': serializer.toJson<String>(vehicleId),
+      'plate': serializer.toJson<String>(plate),
       'brand': serializer.toJson<String>(brand),
       'model': serializer.toJson<String>(model),
       'year': serializer.toJson<int>(year),
-      'plate': serializer.toJson<String>(plate),
       'unit': serializer.toJson<int>(unit),
+      'type': serializer.toJson<String>(type),
+      'operationState': serializer.toJson<String>(operationState),
+      'currentLocation': serializer.toJson<String>(currentLocation),
+      'responsible': serializer.toJson<String>(responsible),
+      'mileage': serializer.toJson<int?>(mileage),
+      'serviceReason': serializer.toJson<String?>(serviceReason),
+      'phone': serializer.toJson<String?>(phone),
       'isActive': serializer.toJson<bool>(isActive),
-      'createdAt': serializer.toJson<DateTime?>(createdAt),
-      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'serviceDate': serializer.toJson<DateTime?>(serviceDate),
+      'checkoutDate': serializer.toJson<DateTime?>(checkoutDate),
     };
   }
 
   VehiclesTableData copyWith({
-    String? id,
-    String? typeId,
+    String? vehicleId,
+    String? plate,
     String? brand,
     String? model,
     int? year,
-    String? plate,
     int? unit,
+    String? type,
+    String? operationState,
+    String? currentLocation,
+    String? responsible,
+    Value<int?> mileage = const Value.absent(),
+    Value<String?> serviceReason = const Value.absent(),
+    Value<String?> phone = const Value.absent(),
     bool? isActive,
-    Value<DateTime?> createdAt = const Value.absent(),
-    Value<DateTime?> updatedAt = const Value.absent(),
+    Value<DateTime?> serviceDate = const Value.absent(),
+    Value<DateTime?> checkoutDate = const Value.absent(),
   }) => VehiclesTableData(
-    id: id ?? this.id,
-    typeId: typeId ?? this.typeId,
+    vehicleId: vehicleId ?? this.vehicleId,
+    plate: plate ?? this.plate,
     brand: brand ?? this.brand,
     model: model ?? this.model,
     year: year ?? this.year,
-    plate: plate ?? this.plate,
     unit: unit ?? this.unit,
+    type: type ?? this.type,
+    operationState: operationState ?? this.operationState,
+    currentLocation: currentLocation ?? this.currentLocation,
+    responsible: responsible ?? this.responsible,
+    mileage: mileage.present ? mileage.value : this.mileage,
+    serviceReason: serviceReason.present
+        ? serviceReason.value
+        : this.serviceReason,
+    phone: phone.present ? phone.value : this.phone,
     isActive: isActive ?? this.isActive,
-    createdAt: createdAt.present ? createdAt.value : this.createdAt,
-    updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+    serviceDate: serviceDate.present ? serviceDate.value : this.serviceDate,
+    checkoutDate: checkoutDate.present ? checkoutDate.value : this.checkoutDate,
   );
   VehiclesTableData copyWithCompanion(VehiclesTableCompanion data) {
     return VehiclesTableData(
-      id: data.id.present ? data.id.value : this.id,
-      typeId: data.typeId.present ? data.typeId.value : this.typeId,
+      vehicleId: data.vehicleId.present ? data.vehicleId.value : this.vehicleId,
+      plate: data.plate.present ? data.plate.value : this.plate,
       brand: data.brand.present ? data.brand.value : this.brand,
       model: data.model.present ? data.model.value : this.model,
       year: data.year.present ? data.year.value : this.year,
-      plate: data.plate.present ? data.plate.value : this.plate,
       unit: data.unit.present ? data.unit.value : this.unit,
+      type: data.type.present ? data.type.value : this.type,
+      operationState: data.operationState.present
+          ? data.operationState.value
+          : this.operationState,
+      currentLocation: data.currentLocation.present
+          ? data.currentLocation.value
+          : this.currentLocation,
+      responsible: data.responsible.present
+          ? data.responsible.value
+          : this.responsible,
+      mileage: data.mileage.present ? data.mileage.value : this.mileage,
+      serviceReason: data.serviceReason.present
+          ? data.serviceReason.value
+          : this.serviceReason,
+      phone: data.phone.present ? data.phone.value : this.phone,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      serviceDate: data.serviceDate.present
+          ? data.serviceDate.value
+          : this.serviceDate,
+      checkoutDate: data.checkoutDate.present
+          ? data.checkoutDate.value
+          : this.checkoutDate,
     );
   }
 
   @override
   String toString() {
     return (StringBuffer('VehiclesTableData(')
-          ..write('id: $id, ')
-          ..write('typeId: $typeId, ')
+          ..write('vehicleId: $vehicleId, ')
+          ..write('plate: $plate, ')
           ..write('brand: $brand, ')
           ..write('model: $model, ')
           ..write('year: $year, ')
-          ..write('plate: $plate, ')
           ..write('unit: $unit, ')
+          ..write('type: $type, ')
+          ..write('operationState: $operationState, ')
+          ..write('currentLocation: $currentLocation, ')
+          ..write('responsible: $responsible, ')
+          ..write('mileage: $mileage, ')
+          ..write('serviceReason: $serviceReason, ')
+          ..write('phone: $phone, ')
           ..write('isActive: $isActive, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('serviceDate: $serviceDate, ')
+          ..write('checkoutDate: $checkoutDate')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(
-    id,
-    typeId,
+    vehicleId,
+    plate,
     brand,
     model,
     year,
-    plate,
     unit,
+    type,
+    operationState,
+    currentLocation,
+    responsible,
+    mileage,
+    serviceReason,
+    phone,
     isActive,
-    createdAt,
-    updatedAt,
+    serviceDate,
+    checkoutDate,
   );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is VehiclesTableData &&
-          other.id == this.id &&
-          other.typeId == this.typeId &&
+          other.vehicleId == this.vehicleId &&
+          other.plate == this.plate &&
           other.brand == this.brand &&
           other.model == this.model &&
           other.year == this.year &&
-          other.plate == this.plate &&
           other.unit == this.unit &&
+          other.type == this.type &&
+          other.operationState == this.operationState &&
+          other.currentLocation == this.currentLocation &&
+          other.responsible == this.responsible &&
+          other.mileage == this.mileage &&
+          other.serviceReason == this.serviceReason &&
+          other.phone == this.phone &&
           other.isActive == this.isActive &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.serviceDate == this.serviceDate &&
+          other.checkoutDate == this.checkoutDate);
 }
 
 class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
-  final Value<String> id;
-  final Value<String> typeId;
+  final Value<String> vehicleId;
+  final Value<String> plate;
   final Value<String> brand;
   final Value<String> model;
   final Value<int> year;
-  final Value<String> plate;
   final Value<int> unit;
+  final Value<String> type;
+  final Value<String> operationState;
+  final Value<String> currentLocation;
+  final Value<String> responsible;
+  final Value<int?> mileage;
+  final Value<String?> serviceReason;
+  final Value<String?> phone;
   final Value<bool> isActive;
-  final Value<DateTime?> createdAt;
-  final Value<DateTime?> updatedAt;
+  final Value<DateTime?> serviceDate;
+  final Value<DateTime?> checkoutDate;
   final Value<int> rowid;
   const VehiclesTableCompanion({
-    this.id = const Value.absent(),
-    this.typeId = const Value.absent(),
+    this.vehicleId = const Value.absent(),
+    this.plate = const Value.absent(),
     this.brand = const Value.absent(),
     this.model = const Value.absent(),
     this.year = const Value.absent(),
-    this.plate = const Value.absent(),
     this.unit = const Value.absent(),
+    this.type = const Value.absent(),
+    this.operationState = const Value.absent(),
+    this.currentLocation = const Value.absent(),
+    this.responsible = const Value.absent(),
+    this.mileage = const Value.absent(),
+    this.serviceReason = const Value.absent(),
+    this.phone = const Value.absent(),
     this.isActive = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
+    this.serviceDate = const Value.absent(),
+    this.checkoutDate = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   VehiclesTableCompanion.insert({
-    required String id,
-    required String typeId,
+    required String vehicleId,
+    required String plate,
     required String brand,
     required String model,
     required int year,
-    required String plate,
     required int unit,
+    required String type,
+    required String operationState,
+    required String currentLocation,
+    required String responsible,
+    this.mileage = const Value.absent(),
+    this.serviceReason = const Value.absent(),
+    this.phone = const Value.absent(),
     this.isActive = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
+    this.serviceDate = const Value.absent(),
+    this.checkoutDate = const Value.absent(),
     this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       typeId = Value(typeId),
+  }) : vehicleId = Value(vehicleId),
+       plate = Value(plate),
        brand = Value(brand),
        model = Value(model),
        year = Value(year),
-       plate = Value(plate),
-       unit = Value(unit);
+       unit = Value(unit),
+       type = Value(type),
+       operationState = Value(operationState),
+       currentLocation = Value(currentLocation),
+       responsible = Value(responsible);
   static Insertable<VehiclesTableData> custom({
-    Expression<String>? id,
-    Expression<String>? typeId,
+    Expression<String>? vehicleId,
+    Expression<String>? plate,
     Expression<String>? brand,
     Expression<String>? model,
     Expression<int>? year,
-    Expression<String>? plate,
     Expression<int>? unit,
+    Expression<String>? type,
+    Expression<String>? operationState,
+    Expression<String>? currentLocation,
+    Expression<String>? responsible,
+    Expression<int>? mileage,
+    Expression<String>? serviceReason,
+    Expression<String>? phone,
     Expression<bool>? isActive,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? serviceDate,
+    Expression<DateTime>? checkoutDate,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (typeId != null) 'type_id': typeId,
+      if (vehicleId != null) 'vehicle_id': vehicleId,
+      if (plate != null) 'plate': plate,
       if (brand != null) 'brand': brand,
       if (model != null) 'model': model,
       if (year != null) 'year': year,
-      if (plate != null) 'plate': plate,
       if (unit != null) 'unit': unit,
+      if (type != null) 'type': type,
+      if (operationState != null) 'operation_state': operationState,
+      if (currentLocation != null) 'current_location': currentLocation,
+      if (responsible != null) 'responsible': responsible,
+      if (mileage != null) 'mileage': mileage,
+      if (serviceReason != null) 'service_reason': serviceReason,
+      if (phone != null) 'phone': phone,
       if (isActive != null) 'is_active': isActive,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
+      if (serviceDate != null) 'service_date': serviceDate,
+      if (checkoutDate != null) 'checkout_date': checkoutDate,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
   VehiclesTableCompanion copyWith({
-    Value<String>? id,
-    Value<String>? typeId,
+    Value<String>? vehicleId,
+    Value<String>? plate,
     Value<String>? brand,
     Value<String>? model,
     Value<int>? year,
-    Value<String>? plate,
     Value<int>? unit,
+    Value<String>? type,
+    Value<String>? operationState,
+    Value<String>? currentLocation,
+    Value<String>? responsible,
+    Value<int?>? mileage,
+    Value<String?>? serviceReason,
+    Value<String?>? phone,
     Value<bool>? isActive,
-    Value<DateTime?>? createdAt,
-    Value<DateTime?>? updatedAt,
+    Value<DateTime?>? serviceDate,
+    Value<DateTime?>? checkoutDate,
     Value<int>? rowid,
   }) {
     return VehiclesTableCompanion(
-      id: id ?? this.id,
-      typeId: typeId ?? this.typeId,
+      vehicleId: vehicleId ?? this.vehicleId,
+      plate: plate ?? this.plate,
       brand: brand ?? this.brand,
       model: model ?? this.model,
       year: year ?? this.year,
-      plate: plate ?? this.plate,
       unit: unit ?? this.unit,
+      type: type ?? this.type,
+      operationState: operationState ?? this.operationState,
+      currentLocation: currentLocation ?? this.currentLocation,
+      responsible: responsible ?? this.responsible,
+      mileage: mileage ?? this.mileage,
+      serviceReason: serviceReason ?? this.serviceReason,
+      phone: phone ?? this.phone,
       isActive: isActive ?? this.isActive,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      serviceDate: serviceDate ?? this.serviceDate,
+      checkoutDate: checkoutDate ?? this.checkoutDate,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -548,11 +850,11 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
+    if (vehicleId.present) {
+      map['vehicle_id'] = Variable<String>(vehicleId.value);
     }
-    if (typeId.present) {
-      map['type_id'] = Variable<String>(typeId.value);
+    if (plate.present) {
+      map['plate'] = Variable<String>(plate.value);
     }
     if (brand.present) {
       map['brand'] = Variable<String>(brand.value);
@@ -563,20 +865,38 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
     if (year.present) {
       map['year'] = Variable<int>(year.value);
     }
-    if (plate.present) {
-      map['plate'] = Variable<String>(plate.value);
-    }
     if (unit.present) {
       map['unit'] = Variable<int>(unit.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (operationState.present) {
+      map['operation_state'] = Variable<String>(operationState.value);
+    }
+    if (currentLocation.present) {
+      map['current_location'] = Variable<String>(currentLocation.value);
+    }
+    if (responsible.present) {
+      map['responsible'] = Variable<String>(responsible.value);
+    }
+    if (mileage.present) {
+      map['mileage'] = Variable<int>(mileage.value);
+    }
+    if (serviceReason.present) {
+      map['service_reason'] = Variable<String>(serviceReason.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
     }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
+    if (serviceDate.present) {
+      map['service_date'] = Variable<DateTime>(serviceDate.value);
     }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    if (checkoutDate.present) {
+      map['checkout_date'] = Variable<DateTime>(checkoutDate.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -587,16 +907,22 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
   @override
   String toString() {
     return (StringBuffer('VehiclesTableCompanion(')
-          ..write('id: $id, ')
-          ..write('typeId: $typeId, ')
+          ..write('vehicleId: $vehicleId, ')
+          ..write('plate: $plate, ')
           ..write('brand: $brand, ')
           ..write('model: $model, ')
           ..write('year: $year, ')
-          ..write('plate: $plate, ')
           ..write('unit: $unit, ')
+          ..write('type: $type, ')
+          ..write('operationState: $operationState, ')
+          ..write('currentLocation: $currentLocation, ')
+          ..write('responsible: $responsible, ')
+          ..write('mileage: $mileage, ')
+          ..write('serviceReason: $serviceReason, ')
+          ..write('phone: $phone, ')
           ..write('isActive: $isActive, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
+          ..write('serviceDate: $serviceDate, ')
+          ..write('checkoutDate: $checkoutDate, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3252,6 +3578,1616 @@ class PendingVehicleReportsTableCompanion
   }
 }
 
+class $PressesTableTable extends PressesTable
+    with TableInfo<$PressesTableTable, PressesTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PressesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _serieMeta = const VerificationMeta('serie');
+  @override
+  late final GeneratedColumn<String> serie = GeneratedColumn<String>(
+    'serie',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeMeta = const VerificationMeta('size');
+  @override
+  late final GeneratedColumn<String> size = GeneratedColumn<String>(
+    'size',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _modelMeta = const VerificationMeta('model');
+  @override
+  late final GeneratedColumn<String> model = GeneratedColumn<String>(
+    'model',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _voltsMeta = const VerificationMeta('volts');
+  @override
+  late final GeneratedColumn<String> volts = GeneratedColumn<String>(
+    'volts',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _operationStateMeta = const VerificationMeta(
+    'operationState',
+  );
+  @override
+  late final GeneratedColumn<String> operationState = GeneratedColumn<String>(
+    'operation_state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('AVAILABLE'),
+  );
+  static const VerificationMeta _currentLocationMeta = const VerificationMeta(
+    'currentLocation',
+  );
+  @override
+  late final GeneratedColumn<String> currentLocation = GeneratedColumn<String>(
+    'current_location',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('TALLER CENTRAL REPROSISA'),
+  );
+  static const VerificationMeta _solicitantsNameMeta = const VerificationMeta(
+    'solicitantsName',
+  );
+  @override
+  late final GeneratedColumn<String> solicitantsName = GeneratedColumn<String>(
+    'solicitants_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _loanCommentMeta = const VerificationMeta(
+    'loanComment',
+  );
+  @override
+  late final GeneratedColumn<String> loanComment = GeneratedColumn<String>(
+    'loan_comment',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _serviceReasonMeta = const VerificationMeta(
+    'serviceReason',
+  );
+  @override
+  late final GeneratedColumn<String> serviceReason = GeneratedColumn<String>(
+    'service_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _serviceDateMeta = const VerificationMeta(
+    'serviceDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> serviceDate = GeneratedColumn<DateTime>(
+    'service_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _checkoutDateMeta = const VerificationMeta(
+    'checkoutDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> checkoutDate = GeneratedColumn<DateTime>(
+    'checkout_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    serie,
+    size,
+    type,
+    model,
+    volts,
+    isActive,
+    operationState,
+    currentLocation,
+    solicitantsName,
+    loanComment,
+    serviceReason,
+    serviceDate,
+    checkoutDate,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'presses_table';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PressesTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('serie')) {
+      context.handle(
+        _serieMeta,
+        serie.isAcceptableOrUnknown(data['serie']!, _serieMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serieMeta);
+    }
+    if (data.containsKey('size')) {
+      context.handle(
+        _sizeMeta,
+        size.isAcceptableOrUnknown(data['size']!, _sizeMeta),
+      );
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('model')) {
+      context.handle(
+        _modelMeta,
+        model.isAcceptableOrUnknown(data['model']!, _modelMeta),
+      );
+    }
+    if (data.containsKey('volts')) {
+      context.handle(
+        _voltsMeta,
+        volts.isAcceptableOrUnknown(data['volts']!, _voltsMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('operation_state')) {
+      context.handle(
+        _operationStateMeta,
+        operationState.isAcceptableOrUnknown(
+          data['operation_state']!,
+          _operationStateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('current_location')) {
+      context.handle(
+        _currentLocationMeta,
+        currentLocation.isAcceptableOrUnknown(
+          data['current_location']!,
+          _currentLocationMeta,
+        ),
+      );
+    }
+    if (data.containsKey('solicitants_name')) {
+      context.handle(
+        _solicitantsNameMeta,
+        solicitantsName.isAcceptableOrUnknown(
+          data['solicitants_name']!,
+          _solicitantsNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('loan_comment')) {
+      context.handle(
+        _loanCommentMeta,
+        loanComment.isAcceptableOrUnknown(
+          data['loan_comment']!,
+          _loanCommentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('service_reason')) {
+      context.handle(
+        _serviceReasonMeta,
+        serviceReason.isAcceptableOrUnknown(
+          data['service_reason']!,
+          _serviceReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('service_date')) {
+      context.handle(
+        _serviceDateMeta,
+        serviceDate.isAcceptableOrUnknown(
+          data['service_date']!,
+          _serviceDateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('checkout_date')) {
+      context.handle(
+        _checkoutDateMeta,
+        checkoutDate.isAcceptableOrUnknown(
+          data['checkout_date']!,
+          _checkoutDateMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PressesTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PressesTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      serie: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}serie'],
+      )!,
+      size: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}size'],
+      ),
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      model: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}model'],
+      ),
+      volts: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}volts'],
+      ),
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      operationState: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operation_state'],
+      )!,
+      currentLocation: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}current_location'],
+      )!,
+      solicitantsName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}solicitants_name'],
+      ),
+      loanComment: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}loan_comment'],
+      ),
+      serviceReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}service_reason'],
+      ),
+      serviceDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}service_date'],
+      ),
+      checkoutDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}checkout_date'],
+      ),
+    );
+  }
+
+  @override
+  $PressesTableTable createAlias(String alias) {
+    return $PressesTableTable(attachedDatabase, alias);
+  }
+}
+
+class PressesTableData extends DataClass
+    implements Insertable<PressesTableData> {
+  final String id;
+  final String serie;
+  final String? size;
+  final String type;
+  final String? model;
+  final String? volts;
+  final bool isActive;
+  final String operationState;
+  final String currentLocation;
+  final String? solicitantsName;
+  final String? loanComment;
+  final String? serviceReason;
+  final DateTime? serviceDate;
+  final DateTime? checkoutDate;
+  const PressesTableData({
+    required this.id,
+    required this.serie,
+    this.size,
+    required this.type,
+    this.model,
+    this.volts,
+    required this.isActive,
+    required this.operationState,
+    required this.currentLocation,
+    this.solicitantsName,
+    this.loanComment,
+    this.serviceReason,
+    this.serviceDate,
+    this.checkoutDate,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['serie'] = Variable<String>(serie);
+    if (!nullToAbsent || size != null) {
+      map['size'] = Variable<String>(size);
+    }
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || model != null) {
+      map['model'] = Variable<String>(model);
+    }
+    if (!nullToAbsent || volts != null) {
+      map['volts'] = Variable<String>(volts);
+    }
+    map['is_active'] = Variable<bool>(isActive);
+    map['operation_state'] = Variable<String>(operationState);
+    map['current_location'] = Variable<String>(currentLocation);
+    if (!nullToAbsent || solicitantsName != null) {
+      map['solicitants_name'] = Variable<String>(solicitantsName);
+    }
+    if (!nullToAbsent || loanComment != null) {
+      map['loan_comment'] = Variable<String>(loanComment);
+    }
+    if (!nullToAbsent || serviceReason != null) {
+      map['service_reason'] = Variable<String>(serviceReason);
+    }
+    if (!nullToAbsent || serviceDate != null) {
+      map['service_date'] = Variable<DateTime>(serviceDate);
+    }
+    if (!nullToAbsent || checkoutDate != null) {
+      map['checkout_date'] = Variable<DateTime>(checkoutDate);
+    }
+    return map;
+  }
+
+  PressesTableCompanion toCompanion(bool nullToAbsent) {
+    return PressesTableCompanion(
+      id: Value(id),
+      serie: Value(serie),
+      size: size == null && nullToAbsent ? const Value.absent() : Value(size),
+      type: Value(type),
+      model: model == null && nullToAbsent
+          ? const Value.absent()
+          : Value(model),
+      volts: volts == null && nullToAbsent
+          ? const Value.absent()
+          : Value(volts),
+      isActive: Value(isActive),
+      operationState: Value(operationState),
+      currentLocation: Value(currentLocation),
+      solicitantsName: solicitantsName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(solicitantsName),
+      loanComment: loanComment == null && nullToAbsent
+          ? const Value.absent()
+          : Value(loanComment),
+      serviceReason: serviceReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serviceReason),
+      serviceDate: serviceDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serviceDate),
+      checkoutDate: checkoutDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(checkoutDate),
+    );
+  }
+
+  factory PressesTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PressesTableData(
+      id: serializer.fromJson<String>(json['id']),
+      serie: serializer.fromJson<String>(json['serie']),
+      size: serializer.fromJson<String?>(json['size']),
+      type: serializer.fromJson<String>(json['type']),
+      model: serializer.fromJson<String?>(json['model']),
+      volts: serializer.fromJson<String?>(json['volts']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      operationState: serializer.fromJson<String>(json['operationState']),
+      currentLocation: serializer.fromJson<String>(json['currentLocation']),
+      solicitantsName: serializer.fromJson<String?>(json['solicitantsName']),
+      loanComment: serializer.fromJson<String?>(json['loanComment']),
+      serviceReason: serializer.fromJson<String?>(json['serviceReason']),
+      serviceDate: serializer.fromJson<DateTime?>(json['serviceDate']),
+      checkoutDate: serializer.fromJson<DateTime?>(json['checkoutDate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'serie': serializer.toJson<String>(serie),
+      'size': serializer.toJson<String?>(size),
+      'type': serializer.toJson<String>(type),
+      'model': serializer.toJson<String?>(model),
+      'volts': serializer.toJson<String?>(volts),
+      'isActive': serializer.toJson<bool>(isActive),
+      'operationState': serializer.toJson<String>(operationState),
+      'currentLocation': serializer.toJson<String>(currentLocation),
+      'solicitantsName': serializer.toJson<String?>(solicitantsName),
+      'loanComment': serializer.toJson<String?>(loanComment),
+      'serviceReason': serializer.toJson<String?>(serviceReason),
+      'serviceDate': serializer.toJson<DateTime?>(serviceDate),
+      'checkoutDate': serializer.toJson<DateTime?>(checkoutDate),
+    };
+  }
+
+  PressesTableData copyWith({
+    String? id,
+    String? serie,
+    Value<String?> size = const Value.absent(),
+    String? type,
+    Value<String?> model = const Value.absent(),
+    Value<String?> volts = const Value.absent(),
+    bool? isActive,
+    String? operationState,
+    String? currentLocation,
+    Value<String?> solicitantsName = const Value.absent(),
+    Value<String?> loanComment = const Value.absent(),
+    Value<String?> serviceReason = const Value.absent(),
+    Value<DateTime?> serviceDate = const Value.absent(),
+    Value<DateTime?> checkoutDate = const Value.absent(),
+  }) => PressesTableData(
+    id: id ?? this.id,
+    serie: serie ?? this.serie,
+    size: size.present ? size.value : this.size,
+    type: type ?? this.type,
+    model: model.present ? model.value : this.model,
+    volts: volts.present ? volts.value : this.volts,
+    isActive: isActive ?? this.isActive,
+    operationState: operationState ?? this.operationState,
+    currentLocation: currentLocation ?? this.currentLocation,
+    solicitantsName: solicitantsName.present
+        ? solicitantsName.value
+        : this.solicitantsName,
+    loanComment: loanComment.present ? loanComment.value : this.loanComment,
+    serviceReason: serviceReason.present
+        ? serviceReason.value
+        : this.serviceReason,
+    serviceDate: serviceDate.present ? serviceDate.value : this.serviceDate,
+    checkoutDate: checkoutDate.present ? checkoutDate.value : this.checkoutDate,
+  );
+  PressesTableData copyWithCompanion(PressesTableCompanion data) {
+    return PressesTableData(
+      id: data.id.present ? data.id.value : this.id,
+      serie: data.serie.present ? data.serie.value : this.serie,
+      size: data.size.present ? data.size.value : this.size,
+      type: data.type.present ? data.type.value : this.type,
+      model: data.model.present ? data.model.value : this.model,
+      volts: data.volts.present ? data.volts.value : this.volts,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      operationState: data.operationState.present
+          ? data.operationState.value
+          : this.operationState,
+      currentLocation: data.currentLocation.present
+          ? data.currentLocation.value
+          : this.currentLocation,
+      solicitantsName: data.solicitantsName.present
+          ? data.solicitantsName.value
+          : this.solicitantsName,
+      loanComment: data.loanComment.present
+          ? data.loanComment.value
+          : this.loanComment,
+      serviceReason: data.serviceReason.present
+          ? data.serviceReason.value
+          : this.serviceReason,
+      serviceDate: data.serviceDate.present
+          ? data.serviceDate.value
+          : this.serviceDate,
+      checkoutDate: data.checkoutDate.present
+          ? data.checkoutDate.value
+          : this.checkoutDate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PressesTableData(')
+          ..write('id: $id, ')
+          ..write('serie: $serie, ')
+          ..write('size: $size, ')
+          ..write('type: $type, ')
+          ..write('model: $model, ')
+          ..write('volts: $volts, ')
+          ..write('isActive: $isActive, ')
+          ..write('operationState: $operationState, ')
+          ..write('currentLocation: $currentLocation, ')
+          ..write('solicitantsName: $solicitantsName, ')
+          ..write('loanComment: $loanComment, ')
+          ..write('serviceReason: $serviceReason, ')
+          ..write('serviceDate: $serviceDate, ')
+          ..write('checkoutDate: $checkoutDate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    serie,
+    size,
+    type,
+    model,
+    volts,
+    isActive,
+    operationState,
+    currentLocation,
+    solicitantsName,
+    loanComment,
+    serviceReason,
+    serviceDate,
+    checkoutDate,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PressesTableData &&
+          other.id == this.id &&
+          other.serie == this.serie &&
+          other.size == this.size &&
+          other.type == this.type &&
+          other.model == this.model &&
+          other.volts == this.volts &&
+          other.isActive == this.isActive &&
+          other.operationState == this.operationState &&
+          other.currentLocation == this.currentLocation &&
+          other.solicitantsName == this.solicitantsName &&
+          other.loanComment == this.loanComment &&
+          other.serviceReason == this.serviceReason &&
+          other.serviceDate == this.serviceDate &&
+          other.checkoutDate == this.checkoutDate);
+}
+
+class PressesTableCompanion extends UpdateCompanion<PressesTableData> {
+  final Value<String> id;
+  final Value<String> serie;
+  final Value<String?> size;
+  final Value<String> type;
+  final Value<String?> model;
+  final Value<String?> volts;
+  final Value<bool> isActive;
+  final Value<String> operationState;
+  final Value<String> currentLocation;
+  final Value<String?> solicitantsName;
+  final Value<String?> loanComment;
+  final Value<String?> serviceReason;
+  final Value<DateTime?> serviceDate;
+  final Value<DateTime?> checkoutDate;
+  final Value<int> rowid;
+  const PressesTableCompanion({
+    this.id = const Value.absent(),
+    this.serie = const Value.absent(),
+    this.size = const Value.absent(),
+    this.type = const Value.absent(),
+    this.model = const Value.absent(),
+    this.volts = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.operationState = const Value.absent(),
+    this.currentLocation = const Value.absent(),
+    this.solicitantsName = const Value.absent(),
+    this.loanComment = const Value.absent(),
+    this.serviceReason = const Value.absent(),
+    this.serviceDate = const Value.absent(),
+    this.checkoutDate = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PressesTableCompanion.insert({
+    required String id,
+    required String serie,
+    this.size = const Value.absent(),
+    required String type,
+    this.model = const Value.absent(),
+    this.volts = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.operationState = const Value.absent(),
+    this.currentLocation = const Value.absent(),
+    this.solicitantsName = const Value.absent(),
+    this.loanComment = const Value.absent(),
+    this.serviceReason = const Value.absent(),
+    this.serviceDate = const Value.absent(),
+    this.checkoutDate = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       serie = Value(serie),
+       type = Value(type);
+  static Insertable<PressesTableData> custom({
+    Expression<String>? id,
+    Expression<String>? serie,
+    Expression<String>? size,
+    Expression<String>? type,
+    Expression<String>? model,
+    Expression<String>? volts,
+    Expression<bool>? isActive,
+    Expression<String>? operationState,
+    Expression<String>? currentLocation,
+    Expression<String>? solicitantsName,
+    Expression<String>? loanComment,
+    Expression<String>? serviceReason,
+    Expression<DateTime>? serviceDate,
+    Expression<DateTime>? checkoutDate,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (serie != null) 'serie': serie,
+      if (size != null) 'size': size,
+      if (type != null) 'type': type,
+      if (model != null) 'model': model,
+      if (volts != null) 'volts': volts,
+      if (isActive != null) 'is_active': isActive,
+      if (operationState != null) 'operation_state': operationState,
+      if (currentLocation != null) 'current_location': currentLocation,
+      if (solicitantsName != null) 'solicitants_name': solicitantsName,
+      if (loanComment != null) 'loan_comment': loanComment,
+      if (serviceReason != null) 'service_reason': serviceReason,
+      if (serviceDate != null) 'service_date': serviceDate,
+      if (checkoutDate != null) 'checkout_date': checkoutDate,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PressesTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? serie,
+    Value<String?>? size,
+    Value<String>? type,
+    Value<String?>? model,
+    Value<String?>? volts,
+    Value<bool>? isActive,
+    Value<String>? operationState,
+    Value<String>? currentLocation,
+    Value<String?>? solicitantsName,
+    Value<String?>? loanComment,
+    Value<String?>? serviceReason,
+    Value<DateTime?>? serviceDate,
+    Value<DateTime?>? checkoutDate,
+    Value<int>? rowid,
+  }) {
+    return PressesTableCompanion(
+      id: id ?? this.id,
+      serie: serie ?? this.serie,
+      size: size ?? this.size,
+      type: type ?? this.type,
+      model: model ?? this.model,
+      volts: volts ?? this.volts,
+      isActive: isActive ?? this.isActive,
+      operationState: operationState ?? this.operationState,
+      currentLocation: currentLocation ?? this.currentLocation,
+      solicitantsName: solicitantsName ?? this.solicitantsName,
+      loanComment: loanComment ?? this.loanComment,
+      serviceReason: serviceReason ?? this.serviceReason,
+      serviceDate: serviceDate ?? this.serviceDate,
+      checkoutDate: checkoutDate ?? this.checkoutDate,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (serie.present) {
+      map['serie'] = Variable<String>(serie.value);
+    }
+    if (size.present) {
+      map['size'] = Variable<String>(size.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (model.present) {
+      map['model'] = Variable<String>(model.value);
+    }
+    if (volts.present) {
+      map['volts'] = Variable<String>(volts.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (operationState.present) {
+      map['operation_state'] = Variable<String>(operationState.value);
+    }
+    if (currentLocation.present) {
+      map['current_location'] = Variable<String>(currentLocation.value);
+    }
+    if (solicitantsName.present) {
+      map['solicitants_name'] = Variable<String>(solicitantsName.value);
+    }
+    if (loanComment.present) {
+      map['loan_comment'] = Variable<String>(loanComment.value);
+    }
+    if (serviceReason.present) {
+      map['service_reason'] = Variable<String>(serviceReason.value);
+    }
+    if (serviceDate.present) {
+      map['service_date'] = Variable<DateTime>(serviceDate.value);
+    }
+    if (checkoutDate.present) {
+      map['checkout_date'] = Variable<DateTime>(checkoutDate.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PressesTableCompanion(')
+          ..write('id: $id, ')
+          ..write('serie: $serie, ')
+          ..write('size: $size, ')
+          ..write('type: $type, ')
+          ..write('model: $model, ')
+          ..write('volts: $volts, ')
+          ..write('isActive: $isActive, ')
+          ..write('operationState: $operationState, ')
+          ..write('currentLocation: $currentLocation, ')
+          ..write('solicitantsName: $solicitantsName, ')
+          ..write('loanComment: $loanComment, ')
+          ..write('serviceReason: $serviceReason, ')
+          ..write('serviceDate: $serviceDate, ')
+          ..write('checkoutDate: $checkoutDate, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LoanAreasTableTable extends LoanAreasTable
+    with TableInfo<$LoanAreasTableTable, LoanAreasTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LoanAreasTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _addressMeta = const VerificationMeta(
+    'address',
+  );
+  @override
+  late final GeneratedColumn<String> address = GeneratedColumn<String>(
+    'address',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _contactMeta = const VerificationMeta(
+    'contact',
+  );
+  @override
+  late final GeneratedColumn<String> contact = GeneratedColumn<String>(
+    'contact',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, address, contact];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'loan_areas_table';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LoanAreasTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('address')) {
+      context.handle(
+        _addressMeta,
+        address.isAcceptableOrUnknown(data['address']!, _addressMeta),
+      );
+    }
+    if (data.containsKey('contact')) {
+      context.handle(
+        _contactMeta,
+        contact.isAcceptableOrUnknown(data['contact']!, _contactMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LoanAreasTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LoanAreasTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      address: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}address'],
+      ),
+      contact: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}contact'],
+      ),
+    );
+  }
+
+  @override
+  $LoanAreasTableTable createAlias(String alias) {
+    return $LoanAreasTableTable(attachedDatabase, alias);
+  }
+}
+
+class LoanAreasTableData extends DataClass
+    implements Insertable<LoanAreasTableData> {
+  final String id;
+  final String name;
+  final String? address;
+  final String? contact;
+  const LoanAreasTableData({
+    required this.id,
+    required this.name,
+    this.address,
+    this.contact,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || address != null) {
+      map['address'] = Variable<String>(address);
+    }
+    if (!nullToAbsent || contact != null) {
+      map['contact'] = Variable<String>(contact);
+    }
+    return map;
+  }
+
+  LoanAreasTableCompanion toCompanion(bool nullToAbsent) {
+    return LoanAreasTableCompanion(
+      id: Value(id),
+      name: Value(name),
+      address: address == null && nullToAbsent
+          ? const Value.absent()
+          : Value(address),
+      contact: contact == null && nullToAbsent
+          ? const Value.absent()
+          : Value(contact),
+    );
+  }
+
+  factory LoanAreasTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LoanAreasTableData(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      address: serializer.fromJson<String?>(json['address']),
+      contact: serializer.fromJson<String?>(json['contact']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'address': serializer.toJson<String?>(address),
+      'contact': serializer.toJson<String?>(contact),
+    };
+  }
+
+  LoanAreasTableData copyWith({
+    String? id,
+    String? name,
+    Value<String?> address = const Value.absent(),
+    Value<String?> contact = const Value.absent(),
+  }) => LoanAreasTableData(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    address: address.present ? address.value : this.address,
+    contact: contact.present ? contact.value : this.contact,
+  );
+  LoanAreasTableData copyWithCompanion(LoanAreasTableCompanion data) {
+    return LoanAreasTableData(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      address: data.address.present ? data.address.value : this.address,
+      contact: data.contact.present ? data.contact.value : this.contact,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LoanAreasTableData(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('address: $address, ')
+          ..write('contact: $contact')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, address, contact);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LoanAreasTableData &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.address == this.address &&
+          other.contact == this.contact);
+}
+
+class LoanAreasTableCompanion extends UpdateCompanion<LoanAreasTableData> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String?> address;
+  final Value<String?> contact;
+  final Value<int> rowid;
+  const LoanAreasTableCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.address = const Value.absent(),
+    this.contact = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LoanAreasTableCompanion.insert({
+    required String id,
+    required String name,
+    this.address = const Value.absent(),
+    this.contact = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name);
+  static Insertable<LoanAreasTableData> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? address,
+    Expression<String>? contact,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (address != null) 'address': address,
+      if (contact != null) 'contact': contact,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LoanAreasTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String?>? address,
+    Value<String?>? contact,
+    Value<int>? rowid,
+  }) {
+    return LoanAreasTableCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      address: address ?? this.address,
+      contact: contact ?? this.contact,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (address.present) {
+      map['address'] = Variable<String>(address.value);
+    }
+    if (contact.present) {
+      map['contact'] = Variable<String>(contact.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LoanAreasTableCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('address: $address, ')
+          ..write('contact: $contact, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PendingPressReportsTableTable extends PendingPressReportsTable
+    with
+        TableInfo<
+          $PendingPressReportsTableTable,
+          PendingPressReportsTableData
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PendingPressReportsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pressIdMeta = const VerificationMeta(
+    'pressId',
+  );
+  @override
+  late final GeneratedColumn<String> pressId = GeneratedColumn<String>(
+    'press_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _folioMeta = const VerificationMeta('folio');
+  @override
+  late final GeneratedColumn<String> folio = GeneratedColumn<String>(
+    'folio',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isSyncedMeta = const VerificationMeta(
+    'isSynced',
+  );
+  @override
+  late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
+    'is_synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _syncedAtMeta = const VerificationMeta(
+    'syncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> syncedAt = GeneratedColumn<DateTime>(
+    'synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    pressId,
+    folio,
+    payload,
+    isSynced,
+    createdAt,
+    syncedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'pending_press_reports_table';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PendingPressReportsTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('press_id')) {
+      context.handle(
+        _pressIdMeta,
+        pressId.isAcceptableOrUnknown(data['press_id']!, _pressIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pressIdMeta);
+    }
+    if (data.containsKey('folio')) {
+      context.handle(
+        _folioMeta,
+        folio.isAcceptableOrUnknown(data['folio']!, _folioMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_folioMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    if (data.containsKey('is_synced')) {
+      context.handle(
+        _isSyncedMeta,
+        isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('synced_at')) {
+      context.handle(
+        _syncedAtMeta,
+        syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PendingPressReportsTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PendingPressReportsTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      pressId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}press_id'],
+      )!,
+      folio: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}folio'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+      isSynced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_synced'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      syncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}synced_at'],
+      ),
+    );
+  }
+
+  @override
+  $PendingPressReportsTableTable createAlias(String alias) {
+    return $PendingPressReportsTableTable(attachedDatabase, alias);
+  }
+}
+
+class PendingPressReportsTableData extends DataClass
+    implements Insertable<PendingPressReportsTableData> {
+  final String id;
+  final String pressId;
+  final String folio;
+  final String payload;
+  final bool isSynced;
+  final DateTime createdAt;
+  final DateTime? syncedAt;
+  const PendingPressReportsTableData({
+    required this.id,
+    required this.pressId,
+    required this.folio,
+    required this.payload,
+    required this.isSynced,
+    required this.createdAt,
+    this.syncedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['press_id'] = Variable<String>(pressId);
+    map['folio'] = Variable<String>(folio);
+    map['payload'] = Variable<String>(payload);
+    map['is_synced'] = Variable<bool>(isSynced);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || syncedAt != null) {
+      map['synced_at'] = Variable<DateTime>(syncedAt);
+    }
+    return map;
+  }
+
+  PendingPressReportsTableCompanion toCompanion(bool nullToAbsent) {
+    return PendingPressReportsTableCompanion(
+      id: Value(id),
+      pressId: Value(pressId),
+      folio: Value(folio),
+      payload: Value(payload),
+      isSynced: Value(isSynced),
+      createdAt: Value(createdAt),
+      syncedAt: syncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncedAt),
+    );
+  }
+
+  factory PendingPressReportsTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PendingPressReportsTableData(
+      id: serializer.fromJson<String>(json['id']),
+      pressId: serializer.fromJson<String>(json['pressId']),
+      folio: serializer.fromJson<String>(json['folio']),
+      payload: serializer.fromJson<String>(json['payload']),
+      isSynced: serializer.fromJson<bool>(json['isSynced']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'pressId': serializer.toJson<String>(pressId),
+      'folio': serializer.toJson<String>(folio),
+      'payload': serializer.toJson<String>(payload),
+      'isSynced': serializer.toJson<bool>(isSynced),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'syncedAt': serializer.toJson<DateTime?>(syncedAt),
+    };
+  }
+
+  PendingPressReportsTableData copyWith({
+    String? id,
+    String? pressId,
+    String? folio,
+    String? payload,
+    bool? isSynced,
+    DateTime? createdAt,
+    Value<DateTime?> syncedAt = const Value.absent(),
+  }) => PendingPressReportsTableData(
+    id: id ?? this.id,
+    pressId: pressId ?? this.pressId,
+    folio: folio ?? this.folio,
+    payload: payload ?? this.payload,
+    isSynced: isSynced ?? this.isSynced,
+    createdAt: createdAt ?? this.createdAt,
+    syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
+  );
+  PendingPressReportsTableData copyWithCompanion(
+    PendingPressReportsTableCompanion data,
+  ) {
+    return PendingPressReportsTableData(
+      id: data.id.present ? data.id.value : this.id,
+      pressId: data.pressId.present ? data.pressId.value : this.pressId,
+      folio: data.folio.present ? data.folio.value : this.folio,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PendingPressReportsTableData(')
+          ..write('id: $id, ')
+          ..write('pressId: $pressId, ')
+          ..write('folio: $folio, ')
+          ..write('payload: $payload, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('syncedAt: $syncedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, pressId, folio, payload, isSynced, createdAt, syncedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PendingPressReportsTableData &&
+          other.id == this.id &&
+          other.pressId == this.pressId &&
+          other.folio == this.folio &&
+          other.payload == this.payload &&
+          other.isSynced == this.isSynced &&
+          other.createdAt == this.createdAt &&
+          other.syncedAt == this.syncedAt);
+}
+
+class PendingPressReportsTableCompanion
+    extends UpdateCompanion<PendingPressReportsTableData> {
+  final Value<String> id;
+  final Value<String> pressId;
+  final Value<String> folio;
+  final Value<String> payload;
+  final Value<bool> isSynced;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> syncedAt;
+  final Value<int> rowid;
+  const PendingPressReportsTableCompanion({
+    this.id = const Value.absent(),
+    this.pressId = const Value.absent(),
+    this.folio = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PendingPressReportsTableCompanion.insert({
+    required String id,
+    required String pressId,
+    required String folio,
+    required String payload,
+    this.isSynced = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       pressId = Value(pressId),
+       folio = Value(folio),
+       payload = Value(payload);
+  static Insertable<PendingPressReportsTableData> custom({
+    Expression<String>? id,
+    Expression<String>? pressId,
+    Expression<String>? folio,
+    Expression<String>? payload,
+    Expression<bool>? isSynced,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? syncedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (pressId != null) 'press_id': pressId,
+      if (folio != null) 'folio': folio,
+      if (payload != null) 'payload': payload,
+      if (isSynced != null) 'is_synced': isSynced,
+      if (createdAt != null) 'created_at': createdAt,
+      if (syncedAt != null) 'synced_at': syncedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PendingPressReportsTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? pressId,
+    Value<String>? folio,
+    Value<String>? payload,
+    Value<bool>? isSynced,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? syncedAt,
+    Value<int>? rowid,
+  }) {
+    return PendingPressReportsTableCompanion(
+      id: id ?? this.id,
+      pressId: pressId ?? this.pressId,
+      folio: folio ?? this.folio,
+      payload: payload ?? this.payload,
+      isSynced: isSynced ?? this.isSynced,
+      createdAt: createdAt ?? this.createdAt,
+      syncedAt: syncedAt ?? this.syncedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (pressId.present) {
+      map['press_id'] = Variable<String>(pressId.value);
+    }
+    if (folio.present) {
+      map['folio'] = Variable<String>(folio.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (isSynced.present) {
+      map['is_synced'] = Variable<bool>(isSynced.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (syncedAt.present) {
+      map['synced_at'] = Variable<DateTime>(syncedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PendingPressReportsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('pressId: $pressId, ')
+          ..write('folio: $folio, ')
+          ..write('payload: $payload, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3266,6 +5202,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $EvidenceVehicleTableTable(this);
   late final $PendingVehicleReportsTableTable pendingVehicleReportsTable =
       $PendingVehicleReportsTableTable(this);
+  late final $PressesTableTable pressesTable = $PressesTableTable(this);
+  late final $LoanAreasTableTable loanAreasTable = $LoanAreasTableTable(this);
+  late final $PendingPressReportsTableTable pendingPressReportsTable =
+      $PendingPressReportsTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3277,35 +5217,50 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     reportAnswersVehicleTable,
     evidenceVehicleTable,
     pendingVehicleReportsTable,
+    pressesTable,
+    loanAreasTable,
+    pendingPressReportsTable,
   ];
 }
 
 typedef $$VehiclesTableTableCreateCompanionBuilder =
     VehiclesTableCompanion Function({
-      required String id,
-      required String typeId,
+      required String vehicleId,
+      required String plate,
       required String brand,
       required String model,
       required int year,
-      required String plate,
       required int unit,
+      required String type,
+      required String operationState,
+      required String currentLocation,
+      required String responsible,
+      Value<int?> mileage,
+      Value<String?> serviceReason,
+      Value<String?> phone,
       Value<bool> isActive,
-      Value<DateTime?> createdAt,
-      Value<DateTime?> updatedAt,
+      Value<DateTime?> serviceDate,
+      Value<DateTime?> checkoutDate,
       Value<int> rowid,
     });
 typedef $$VehiclesTableTableUpdateCompanionBuilder =
     VehiclesTableCompanion Function({
-      Value<String> id,
-      Value<String> typeId,
+      Value<String> vehicleId,
+      Value<String> plate,
       Value<String> brand,
       Value<String> model,
       Value<int> year,
-      Value<String> plate,
       Value<int> unit,
+      Value<String> type,
+      Value<String> operationState,
+      Value<String> currentLocation,
+      Value<String> responsible,
+      Value<int?> mileage,
+      Value<String?> serviceReason,
+      Value<String?> phone,
       Value<bool> isActive,
-      Value<DateTime?> createdAt,
-      Value<DateTime?> updatedAt,
+      Value<DateTime?> serviceDate,
+      Value<DateTime?> checkoutDate,
       Value<int> rowid,
     });
 
@@ -3318,13 +5273,13 @@ class $$VehiclesTableTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
+  ColumnFilters<String> get vehicleId => $composableBuilder(
+    column: $table.vehicleId,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get typeId => $composableBuilder(
-    column: $table.typeId,
+  ColumnFilters<String> get plate => $composableBuilder(
+    column: $table.plate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3343,13 +5298,43 @@ class $$VehiclesTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get plate => $composableBuilder(
-    column: $table.plate,
+  ColumnFilters<int> get unit => $composableBuilder(
+    column: $table.unit,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get unit => $composableBuilder(
-    column: $table.unit,
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get operationState => $composableBuilder(
+    column: $table.operationState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currentLocation => $composableBuilder(
+    column: $table.currentLocation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get responsible => $composableBuilder(
+    column: $table.responsible,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get mileage => $composableBuilder(
+    column: $table.mileage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get serviceReason => $composableBuilder(
+    column: $table.serviceReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phone => $composableBuilder(
+    column: $table.phone,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3358,13 +5343,13 @@ class $$VehiclesTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
+  ColumnFilters<DateTime> get serviceDate => $composableBuilder(
+    column: $table.serviceDate,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
+  ColumnFilters<DateTime> get checkoutDate => $composableBuilder(
+    column: $table.checkoutDate,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3378,13 +5363,13 @@ class $$VehiclesTableTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
+  ColumnOrderings<String> get vehicleId => $composableBuilder(
+    column: $table.vehicleId,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get typeId => $composableBuilder(
-    column: $table.typeId,
+  ColumnOrderings<String> get plate => $composableBuilder(
+    column: $table.plate,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3403,13 +5388,43 @@ class $$VehiclesTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get plate => $composableBuilder(
-    column: $table.plate,
+  ColumnOrderings<int> get unit => $composableBuilder(
+    column: $table.unit,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get unit => $composableBuilder(
-    column: $table.unit,
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get operationState => $composableBuilder(
+    column: $table.operationState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currentLocation => $composableBuilder(
+    column: $table.currentLocation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get responsible => $composableBuilder(
+    column: $table.responsible,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get mileage => $composableBuilder(
+    column: $table.mileage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get serviceReason => $composableBuilder(
+    column: $table.serviceReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+    column: $table.phone,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3418,13 +5433,13 @@ class $$VehiclesTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
+  ColumnOrderings<DateTime> get serviceDate => $composableBuilder(
+    column: $table.serviceDate,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
+  ColumnOrderings<DateTime> get checkoutDate => $composableBuilder(
+    column: $table.checkoutDate,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -3438,11 +5453,11 @@ class $$VehiclesTableTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
+  GeneratedColumn<String> get vehicleId =>
+      $composableBuilder(column: $table.vehicleId, builder: (column) => column);
 
-  GeneratedColumn<String> get typeId =>
-      $composableBuilder(column: $table.typeId, builder: (column) => column);
+  GeneratedColumn<String> get plate =>
+      $composableBuilder(column: $table.plate, builder: (column) => column);
 
   GeneratedColumn<String> get brand =>
       $composableBuilder(column: $table.brand, builder: (column) => column);
@@ -3453,20 +5468,50 @@ class $$VehiclesTableTableAnnotationComposer
   GeneratedColumn<int> get year =>
       $composableBuilder(column: $table.year, builder: (column) => column);
 
-  GeneratedColumn<String> get plate =>
-      $composableBuilder(column: $table.plate, builder: (column) => column);
-
   GeneratedColumn<int> get unit =>
       $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get operationState => $composableBuilder(
+    column: $table.operationState,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get currentLocation => $composableBuilder(
+    column: $table.currentLocation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get responsible => $composableBuilder(
+    column: $table.responsible,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get mileage =>
+      $composableBuilder(column: $table.mileage, builder: (column) => column);
+
+  GeneratedColumn<String> get serviceReason => $composableBuilder(
+    column: $table.serviceReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+  GeneratedColumn<DateTime> get serviceDate => $composableBuilder(
+    column: $table.serviceDate,
+    builder: (column) => column,
+  );
 
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+  GeneratedColumn<DateTime> get checkoutDate => $composableBuilder(
+    column: $table.checkoutDate,
+    builder: (column) => column,
+  );
 }
 
 class $$VehiclesTableTableTableManager
@@ -3504,54 +5549,78 @@ class $$VehiclesTableTableTableManager
               $$VehiclesTableTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<String> typeId = const Value.absent(),
+                Value<String> vehicleId = const Value.absent(),
+                Value<String> plate = const Value.absent(),
                 Value<String> brand = const Value.absent(),
                 Value<String> model = const Value.absent(),
                 Value<int> year = const Value.absent(),
-                Value<String> plate = const Value.absent(),
                 Value<int> unit = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String> operationState = const Value.absent(),
+                Value<String> currentLocation = const Value.absent(),
+                Value<String> responsible = const Value.absent(),
+                Value<int?> mileage = const Value.absent(),
+                Value<String?> serviceReason = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
-                Value<DateTime?> createdAt = const Value.absent(),
-                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<DateTime?> serviceDate = const Value.absent(),
+                Value<DateTime?> checkoutDate = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VehiclesTableCompanion(
-                id: id,
-                typeId: typeId,
+                vehicleId: vehicleId,
+                plate: plate,
                 brand: brand,
                 model: model,
                 year: year,
-                plate: plate,
                 unit: unit,
+                type: type,
+                operationState: operationState,
+                currentLocation: currentLocation,
+                responsible: responsible,
+                mileage: mileage,
+                serviceReason: serviceReason,
+                phone: phone,
                 isActive: isActive,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
+                serviceDate: serviceDate,
+                checkoutDate: checkoutDate,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                required String typeId,
+                required String vehicleId,
+                required String plate,
                 required String brand,
                 required String model,
                 required int year,
-                required String plate,
                 required int unit,
+                required String type,
+                required String operationState,
+                required String currentLocation,
+                required String responsible,
+                Value<int?> mileage = const Value.absent(),
+                Value<String?> serviceReason = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
-                Value<DateTime?> createdAt = const Value.absent(),
-                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<DateTime?> serviceDate = const Value.absent(),
+                Value<DateTime?> checkoutDate = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VehiclesTableCompanion.insert(
-                id: id,
-                typeId: typeId,
+                vehicleId: vehicleId,
+                plate: plate,
                 brand: brand,
                 model: model,
                 year: year,
-                plate: plate,
                 unit: unit,
+                type: type,
+                operationState: operationState,
+                currentLocation: currentLocation,
+                responsible: responsible,
+                mileage: mileage,
+                serviceReason: serviceReason,
+                phone: phone,
                 isActive: isActive,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
+                serviceDate: serviceDate,
+                checkoutDate: checkoutDate,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -4971,6 +7040,835 @@ typedef $$PendingVehicleReportsTableTableProcessedTableManager =
       PendingVehicleReportsTableData,
       PrefetchHooks Function()
     >;
+typedef $$PressesTableTableCreateCompanionBuilder =
+    PressesTableCompanion Function({
+      required String id,
+      required String serie,
+      Value<String?> size,
+      required String type,
+      Value<String?> model,
+      Value<String?> volts,
+      Value<bool> isActive,
+      Value<String> operationState,
+      Value<String> currentLocation,
+      Value<String?> solicitantsName,
+      Value<String?> loanComment,
+      Value<String?> serviceReason,
+      Value<DateTime?> serviceDate,
+      Value<DateTime?> checkoutDate,
+      Value<int> rowid,
+    });
+typedef $$PressesTableTableUpdateCompanionBuilder =
+    PressesTableCompanion Function({
+      Value<String> id,
+      Value<String> serie,
+      Value<String?> size,
+      Value<String> type,
+      Value<String?> model,
+      Value<String?> volts,
+      Value<bool> isActive,
+      Value<String> operationState,
+      Value<String> currentLocation,
+      Value<String?> solicitantsName,
+      Value<String?> loanComment,
+      Value<String?> serviceReason,
+      Value<DateTime?> serviceDate,
+      Value<DateTime?> checkoutDate,
+      Value<int> rowid,
+    });
+
+class $$PressesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $PressesTableTable> {
+  $$PressesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get serie => $composableBuilder(
+    column: $table.serie,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get volts => $composableBuilder(
+    column: $table.volts,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get operationState => $composableBuilder(
+    column: $table.operationState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currentLocation => $composableBuilder(
+    column: $table.currentLocation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get solicitantsName => $composableBuilder(
+    column: $table.solicitantsName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get loanComment => $composableBuilder(
+    column: $table.loanComment,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get serviceReason => $composableBuilder(
+    column: $table.serviceReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get serviceDate => $composableBuilder(
+    column: $table.serviceDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get checkoutDate => $composableBuilder(
+    column: $table.checkoutDate,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PressesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $PressesTableTable> {
+  $$PressesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get serie => $composableBuilder(
+    column: $table.serie,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get volts => $composableBuilder(
+    column: $table.volts,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get operationState => $composableBuilder(
+    column: $table.operationState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currentLocation => $composableBuilder(
+    column: $table.currentLocation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get solicitantsName => $composableBuilder(
+    column: $table.solicitantsName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get loanComment => $composableBuilder(
+    column: $table.loanComment,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get serviceReason => $composableBuilder(
+    column: $table.serviceReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get serviceDate => $composableBuilder(
+    column: $table.serviceDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get checkoutDate => $composableBuilder(
+    column: $table.checkoutDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PressesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PressesTableTable> {
+  $$PressesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get serie =>
+      $composableBuilder(column: $table.serie, builder: (column) => column);
+
+  GeneratedColumn<String> get size =>
+      $composableBuilder(column: $table.size, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get model =>
+      $composableBuilder(column: $table.model, builder: (column) => column);
+
+  GeneratedColumn<String> get volts =>
+      $composableBuilder(column: $table.volts, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<String> get operationState => $composableBuilder(
+    column: $table.operationState,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get currentLocation => $composableBuilder(
+    column: $table.currentLocation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get solicitantsName => $composableBuilder(
+    column: $table.solicitantsName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get loanComment => $composableBuilder(
+    column: $table.loanComment,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get serviceReason => $composableBuilder(
+    column: $table.serviceReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get serviceDate => $composableBuilder(
+    column: $table.serviceDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get checkoutDate => $composableBuilder(
+    column: $table.checkoutDate,
+    builder: (column) => column,
+  );
+}
+
+class $$PressesTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PressesTableTable,
+          PressesTableData,
+          $$PressesTableTableFilterComposer,
+          $$PressesTableTableOrderingComposer,
+          $$PressesTableTableAnnotationComposer,
+          $$PressesTableTableCreateCompanionBuilder,
+          $$PressesTableTableUpdateCompanionBuilder,
+          (
+            PressesTableData,
+            BaseReferences<_$AppDatabase, $PressesTableTable, PressesTableData>,
+          ),
+          PressesTableData,
+          PrefetchHooks Function()
+        > {
+  $$PressesTableTableTableManager(_$AppDatabase db, $PressesTableTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PressesTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PressesTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PressesTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> serie = const Value.absent(),
+                Value<String?> size = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String?> model = const Value.absent(),
+                Value<String?> volts = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<String> operationState = const Value.absent(),
+                Value<String> currentLocation = const Value.absent(),
+                Value<String?> solicitantsName = const Value.absent(),
+                Value<String?> loanComment = const Value.absent(),
+                Value<String?> serviceReason = const Value.absent(),
+                Value<DateTime?> serviceDate = const Value.absent(),
+                Value<DateTime?> checkoutDate = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PressesTableCompanion(
+                id: id,
+                serie: serie,
+                size: size,
+                type: type,
+                model: model,
+                volts: volts,
+                isActive: isActive,
+                operationState: operationState,
+                currentLocation: currentLocation,
+                solicitantsName: solicitantsName,
+                loanComment: loanComment,
+                serviceReason: serviceReason,
+                serviceDate: serviceDate,
+                checkoutDate: checkoutDate,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String serie,
+                Value<String?> size = const Value.absent(),
+                required String type,
+                Value<String?> model = const Value.absent(),
+                Value<String?> volts = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<String> operationState = const Value.absent(),
+                Value<String> currentLocation = const Value.absent(),
+                Value<String?> solicitantsName = const Value.absent(),
+                Value<String?> loanComment = const Value.absent(),
+                Value<String?> serviceReason = const Value.absent(),
+                Value<DateTime?> serviceDate = const Value.absent(),
+                Value<DateTime?> checkoutDate = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PressesTableCompanion.insert(
+                id: id,
+                serie: serie,
+                size: size,
+                type: type,
+                model: model,
+                volts: volts,
+                isActive: isActive,
+                operationState: operationState,
+                currentLocation: currentLocation,
+                solicitantsName: solicitantsName,
+                loanComment: loanComment,
+                serviceReason: serviceReason,
+                serviceDate: serviceDate,
+                checkoutDate: checkoutDate,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PressesTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PressesTableTable,
+      PressesTableData,
+      $$PressesTableTableFilterComposer,
+      $$PressesTableTableOrderingComposer,
+      $$PressesTableTableAnnotationComposer,
+      $$PressesTableTableCreateCompanionBuilder,
+      $$PressesTableTableUpdateCompanionBuilder,
+      (
+        PressesTableData,
+        BaseReferences<_$AppDatabase, $PressesTableTable, PressesTableData>,
+      ),
+      PressesTableData,
+      PrefetchHooks Function()
+    >;
+typedef $$LoanAreasTableTableCreateCompanionBuilder =
+    LoanAreasTableCompanion Function({
+      required String id,
+      required String name,
+      Value<String?> address,
+      Value<String?> contact,
+      Value<int> rowid,
+    });
+typedef $$LoanAreasTableTableUpdateCompanionBuilder =
+    LoanAreasTableCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String?> address,
+      Value<String?> contact,
+      Value<int> rowid,
+    });
+
+class $$LoanAreasTableTableFilterComposer
+    extends Composer<_$AppDatabase, $LoanAreasTableTable> {
+  $$LoanAreasTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contact => $composableBuilder(
+    column: $table.contact,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LoanAreasTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $LoanAreasTableTable> {
+  $$LoanAreasTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contact => $composableBuilder(
+    column: $table.contact,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LoanAreasTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LoanAreasTableTable> {
+  $$LoanAreasTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<String> get contact =>
+      $composableBuilder(column: $table.contact, builder: (column) => column);
+}
+
+class $$LoanAreasTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LoanAreasTableTable,
+          LoanAreasTableData,
+          $$LoanAreasTableTableFilterComposer,
+          $$LoanAreasTableTableOrderingComposer,
+          $$LoanAreasTableTableAnnotationComposer,
+          $$LoanAreasTableTableCreateCompanionBuilder,
+          $$LoanAreasTableTableUpdateCompanionBuilder,
+          (
+            LoanAreasTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $LoanAreasTableTable,
+              LoanAreasTableData
+            >,
+          ),
+          LoanAreasTableData,
+          PrefetchHooks Function()
+        > {
+  $$LoanAreasTableTableTableManager(
+    _$AppDatabase db,
+    $LoanAreasTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LoanAreasTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LoanAreasTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LoanAreasTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> address = const Value.absent(),
+                Value<String?> contact = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LoanAreasTableCompanion(
+                id: id,
+                name: name,
+                address: address,
+                contact: contact,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                Value<String?> address = const Value.absent(),
+                Value<String?> contact = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LoanAreasTableCompanion.insert(
+                id: id,
+                name: name,
+                address: address,
+                contact: contact,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LoanAreasTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LoanAreasTableTable,
+      LoanAreasTableData,
+      $$LoanAreasTableTableFilterComposer,
+      $$LoanAreasTableTableOrderingComposer,
+      $$LoanAreasTableTableAnnotationComposer,
+      $$LoanAreasTableTableCreateCompanionBuilder,
+      $$LoanAreasTableTableUpdateCompanionBuilder,
+      (
+        LoanAreasTableData,
+        BaseReferences<_$AppDatabase, $LoanAreasTableTable, LoanAreasTableData>,
+      ),
+      LoanAreasTableData,
+      PrefetchHooks Function()
+    >;
+typedef $$PendingPressReportsTableTableCreateCompanionBuilder =
+    PendingPressReportsTableCompanion Function({
+      required String id,
+      required String pressId,
+      required String folio,
+      required String payload,
+      Value<bool> isSynced,
+      Value<DateTime> createdAt,
+      Value<DateTime?> syncedAt,
+      Value<int> rowid,
+    });
+typedef $$PendingPressReportsTableTableUpdateCompanionBuilder =
+    PendingPressReportsTableCompanion Function({
+      Value<String> id,
+      Value<String> pressId,
+      Value<String> folio,
+      Value<String> payload,
+      Value<bool> isSynced,
+      Value<DateTime> createdAt,
+      Value<DateTime?> syncedAt,
+      Value<int> rowid,
+    });
+
+class $$PendingPressReportsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $PendingPressReportsTableTable> {
+  $$PendingPressReportsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pressId => $composableBuilder(
+    column: $table.pressId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get folio => $composableBuilder(
+    column: $table.folio,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PendingPressReportsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $PendingPressReportsTableTable> {
+  $$PendingPressReportsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pressId => $composableBuilder(
+    column: $table.pressId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get folio => $composableBuilder(
+    column: $table.folio,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PendingPressReportsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PendingPressReportsTableTable> {
+  $$PendingPressReportsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get pressId =>
+      $composableBuilder(column: $table.pressId, builder: (column) => column);
+
+  GeneratedColumn<String> get folio =>
+      $composableBuilder(column: $table.folio, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<bool> get isSynced =>
+      $composableBuilder(column: $table.isSynced, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get syncedAt =>
+      $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+}
+
+class $$PendingPressReportsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PendingPressReportsTableTable,
+          PendingPressReportsTableData,
+          $$PendingPressReportsTableTableFilterComposer,
+          $$PendingPressReportsTableTableOrderingComposer,
+          $$PendingPressReportsTableTableAnnotationComposer,
+          $$PendingPressReportsTableTableCreateCompanionBuilder,
+          $$PendingPressReportsTableTableUpdateCompanionBuilder,
+          (
+            PendingPressReportsTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $PendingPressReportsTableTable,
+              PendingPressReportsTableData
+            >,
+          ),
+          PendingPressReportsTableData,
+          PrefetchHooks Function()
+        > {
+  $$PendingPressReportsTableTableTableManager(
+    _$AppDatabase db,
+    $PendingPressReportsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PendingPressReportsTableTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$PendingPressReportsTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PendingPressReportsTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> pressId = const Value.absent(),
+                Value<String> folio = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> syncedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PendingPressReportsTableCompanion(
+                id: id,
+                pressId: pressId,
+                folio: folio,
+                payload: payload,
+                isSynced: isSynced,
+                createdAt: createdAt,
+                syncedAt: syncedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String pressId,
+                required String folio,
+                required String payload,
+                Value<bool> isSynced = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> syncedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PendingPressReportsTableCompanion.insert(
+                id: id,
+                pressId: pressId,
+                folio: folio,
+                payload: payload,
+                isSynced: isSynced,
+                createdAt: createdAt,
+                syncedAt: syncedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PendingPressReportsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PendingPressReportsTableTable,
+      PendingPressReportsTableData,
+      $$PendingPressReportsTableTableFilterComposer,
+      $$PendingPressReportsTableTableOrderingComposer,
+      $$PendingPressReportsTableTableAnnotationComposer,
+      $$PendingPressReportsTableTableCreateCompanionBuilder,
+      $$PendingPressReportsTableTableUpdateCompanionBuilder,
+      (
+        PendingPressReportsTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $PendingPressReportsTableTable,
+          PendingPressReportsTableData
+        >,
+      ),
+      PendingPressReportsTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4997,5 +7895,14 @@ class $AppDatabaseManager {
       $$PendingVehicleReportsTableTableTableManager(
         _db,
         _db.pendingVehicleReportsTable,
+      );
+  $$PressesTableTableTableManager get pressesTable =>
+      $$PressesTableTableTableManager(_db, _db.pressesTable);
+  $$LoanAreasTableTableTableManager get loanAreasTable =>
+      $$LoanAreasTableTableTableManager(_db, _db.loanAreasTable);
+  $$PendingPressReportsTableTableTableManager get pendingPressReportsTable =>
+      $$PendingPressReportsTableTableTableManager(
+        _db,
+        _db.pendingPressReportsTable,
       );
 }
