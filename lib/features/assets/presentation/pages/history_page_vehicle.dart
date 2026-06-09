@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
-import 'package:pdf/pdf.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_history_provider.dart';
@@ -62,7 +61,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       grouped.putIfAbsent(ans.sectionName, () => []).add({
         "name": ans.componentName,
         "status": status, 
-        "observation": ans.observation ?? "",
+        "observation": ans.observation,
         "foto_antes_bytes": ans.evidenceBytes,
         "foto_despues_bytes": null,
       });

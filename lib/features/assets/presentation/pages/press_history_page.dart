@@ -9,7 +9,6 @@ import '../providers/press_history_provider.dart';
 import '../providers/press_report_detail_provider.dart';
 import '../widgets/press_history_card.dart';
 import '../../presentation/states/status.dart';
-import '../pages/press_report_detail_page.dart';
 import '../pages/pdf_viewer_page.dart';
 import '../../domain/entities/press_history.dart';
 import '../../../../core/utils/SGC-PO-MT-01-FO-08-PRESS.dart';

@@ -66,7 +66,7 @@ class PressInspectionLocalDataSourceImpl
 
               solicitantsName: Value(
                 press.responsible == 'N/A' ? null : press.responsible,
-              ),
+              ), 
 
               loanComment: Value(press.loanComment),
 

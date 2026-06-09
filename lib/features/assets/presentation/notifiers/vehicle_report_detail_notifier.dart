@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/usecases/get_vehicle_report_detail.dart';
 import '../states/vehicle_report_detail_state.dart';
 import '../../data/models/vehicle_report_detail_model.dart';
 import '../providers/vehicle_usecase_provider.dart'; // Asegúrate de importar donde está tu getVehicleReportDetailUseCaseProvider

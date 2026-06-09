@@ -10,6 +10,7 @@ abstract class VehicleInspectionLocalDatasource {
   Future<void> saveVehicles(List<VehicleModel> vehicles);
 
   Future<List<VehicleModel>> getVehicles();
+  Future<List<VehicleModel>> getActiveVehicles();
   Future<void> saveVehicleTemplate(Map<String, dynamic> template);
   Future<Map<String, dynamic>> getVehicleTemplate();
 
@@ -17,6 +18,8 @@ abstract class VehicleInspectionLocalDatasource {
 
   Future<List<PendingVehicleReportsTableData>> getPendingReports();
   Future<void> deletePendingReport(String reportId);
+
+  Future<void> clearVehicles();
 }
 
 class VehicleInspectionLocalDataSourceImpl
@@ -38,6 +41,7 @@ class VehicleInspectionLocalDataSourceImpl
             VehiclesTableCompanion(
               vehicleId: Value(vehicle.vehicleId),
               type: Value(vehicle.type),
+              typeId: Value(vehicle.typeId),
               brand: Value(vehicle.brand),
               model: Value(vehicle.model),
               unit: Value(vehicle.unit),
@@ -50,7 +54,7 @@ class VehicleInspectionLocalDataSourceImpl
               serviceReason: Value(vehicle.serviceReason),
               phone: Value(vehicle.phone),
               serviceDate: Value(vehicle.serviceDate),
-              checkoutDate: Value(vehicle.checkoutDate),            
+              checkoutDate: Value(vehicle.checkoutDate),
             ),
           );
     }
@@ -65,25 +69,26 @@ class VehicleInspectionLocalDataSourceImpl
     final rows = await db.select(db.vehiclesTable).get();
 
     return rows.map((row) {
-        return VehicleModel(
-          vehicleId: row.vehicleId,
-          plate: row.plate,
-          brand: row.brand,
-          model: row.model,
-          year: row.year,
-          unit: row.unit,
-          type: row.type,
-          operationState: row.operationState,
-          currentLocation: row.currentLocation,
-          responsible: row.responsible,
-          mileage: row.mileage ?? 0,
-          serviceReason: row.serviceReason,
-          phone: row.phone,
-          serviceDate: row.serviceDate,
-          checkoutDate: row.checkoutDate,
-          isActive: row.isActive,
-        );
-      }).toList();
+      return VehicleModel(
+        vehicleId: row.vehicleId,
+        plate: row.plate,
+        brand: row.brand,
+        model: row.model,
+        year: row.year,
+        unit: row.unit,
+        type: row.type,
+        typeId: row.typeId,
+        operationState: row.operationState,
+        currentLocation: row.currentLocation,
+        responsible: row.responsible,
+        mileage: row.mileage ?? 0,
+        serviceReason: row.serviceReason,
+        phone: row.phone,
+        serviceDate: row.serviceDate,
+        checkoutDate: row.checkoutDate,
+        isActive: row.isActive,
+      );
+    }).toList();
   }
 
   @override
@@ -136,5 +141,41 @@ class VehicleInspectionLocalDataSourceImpl
     await (db.delete(
       db.pendingVehicleReportsTable,
     )..where((t) => t.id.equals(reportId))).go();
+  }
+
+  @override
+  Future<void> clearVehicles() async {
+    print('cleaning vehicles');
+    await db.delete(db.vehiclesTable).go();
+    print('vehicles cleaned');
+  }
+
+  @override
+  Future<List<VehicleModel>> getActiveVehicles() async {
+    final rows = await (db.select(
+      db.vehiclesTable,
+    )..where((t) => t.isActive.equals(true))).get();
+  
+    return rows.map((row) {
+      return VehicleModel(
+        vehicleId: row.vehicleId,
+        plate: row.plate,
+        brand: row.brand,
+        model: row.model,
+        year: row.year,
+        unit: row.unit,
+        type: row.type,
+        typeId: row.typeId,
+        operationState: row.operationState,
+        currentLocation: row.currentLocation,
+        responsible: row.responsible,
+        mileage: row.mileage ?? 0,
+        serviceReason: row.serviceReason,
+        phone: row.phone,
+        serviceDate: row.serviceDate,
+        checkoutDate: row.checkoutDate,
+        isActive: row.isActive,
+      );
+    }).toList();
   }
 }

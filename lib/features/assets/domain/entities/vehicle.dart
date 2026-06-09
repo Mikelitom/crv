@@ -6,6 +6,7 @@ class Vehicle {
   final int year;
   final int unit;
   final bool isActive;
+  final String typeId;
   final String type;
   final String operationState;
   final String currentLocation;
@@ -24,6 +25,7 @@ class Vehicle {
     required this.year,
     required this.unit,
     required this.isActive,
+    required this.typeId,
     required this.type,
     required this.operationState,
     required this.currentLocation,

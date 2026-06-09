@@ -1,4 +1,3 @@
-import 'package:crv_reprosisa/features/assets/domain/usecases/desactivate_vehicle.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_usecase_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/vehicle_state.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';

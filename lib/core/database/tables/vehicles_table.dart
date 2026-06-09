@@ -10,6 +10,7 @@ class VehiclesTable extends Table {
   IntColumn get unit => integer()();
 
   TextColumn get type => text()();
+  TextColumn get typeId => text()();
   TextColumn get operationState => text()();
   TextColumn get currentLocation => text()();
   TextColumn get responsible => text()();
@@ -17,8 +18,7 @@ class VehiclesTable extends Table {
   IntColumn get mileage => integer().nullable()();
   TextColumn get serviceReason => text().nullable()();
   TextColumn get phone => text().nullable()();
-  BoolColumn get isActive =>
-      boolean().withDefault(const Constant(true))();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
 
   DateTimeColumn get serviceDate => dateTime().nullable()();
   DateTimeColumn get checkoutDate => dateTime().nullable()();

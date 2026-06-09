@@ -9,6 +9,7 @@ class VehicleModel extends Vehicle {
     required super.year,
     required super.unit,
     required super.isActive,
+    required super.typeId,
     required super.type,
     required super.operationState,
     required super.currentLocation,
@@ -29,16 +30,26 @@ class VehicleModel extends Vehicle {
       year: _asInt(json['year']),
       unit: _asInt(json['unit']),
       isActive: _asBool(json['is_active']),
+      typeId: _asString(json['type_id']),
       type: _asString(json['type']),
       operationState: _asString(json['operation_state']),
       currentLocation: _asString(json['current_location']),
       responsible: _asString(json['responsible']),
       mileage: _asInt(json['mileage']),
-      // Campos de auditoría dinámicos planos del endpoint
-      serviceReason: json['service_reason'] != null ? _asString(json['service_reason']) : null,
-      phone: json['phone'] != null ? _asString(json['phone']) : null,
-      serviceDate: json['service_date'],
-      checkoutDate: json['checkout_date'],
+      serviceReason: json['service_reason'] != null
+          ? _asString(json['service_reason'])
+          : null,
+      phone: json['phone'] != null
+          ? _asString(json['phone'])
+          : null,
+  
+      serviceDate: json['service_date'] != null
+          ? DateTime.parse(json['service_date'])
+          : null,
+  
+      checkoutDate: json['checkout_date'] != null
+          ? DateTime.parse(json['checkout_date'])
+          : null,
     );
   }
 

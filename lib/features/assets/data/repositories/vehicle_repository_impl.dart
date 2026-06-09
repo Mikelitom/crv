@@ -5,14 +5,16 @@ import 'package:crv_reprosisa/features/assets/data/datasource/vehicle_remote_dat
 import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
 import 'package:crv_reprosisa/features/assets/domain/params/create_vehicle_params.dart';
 import 'package:crv_reprosisa/features/assets/domain/repositories/vehicle_repository.dart';
+import 'package:crv_reprosisa/features/vehiculos/data/datasource/vehicle_inspection_local_datasource.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../domain/entities/vehicle_report_detail_entity.dart';
 
 class VehicleRepositoryImpl implements VehicleRepository {
   final VehicleRemoteDatasource remote;
+  final VehicleInspectionLocalDatasource local;
 
-  VehicleRepositoryImpl(this.remote);
+  VehicleRepositoryImpl(this.remote, this.local);
 
   @override
   Future<Either<Failure, Vehicle>> createVehicle(
@@ -95,8 +97,15 @@ class VehicleRepositoryImpl implements VehicleRepository {
   Future<Either<Failure, List<Vehicle>>> getAllVehicle() async {
     try {
       final vehicle = await remote.getAllVehicle();
+      print('get all vehicle');
+      await local.clearVehicles();
+      print('clear vehicles');
+      await local.saveVehicles(vehicle);
+      print('save vehicles');
       return Right(vehicle);
     } on DioException catch (e) {
+      final vehicles = await local.getVehicles();
+      if (vehicles.isNotEmpty) return Right(vehicles);
       return Left(ServerFailure(e.toString()));
     } on SocketException catch (e) {
       return Left(NetworkFailure(e.toString()));
@@ -105,15 +114,17 @@ class VehicleRepositoryImpl implements VehicleRepository {
     }
   }
 
- @override
-Future<Either<Failure, VehicleReportDetailEntity>> getVehicleReportDetail(String versionId) async {
-  try {
-    final reportModel = await remote.getVehicleReportDetail(versionId);
-    return Right(reportModel);
-  } on DioException catch (e) {
-    return Left(ServerFailure(e.toString()));
-  } catch (e) {
-    return Left(UnknownFailure(e.toString()));
+  @override
+  Future<Either<Failure, VehicleReportDetailEntity>> getVehicleReportDetail(
+    String versionId,
+  ) async {
+    try {
+      final reportModel = await remote.getVehicleReportDetail(versionId);
+      return Right(reportModel);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
   }
-}
 }

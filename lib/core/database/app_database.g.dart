@@ -74,6 +74,15 @@ class $VehiclesTableTable extends VehiclesTable
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _typeIdMeta = const VerificationMeta('typeId');
+  @override
+  late final GeneratedColumn<String> typeId = GeneratedColumn<String>(
+    'type_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _operationStateMeta = const VerificationMeta(
     'operationState',
   );
@@ -184,6 +193,7 @@ class $VehiclesTableTable extends VehiclesTable
     year,
     unit,
     type,
+    typeId,
     operationState,
     currentLocation,
     responsible,
@@ -261,6 +271,14 @@ class $VehiclesTableTable extends VehiclesTable
       );
     } else if (isInserting) {
       context.missing(_typeMeta);
+    }
+    if (data.containsKey('type_id')) {
+      context.handle(
+        _typeIdMeta,
+        typeId.isAcceptableOrUnknown(data['type_id']!, _typeIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeIdMeta);
     }
     if (data.containsKey('operation_state')) {
       context.handle(
@@ -377,6 +395,10 @@ class $VehiclesTableTable extends VehiclesTable
         DriftSqlType.string,
         data['${effectivePrefix}type'],
       )!,
+      typeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type_id'],
+      )!,
       operationState: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}operation_state'],
@@ -431,6 +453,7 @@ class VehiclesTableData extends DataClass
   final int year;
   final int unit;
   final String type;
+  final String typeId;
   final String operationState;
   final String currentLocation;
   final String responsible;
@@ -448,6 +471,7 @@ class VehiclesTableData extends DataClass
     required this.year,
     required this.unit,
     required this.type,
+    required this.typeId,
     required this.operationState,
     required this.currentLocation,
     required this.responsible,
@@ -468,6 +492,7 @@ class VehiclesTableData extends DataClass
     map['year'] = Variable<int>(year);
     map['unit'] = Variable<int>(unit);
     map['type'] = Variable<String>(type);
+    map['type_id'] = Variable<String>(typeId);
     map['operation_state'] = Variable<String>(operationState);
     map['current_location'] = Variable<String>(currentLocation);
     map['responsible'] = Variable<String>(responsible);
@@ -499,6 +524,7 @@ class VehiclesTableData extends DataClass
       year: Value(year),
       unit: Value(unit),
       type: Value(type),
+      typeId: Value(typeId),
       operationState: Value(operationState),
       currentLocation: Value(currentLocation),
       responsible: Value(responsible),
@@ -534,6 +560,7 @@ class VehiclesTableData extends DataClass
       year: serializer.fromJson<int>(json['year']),
       unit: serializer.fromJson<int>(json['unit']),
       type: serializer.fromJson<String>(json['type']),
+      typeId: serializer.fromJson<String>(json['typeId']),
       operationState: serializer.fromJson<String>(json['operationState']),
       currentLocation: serializer.fromJson<String>(json['currentLocation']),
       responsible: serializer.fromJson<String>(json['responsible']),
@@ -556,6 +583,7 @@ class VehiclesTableData extends DataClass
       'year': serializer.toJson<int>(year),
       'unit': serializer.toJson<int>(unit),
       'type': serializer.toJson<String>(type),
+      'typeId': serializer.toJson<String>(typeId),
       'operationState': serializer.toJson<String>(operationState),
       'currentLocation': serializer.toJson<String>(currentLocation),
       'responsible': serializer.toJson<String>(responsible),
@@ -576,6 +604,7 @@ class VehiclesTableData extends DataClass
     int? year,
     int? unit,
     String? type,
+    String? typeId,
     String? operationState,
     String? currentLocation,
     String? responsible,
@@ -593,6 +622,7 @@ class VehiclesTableData extends DataClass
     year: year ?? this.year,
     unit: unit ?? this.unit,
     type: type ?? this.type,
+    typeId: typeId ?? this.typeId,
     operationState: operationState ?? this.operationState,
     currentLocation: currentLocation ?? this.currentLocation,
     responsible: responsible ?? this.responsible,
@@ -614,6 +644,7 @@ class VehiclesTableData extends DataClass
       year: data.year.present ? data.year.value : this.year,
       unit: data.unit.present ? data.unit.value : this.unit,
       type: data.type.present ? data.type.value : this.type,
+      typeId: data.typeId.present ? data.typeId.value : this.typeId,
       operationState: data.operationState.present
           ? data.operationState.value
           : this.operationState,
@@ -648,6 +679,7 @@ class VehiclesTableData extends DataClass
           ..write('year: $year, ')
           ..write('unit: $unit, ')
           ..write('type: $type, ')
+          ..write('typeId: $typeId, ')
           ..write('operationState: $operationState, ')
           ..write('currentLocation: $currentLocation, ')
           ..write('responsible: $responsible, ')
@@ -670,6 +702,7 @@ class VehiclesTableData extends DataClass
     year,
     unit,
     type,
+    typeId,
     operationState,
     currentLocation,
     responsible,
@@ -691,6 +724,7 @@ class VehiclesTableData extends DataClass
           other.year == this.year &&
           other.unit == this.unit &&
           other.type == this.type &&
+          other.typeId == this.typeId &&
           other.operationState == this.operationState &&
           other.currentLocation == this.currentLocation &&
           other.responsible == this.responsible &&
@@ -710,6 +744,7 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
   final Value<int> year;
   final Value<int> unit;
   final Value<String> type;
+  final Value<String> typeId;
   final Value<String> operationState;
   final Value<String> currentLocation;
   final Value<String> responsible;
@@ -728,6 +763,7 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
     this.year = const Value.absent(),
     this.unit = const Value.absent(),
     this.type = const Value.absent(),
+    this.typeId = const Value.absent(),
     this.operationState = const Value.absent(),
     this.currentLocation = const Value.absent(),
     this.responsible = const Value.absent(),
@@ -747,6 +783,7 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
     required int year,
     required int unit,
     required String type,
+    required String typeId,
     required String operationState,
     required String currentLocation,
     required String responsible,
@@ -764,6 +801,7 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
        year = Value(year),
        unit = Value(unit),
        type = Value(type),
+       typeId = Value(typeId),
        operationState = Value(operationState),
        currentLocation = Value(currentLocation),
        responsible = Value(responsible);
@@ -775,6 +813,7 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
     Expression<int>? year,
     Expression<int>? unit,
     Expression<String>? type,
+    Expression<String>? typeId,
     Expression<String>? operationState,
     Expression<String>? currentLocation,
     Expression<String>? responsible,
@@ -794,6 +833,7 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
       if (year != null) 'year': year,
       if (unit != null) 'unit': unit,
       if (type != null) 'type': type,
+      if (typeId != null) 'type_id': typeId,
       if (operationState != null) 'operation_state': operationState,
       if (currentLocation != null) 'current_location': currentLocation,
       if (responsible != null) 'responsible': responsible,
@@ -815,6 +855,7 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
     Value<int>? year,
     Value<int>? unit,
     Value<String>? type,
+    Value<String>? typeId,
     Value<String>? operationState,
     Value<String>? currentLocation,
     Value<String>? responsible,
@@ -834,6 +875,7 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
       year: year ?? this.year,
       unit: unit ?? this.unit,
       type: type ?? this.type,
+      typeId: typeId ?? this.typeId,
       operationState: operationState ?? this.operationState,
       currentLocation: currentLocation ?? this.currentLocation,
       responsible: responsible ?? this.responsible,
@@ -870,6 +912,9 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
     }
     if (type.present) {
       map['type'] = Variable<String>(type.value);
+    }
+    if (typeId.present) {
+      map['type_id'] = Variable<String>(typeId.value);
     }
     if (operationState.present) {
       map['operation_state'] = Variable<String>(operationState.value);
@@ -914,6 +959,7 @@ class VehiclesTableCompanion extends UpdateCompanion<VehiclesTableData> {
           ..write('year: $year, ')
           ..write('unit: $unit, ')
           ..write('type: $type, ')
+          ..write('typeId: $typeId, ')
           ..write('operationState: $operationState, ')
           ..write('currentLocation: $currentLocation, ')
           ..write('responsible: $responsible, ')
@@ -5232,6 +5278,7 @@ typedef $$VehiclesTableTableCreateCompanionBuilder =
       required int year,
       required int unit,
       required String type,
+      required String typeId,
       required String operationState,
       required String currentLocation,
       required String responsible,
@@ -5252,6 +5299,7 @@ typedef $$VehiclesTableTableUpdateCompanionBuilder =
       Value<int> year,
       Value<int> unit,
       Value<String> type,
+      Value<String> typeId,
       Value<String> operationState,
       Value<String> currentLocation,
       Value<String> responsible,
@@ -5305,6 +5353,11 @@ class $$VehiclesTableTableFilterComposer
 
   ColumnFilters<String> get type => $composableBuilder(
     column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get typeId => $composableBuilder(
+    column: $table.typeId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5398,6 +5451,11 @@ class $$VehiclesTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get typeId => $composableBuilder(
+    column: $table.typeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get operationState => $composableBuilder(
     column: $table.operationState,
     builder: (column) => ColumnOrderings(column),
@@ -5473,6 +5531,9 @@ class $$VehiclesTableTableAnnotationComposer
 
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get typeId =>
+      $composableBuilder(column: $table.typeId, builder: (column) => column);
 
   GeneratedColumn<String> get operationState => $composableBuilder(
     column: $table.operationState,
@@ -5556,6 +5617,7 @@ class $$VehiclesTableTableTableManager
                 Value<int> year = const Value.absent(),
                 Value<int> unit = const Value.absent(),
                 Value<String> type = const Value.absent(),
+                Value<String> typeId = const Value.absent(),
                 Value<String> operationState = const Value.absent(),
                 Value<String> currentLocation = const Value.absent(),
                 Value<String> responsible = const Value.absent(),
@@ -5574,6 +5636,7 @@ class $$VehiclesTableTableTableManager
                 year: year,
                 unit: unit,
                 type: type,
+                typeId: typeId,
                 operationState: operationState,
                 currentLocation: currentLocation,
                 responsible: responsible,
@@ -5594,6 +5657,7 @@ class $$VehiclesTableTableTableManager
                 required int year,
                 required int unit,
                 required String type,
+                required String typeId,
                 required String operationState,
                 required String currentLocation,
                 required String responsible,
@@ -5612,6 +5676,7 @@ class $$VehiclesTableTableTableManager
                 year: year,
                 unit: unit,
                 type: type,
+                typeId: typeId,
                 operationState: operationState,
                 currentLocation: currentLocation,
                 responsible: responsible,

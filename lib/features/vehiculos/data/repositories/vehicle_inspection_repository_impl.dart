@@ -5,7 +5,6 @@ import '../../../../core/error/failure.dart';
 import '../../domain/repositories/vehicle_inspeccion_repository.dart';
 import '../datasource/vehicle_inspection_remote_datasource.dart';
 
-
 class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
   final VehicleInspectionRemoteDataSource remoteDataSource;
   final VehicleInspectionLocalDatasource localDataSource;
@@ -23,15 +22,25 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
       return Right(response);
     } catch (e) {
       try {
-        final localVehicles = await localDataSource.getVehicles();
+        final localVehicles = await localDataSource.getActiveVehicles();
 
-        // if (localVehicles.isNotEmpty) {
-        //   return Right(localVehicles);
-        // }
+        List<Vehicle> vehicles = [];
 
-        return const Left(
-          ServerFailure("No hay vehículos disponibles sin conexión"),
-        );
+        for (final local in localVehicles) {
+          vehicles.add(
+            Vehicle(
+              id: local.vehicleId,
+              typeId: local.typeId,
+              brand: local.brand,
+              model: local.model,
+              unit: local.unit,
+              year: local.year,
+              plate: local.plate,
+            ),
+          );
+        }
+
+        return Right(vehicles);
       } catch (localError) {
         return const Left(ServerFailure("Error al obtener vehículos locales"));
       }

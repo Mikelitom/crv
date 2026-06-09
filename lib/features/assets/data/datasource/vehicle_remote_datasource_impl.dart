@@ -58,11 +58,27 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
   @override
   Future<List<VehicleModel>> getAllVehicle() async {
     final response = await dio.get("/asset/vehicles");
-
+  
+    print('RESPUESTA RECIBIDA');
+  
     final List<dynamic> rawList = response.data;
-
+  
     return rawList.map((json) {
-      return VehicleModel.fromJson(json as Map<String, dynamic>);
+      try {
+        print('ANTES FROMJSON');
+  
+        final model = VehicleModel.fromJson(
+          json as Map<String, dynamic>,
+        );
+  
+        print('DESPUES FROMJSON');
+  
+        return model;
+      } catch (e, stack) {
+        print('ERROR FROMJSON: $e');
+        print(stack);
+        rethrow;
+      }
     }).toList();
   }
 
