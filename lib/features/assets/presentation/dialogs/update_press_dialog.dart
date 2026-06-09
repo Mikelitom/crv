@@ -1,5 +1,4 @@
 import 'package:crv_reprosisa/features/assets/domain/entities/press.dart';
-import 'package:crv_reprosisa/features/assets/domain/params/create_clients_params.dart';
 import 'package:crv_reprosisa/features/assets/domain/params/create_press_params.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_list_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/update_press_notifier_provider.dart';

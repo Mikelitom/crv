@@ -1,4 +1,7 @@
+import 'package:crv_reprosisa/core/database/database_provider.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/data/datasource/press_inspection_local_datasource.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/adapters.dart';
 import '../../../../core/config/dio_client.dart';
 import '../../data/datasource/inspeccion_datasource_remote.dart';
 import '../../data/repositories/inspeccion_repository_impl.dart';
@@ -11,15 +14,32 @@ import '../../domain/usecases/create_loan_use_case.dart';
 import '../notifier/inspeccion_notifier.dart';
 import 'inspeccion_state.dart';
 import '../../domain/usecases/get_latest_loan_status_use_case.dart';
+import 'package:hive/hive.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/data/services/press_sync_service.dart';
 
 final inspeccionDataSourceProvider = Provider((ref) {
   final dio = ref.watch(dioProvider);
   return InspeccionRemoteDataSourceImpl(dio);
 });
 
+final inspectionLocalDataSourceProvider =
+    Provider<PressInspectionLocalDataSource>((ref) {
+      final db = ref.read(appDatabaseProvider);
+      final box = Hive.box('press_cache');
+      return PressInspectionLocalDataSourceImpl(db, box);
+    });
+
 final inspeccionRepositoryProvider = Provider<InspeccionRepository>((ref) {
   final ds = ref.watch(inspeccionDataSourceProvider);
-  return InspeccionRepositoryImpl(ds);
+  final lds = ref.watch(inspectionLocalDataSourceProvider);
+  return InspeccionRepositoryImpl(ds, lds);
+});
+
+final pressSyncServiceProvider = Provider<PressSyncService>((ref) {
+  return PressSyncService(
+    local: ref.read(inspectionLocalDataSourceProvider),
+    remote: ref.read(inspeccionDataSourceProvider),
+  );
 });
 
 // --- USE CASES ---
@@ -58,6 +78,7 @@ final allSeriesProvider = FutureProvider<List<String>>((ref) async {
   );
 });
 
-final inspeccionProvider = NotifierProvider<InspeccionNotifier, InspeccionState>(() {
-  return InspeccionNotifier();
-});
+final inspeccionProvider =
+    NotifierProvider<InspeccionNotifier, InspeccionState>(() {
+      return InspeccionNotifier();
+    });
