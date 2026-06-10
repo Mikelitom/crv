@@ -1,7 +1,29 @@
 import '../../domain/entities/client_history.dart';
 
 class ClientHistoryModel extends ClientHistory {
-  ClientHistoryModel({required super.clientId, required super.clientName, required super.clientCompany, required super.mineId, required super.mineName, required super.areaId, required super.areaName, required super.conveyorId, required super.conveyorName, required super.reportId, required super.folio, required super.state, required super.inspectionDate, required super.material, required super.granulometry, required super.inspectorId, required super.inspectorName, required super.versionId, required super.versionNumber, required super.isCurrent, required super.answersCount, required super.evidencesCount});
+  ClientHistoryModel({
+    required super.clientId, 
+    required super.clientName, 
+    required super.clientCompany, 
+    required super.mineId, 
+    required super.mineName, 
+    required super.areaId, 
+    required super.areaName, 
+    required super.conveyorId, 
+    required super.conveyorName, 
+    required super.reportId, 
+    required super.folio, 
+    required super.state, 
+    required super.inspectionDate, 
+    required super.material, 
+    required super.granulometry, 
+    required super.inspectorId, 
+    required super.inspectorName, 
+    required super.versionId, 
+    required super.versionNumber, 
+    required super.isCurrent, 
+    required super.answersCount, 
+    required super.evidencesCount});
 
   factory ClientHistoryModel.fromJson(Map<String, dynamic> json) => ClientHistoryModel(
         clientId: json['client_id'] ?? '',

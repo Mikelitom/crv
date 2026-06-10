@@ -7,11 +7,13 @@ class BandaInspectionState {
   final List<Mine> allMines;
   final List<Mine> filteredMines;
   final List<BandaSection> sections;
-  
+
   final Client? selectedClient;
   final Mine? selectedMine;
   final DateTime inspectionDate;
   final String elaboro;
+  final String area;
+  final String seccion;
 
   // Campos dinamicos para el formulario
   final String conveyor;
@@ -32,6 +34,8 @@ class BandaInspectionState {
     this.selectedMine,
     required this.inspectionDate,
     this.elaboro = '',
+    this.area = '',
+    this.seccion = '',
     this.conveyor = '',
     this.conveyorResponsible = '',
     this.recommendedBelt = '',
@@ -40,6 +44,30 @@ class BandaInspectionState {
     this.presentTo = '',
     this.generalComments = '',
   });
+
+  // --- AGREGADO: Constructor inicial para el método reset() del Notifier ---
+  factory BandaInspectionState.initial() {
+    return BandaInspectionState(
+      isLoading: false,
+      clients: const [],
+      allMines: const [],
+      filteredMines: const [],
+      sections: const [],
+      selectedClient: null,
+      selectedMine: null,
+      inspectionDate: DateTime.now(),
+      elaboro: '',
+      area: '',
+      seccion: '', 
+      conveyor: '',
+      conveyorResponsible: '',
+      recommendedBelt: '',
+      material: '',
+      granulometry: '',
+      presentTo: '',
+      generalComments: '',
+    );
+  }
 
   BandaInspectionState copyWith({
     bool? isLoading,
@@ -52,6 +80,8 @@ class BandaInspectionState {
     Mine? selectedMine,
     DateTime? inspectionDate,
     String? elaboro,
+    String? area,
+    String? seccion, 
     String? conveyor,
     String? conveyorResponsible,
     String? recommendedBelt,
@@ -70,6 +100,8 @@ class BandaInspectionState {
       selectedMine: clearMine ? null : (selectedMine ?? this.selectedMine),
       inspectionDate: inspectionDate ?? this.inspectionDate,
       elaboro: elaboro ?? this.elaboro,
+      area: area ?? this.area,
+      seccion: seccion ?? this.seccion, 
       conveyor: conveyor ?? this.conveyor,
       conveyorResponsible: conveyorResponsible ?? this.conveyorResponsible,
       recommendedBelt: recommendedBelt ?? this.recommendedBelt,

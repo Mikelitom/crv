@@ -3,6 +3,11 @@ import 'dart:typed_data';
 class BandaTemplate {
   final List<BandaSection> sections;
   BandaTemplate({required this.sections});
+
+  // --- AGREGADO: Para inmutabilidad global ---
+  BandaTemplate copyWith({List<BandaSection>? sections}) {
+    return BandaTemplate(sections: sections ?? this.sections);
+  }
 }
 
 class BandaSection {
@@ -11,6 +16,19 @@ class BandaSection {
   final List<BandaComponent> components;
 
   BandaSection({required this.id, required this.name, required this.components});
+
+  // --- AGREGADO: Vital para que el Notifier pueda actualizar una sección específica ---
+  BandaSection copyWith({
+    String? id,
+    String? name,
+    List<BandaComponent>? components,
+  }) {
+    return BandaSection(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      components: components ?? this.components,
+    );
+  }
 }
 
 class BandaComponent {
@@ -39,7 +57,6 @@ class BandaComponent {
   }) : evidenceBefore = evidenceBefore ?? [],
        evidenceAfter = evidenceAfter ?? [];
 
-  // Método copyWith respetando tus nombres existentes
   BandaComponent copyWith({
     String? id,
     String? name,

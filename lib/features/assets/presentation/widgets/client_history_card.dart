@@ -37,22 +37,27 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200, width: 1.5),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(children: [
-        Padding(padding: const EdgeInsets.all(24), child: Row(children: [
+        Padding(padding: const EdgeInsets.all(20), child: Row(children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             _badge(selected.state),
             const SizedBox(height: 12),
-            Text("FOLIO: ${selected.folio}".toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 11, color: Colors.grey)),
-            Text(selected.clientName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-            Text("${selected.mineName} • ${selected.areaName}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+            Text(selected.conveyorName.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+            Text("FOLIO: ${selected.folio} | v${selected.versionNumber}", style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 10, color: Colors.grey)),
+            Text("${selected.mineName} • ${selected.areaName}", style: const TextStyle(color: Colors.blueGrey, fontSize: 13)),
           ])),
           _versionSelector()
         ])),
         const Divider(height: 1),
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), child: Row(children: [
-          Expanded(child: _info("INSPECTOR", selected.inspectorName)),
-          Expanded(child: _info("MATERIAL", selected.material)),
+        Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), child: Row(children: [
+          _info("INSPECTOR", selected.inspectorName),
+          const SizedBox(width: 15),
+          _info("FECHA", DateFormat('dd/MM/yy').format(selected.inspectionDate)),
+          const SizedBox(width: 15),
+          _info("EVIDENCIAS", "${selected.evidencesCount} adjuntos"),
+          const Spacer(),
           Row(children: [
             _actionBtn(Icons.picture_as_pdf, Colors.redAccent, () => widget.onPdfView(selected.versionId)),
             _actionBtn(Icons.download, Colors.grey.shade600, () => widget.onDownload(selected.versionId)),
@@ -64,28 +69,37 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
   }
 
   Widget _versionSelector() => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
     decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
     child: DropdownButtonHideUnderline(child: DropdownButton<ClientHistory>(
-      value: selected, icon: const Icon(Icons.history, color: Colors.redAccent, size: 18),
-      items: widget.versions.map((v) => DropdownMenuItem(value: v, child: Text("v${v.versionNumber}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)))).toList(),
+      value: selected, icon: const Icon(Icons.history, color: Colors.redAccent, size: 16),
+      items: widget.versions.map((v) => DropdownMenuItem(value: v, child: Text("v${v.versionNumber}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)))).toList(),
       onChanged: (v) => setState(() => selected = v!),
     )),
   );
 
   Widget _info(String l, String v) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(l, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey.shade500)),
-    const SizedBox(height: 4),
-    Text(v, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+    Text(l, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.grey.shade400)),
+    const SizedBox(height: 2),
+    Text(v, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11)),
   ]);
 
   Widget _actionBtn(IconData icon, Color color, VoidCallback onTap) => IconButton(
-    icon: Icon(icon, size: 20), color: color, onPressed: onTap, constraints: const BoxConstraints(minWidth: 40)
+    icon: Icon(icon, size: 18), color: color, onPressed: onTap, constraints: const BoxConstraints(minWidth: 36)
   );
 
-  Widget _badge(String state) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(color: state == "COMPLETED" ? Colors.green.shade50 : Colors.red.shade50, borderRadius: BorderRadius.circular(6)),
-    child: Text(state == "COMPLETED" ? "COMPLETADO" : "EN PROCESO", style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.redAccent))
-  );
+  Widget _badge(String state) {
+    Color c;
+    String txt;
+    switch (state.toUpperCase()) {
+      case "COMPLETED": c = Colors.green; txt = "COMPLETADO"; break;
+      case "IN_PROGRESS": c = Colors.amber.shade700; txt = "EN PROCESO"; break;
+      default: c = Colors.redAccent; txt = "PENDIENTE";
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+      child: Text(txt, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: c))
+    );
+  }
 }

@@ -1,14 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/client_mine.dart';
-import '../presentation/provider/banda_inspection_providers.dart';// Asegúrate de importar Mine
+import '../presentation/provider/banda_inspection_providers.dart';
 
-class GeneralBandaInfo extends ConsumerWidget {
+class GeneralBandaInfo extends ConsumerStatefulWidget {
   const GeneralBandaInfo({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GeneralBandaInfo> createState() => _GeneralBandaInfoState();
+}
+
+class _GeneralBandaInfoState extends ConsumerState<GeneralBandaInfo> {
+  late final TextEditingController _areaController;
+  late final TextEditingController _responsableController;
+  late final TextEditingController _seccionController;
+  late final TextEditingController _fechaController;
+  late final TextEditingController _transportadorController;
+  late final TextEditingController _bandaController;
+  late final TextEditingController _materialController;
+  late final TextEditingController _granulometryController;
+  late final TextEditingController _elaboroController;
+  late final TextEditingController _presentarController;
+
+  @override
+  void initState() {
+    super.initState();
+    _areaController = TextEditingController();
+    _responsableController = TextEditingController();
+    _seccionController = TextEditingController();
+    _fechaController = TextEditingController();
+    _transportadorController = TextEditingController();
+    _bandaController = TextEditingController();
+    _materialController = TextEditingController();
+    _granulometryController = TextEditingController();
+    _elaboroController = TextEditingController();
+    _presentarController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _areaController.dispose();
+    _responsableController.dispose();
+    _seccionController.dispose();
+    _fechaController.dispose();
+    _transportadorController.dispose();
+    _bandaController.dispose();
+    _materialController.dispose();
+    _granulometryController.dispose();
+    _elaboroController.dispose();
+    _presentarController.dispose();
+    super.dispose();
+  }
+
+  void _updateControllerIfNeeded(TextEditingController controller, String value) {
+    if (controller.text != value) {
+      final int offset = controller.selection.base.offset;
+      controller.text = value;
+      if (offset <= controller.text.length) {
+        controller.selection = TextSelection.fromPosition(TextPosition(offset: offset));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(bandaInspectionProvider);
+
+    _updateControllerIfNeeded(_areaController, state.area);
+    _updateControllerIfNeeded(_responsableController, state.conveyorResponsible);
+    _updateControllerIfNeeded(_seccionController, state.seccion);
+    _updateControllerIfNeeded(_fechaController, state.inspectionDate.toString().split(' ')[0]);
+    _updateControllerIfNeeded(_transportadorController, state.conveyor);
+    _updateControllerIfNeeded(_bandaController, state.recommendedBelt);
+    _updateControllerIfNeeded(_materialController, state.material);
+    _updateControllerIfNeeded(_granulometryController, state.granulometry);
+    _updateControllerIfNeeded(_elaboroController, state.elaboro);
+    _updateControllerIfNeeded(_presentarController, state.presentTo);
     
     return LayoutBuilder(builder: (context, constraints) {
       bool isMobile = constraints.maxWidth < 800;
@@ -30,16 +97,26 @@ class GeneralBandaInfo extends ConsumerWidget {
               spacing: 20,
               runSpacing: 20,
               children: [
-                _buildDropdownMine(ref, state, isMobile, constraints.maxWidth),
-                _buildField("AREA", isMobile, constraints.maxWidth),
-                _buildField("RESPONSABLE", isMobile, constraints.maxWidth),
-                _buildField("SECCIÓN", isMobile, constraints.maxWidth),
-                _buildField("FECHA", isMobile, constraints.maxWidth, initialValue: state.inspectionDate.toString().split(' ')[0]),
-                _buildField("TRANSPORTADOR", isMobile, constraints.maxWidth),
-                _buildField("BANDA RECOMENDADA", isMobile, constraints.maxWidth),
-                _buildField("MATERIAL Y GRANULOMETRÍA", isMobile, constraints.maxWidth),
-                _buildField("ELABORÓ", isMobile, constraints.maxWidth, initialValue: state.elaboro),
-                _buildField("PRESENTAR", isMobile, constraints.maxWidth),
+                _buildDropdownMine(constraints.maxWidth, isMobile, state, ref),
+                _buildField("ÁREA", _areaController, constraints.maxWidth, isMobile, 
+                    (val) => ref.read(bandaInspectionProvider.notifier).updateArea(val)),
+                _buildField("RESPONSABLE", _responsableController, constraints.maxWidth, isMobile, 
+                    (val) => ref.read(bandaInspectionProvider.notifier).updateConveyorResponsible(val)),
+                _buildField("SECCIÓN", _seccionController, constraints.maxWidth, isMobile, 
+                    (val) => ref.read(bandaInspectionProvider.notifier).updateSeccion(val)),
+                _buildField("FECHA", _fechaController, constraints.maxWidth, isMobile, null),
+                _buildField("TRANSPORTADOR", _transportadorController, constraints.maxWidth, isMobile, 
+                    (val) => ref.read(bandaInspectionProvider.notifier).updateConveyor(val)),
+                _buildField("BANDA RECOMENDADA", _bandaController, constraints.maxWidth, isMobile, 
+                    (val) => ref.read(bandaInspectionProvider.notifier).updateRecommendedBelt(val)),
+                
+                // --- CONTENEDOR DIVIDIDO EN FILA PARA MATERIAL Y GRANULOMETRÍA ---
+                _buildMaterialAndGranulometryFields(constraints.maxWidth, isMobile),
+                
+                _buildField("ELABORÓ", _elaboroController, constraints.maxWidth, isMobile, 
+                    (val) => ref.read(bandaInspectionProvider.notifier).updateElaboro(val)),                
+                _buildField("PRESENTAR A", _presentarController, constraints.maxWidth, isMobile, 
+                    (val) => ref.read(bandaInspectionProvider.notifier).updatePresentTo(val)),
               ],
             ),
           ],
@@ -48,7 +125,40 @@ class GeneralBandaInfo extends ConsumerWidget {
     });
   }
 
-  Widget _buildDropdownMine(WidgetRef ref, dynamic state, bool isMobile, double width) {
+  Widget _buildMaterialAndGranulometryFields(double maxWidth, bool isMobile) {
+    double fieldWidth = isMobile ? maxWidth : (maxWidth / 2) - 52;
+    return SizedBox(
+      width: fieldWidth,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("MATERIAL Y GRANULOMETRÍA", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _materialController,
+                  onChanged: (val) => ref.read(bandaInspectionProvider.notifier).updateMaterial(val),
+                  decoration: _inputDecoration().copyWith(hintText: "Material"),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: _granulometryController,
+                  onChanged: (val) => ref.read(bandaInspectionProvider.notifier).updateGranulometry(val),
+                  decoration: _inputDecoration().copyWith(hintText: "Granulometría"),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDropdownMine(double width, bool isMobile, dynamic state, WidgetRef ref) {
     double fieldWidth = isMobile ? width : (width / 2) - 52;
     return SizedBox(
       width: fieldWidth,
@@ -76,7 +186,7 @@ class GeneralBandaInfo extends ConsumerWidget {
     );
   }
 
-  Widget _buildField(String label, bool isMobile, double maxWidth, {String initialValue = ""}) {
+  Widget _buildField(String label, TextEditingController controller, double maxWidth, bool isMobile, Function(String)? onChanged) {
     double fieldWidth = isMobile ? maxWidth : (maxWidth / 2) - 52;
     return SizedBox(
       width: fieldWidth,
@@ -86,7 +196,8 @@ class GeneralBandaInfo extends ConsumerWidget {
           Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           TextFormField(
-            initialValue: initialValue,
+            controller: controller,
+            onChanged: onChanged,
             decoration: _inputDecoration(),
           ),
         ],

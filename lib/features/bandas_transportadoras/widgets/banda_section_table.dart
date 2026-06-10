@@ -26,9 +26,8 @@ class BandaSectionTable extends ConsumerStatefulWidget {
 class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
   final ImagePicker _picker = ImagePicker();
   final Color _kRed = const Color(0xFFB71C1C);
-  final Color _kBorder = const Color(0xFFE2E8F0);
+  final Color _kBorder = const Color.fromARGB(255, 209, 219, 231);
 
-  // --- LÓGICA DE IMAGEN ---
   Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
     final ImageSource? source = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -60,15 +59,20 @@ class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
     }
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 700;
-    return Column(
-      children: [
-        _buildInstitutionalHeader(), // El header con el botón dentro
-        const SizedBox(height: 16),
-        isMobile ? _buildMobileList() : _buildDesktopTable(),
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: _kBorder),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          _buildTableHead(),
+          ...widget.items.map((item) => _buildDesktopRow(item)).toList(),
+        ],
+      ),
     );
   }
 
@@ -185,32 +189,36 @@ class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
     );
   }
 
-  Widget _buildTableHead() {
+Widget _buildTableHead() {
     return Container(
       color: const Color(0xFFF8F9FA),
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         children: const [
-          Expanded(flex: 4, child: Center(child: Text("ACCESORIO", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
-          Expanded(flex: 5, child: Center(child: Text("OBSERVACIONES", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
-          Expanded(flex: 1, child: Center(child: Text("DIM.", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
-          Expanded(flex: 5, child: Center(child: Text("RECOMENDACIONES", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
-          Expanded(flex: 2, child: Center(child: Text("EVID. (A/D)", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
+          Expanded(flex: 3, child: Center(child: Text("ACCESORIO", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
+          Expanded(flex: 4, child: Center(child: Text("OBSERVACIONES", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
+          Expanded(flex: 2, child: Center(child: Text("DIM.", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
+          Expanded(flex: 4, child: Center(child: Text("ACCIONES Y RECOMENDACIONES", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
+          Expanded(flex: 3, child: Center(child: Text("EVID. (A/D)", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
         ],
       ),
     );
   }
-
-  Widget _buildDesktopRow(BandaComponent item) {
-    return IntrinsicHeight(
-      child: Container(
-        decoration: BoxDecoration(border: Border(top: BorderSide(color: _kBorder.withOpacity(0.5)))),
+Widget _buildDesktopRow(BandaComponent item) {
+    return Container(
+      decoration: BoxDecoration(border: Border(top: BorderSide(color: _kBorder.withOpacity(0.5)))),
+      child: IntrinsicHeight(
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(flex: 4, child: _cell(Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)))),
-            Expanded(flex: 5, child: _cell(_buildRadios(item))),
-            Expanded(flex: 1, child: _cell(_buildDimInput(item))),
-            Expanded(flex: 5, child: _cell(_buildObsInput(item))),
+            Expanded(flex: 3, child: _cell(Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)))),
+            Expanded(flex: 4, child: _cell(_buildRadios(item))),
+            Expanded(flex: 2, child: _cell(_buildDimInput(item))),
+            // --- CAMBIO AQUÍ: flex aumentado a 5 para más ancho y Expanded para que llene ---
+            Expanded(flex: 5, child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: _buildObsInput(item)
+            )),
             Expanded(flex: 2, child: _cell(Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -224,7 +232,6 @@ class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
       ),
     );
   }
-
   // --- MÓVIL ---
   Widget _buildMobileList() {
     return Column(
@@ -270,13 +277,13 @@ class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
     alignment: Alignment.center, child: child,
   );
 
-  Widget _buildRadios(BandaComponent item) {
-    return Wrap(
-      alignment: WrapAlignment.center,
+Widget _buildRadios(BandaComponent item) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: item.options.map((opt) => SizedBox(
-        width: 130,
+        height: 28,
         child: RadioListTile<String>(
-          title: Text(opt.label, style: const TextStyle(fontSize: 11)),
+          title: Text(opt.label, style: const TextStyle(fontSize: 10)),
           value: opt.id, groupValue: item.selectedOptionId, activeColor: _kRed,
           onChanged: (v) => ref.read(bandaInspectionProvider.notifier).updateComponentOption(widget.sectionId, item.id, v!),
           dense: true, contentPadding: EdgeInsets.zero,
@@ -285,19 +292,26 @@ class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
     );
   }
 
-  Widget _buildDimInput(BandaComponent item) => TextField(
+Widget _buildDimInput(BandaComponent item) => TextFormField( // Cambiado a TextFormField
+    key: ValueKey('dim_${item.id}'), // <--- CAMBIO: Llave única
+    initialValue: item.dimension,     // <--- CAMBIO: Sincronizado con el estado
     textAlign: TextAlign.center,
     keyboardType: TextInputType.number,
     onChanged: (v) => ref.read(bandaInspectionProvider.notifier).updateComponentDimension(widget.sectionId, item.id, v),
     decoration: InputDecoration(hintText: "Dim.", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
   );
 
-  Widget _buildObsInput(BandaComponent item) => TextField(
-    maxLines: 2,
+ Widget _buildObsInput(BandaComponent item) => TextFormField(
+    key: ValueKey('obs_${item.id}'),
+    initialValue: item.observation,
+    maxLines: 3, // <--- CAMBIO: Aumentado a 3 para que tenga más altura natural
+    decoration: const InputDecoration(
+      hintText: "Nota...", 
+      border: OutlineInputBorder(), 
+      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12) // <--- Padding interno
+    ),
     onChanged: (v) => ref.read(bandaInspectionProvider.notifier).updateComponentObservation(widget.sectionId, item.id, v),
-    decoration: InputDecoration(hintText: "Nota...", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
   );
-
   void _viewImage(Uint8List bytes) {
     showDialog(
       context: context,

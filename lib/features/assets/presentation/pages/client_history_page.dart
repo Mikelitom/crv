@@ -5,10 +5,11 @@ import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 import 'package:crv_reprosisa/features/assets/presentation/widgets/client_history_card.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/client_history.dart';
 import 'package:intl/intl.dart';
-// Asegúrate de importar el nuevo visor que creamos
 import 'client_pdf_viewer_page.dart'; 
-// Importa tu generador de PDF aquí
 import 'package:crv_reprosisa/core/utils/banda_pdf_generator.dart'; 
+import 'package:crv_reprosisa/features/assets/presentation/providers/conveyor_report_detail_provider.dart';
+import 'package:crv_reprosisa/features/bandas_transportadoras/domain/entities/banda_template.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/conveyor_report_detail.dart';
 
 class ClientHistoryPage extends ConsumerStatefulWidget {
   final String clientId;
@@ -38,15 +39,41 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
     return grouped;
   }
 
-  Future<void> _pickDate(bool isStart) async {
-    final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2025), lastDate: DateTime.now());
-    if (d != null) setState(() => isStart ? _start = d : _end = d);
+  // --- CORRECCIÓN: Se adaptan los getters anidados de la entidad Answer ---
+  List<BandaSection> _mapAnswersToSections(List<Answer> answers) {
+    final Map<String, List<BandaComponent>> sectionsMap = {};
+    
+    for (var a in answers) {
+      if (!sectionsMap.containsKey(a.section.name)) {
+        sectionsMap[a.section.name] = [];
+      }
+      
+      sectionsMap[a.section.name]!.add(BandaComponent(
+        id: a.answerId, 
+        name: a.accessory.name,
+        observation: a.recommendedAction.isNotEmpty ? a.recommendedAction : "Sin observaciones",        
+        options: [], 
+        selectedOptionId: a.option.label,        
+        dimension: a.dimensions.toString(),
+        evidenceBefore: [], 
+        evidenceAfter: [],
+      ));
+    }
+
+    return sectionsMap.entries.map((e) => BandaSection(
+      id: e.key.hashCode.toString(), 
+      name: e.key, 
+      components: e.value
+    )).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(clientHistoryProvider);
-    final filtered = state.history.where((h) => h.folio.toLowerCase().contains(_query.toLowerCase())).toList();
+    final filtered = state.history.where((h) => 
+        h.folio.toLowerCase().contains(_query.toLowerCase()) &&
+        (_start == null || h.inspectionDate.isAfter(_start!))
+    ).toList();
     final grouped = _groupData(filtered);
 
     return Scaffold(
@@ -64,14 +91,34 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           children: grouped.entries.map((e) => ClientHistoryCard(
             versions: e.value,
-            onPdfView: (versionId) {
-              // Navegación al visor específico de Cliente
-              Navigator.push(context, MaterialPageRoute(
-                builder: (_) => ClientPdfViewerPage(
-                  folio: e.key,
-                  pdfGenerator: () => BandaPdfGenerator.generateReport({}, []), // Ajusta aquí con tus datos reales
-                ),
-              ));
+            onPdfView: (versionId) async {
+              final reportDetail = await ref.read(conveyorReportDetailProvider.notifier).fetchDetail(versionId);
+              
+              if (reportDetail != null && mounted) {
+           
+
+                final Map<String, dynamic> datosNormalizados = {
+                  'planta': reportDetail.conveyor['mine'] ?? "", 
+                  'area': reportDetail.conveyor['area'] ?? "",
+                  'responsable': reportDetail.report['conveyor_responsible'] ?? "",
+                  'seccion': reportDetail.report['section']?.toString() ?? "", // <--- Se lee el string puro aquí                  
+                  'transportador': reportDetail.conveyor['name'] ?? "N/A", 
+                  'banda': reportDetail.report['recommended_belt'] ?? "",
+                  'material': "${reportDetail.report['material'] ?? ''} / ${reportDetail.report['granulometry'] ?? 'N/A'}",
+                  'elaboro': reportDetail.inspector['name'] ?? "",
+                  'presentar': reportDetail.report['present_to'] ?? "",
+                  'comentarios': reportDetail.report['comentarios'] ?? "",
+                };
+
+                final sections = _mapAnswersToSections(reportDetail.answers);
+                
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => ClientPdfViewerPage(
+                    folio: e.key,
+                    pdfGenerator: () => BandaPdfGenerator.generateReport(datosNormalizados, sections), 
+                  ),
+                ));
+              }
             },
             onDownload: (id) => print("Descargar: $id"),
             onPrint: (id) => print("Imprimir: $id"),
@@ -79,6 +126,11 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
         ))
       ]),
     );
+  }
+
+  Future<void> _pickDate(bool isStart) async {
+    final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2025), lastDate: DateTime.now());
+    if (d != null) setState(() => isStart ? _start = d : _end = d);
   }
 
   Widget _dateBtn(String label, DateTime? date, VoidCallback onTap) => InkWell(onTap: onTap, child: Container(

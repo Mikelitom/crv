@@ -88,17 +88,18 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
         }
       }
 
-      final reportRequest = {
+     final reportRequest = {
         "conveyor": state.conveyor.isEmpty ? "N/A" : state.conveyor, 
-        "area": state.selectedMine?.name ?? "",
+        "area": state.area,
         "mine_id": state.selectedMine?.id ?? "",
         "inspection_date": state.inspectionDate.toIso8601String(),
-        "conveyor_responsible": state.conveyorResponsible.isEmpty ? "N/A" : state.conveyorResponsible,
+        "section": state.seccion.isEmpty ? "N/A" : state.seccion, // <--- Cadena de texto simple de la sección general        "conveyor_responsible": state.conveyorResponsible.isEmpty ? "N/A" : state.conveyorResponsible,
         "recommended_belt": state.recommendedBelt.isEmpty ? "N/A" : state.recommendedBelt,
         "material": state.material.isEmpty ? "N/A" : state.material,
         "granulometry": state.granulometry.isEmpty ? "N/A" : state.granulometry,
         "present_to": state.presentTo.isEmpty ? "N/A" : state.presentTo,
         "state": "IN_PROGRESS",
+        "conveyor_responsible": state.conveyorResponsible,
         "folio": "B-${DateTime.now().millisecondsSinceEpoch}",
         "answers": answers,
       };
@@ -127,7 +128,8 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
   void _showPreview(BuildContext context) async {
     final state = ref.read(bandaInspectionProvider);
     
-    String seccionActual = "";
+    String seccionActual = state.seccion; 
+    
     if (_currentSectionIndex < state.sections.length) {
       seccionActual = state.sections[_currentSectionIndex].name;
     } else if (_mostrarRodilleria) {
@@ -135,17 +137,16 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
     }
 
     final Map<String, dynamic> generalData = {
-      'planta': state.selectedClient?.name ?? "N/A", 
-      'area': state.selectedMine?.name ?? "N/A",
-      'responsable': state.conveyorResponsible.isEmpty ? "N/A" : state.conveyorResponsible, 
+      'planta': state.selectedMine?.name ?? "N/A", 
+      'area': state.area,
+      'responsable': state.conveyorResponsible,
+      'seccion': state.seccion,
       'fecha': state.inspectionDate.toString().split(' ')[0],
-      'banda': state.recommendedBelt.isEmpty ? "N/A" : state.recommendedBelt, 
-      'transportador': state.conveyor.isEmpty ? "N/A" : state.conveyor,
-      'material': state.material.isEmpty ? "N/A" : "${state.material} / ${state.granulometry}",
+      'transportador': state.conveyor, 
+      'banda': state.recommendedBelt,
+      'material': "${state.material} / ${state.granulometry}",
       'elaboro': state.elaboro,
-      'presentar': state.presentTo.isEmpty ? "N/A" : state.presentTo,
-      'comentarios': state.generalComments,
-      'seccion': seccionActual,
+      'presentar': state.presentTo,
     };
 
     showDialog(
