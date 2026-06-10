@@ -311,8 +311,7 @@ PressHistoryPage(pressId: id, title: title),
       ],
     );
   }
-
-  Widget _buildClientLayout() {
+Widget _buildClientLayout() {
     final List<dynamic> mines = (_val('mines') as List<dynamic>?) ?? [];
 
     return Column(
@@ -324,22 +323,34 @@ PressHistoryPage(pressId: id, title: title),
           _buildTile("E-MAIL", _val('email')),
         ]),
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
+          padding: EdgeInsets.symmetric(vertical: 12),
           child: Text(
             "MINAS ASOCIADAS",
             style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: Colors.blueGrey,
+              letterSpacing: 0.5,
             ),
           ),
         ),
         if (mines.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8.0),
-            child: Text(
+          Container(
+            padding: const EdgeInsets.all(20),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade200, width: 1),
+            ),
+            child: const Text(
               "No hay minas registradas",
-              style: TextStyle(fontSize: 12),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey, 
+                fontSize: 13, 
+                fontWeight: FontWeight.w600
+              ),
             ),
           ),
 
@@ -357,85 +368,93 @@ PressHistoryPage(pressId: id, title: title),
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.blue.shade100, width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blue.shade50.withOpacity(0.5),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade200, width: 1),
             ),
-            child: Material(
-              color: Colors.transparent,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: primaryRed.withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
                           Icons.landscape_rounded,
-                          color: Colors.blue.shade700,
-                          size: 20,
+                          color: primaryRed,
+                          size: 18,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            name.toUpperCase(),
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 14,
-                              color: Colors.blue.shade900,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 20),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            address,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.phone_outlined,
-                          size: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          phone,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          name.toUpperCase(),
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                            color: Colors.grey.shade800,
+                            letterSpacing: 0.2,
                           ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 40),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 15,
+                              color: Colors.grey.shade500,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                address,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.phone_outlined,
+                              size: 15,
+                              color: Colors.grey.shade500,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              phone,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
