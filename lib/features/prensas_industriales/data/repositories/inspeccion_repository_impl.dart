@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import 'package:crv_reprosisa/features/prensas_industriales/data/datasource/press_inspection_local_datasource.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/data/models/loan_area_model.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
@@ -11,22 +13,30 @@ import '../../domain/entities/loan_area.dart';
 
 class InspeccionRepositoryImpl implements InspeccionRepository {
   final InspeccionRemoteDataSource dataSource;
-  InspeccionRepositoryImpl(this.dataSource);
+  final PressInspectionLocalDataSource local;
+
+  InspeccionRepositoryImpl(this.dataSource, this.local);
 
   @override
-  Future<Either<Failure, Map<String, dynamic>>> getLatestLoanStatus(String pressId) async {
+  Future<Either<Failure, Map<String, dynamic>>> getLatestLoanStatus(
+    String pressId,
+  ) async {
     try {
-      final response = await dataSource.getLoansMultiFilter({"press_id": pressId});
-      
+      final response = await dataSource.getLoansMultiFilter({
+        "press_id": pressId,
+      });
+
       if (response.isNotEmpty) {
         return Right(Map<String, dynamic>.from(response.first));
       }
-      
+
       return const Right({'status': 'AVAILABLE'});
     } on DioException catch (e) {
       return Left(ServerFailure(e.message ?? "Error al verificar estatus"));
     } catch (e) {
-      return const Left(UnknownFailure("No se pudo obtener el estado de la prensa"));
+      return const Left(
+        UnknownFailure("No se pudo obtener el estado de la prensa"),
+      );
     }
   }
 
@@ -34,49 +44,135 @@ class InspeccionRepositoryImpl implements InspeccionRepository {
   Future<Either<Failure, List<ComponentItem>>> getInspectionTemplate() async {
     try {
       final data = await dataSource.getInspectionTemplate();
-      return Right(data.map((json) => PrensaComponentItem.fromJson(json)).toList());
-    } catch (e) { return const Left(ServerFailure("Error template")); }
+
+      await local.savePressTemplate({'components': data});
+
+      return Right(
+        data.map((json) => PrensaComponentItem.fromJson(json)).toList(),
+      );
+    } on DioException {
+      try {
+        final cached = await local.getPressTemplate();
+
+        final components = cached['components'] as List<dynamic>? ?? [];
+
+        return Right(
+          components
+              .map(
+                (json) => PrensaComponentItem.fromJson(
+                  Map<String, dynamic>.from(json),
+                ),
+              )
+              .toList(),
+        );
+      } catch (_) {
+        return const Left(ServerFailure("No existe template local"));
+      }
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
   }
 
   @override
   Future<Either<Failure, Press>> getPressBySerie(String serie) async {
     try {
-      final press = await dataSource.getPressBySerie(serie);
-      if (press != null) return Right(press);
+      final localPress = await local.getPressBySerie(serie);
+
+      if (localPress != null) {
+        return Right(
+          Press(
+            id: localPress.id,
+            serie: localPress.serie,
+            model: localPress.model,
+            type: localPress.type,
+            voltz: localPress.volts,
+          ),
+        );
+      }
+
+      final remotePress = await dataSource.getPressBySerie(serie);
+
+      if (remotePress != null) {
+        return Right(remotePress);
+      }
+
       return const Left(ServerFailure("No se encontró la prensa"));
-    } catch (e) { return const Left(UnknownFailure("Error al buscar serie")); }
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? "Error al buscar prensa"));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
   }
 
   @override
   Future<Either<Failure, List<String>>> fetchAllSeries() async {
     try {
-      final series = await dataSource.getAllSeries();
+      final series = await local.getAllSeries();
+
       return Right(series);
-    } catch (e) { return const Left(ServerFailure("Error al cargar series")); }
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
   }
 
   @override
-  Future<Either<Failure, String>> createPressReport(Map<String, dynamic> reportData) async {
+  Future<Either<Failure, String>> createPressReport(
+    Map<String, dynamic> reportData,
+  ) async {
     try {
       final id = await dataSource.savePressReport(reportData);
       return Right(id);
-    } catch (e) { return const Left(ServerFailure("Error al enviar reporte")); }
+    } catch (e) {
+      try {
+        await local.saveOfflineReport(reportData);
+
+        return const Right(
+          'Reporte guardado localmente. Pendiente de sincronizacion.'
+        );
+      } catch (localError) {
+        return const Left(ServerFailure("No fue posible guardar el reporte localmente"));
+      }
+    }
   }
 
   @override
   Future<Either<Failure, List<LoanArea>>> getLoanAreas() async {
     try {
       final data = await dataSource.getAllLoanAreas();
-      return Right(data.map((json) => LoanArea.fromJson(json)).toList());
-    } catch (e) { return const Left(ServerFailure("Error al cargar talleres")); }
+
+      final areas = data
+          .map(
+            (json) => LoanAreaModel.fromJson(Map<String, dynamic>.from(json)),
+          )
+          .toList();
+
+      await local.clearLoanAreas();
+      await local.saveLoanAreas(areas);
+
+      return Right(areas);
+    } on DioException {
+      try {
+        final cached = await local.getLoanAreas();
+
+        return Right(cached);
+      } catch (_) {
+        return const Left(ServerFailure("No se pudieron cargar las áreas"));
+      }
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
   }
 
   @override
-  Future<Either<Failure, LoanArea>> createLoanArea(Map<String, String> data) async {
+  Future<Either<Failure, LoanArea>> createLoanArea(
+    Map<String, String> data,
+  ) async {
     try {
       final result = await dataSource.createLoanArea(data);
       return Right(LoanArea.fromJson(result));
-    } catch (e) { return const Left(ServerFailure("Error al crear taller")); }
+    } catch (e) {
+      return const Left(ServerFailure("Error al crear taller"));
+    }
   }
 
   @override
@@ -84,7 +180,9 @@ class InspeccionRepositoryImpl implements InspeccionRepository {
     try {
       await dataSource.createLoan(data);
       return const Right(unit);
-    } catch (e) { return const Left(ServerFailure("Error al registrar préstamo")); }
+    } catch (e) {
+      return const Left(ServerFailure("Error al registrar préstamo"));
+    }
   }
 
   @override
@@ -92,6 +190,8 @@ class InspeccionRepositoryImpl implements InspeccionRepository {
     try {
       final data = await dataSource.getInspectionPdfFile(id);
       return Right(data);
-    } catch (e) { return const Left(ServerFailure("Error al descargar PDF")); }
+    } catch (e) {
+      return const Left(ServerFailure("Error al descargar PDF"));
+    }
   }
 }

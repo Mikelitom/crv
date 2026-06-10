@@ -5,7 +5,6 @@ import 'core/router/app_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +21,8 @@ Future<void> main() async {
   // Hive local cache
   await Hive.initFlutter();
   await Hive.openBox('vehicle_cache');
+  await Hive.openBox('press_cache');
+  await Hive.openBox('conveyor_cache');
   await Hive.openBox('session');
 
   runApp(const ProviderScope(child: AppBootstrap()));

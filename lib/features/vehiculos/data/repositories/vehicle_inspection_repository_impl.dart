@@ -1,12 +1,9 @@
-import 'dart:convert';
-
 import 'package:crv_reprosisa/features/vehiculos/data/datasource/vehicle_inspection_local_datasource.dart';
+import 'package:crv_reprosisa/features/vehiculos/domain/entities/vehicle_entity.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failure.dart';
-import '../../domain/entities/vehicle_entity.dart';
 import '../../domain/repositories/vehicle_inspeccion_repository.dart';
 import '../datasource/vehicle_inspection_remote_datasource.dart';
-import '../models/inspection_vehicle_model.dart';
 
 class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
   final VehicleInspectionRemoteDataSource remoteDataSource;
@@ -22,29 +19,29 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
     try {
       final response = await remoteDataSource.getActiveVehicles();
 
-      await localDataSource.saveVehicles(response.cast<VehicleModel>());
-
-      print("Vehiculos guardados localmente: ${response.length}");
-
       return Right(response);
     } catch (e) {
-      print("Error remoto: $e");
-
       try {
-        final localVehicles = await localDataSource.getVehicles();
+        final localVehicles = await localDataSource.getActiveVehicles();
 
-        print("Vehiculos encontrados localmente: ${localVehicles.length}");
+        List<Vehicle> vehicles = [];
 
-        if (localVehicles.isNotEmpty) {
-          return Right(localVehicles);
+        for (final local in localVehicles) {
+          vehicles.add(
+            Vehicle(
+              id: local.vehicleId,
+              typeId: local.typeId,
+              brand: local.brand,
+              model: local.model,
+              unit: local.unit,
+              year: local.year,
+              plate: local.plate,
+            ),
+          );
         }
 
-        return const Left(
-          ServerFailure("No hay vehículos disponibles sin conexión"),
-        );
+        return Right(vehicles);
       } catch (localError) {
-        print("Error local: $localError");
-
         return const Left(ServerFailure("Error al obtener vehículos locales"));
       }
     }

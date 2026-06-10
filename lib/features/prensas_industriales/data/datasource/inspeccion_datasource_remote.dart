@@ -1,8 +1,6 @@
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../models/press_model.dart';
-import '../models/loan_area_model.dart';
-
 abstract class InspeccionRemoteDataSource {
   Future<PressModel?> getPressBySerie(String serie);
   Future<String> savePressReport(Map<String, dynamic> reportData);

@@ -1,9 +1,7 @@
 import 'package:crv_reprosisa/core/models/inspection_models.dart';
-import 'package:crv_reprosisa/features/assets/presentation/model/asset_models.dart';
 import 'package:crv_reprosisa/features/assets/presentation/pages/assets_admin_page.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
-import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/pages/inspections_page.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/widgets/quick_actions_i.dart';
 // SE ELIMINÓ EL IMPORT DEL CATÁLOGO AQUÍ
@@ -276,4 +274,4 @@ final List<StatsModel> _adminStats = [
   StatsModel(value: "0", label: "Completadas", color: Colors.grey),
 ];
 final List<ActionCardModel> _adminActions = [];
-final List<InspectionRowUI> _adminInspections = [];
+// final List<InspectionRowUI> _adminInspections = [];

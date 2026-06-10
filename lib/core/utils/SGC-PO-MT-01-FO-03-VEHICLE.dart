@@ -171,7 +171,7 @@ class VehiculoPdfGenerator {
 
   static pw.Widget _infoLine(String label, String val) => pw.Expanded(child: pw.Row(children: [
     pw.Text("$label: ", style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
-    pw.Expanded(child: pw.Container(decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(width: 1.0))), child: pw.Text(val ?? "", style: const pw.TextStyle(fontSize: 8)))),
+    pw.Expanded(child: pw.Container(decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(width: 1.0))), child: pw.Text(val, style: const pw.TextStyle(fontSize: 8)))),
   ]));
 
   static pw.Widget _buildInspectionTable(String title, List<dynamic> items) => pw.Table(

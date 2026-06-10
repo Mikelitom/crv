@@ -8,13 +8,15 @@ import 'package:crv_reprosisa/features/assets/domain/entities/press_history.dart
 import 'package:crv_reprosisa/features/assets/domain/entities/press_report_detail_entity.dart';
 import 'package:crv_reprosisa/features/assets/domain/params/create_press_params.dart';
 import 'package:crv_reprosisa/features/assets/domain/repositories/press_repository.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/data/datasource/press_inspection_local_datasource.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
 class PressRepositoryImpl implements PressRepository {
   final PressRemoteDatasource remote;
+  final PressInspectionLocalDataSource local;
 
-  PressRepositoryImpl(this.remote);
+  PressRepositoryImpl(this.remote, this.local);
 
   @override
   Future<Either<Failure, Press>> createPress(CreatePressParams params) async {
@@ -51,8 +53,12 @@ class PressRepositoryImpl implements PressRepository {
   Future<Either<Failure, List<Press>>> getAllPress() async {
     try {
       final press = await remote.getAllPress();
+      await local.clearPresses();
+      await local.savePresses(press);
       return Right(press);
     } on DioException catch (e) {
+      final press = await local.getPresses();
+      if (press.isNotEmpty) return Right(press);
       return Left(ServerFailure(e.toString()));
     } on SocketException catch (e) {
       return Left(NetworkFailure(e.toString()));
