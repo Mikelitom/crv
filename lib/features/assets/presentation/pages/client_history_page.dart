@@ -1,15 +1,18 @@
-import 'package:crv_reprosisa/features/assets/presentation/providers/conveyor_history_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
+import 'dart:typed_data';
+
+import 'package:crv_reprosisa/features/assets/presentation/providers/conveyor_history_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 import 'package:crv_reprosisa/features/assets/presentation/widgets/client_history_card.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/client_history.dart';
-import 'package:intl/intl.dart';
-import 'client_pdf_viewer_page.dart'; 
-import 'package:crv_reprosisa/core/utils/banda_pdf_generator.dart'; 
+import 'package:crv_reprosisa/features/assets/domain/entities/conveyor_report_detail.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/conveyor_report_detail_provider.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/domain/entities/banda_template.dart';
-import 'package:crv_reprosisa/features/assets/domain/entities/conveyor_report_detail.dart';
+import 'package:crv_reprosisa/core/utils/banda_pdf_generator.dart'; 
+import 'client_pdf_viewer_page.dart'; 
 
 class ClientHistoryPage extends ConsumerStatefulWidget {
   final String clientId;
@@ -39,23 +42,46 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
     return grouped;
   }
 
-  // --- CORRECCIÓN: Se adaptan los getters anidados de la entidad Answer ---
-  List<BandaSection> _mapAnswersToSections(List<Answer> answers) {
+  // Mapeo asíncrono para descargar evidencias históricas y construir las secciones
+  Future<List<BandaSection>> _mapAnswersToSections(List<Answer> answers) async {
     final Map<String, List<BandaComponent>> sectionsMap = {};
     
     for (var a in answers) {
       if (!sectionsMap.containsKey(a.section.name)) {
         sectionsMap[a.section.name] = [];
       }
+
+      // Descargamos las evidencias históricas en memoria de manera segura
+      final List<EvidenceFile> evFiles = [];
+      for (var ev in a.evidences) {
+        if (ev.signedUrl.isNotEmpty) {
+          try {
+            final dio = Dio();
+            final response = await dio.get<Uint8List>(
+              ev.signedUrl,
+              options: Options(responseType: ResponseType.bytes),
+            );
+            if (response.statusCode == 200) {
+              evFiles.add(EvidenceFile(
+                bytes: response.data!,
+                type: ev.fileType,
+                mimeType: ev.mimeType,
+              ));
+            }
+          } catch (e) {
+            debugPrint("Error descargando evidencia histórica: $e");
+          }
+        }
+      }
       
       sectionsMap[a.section.name]!.add(BandaComponent(
         id: a.answerId, 
         name: a.accessory.name,
-        observation: a.recommendedAction.isNotEmpty ? a.recommendedAction : "Sin observaciones",        
-        options: [], 
-        selectedOptionId: a.option.label,        
-        dimension: a.dimensions.toString(),
-        evidenceBefore: [], 
+        observation: a.recommendedAction.isNotEmpty ? a.recommendedAction : "",      
+        options: [], // Se deja vacío para que el PDFGenerator cargue el catálogo completo
+        selectedOptionId: a.option.value, // Se pasa el valor exacto para que sea resaltado en rojo        
+        dimension: a.dimensions > 0 ? a.dimensions.toString() : '',
+        evidenceBefore: evFiles,
         evidenceAfter: [],
       ));
     }
@@ -78,16 +104,31 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F8),
-      appBar: AppBar(title: const Text("Expediente Digital", style: TextStyle(fontWeight: FontWeight.w900)), backgroundColor: Colors.white, elevation: 0.5),
+      appBar: AppBar(
+        title: const Text("Expediente Digital", style: TextStyle(fontWeight: FontWeight.w900)), 
+        backgroundColor: Colors.white, 
+        elevation: 0.5
+      ),
       body: Column(children: [
         Padding(padding: const EdgeInsets.all(20), child: Row(children: [
-          Expanded(child: TextField(onChanged: (v) => setState(() => _query = v), decoration: InputDecoration(hintText: "Buscar por folio...", prefixIcon: const Icon(Icons.search, color: Colors.redAccent), filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)))),
+          Expanded(child: TextField(
+            onChanged: (v) => setState(() => _query = v), 
+            decoration: InputDecoration(
+              hintText: "Buscar por folio...", 
+              prefixIcon: const Icon(Icons.search, color: Colors.redAccent), 
+              filled: true, 
+              fillColor: Colors.white, 
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)
+            )
+          )),
           const SizedBox(width: 15),
           _dateBtn("Desde", _start, () => _pickDate(true)),
           const SizedBox(width: 15),
           _dateBtn("Hasta", _end, () => _pickDate(false)),
         ])),
-        Expanded(child: state.status == Status.loading ? const Center(child: CircularProgressIndicator(color: Colors.redAccent)) : ListView(
+        Expanded(child: state.status == Status.loading 
+          ? const Center(child: CircularProgressIndicator(color: Colors.redAccent)) 
+          : ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           children: grouped.entries.map((e) => ClientHistoryCard(
             versions: e.value,
@@ -95,33 +136,36 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
               final reportDetail = await ref.read(conveyorReportDetailProvider.notifier).fetchDetail(versionId);
               
               if (reportDetail != null && mounted) {
-           
+                final String seccionGeneral = reportDetail.report['section']?.toString() ?? "";
 
                 final Map<String, dynamic> datosNormalizados = {
                   'planta': reportDetail.conveyor['mine'] ?? "", 
                   'area': reportDetail.conveyor['area'] ?? "",
                   'responsable': reportDetail.report['conveyor_responsible'] ?? "",
-                  'seccion': reportDetail.report['section']?.toString() ?? "", // <--- Se lee el string puro aquí                  
-                  'transportador': reportDetail.conveyor['name'] ?? "N/A", 
+                  'seccion': seccionGeneral,               
+                  'transportador': reportDetail.conveyor['name'] ?? "", 
                   'banda': reportDetail.report['recommended_belt'] ?? "",
-                  'material': "${reportDetail.report['material'] ?? ''} / ${reportDetail.report['granulometry'] ?? 'N/A'}",
+                  'material': "${reportDetail.report['material'] ?? ''} / ${reportDetail.report['granulometry'] ?? ''}",
                   'elaboro': reportDetail.inspector['name'] ?? "",
                   'presentar': reportDetail.report['present_to'] ?? "",
                   'comentarios': reportDetail.report['comentarios'] ?? "",
                 };
 
-                final sections = _mapAnswersToSections(reportDetail.answers);
+                // Procesamos asíncronamente las respuestas junto con las imágenes en red
+                final sections = await _mapAnswersToSections(reportDetail.answers);
                 
-                Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => ClientPdfViewerPage(
-                    folio: e.key,
-                    pdfGenerator: () => BandaPdfGenerator.generateReport(datosNormalizados, sections), 
-                  ),
-                ));
+                if (mounted) {
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => ClientPdfViewerPage(
+                      folio: e.key,
+                      pdfGenerator: () => BandaPdfGenerator.generateReport(datosNormalizados, sections), 
+                    ),
+                  ));
+                }
               }
             },
-            onDownload: (id) => print("Descargar: $id"),
-            onPrint: (id) => print("Imprimir: $id"),
+            onDownload: (id) => debugPrint("Descargar: $id"),
+            onPrint: (id) => debugPrint("Imprimir: $id"),
           )).toList(),
         ))
       ]),
@@ -129,7 +173,12 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
   }
 
   Future<void> _pickDate(bool isStart) async {
-    final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2025), lastDate: DateTime.now());
+    final d = await showDatePicker(
+      context: context, 
+      initialDate: DateTime.now(), 
+      firstDate: DateTime(2025), 
+      lastDate: DateTime.now()
+    );
     if (d != null) setState(() => isStart ? _start = d : _end = d);
   }
 

@@ -89,15 +89,15 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
       }
 
      final reportRequest = {
-        "conveyor": state.conveyor.isEmpty ? "N/A" : state.conveyor, 
+        "conveyor": state.conveyor.isEmpty ? "" : state.conveyor, 
         "area": state.area,
         "mine_id": state.selectedMine?.id ?? "",
         "inspection_date": state.inspectionDate.toIso8601String(),
-        "section": state.seccion.isEmpty ? "N/A" : state.seccion, // <--- Cadena de texto simple de la sección general        "conveyor_responsible": state.conveyorResponsible.isEmpty ? "N/A" : state.conveyorResponsible,
-        "recommended_belt": state.recommendedBelt.isEmpty ? "N/A" : state.recommendedBelt,
-        "material": state.material.isEmpty ? "N/A" : state.material,
-        "granulometry": state.granulometry.isEmpty ? "N/A" : state.granulometry,
-        "present_to": state.presentTo.isEmpty ? "N/A" : state.presentTo,
+        "section": state.seccion.isEmpty ? "" : state.seccion, // <--- Cadena de texto simple de la sección general        "conveyor_responsible": state.conveyorResponsible.isEmpty ? "N/A" : state.conveyorResponsible,
+        "recommended_belt": state.recommendedBelt.isEmpty ? "" : state.recommendedBelt,
+        "material": state.material.isEmpty ? "" : state.material,
+        "granulometry": state.granulometry.isEmpty ? "" : state.granulometry,
+        "present_to": state.presentTo.isEmpty ? "" : state.presentTo,
         "state": "IN_PROGRESS",
         "conveyor_responsible": state.conveyorResponsible,
         "folio": "B-${DateTime.now().millisecondsSinceEpoch}",
