@@ -4,5 +4,8 @@ abstract class ClientLocalDatasource {
   Future<void> saveClients(List<ClientsModel> clients);
   Future<List<ClientsModel>> getClients();
 
-  
+  Future<void> saveClientTemplate(Map<String, dynamic> template);
+  Future<Map<String, dynamic>> getClientTemplate();
+
+  // Future<void> saveOfflineReport(Map<String, dynamic> report);
 }
