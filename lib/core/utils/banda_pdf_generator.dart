@@ -1,7 +1,5 @@
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
-import 'package:printing/printing.dart'; 
 import 'package:pdf/widgets.dart' as pw;
 import '../../features/bandas_transportadoras/domain/entities/banda_template.dart';
 
@@ -453,15 +451,15 @@ class BandaPdfGenerator {
     );
   }
 
-  static pw.Widget _rowContainer(pw.Widget child) {
-    return pw.Container(
-      height: 14,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 5),
-      alignment: pw.Alignment.centerLeft,
-      decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(width: 0.5))),
-      child: child,
-    );
-  }
+  // static pw.Widget _rowContainer(pw.Widget child) {
+  //   return pw.Container(
+  //     height: 14,
+  //     padding: const pw.EdgeInsets.symmetric(horizontal: 5),
+  //     alignment: pw.Alignment.centerLeft,
+  //     decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(width: 0.5))),
+  //     child: child,
+  //   );
+  // }
 
   static pw.Widget _buildOptionsInRow(List<BandaOption> options, String? selectedOptionId) {
     if (options.isEmpty) {
