@@ -11,6 +11,7 @@ abstract class VehicleInspectionLocalDatasource {
 
   Future<List<VehicleModel>> getVehicles();
   Future<List<VehicleModel>> getActiveVehicles();
+
   Future<void> saveVehicleTemplate(Map<String, dynamic> template);
   Future<Map<String, dynamic>> getVehicleTemplate();
 

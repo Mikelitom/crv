@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/bandas_transportadoras/data/datasource/client_local_datasource.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
@@ -8,16 +9,34 @@ import '../../domain/entities/client_mine.dart';
 
 class BandaRepositoryImpl implements BandaRepository {
   final BandaRemoteDataSource dataSource;
+  final ClientLocalDataSource local;
 
-  BandaRepositoryImpl(this.dataSource);
+  BandaRepositoryImpl(this.dataSource, this.local);
 
   @override
   Future<Either<Failure, List<BandaSection>>> getBandaTemplate() async {
     try {
       final result = await dataSource.getBandaTemplate();
+
+      await local.saveClientTemplate(result);
+
       return Right(result);
     } on DioException catch (e) {
-      return Left(ServerFailure(e.message ?? "Error al cargar template"));
+      try {
+        final localData = await local.getClientTemplate();
+
+        if (localData.isNotEmpty) {
+          return Right(localData);
+        }
+
+        return Left(
+          ServerFailure(
+            e.message ?? "No hay template disponibñe sin conexion.",
+          ),
+        );
+      } catch (_) {
+        return const Left(ServerFailure('Error al cargar template de bandas.'));
+      }
     } catch (e) {
       return Left(UnknownFailure(e.toString()));
     }
@@ -44,7 +63,9 @@ class BandaRepositoryImpl implements BandaRepository {
   }
 
   @override
-  Future<Either<Failure, String>> createBandaReport(Map<String, dynamic> reportData) async {
+  Future<Either<Failure, String>> createBandaReport(
+    Map<String, dynamic> reportData,
+  ) async {
     try {
       final id = await dataSource.saveBandaReport(reportData);
       return Right(id);
