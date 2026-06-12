@@ -1,12 +1,14 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/client_history.dart';
 
 class ClientHistoryCard extends StatefulWidget {
   final List<ClientHistory> versions;
   final Function(String) onPdfView;
-  final Function(String) onDownload;
-  final Function(String) onPrint;
+final Future<void> Function(String) onDownload;
+final Future<void> Function(String) onPrint;
 
   const ClientHistoryCard({
     super.key,
@@ -22,6 +24,12 @@ class ClientHistoryCard extends StatefulWidget {
 
 class _ClientHistoryCardState extends State<ClientHistoryCard> {
   late ClientHistory selected;
+  
+  bool _isDownloading = false;
+  bool _isPrinting = false;
+
+  static const Color primaryRed = Color(0xFFC62828);
+  static const Color backgroundGrey = Color(0xFFF8F9FA);
 
   @override
   void initState() {
@@ -32,123 +40,257 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
     );
   }
 
+  // Manejador asíncrono para la descarga nativa
+  Future<void> _handleDownload(String versionId) async {
+    if (_isDownloading) return;
+    setState(() => _isDownloading = true);
+    try {
+      await widget.onDownload(versionId);
+    } catch (e) {
+      debugPrint("Error al descargar: $e");
+    } finally {
+      if (mounted) setState(() => _isDownloading = false);
+    }
+  }
+
+  // Manejador asíncrono para la impresión nativa
+  Future<void> _handlePrint(String versionId) async {
+    if (_isPrinting) return;
+    setState(() => _isPrinting = true);
+    try {
+      await widget.onPrint(versionId);
+    } catch (e) {
+      debugPrint("Error al imprimir: $e");
+    } finally {
+      if (mounted) setState(() => _isPrinting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200, width: 1.5),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.shade300, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _badge(selected.state),
-                      const SizedBox(height: 12),
-                      Text(
-                        selected.conveyorName.toUpperCase(),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        "FOLIO: ${selected.folio} | v${selected.versionNumber}",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w400,
-                          fontSize: 10,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      Text(
-                        "${selected.mineName} • ${selected.areaName}",
-                        style: const TextStyle(
-                          color: Colors.blueGrey,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _versionSelector(),
-              ],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _badge(selected.state),
+              Flexible(child: _versionSelector()),
+            ],
           ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Row(
-              children: [
-                _info("INSPECTOR", selected.inspectorName),
-                const SizedBox(width: 15),
-                _info(
-                  "FECHA",
-                  DateFormat('dd/MM/yy').format(selected.inspectionDate),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: primaryRed.withOpacity(0.08),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: 15),
-                _info("EVIDENCIAS", "${selected.evidencesCount} adjuntos"),
-                const Spacer(),
-                Row(
+                child: const Icon(Icons.business_rounded, color: primaryRed, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _actionBtn(
-                      Icons.picture_as_pdf,
-                      Colors.redAccent,
-                      () => widget.onPdfView(selected.versionId),
+                    Text(
+                      selected.conveyorName.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 18, 
+                        fontWeight: FontWeight.w900, 
+                        color: Colors.black87
+                      ),
                     ),
-                    _actionBtn(
-                      Icons.download,
-                      Colors.grey.shade600,
-                      () => widget.onDownload(selected.versionId),
-                    ),
-                    _actionBtn(
-                      Icons.print,
-                      Colors.grey.shade600,
-                      () => widget.onPrint(selected.versionId),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Compañía: ${selected.clientCompany} • Cliente: ${selected.clientName}",
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12, 
+                        fontWeight: FontWeight.w600, 
+                        color: Colors.grey.shade600
+                      ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Icon(Icons.landscape_rounded, size: 16, color: Colors.blueGrey),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  "${selected.mineName} • ${selected.areaName}",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.blueGrey,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (selected.material.isNotEmpty || selected.granulometry.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200)
+              ),
+              child: Text(
+                "Material: ${selected.material} | Granulometría: ${selected.granulometry}",
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.grey.shade700),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+          _infoContainer(),
+          const SizedBox(height: 16),
+          Divider(color: Colors.grey.shade300, thickness: 1.5),
+          const SizedBox(height: 4),
+          _footer(selected.folio, selected.versionNumber),
         ],
       ),
     );
   }
 
+  Widget _infoContainer() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: backgroundGrey, 
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200, width: 1)
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _infoRow(Icons.person_outline, selected.inspectorName)),
+          const SizedBox(width: 6),
+          Expanded(child: _infoRow(Icons.calendar_today_outlined, DateFormat('dd/MM/yyyy').format(selected.inspectionDate))),
+          const SizedBox(width: 6),
+          Expanded(child: _infoRow(Icons.image_outlined, "${selected.evidencesCount} adjuntos")),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey.shade600),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            text, 
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 10.5, color: Colors.grey.shade800, fontWeight: FontWeight.w700)
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _footer(String folio, int version) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(
+          child: _versionChip("Folio: $folio (v$version)", primaryRed),
+        ),
+        const SizedBox(width: 8),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _actionBtn(
+              Icons.picture_as_pdf, 
+              primaryRed, 
+              () => widget.onPdfView(selected.versionId)
+            ),
+            // Botón de descarga con indicador visual de carga
+            _isDownloading 
+                ? const SizedBox(
+                    width: 36, 
+                    height: 36, 
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: primaryRed),
+                    ),
+                  )
+                : _actionBtn(
+                    Icons.download, 
+                    primaryRed, 
+                    () => _handleDownload(selected.versionId)
+                  ),
+            // Botón de impresión con indicador visual de carga
+            _isPrinting 
+                ? const SizedBox(
+                    width: 36, 
+                    height: 36, 
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: primaryRed),
+                    ),
+                  )
+                : _actionBtn(
+                    Icons.print, 
+                    primaryRed, 
+                    () => _handlePrint(selected.versionId)
+                  ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _versionSelector() => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     decoration: BoxDecoration(
       color: Colors.grey.shade100,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: Colors.grey.shade300, width: 1.2)
     ),
     child: DropdownButtonHideUnderline(
       child: DropdownButton<ClientHistory>(
         value: selected,
-        icon: const Icon(Icons.history, color: Colors.redAccent, size: 16),
+        icon: const Icon(Icons.history, color: primaryRed, size: 18),
         items: widget.versions
             .map(
               (v) => DropdownMenuItem(
                 value: v,
                 child: Text(
-                  "v${v.versionNumber}",
+                  "Versión v${v.versionNumber}",
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -159,58 +301,57 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
     ),
   );
 
-  Widget _info(String l, String v) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        l,
-        style: TextStyle(
-          fontSize: 8,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey.shade400,
-        ),
-      ),
-      const SizedBox(height: 2),
-      Text(
-        v,
-        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11),
-      ),
-    ],
+  Widget _actionBtn(IconData icon, Color color, VoidCallback onTap) => IconButton(
+    icon: Icon(icon, size: 22),
+    color: color,
+    onPressed: onTap,
+    constraints: const BoxConstraints(minWidth: 36, maxWidth: 40),
+    splashRadius: 20,
+    padding: EdgeInsets.zero,
   );
-
-  Widget _actionBtn(IconData icon, Color color, VoidCallback onTap) =>
-      IconButton(
-        icon: Icon(icon, size: 18),
-        color: color,
-        onPressed: onTap,
-        constraints: const BoxConstraints(minWidth: 36),
-      );
 
   Widget _badge(String state) {
     Color c;
     String txt;
     switch (state.toUpperCase()) {
       case "COMPLETED":
-        c = Colors.green;
+        c = Colors.green.shade700;
         txt = "COMPLETADO";
         break;
       case "IN_PROGRESS":
-        c = Colors.amber.shade700;
+        c = Colors.amber.shade800;
         txt = "EN PROCESO";
         break;
       default:
-        c = Colors.redAccent;
+        c = primaryRed;
         txt = "PENDIENTE";
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: c.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
+        color: c.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: c.withOpacity(0.25), width: 1.2)
       ),
       child: Text(
         txt,
-        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: c),
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: c, letterSpacing: 0.5),
+      ),
+    );
+  }
+
+  Widget _versionChip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08), 
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.25))
+      ),
+      child: Text(
+        text, 
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 10)
       ),
     );
   }

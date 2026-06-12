@@ -1,8 +1,11 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
-import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:printing/printing.dart';
 
 import 'package:crv_reprosisa/features/assets/presentation/providers/conveyor_history_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
@@ -42,7 +45,6 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
     return grouped;
   }
 
-  // Mapeo asíncrono para descargar evidencias históricas y construir las secciones
   Future<List<BandaSection>> _mapAnswersToSections(List<Answer> answers) async {
     final Map<String, List<BandaComponent>> sectionsMap = {};
     
@@ -51,7 +53,6 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
         sectionsMap[a.section.name] = [];
       }
 
-      // Descargamos las evidencias históricas en memoria de manera segura
       final List<EvidenceFile> evFiles = [];
       for (var ev in a.evidences) {
         if (ev.signedUrl.isNotEmpty) {
@@ -78,8 +79,8 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
         id: a.answerId, 
         name: a.accessory.name,
         observation: a.recommendedAction.isNotEmpty ? a.recommendedAction : "",      
-        options: [], // Se deja vacío para que el PDFGenerator cargue el catálogo completo
-        selectedOptionId: a.option.value, // Se pasa el valor exacto para que sea resaltado en rojo        
+        options: [], 
+        selectedOptionId: a.option.value,       
         dimension: a.dimensions > 0 ? a.dimensions.toString() : '',
         evidenceBefore: evFiles,
         evidenceAfter: [],
@@ -91,6 +92,109 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
       name: e.key, 
       components: e.value
     )).toList();
+  }
+
+  Future<Uint8List?> _generatePdf(String versionId) async {
+    try {
+      final reportDetail = await ref
+          .read(conveyorReportDetailProvider.notifier)
+          .fetchDetail(versionId);
+
+      if (reportDetail == null) return null;
+
+      final String seccionGeneral =
+          reportDetail.report['section']?.toString() ?? "";
+
+      final Map<String, dynamic> datosNormalizados = {
+        'planta': reportDetail.conveyor['mine'] ?? "",
+        'area': reportDetail.conveyor['area'] ?? "",
+        'responsable':
+            reportDetail.report['conveyor_responsible'] ?? "",
+        'seccion': seccionGeneral,
+        'transportador':
+            reportDetail.conveyor['name'] ?? "",
+        'banda':
+            reportDetail.report['recommended_belt'] ?? "",
+        'material':
+            "${reportDetail.report['material'] ?? ''} / ${reportDetail.report['granulometry'] ?? ''}",
+        'elaboro':
+            reportDetail.inspector['name'] ?? "",
+        'presentar':
+            reportDetail.report['present_to'] ?? "",
+        'comentarios':
+            reportDetail.report['comentarios'] ?? "",
+      };
+
+      final sections =
+          await _mapAnswersToSections(reportDetail.answers);
+
+      return BandaPdfGenerator.generateReport(
+        datosNormalizados,
+        sections,
+      );
+    } catch (e) {
+      debugPrint("Error generando PDF: $e");
+      return null;
+    }
+  }
+
+  Future<void> _downloadReport(String versionId, String folio) async {
+    try {
+      final reportDetail = await ref
+          .read(conveyorReportDetailProvider.notifier)
+          .fetchDetail(versionId);
+
+      if (reportDetail == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error al generar PDF")),
+        );
+        return;
+      }
+
+      final String seccionGeneral =
+          reportDetail.report['section']?.toString() ?? "";
+
+      final Map<String, dynamic> datosNormalizados = {
+        'planta': reportDetail.conveyor['mine'] ?? "",
+        'area': reportDetail.conveyor['area'] ?? "",
+        'responsable':
+            reportDetail.report['conveyor_responsible'] ?? "",
+        'seccion': seccionGeneral,
+        'transportador':
+            reportDetail.conveyor['name'] ?? "",
+        'banda':
+            reportDetail.report['recommended_belt'] ?? "",
+        'material':
+            "${reportDetail.report['material'] ?? ''} / ${reportDetail.report['granulometry'] ?? ''}",
+        'elaboro':
+            reportDetail.inspector['name'] ?? "",
+        'presentar':
+            reportDetail.report['present_to'] ?? "",
+        'comentarios':
+            reportDetail.report['comentarios'] ?? "",
+      };
+
+      final sections =
+          await _mapAnswersToSections(reportDetail.answers);
+
+      final pdfBytes = await BandaPdfGenerator.generateReport(
+        datosNormalizados,
+        sections,
+      );
+
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: 'Reporte_$folio.pdf',
+      );
+    } catch (e) {
+      debugPrint("Error descargando PDF: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error al descargar PDF: $e")),
+        );
+      }
+    }
   }
 
   @override
@@ -151,7 +255,6 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
                   'comentarios': reportDetail.report['comentarios'] ?? "",
                 };
 
-                // Procesamos asíncronamente las respuestas junto con las imágenes en red
                 final sections = await _mapAnswersToSections(reportDetail.answers);
                 
                 if (mounted) {
@@ -164,8 +267,15 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
                 }
               }
             },
-            onDownload: (id) => debugPrint("Descargar: $id"),
-            onPrint: (id) => debugPrint("Imprimir: $id"),
+            onDownload: (id) => _downloadReport(id, e.key),
+            onPrint: (id) async {
+              final pdfBytes = await _generatePdf(id);
+              if (pdfBytes == null) return;
+
+              await Printing.layoutPdf(
+                onLayout: (_) async => pdfBytes,
+              );
+            },
           )).toList(),
         ))
       ]),

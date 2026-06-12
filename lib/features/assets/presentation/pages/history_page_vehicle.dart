@@ -44,13 +44,21 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     } catch (e) { return null; }
   }
 
+  // --- AGRUPAR VERSIONES POR FOLIO (V1, V2...) ---
+  Map<String, List<dynamic>> _groupVersions(List<dynamic> history) {
+    Map<String, List<dynamic>> grouped = {};
+    for (var item in history) {
+      if (!grouped.containsKey(item.folio)) grouped[item.folio] = [];
+      grouped[item.folio]!.add(item);
+    }
+    return grouped;
+  }
+
   // --- TRADUCTOR DE ENTIDAD A MAPA CON NORMALIZACIÓN DE ESTADOS ---
   Map<String, dynamic> _mapEntityToPdfMap(VehicleReportDetailEntity data) {
     Map<String, List<Map<String, dynamic>>> grouped = {};
 
     for (var ans in data.answers) {
-      // Normalizamos el estado para que coincida con lo que el generador espera:
-      // GOOD, BAD, REPOSITION, REPARATION
       String code = ans.optionName.toLowerCase();
       String status = "UNKNOWN";
       if (code.contains("buen")) status = "GOOD";
@@ -78,29 +86,47 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     };
   }
 
-  Future<void> _viewPdfPreview(item) async {
-    final result = await ref
-        .read(getVehicleReportDetailUseCaseProvider)
-        .call(item.versionId);
+  // --- LÓGICA ASÍNCRONA PARA OBTENER BYTES DE PDF POBLADOS CON IMÁGENES ---
+  Future<Uint8List?> _generatePdfBytes(String versionId) async {
+    try {
+      final result = await ref
+          .read(getVehicleReportDetailUseCaseProvider)
+          .call(versionId);
 
-    result.fold(
-      (l) => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error al cargar detalle"))),
-      (data) async {
-        for (var ans in data.answers) {
-          if (ans.evidencePaths.isNotEmpty) {
-            ans.evidenceBytes = await _downloadImage(ans.evidencePaths[0]);
+      Uint8List? generatedBytes;
+      
+      await result.fold(
+        (l) async => generatedBytes = null,
+        (data) async {
+          for (var ans in data.answers) {
+            if (ans.evidencePaths.isNotEmpty) {
+              ans.evidenceBytes = await _downloadImage(ans.evidencePaths[0]);
+            }
           }
+          final pdfData = _mapEntityToPdfMap(data);
+          // Se espera a que el generador asíncrono devuelva el resultado
+          generatedBytes = await VehiculoPdfGenerator.generateEsqueleto(pdfData);
         }
+      );
+      return generatedBytes;
+    } catch (e) {
+      debugPrint("Error al procesar PDF de vehículo: $e");
+      return null;
+    }
+  }
 
-        final pdfData = _mapEntityToPdfMap(data);
+  Future<void> _viewPdfPreview(item) async {
+    final pdfBytes = await _generatePdfBytes(item.versionId);
+    if (pdfBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error al cargar detalle")));
+      return;
+    }
 
-        if (!mounted) return;
-        Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(
-          appBar: AppBar(title: const Text("Vista Previa PDF"), backgroundColor: primaryRed),
-          body: PdfPreview(build: (format) => VehiculoPdfGenerator.generateEsqueleto(pdfData)),
-        )));
-      },
-    );
+    if (!mounted) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(
+      appBar: AppBar(title: const Text("Vista Previa PDF"), backgroundColor: primaryRed),
+      body: PdfPreview(build: (format) => pdfBytes),
+    )));
   }
 
   Future<void> _selectDate(BuildContext context, bool isStart) async {
@@ -128,6 +154,9 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
           item.inspectionDate.isBefore(_endDate!.add(const Duration(days: 1)));
     }).toList();
 
+    final groupedFolios = _groupVersions(filteredHistory);
+    final foliosKeys = groupedFolios.keys.toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F4F7),
       appBar: AppBar(
@@ -142,21 +171,31 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
             child: state.status == Status.loading
                 ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
-                    itemCount: filteredHistory.length,
+                    itemCount: foliosKeys.length,
                     itemBuilder: (_, index) {
-                      final item = filteredHistory[index];
+                      final folioKey = foliosKeys[index];
+                      final versionsList = groupedFolios[folioKey]!;
+                      
+                      final currentItem = versionsList.firstWhere(
+                        (v) => v.isCurrent == true, 
+                        orElse: () => versionsList.first
+                      );
+
                       return HistoryCard(
-                        item: item,
-                        onDetailsPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => VehicleReportDetailPage(reportId: item.versionId))),
+                        versions: versionsList,
                         onDownloadPressed: () async {
-                          final pdfBytes = await VehiculoPdfGenerator.generateEsqueleto(item.toJson());
-                          await Printing.sharePdf(bytes: pdfBytes, filename: 'Reporte_${item.folio}.pdf');
+                          final pdfBytes = await _generatePdfBytes(currentItem.versionId);
+                          if (pdfBytes != null && mounted) {
+                            await Printing.sharePdf(bytes: pdfBytes, filename: 'Reporte_${currentItem.folio}.pdf');
+                          }
                         },
                         onPrintPressed: () async {
-                          final pdfBytes = await VehiculoPdfGenerator.generateEsqueleto(item.toJson());
-                          await Printing.layoutPdf(onLayout: (_) => pdfBytes);
+                          final pdfBytes = await _generatePdfBytes(currentItem.versionId);
+                          if (pdfBytes != null && mounted) {
+                            await Printing.layoutPdf(onLayout: (_) => pdfBytes);
+                          }
                         },
-                        onPdfPreviewPressed: () => _viewPdfPreview(item),
+                        onPdfPreviewPressed: () => _viewPdfPreview(currentItem),
                       );
                     },
                   ),
