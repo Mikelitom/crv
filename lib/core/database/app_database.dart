@@ -8,6 +8,7 @@ import 'tables/report_answers_vehicle.dart';
 import 'tables/evidence_vehicle_table.dart';
 import 'tables/pending_vehicle_reports_table.dart';
 import 'tables/pending_press_reports_table.dart';
+import 'tables/pending_client_reports_table.dart';
 import 'tables/press_table.dart';
 import 'tables/loan_areas_table.dart';
 import 'tables/clients_table.dart';
@@ -28,13 +29,14 @@ part 'app_database.g.dart';
     PendingPressReportsTable,
     ClientsTable,
     MinesTable,
+    PendingClientReportsTable
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(openConnection());
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

@@ -16,9 +16,9 @@ class BandaRepositoryImpl implements BandaRepository {
   Future<Either<Failure, List<BandaSection>>> getBandaTemplate() async {
     try {
       final remoteData = await dataSource.getBandaTemplate();
-  
+
       await local.saveClientTemplate(remoteData);
-  
+
       return Right(remoteData);
     } catch (e) {
       try {
@@ -27,11 +27,11 @@ class BandaRepositoryImpl implements BandaRepository {
         print("REMOTE FALLÓ → USANDO CACHE");
         print(localData);
         print(localData.runtimeType);
-        
+
         if (localData.isNotEmpty) {
           return Right(localData);
         }
-  
+
         return const Left(ServerFailure('Sin datos en cache'));
       } catch (_) {
         return const Left(ServerFailure('Error leyendo cache'));
@@ -47,16 +47,10 @@ class BandaRepositoryImpl implements BandaRepository {
     } catch (_) {
       try {
         final localClients = await local.getActiveClients();
-  
+
         return Right(
           localClients
-              .map(
-                (c) => Client(
-                  id: c.id,
-                  name: c.name,
-                  company: c.company,
-                ),
-              )
+              .map((c) => Client(id: c.id, name: c.name, company: c.company))
               .toList(),
         );
       } catch (_) {
@@ -64,7 +58,7 @@ class BandaRepositoryImpl implements BandaRepository {
       }
     }
   }
-  
+
   @override
   Future<Either<Failure, List<Mine>>> getActiveMines() async {
     try {
@@ -73,7 +67,7 @@ class BandaRepositoryImpl implements BandaRepository {
     } catch (_) {
       try {
         final localMines = await local.getActiveMines();
-  
+
         return Right(
           localMines
               .map(
@@ -99,8 +93,20 @@ class BandaRepositoryImpl implements BandaRepository {
     try {
       final id = await dataSource.saveBandaReport(reportData);
       return Right(id);
-    } catch (e) {
-      return Left(ServerFailure("Error al guardar reporte de banda"));
+    } catch (e, s) {
+      print("REPORT DATA COMPLETO:");
+      print(reportData);
+      print("ERROR EN CREATE REPORT: $e");
+      print(s);
+      try {
+        await local.saveOfflineReport(reportData);
+
+        return const Right(
+          'Reporte guardado localmente. Pendiente de sincronizacion.'
+        );
+      } catch (e) {
+        return Left(ServerFailure("Error al guardar reporte de banda"));
+      }
     }
   }
 }

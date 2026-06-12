@@ -6203,6 +6203,470 @@ class MinesTableCompanion extends UpdateCompanion<MinesTableData> {
   }
 }
 
+class $PendingClientReportsTableTable extends PendingClientReportsTable
+    with
+        TableInfo<
+          $PendingClientReportsTableTable,
+          PendingClientReportsTableData
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PendingClientReportsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mineIdMeta = const VerificationMeta('mineId');
+  @override
+  late final GeneratedColumn<String> mineId = GeneratedColumn<String>(
+    'mine_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _folioMeta = const VerificationMeta('folio');
+  @override
+  late final GeneratedColumn<String> folio = GeneratedColumn<String>(
+    'folio',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isSyncedMeta = const VerificationMeta(
+    'isSynced',
+  );
+  @override
+  late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
+    'is_synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _syncedAtMeta = const VerificationMeta(
+    'syncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> syncedAt = GeneratedColumn<DateTime>(
+    'synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    mineId,
+    folio,
+    payload,
+    isSynced,
+    createdAt,
+    syncedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'pending_client_reports_table';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PendingClientReportsTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('mine_id')) {
+      context.handle(
+        _mineIdMeta,
+        mineId.isAcceptableOrUnknown(data['mine_id']!, _mineIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mineIdMeta);
+    }
+    if (data.containsKey('folio')) {
+      context.handle(
+        _folioMeta,
+        folio.isAcceptableOrUnknown(data['folio']!, _folioMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_folioMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    if (data.containsKey('is_synced')) {
+      context.handle(
+        _isSyncedMeta,
+        isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('synced_at')) {
+      context.handle(
+        _syncedAtMeta,
+        syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PendingClientReportsTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PendingClientReportsTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      mineId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mine_id'],
+      )!,
+      folio: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}folio'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+      isSynced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_synced'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      syncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}synced_at'],
+      ),
+    );
+  }
+
+  @override
+  $PendingClientReportsTableTable createAlias(String alias) {
+    return $PendingClientReportsTableTable(attachedDatabase, alias);
+  }
+}
+
+class PendingClientReportsTableData extends DataClass
+    implements Insertable<PendingClientReportsTableData> {
+  final String id;
+  final String mineId;
+  final String folio;
+  final String payload;
+  final bool isSynced;
+  final DateTime createdAt;
+  final DateTime? syncedAt;
+  const PendingClientReportsTableData({
+    required this.id,
+    required this.mineId,
+    required this.folio,
+    required this.payload,
+    required this.isSynced,
+    required this.createdAt,
+    this.syncedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['mine_id'] = Variable<String>(mineId);
+    map['folio'] = Variable<String>(folio);
+    map['payload'] = Variable<String>(payload);
+    map['is_synced'] = Variable<bool>(isSynced);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || syncedAt != null) {
+      map['synced_at'] = Variable<DateTime>(syncedAt);
+    }
+    return map;
+  }
+
+  PendingClientReportsTableCompanion toCompanion(bool nullToAbsent) {
+    return PendingClientReportsTableCompanion(
+      id: Value(id),
+      mineId: Value(mineId),
+      folio: Value(folio),
+      payload: Value(payload),
+      isSynced: Value(isSynced),
+      createdAt: Value(createdAt),
+      syncedAt: syncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncedAt),
+    );
+  }
+
+  factory PendingClientReportsTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PendingClientReportsTableData(
+      id: serializer.fromJson<String>(json['id']),
+      mineId: serializer.fromJson<String>(json['mineId']),
+      folio: serializer.fromJson<String>(json['folio']),
+      payload: serializer.fromJson<String>(json['payload']),
+      isSynced: serializer.fromJson<bool>(json['isSynced']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'mineId': serializer.toJson<String>(mineId),
+      'folio': serializer.toJson<String>(folio),
+      'payload': serializer.toJson<String>(payload),
+      'isSynced': serializer.toJson<bool>(isSynced),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'syncedAt': serializer.toJson<DateTime?>(syncedAt),
+    };
+  }
+
+  PendingClientReportsTableData copyWith({
+    String? id,
+    String? mineId,
+    String? folio,
+    String? payload,
+    bool? isSynced,
+    DateTime? createdAt,
+    Value<DateTime?> syncedAt = const Value.absent(),
+  }) => PendingClientReportsTableData(
+    id: id ?? this.id,
+    mineId: mineId ?? this.mineId,
+    folio: folio ?? this.folio,
+    payload: payload ?? this.payload,
+    isSynced: isSynced ?? this.isSynced,
+    createdAt: createdAt ?? this.createdAt,
+    syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
+  );
+  PendingClientReportsTableData copyWithCompanion(
+    PendingClientReportsTableCompanion data,
+  ) {
+    return PendingClientReportsTableData(
+      id: data.id.present ? data.id.value : this.id,
+      mineId: data.mineId.present ? data.mineId.value : this.mineId,
+      folio: data.folio.present ? data.folio.value : this.folio,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PendingClientReportsTableData(')
+          ..write('id: $id, ')
+          ..write('mineId: $mineId, ')
+          ..write('folio: $folio, ')
+          ..write('payload: $payload, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('syncedAt: $syncedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, mineId, folio, payload, isSynced, createdAt, syncedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PendingClientReportsTableData &&
+          other.id == this.id &&
+          other.mineId == this.mineId &&
+          other.folio == this.folio &&
+          other.payload == this.payload &&
+          other.isSynced == this.isSynced &&
+          other.createdAt == this.createdAt &&
+          other.syncedAt == this.syncedAt);
+}
+
+class PendingClientReportsTableCompanion
+    extends UpdateCompanion<PendingClientReportsTableData> {
+  final Value<String> id;
+  final Value<String> mineId;
+  final Value<String> folio;
+  final Value<String> payload;
+  final Value<bool> isSynced;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> syncedAt;
+  final Value<int> rowid;
+  const PendingClientReportsTableCompanion({
+    this.id = const Value.absent(),
+    this.mineId = const Value.absent(),
+    this.folio = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PendingClientReportsTableCompanion.insert({
+    required String id,
+    required String mineId,
+    required String folio,
+    required String payload,
+    this.isSynced = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       mineId = Value(mineId),
+       folio = Value(folio),
+       payload = Value(payload);
+  static Insertable<PendingClientReportsTableData> custom({
+    Expression<String>? id,
+    Expression<String>? mineId,
+    Expression<String>? folio,
+    Expression<String>? payload,
+    Expression<bool>? isSynced,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? syncedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (mineId != null) 'mine_id': mineId,
+      if (folio != null) 'folio': folio,
+      if (payload != null) 'payload': payload,
+      if (isSynced != null) 'is_synced': isSynced,
+      if (createdAt != null) 'created_at': createdAt,
+      if (syncedAt != null) 'synced_at': syncedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PendingClientReportsTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? mineId,
+    Value<String>? folio,
+    Value<String>? payload,
+    Value<bool>? isSynced,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? syncedAt,
+    Value<int>? rowid,
+  }) {
+    return PendingClientReportsTableCompanion(
+      id: id ?? this.id,
+      mineId: mineId ?? this.mineId,
+      folio: folio ?? this.folio,
+      payload: payload ?? this.payload,
+      isSynced: isSynced ?? this.isSynced,
+      createdAt: createdAt ?? this.createdAt,
+      syncedAt: syncedAt ?? this.syncedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (mineId.present) {
+      map['mine_id'] = Variable<String>(mineId.value);
+    }
+    if (folio.present) {
+      map['folio'] = Variable<String>(folio.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (isSynced.present) {
+      map['is_synced'] = Variable<bool>(isSynced.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (syncedAt.present) {
+      map['synced_at'] = Variable<DateTime>(syncedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PendingClientReportsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('mineId: $mineId, ')
+          ..write('folio: $folio, ')
+          ..write('payload: $payload, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6223,6 +6687,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $PendingPressReportsTableTable(this);
   late final $ClientsTableTable clientsTable = $ClientsTableTable(this);
   late final $MinesTableTable minesTable = $MinesTableTable(this);
+  late final $PendingClientReportsTableTable pendingClientReportsTable =
+      $PendingClientReportsTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6239,6 +6705,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     pendingPressReportsTable,
     clientsTable,
     minesTable,
+    pendingClientReportsTable,
   ];
 }
 
@@ -9402,6 +9869,263 @@ typedef $$MinesTableTableProcessedTableManager =
       MinesTableData,
       PrefetchHooks Function()
     >;
+typedef $$PendingClientReportsTableTableCreateCompanionBuilder =
+    PendingClientReportsTableCompanion Function({
+      required String id,
+      required String mineId,
+      required String folio,
+      required String payload,
+      Value<bool> isSynced,
+      Value<DateTime> createdAt,
+      Value<DateTime?> syncedAt,
+      Value<int> rowid,
+    });
+typedef $$PendingClientReportsTableTableUpdateCompanionBuilder =
+    PendingClientReportsTableCompanion Function({
+      Value<String> id,
+      Value<String> mineId,
+      Value<String> folio,
+      Value<String> payload,
+      Value<bool> isSynced,
+      Value<DateTime> createdAt,
+      Value<DateTime?> syncedAt,
+      Value<int> rowid,
+    });
+
+class $$PendingClientReportsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $PendingClientReportsTableTable> {
+  $$PendingClientReportsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mineId => $composableBuilder(
+    column: $table.mineId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get folio => $composableBuilder(
+    column: $table.folio,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PendingClientReportsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $PendingClientReportsTableTable> {
+  $$PendingClientReportsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mineId => $composableBuilder(
+    column: $table.mineId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get folio => $composableBuilder(
+    column: $table.folio,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PendingClientReportsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PendingClientReportsTableTable> {
+  $$PendingClientReportsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get mineId =>
+      $composableBuilder(column: $table.mineId, builder: (column) => column);
+
+  GeneratedColumn<String> get folio =>
+      $composableBuilder(column: $table.folio, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<bool> get isSynced =>
+      $composableBuilder(column: $table.isSynced, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get syncedAt =>
+      $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+}
+
+class $$PendingClientReportsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PendingClientReportsTableTable,
+          PendingClientReportsTableData,
+          $$PendingClientReportsTableTableFilterComposer,
+          $$PendingClientReportsTableTableOrderingComposer,
+          $$PendingClientReportsTableTableAnnotationComposer,
+          $$PendingClientReportsTableTableCreateCompanionBuilder,
+          $$PendingClientReportsTableTableUpdateCompanionBuilder,
+          (
+            PendingClientReportsTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $PendingClientReportsTableTable,
+              PendingClientReportsTableData
+            >,
+          ),
+          PendingClientReportsTableData,
+          PrefetchHooks Function()
+        > {
+  $$PendingClientReportsTableTableTableManager(
+    _$AppDatabase db,
+    $PendingClientReportsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PendingClientReportsTableTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$PendingClientReportsTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PendingClientReportsTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> mineId = const Value.absent(),
+                Value<String> folio = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> syncedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PendingClientReportsTableCompanion(
+                id: id,
+                mineId: mineId,
+                folio: folio,
+                payload: payload,
+                isSynced: isSynced,
+                createdAt: createdAt,
+                syncedAt: syncedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String mineId,
+                required String folio,
+                required String payload,
+                Value<bool> isSynced = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> syncedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PendingClientReportsTableCompanion.insert(
+                id: id,
+                mineId: mineId,
+                folio: folio,
+                payload: payload,
+                isSynced: isSynced,
+                createdAt: createdAt,
+                syncedAt: syncedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PendingClientReportsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PendingClientReportsTableTable,
+      PendingClientReportsTableData,
+      $$PendingClientReportsTableTableFilterComposer,
+      $$PendingClientReportsTableTableOrderingComposer,
+      $$PendingClientReportsTableTableAnnotationComposer,
+      $$PendingClientReportsTableTableCreateCompanionBuilder,
+      $$PendingClientReportsTableTableUpdateCompanionBuilder,
+      (
+        PendingClientReportsTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $PendingClientReportsTableTable,
+          PendingClientReportsTableData
+        >,
+      ),
+      PendingClientReportsTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9442,4 +10166,9 @@ class $AppDatabaseManager {
       $$ClientsTableTableTableManager(_db, _db.clientsTable);
   $$MinesTableTableTableManager get minesTable =>
       $$MinesTableTableTableManager(_db, _db.minesTable);
+  $$PendingClientReportsTableTableTableManager get pendingClientReportsTable =>
+      $$PendingClientReportsTableTableTableManager(
+        _db,
+        _db.pendingClientReportsTable,
+      );
 }

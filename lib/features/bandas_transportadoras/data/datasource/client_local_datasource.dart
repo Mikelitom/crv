@@ -5,6 +5,7 @@ import 'package:crv_reprosisa/core/database/app_database.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/data/models/banda_models.dart';
 import 'package:hive/hive.dart';
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 
 abstract class ClientLocalDataSource {
   Future<void> saveClients(List<ClientsModel> clients);
@@ -16,7 +17,9 @@ abstract class ClientLocalDataSource {
   Future<List<ClientsModel>> getActiveClients();
   Future<List<MineModel>> getActiveMines();
 
-  // Future<void> saveOfflineReport(Map<String, dynamic> report);
+  Future<void> saveOfflineReport(Map<String, dynamic> reportData);
+  Future<List<PendingClientReportsTableData>> getPendingReports();
+  Future<void> deletePendingReport(String reportId);
 }
 
 class ClientLocalDataSourceImpl implements ClientLocalDataSource {
@@ -204,5 +207,56 @@ class ClientLocalDataSourceImpl implements ClientLocalDataSource {
     return decoded
         .map((e) => BandaSectionModel.fromJson(Map<String, dynamic>.from(e)))
         .toList();
+  }
+
+  @override
+  Future<void> saveOfflineReport(Map<String, dynamic> reportData) async {
+    try {
+      print("ENTRÓ A SAVE OFFLINE");
+  
+      final id = const Uuid().v4();
+      final mineId = reportData['mine_id']?.toString();
+      final folio = reportData['folio']?.toString();
+  
+      print("mineId: $mineId");
+      print("folio: $folio");
+  
+      if (mineId == null || folio == null) {
+        throw Exception("mineId o folio es null");
+      }
+  
+      await db.into(db.pendingClientReportsTable).insert(
+        PendingClientReportsTableCompanion.insert(
+          id: id,
+          mineId: mineId,
+          folio: folio,
+          payload: jsonEncode(reportData),
+        ),
+      );
+  
+      final reports = await db.select(db.pendingClientReportsTable).get();
+  
+      print("REPORTES GUARDADOS: ${reports.length}");
+
+      
+    } catch (e, s) {
+      print("ERROR SAVE OFFLINE: $e");
+      print(s);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<PendingClientReportsTableData>> getPendingReports() {
+    return (db.select(
+      db.pendingClientReportsTable,
+    )..where((t) => t.isSynced.equals(false))).get();
+  }
+
+  @override
+  Future<void> deletePendingReport(String reportId) async {
+    await (db.delete(
+      db.pendingClientReportsTable,
+    )..where((t) => t.id.equals(reportId))).go();
   }
 }
