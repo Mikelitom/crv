@@ -1,16 +1,12 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:http/http.dart' as http;
 import '../models/inspector_row_ui.dart';
 import '../provider/inspection_providers.dart';
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-03-VEHICLE.dart';
-import 'package:crv_reprosisa/features/prensas_industriales/presentation/Pages/prensa_inspection.dart';
-import 'package:crv_reprosisa/features/vehiculos/presentation/pages/vehicle_inspection_page.dart';
-import 'package:crv_reprosisa/features/bandas_transportadoras/presentation/pages/banda_inspection_page.dart';
 
 class TableInspector extends ConsumerStatefulWidget {
   final List<InspectionRowUI> items;
@@ -26,13 +22,13 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
   final Color headerColor = const Color(0xFFF9FAFB);
   final Color borderColor = const Color(0xFFE5E7EB);
 
+  // 👁️ VISTA PREVIA DEL PDF
   Future<void> _viewReport(InspectionRowUI item) async {
     final model = await ref.read(inspectionProvider.notifier).getReportDetail(item.versionId);
     if (model == null) return;
 
     final pdfData = VehiculoPdfGenerator.mapDetailModelToPdfData(model);
     
-    // Descarga de imágenes
     for (var sec in pdfData['secciones']) {
       for (var item in sec['items']) {
         if (item['url_antes'] != null) item['foto_antes_bytes'] = await _downloadImage(item['url_antes']);
@@ -50,7 +46,7 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
     )));
   }
 
-  // 🔥 CAMBIO: Implementación de descarga directa
+  // 🖨️ IMPRESIÓN DIRECTA DEL PDF
   Future<void> _printReport(InspectionRowUI item) async {
     final model = await ref.read(inspectionProvider.notifier).getReportDetail(item.versionId);
     if (model == null) {
@@ -61,7 +57,6 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
 
     final pdfData = VehiculoPdfGenerator.mapDetailModelToPdfData(model);
     
-    // Descargar imágenes necesarias
     for (var sec in pdfData['secciones']) {
       for (var item in sec['items']) {
         if (item['url_antes'] != null) item['foto_antes_bytes'] = await _downloadImage(item['url_antes']);
@@ -71,10 +66,10 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
 
     final pdfBytes = await VehiculoPdfGenerator.generateEsqueleto(pdfData);
 
-    // Esto fuerza la descarga en web o abre el diálogo de guardar/compartir en otras plataformas
-    await Printing.sharePdf(
-      bytes: pdfBytes,
-      filename: 'Reporte_${item.folio}.pdf',
+    // Lanza el diálogo de impresión nativo del dispositivo
+    await Printing.layoutPdf(
+      onLayout: (format) async => pdfBytes,
+      name: 'Reporte_${item.folio}',
     );
   }
 
@@ -85,35 +80,13 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
     } catch (e) { return null; }
   }
 
-// 🔥 IMPLEMENTACIÓN DE EDITAR
+  // ✏️ EDICIÓN NO FUNCIONAL AÚN
   Future<void> _editReport(InspectionRowUI item) async {
-    // 1. Cargar datos base
-    await ref.read(inspectionProvider.notifier).loadInspectionDetail(item.id);
-    
-    // 2. Si es vehículo, cargar info histórica extra
-    if (item.reportType.toUpperCase().contains('VEHICLE')) {
-      await ref.read(inspectionProvider.notifier).loadVehicleHistory(item.id);
-    }
-    
-    if (!mounted) return;
-    _navigateToForm(item, isReadOnly: false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("La funcionalidad de edición estará disponible próximamente.")),
+    );
   }
 
-  void _navigateToForm(InspectionRowUI item, {required bool isReadOnly}) {
-    Widget page;
-    final String type = item.reportType.toUpperCase();
-    
-    // Asegúrate de que tus páginas acepten 'isReadOnly' en el constructor
-    if (type.contains('PRESS')) {
-      page = PrensaInspectionPage(isReadOnly: isReadOnly);
-    } else if (type.contains('VEHICLE')) {
-      page = VehicleInspectionPage(isReadOnly: isReadOnly);
-    } else {
-      page = BandaInspectionPage(isReadOnly: isReadOnly);
-    }
-    
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-  }
   @override
   Widget build(BuildContext context) {
     if (widget.items.isEmpty) return const SizedBox(height: 250, child: Center(child: Text("Sin registros")));
@@ -171,7 +144,8 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
             subtitle: Text("${item.date} • ${item.translatedState}"),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                 IconButton(icon: const Icon(Icons.visibility, size: 20), onPressed: () => _viewReport(item)),
-                IconButton(icon: const Icon(Icons.file_download, size: 20), onPressed: () => _printReport(item)),
+                IconButton(icon: const Icon(Icons.edit_outlined, size: 20), onPressed: () => _editReport(item)),
+                IconButton(icon: const Icon(Icons.print, size: 20), onPressed: () => _printReport(item)),
             ]),
           ),
         );

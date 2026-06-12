@@ -30,7 +30,6 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     
-    // Mejora: Limpiar búsqueda al cambiar de pestaña
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         ref.read(inspectionProvider.notifier).filterInspections("");
@@ -54,7 +53,6 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    // Escucha global de errores para mostrar SnackBar
     ref.listen(inspectionProvider.select((state) => state.errorMessage), (prev, next) {
       if (next != null) {
         ScaffoldMessenger.of(context).showSnackBar(
