@@ -8,6 +8,12 @@ class BandaOptionModel extends BandaOption {
     label: json['label'],
     value: json['value'],
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'label': label,
+    'value': value,
+  };
 }
 
 class BandaComponentModel extends BandaComponent {
@@ -24,6 +30,13 @@ class BandaComponentModel extends BandaComponent {
     description: json['description'],
     options: (json['options'] as List).map((e) => BandaOptionModel.fromJson(e)).toList(),
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'description': description,
+    'options': options.map((e) => (e as BandaOptionModel).toJson()).toList(),
+  };
 }
 
 class BandaSectionModel extends BandaSection {
@@ -34,4 +47,10 @@ class BandaSectionModel extends BandaSection {
     name: json['name'],
     components: (json['components'] as List).map((e) => BandaComponentModel.fromJson(e)).toList(),
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'components': components.map((e) => (e as BandaComponentModel).toJson()).toList(),
+  };
 }

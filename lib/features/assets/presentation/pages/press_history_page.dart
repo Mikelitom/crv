@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
-import 'package:http/http.dart' as http;
 
 import '../providers/press_history_provider.dart';
 import '../providers/press_report_detail_provider.dart';

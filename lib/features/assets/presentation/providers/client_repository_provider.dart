@@ -5,5 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final clientRepositoryProvider = Provider<ClientRepository>((ref) {
   final datasource = ref.read(clientRemoteDatasourceProvider);
-  return ClientRepositoryImpl(datasource);
+  final local = ref.read(clientLocalDataSourceProvider);
+  return ClientRepositoryImpl(datasource, local);
 });

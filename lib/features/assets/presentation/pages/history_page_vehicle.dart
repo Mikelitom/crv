@@ -12,7 +12,6 @@ import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_use
 import 'package:crv_reprosisa/features/assets/domain/entities/vehicle_report_detail_entity.dart';
 
 import '../widgets/history_card.dart';
-import 'vehicle_report_detail_page.dart';
 
 class HistoryPage extends ConsumerStatefulWidget {
   final String assetId;
