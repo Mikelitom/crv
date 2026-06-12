@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:crv_reprosisa/features/assets/data/models/clients_model.dart';
 import 'package:crv_reprosisa/core/database/app_database.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/data/models/banda_models.dart';
@@ -17,7 +19,7 @@ abstract class ClientLocalDataSource {
 
 class ClientLocalDataSourceImpl implements ClientLocalDataSource {
   final AppDatabase db;
-  final Box box;
+  final Box<dynamic> box;
 
   ClientLocalDataSourceImpl(this.db, this.box);
 
@@ -25,17 +27,25 @@ class ClientLocalDataSourceImpl implements ClientLocalDataSource {
 
   @override
   Future<void> saveClientTemplate(List<BandaSectionModel> template) async {
-    await box.put(templateKey, template);
+    final jsonString = jsonEncode(
+      template.map((e) => e.toJson()).toList(),
+    );
+  
+    await box.put(templateKey, jsonString);
   }
 
   @override
   Future<List<BandaSectionModel>> getClientTemplate() async {
-    final data = box.get(templateKey);
-
-    if (data == null) {
-      return [];
-    }
-
-    return data.map((e) => BandaSectionModel.fromJson(e)).toList();
+    final raw = box.get(templateKey);
+  
+    if (raw == null) return [];
+  
+    final List decoded = jsonDecode(raw);
+  
+    return decoded
+        .map((e) => BandaSectionModel.fromJson(
+              Map<String, dynamic>.from(e),
+            ))
+        .toList();
   }
 }

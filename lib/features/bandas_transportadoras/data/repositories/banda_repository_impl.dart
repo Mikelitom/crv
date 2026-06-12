@@ -16,29 +16,27 @@ class BandaRepositoryImpl implements BandaRepository {
   @override
   Future<Either<Failure, List<BandaSection>>> getBandaTemplate() async {
     try {
-      final result = await dataSource.getBandaTemplate();
-
-      await local.saveClientTemplate(result);
-
-      return Right(result);
-    } on DioException catch (e) {
+      final remoteData = await dataSource.getBandaTemplate();
+  
+      await local.saveClientTemplate(remoteData);
+  
+      return Right(remoteData);
+    } catch (e) {
       try {
         final localData = await local.getClientTemplate();
 
+        print("REMOTE FALLÓ → USANDO CACHE");
+        print(localData);
+        print(localData.runtimeType);
+        
         if (localData.isNotEmpty) {
           return Right(localData);
         }
-
-        return Left(
-          ServerFailure(
-            e.message ?? "No hay template disponibñe sin conexion.",
-          ),
-        );
+  
+        return const Left(ServerFailure('Sin datos en cache'));
       } catch (_) {
-        return const Left(ServerFailure('Error al cargar template de bandas.'));
+        return const Left(ServerFailure('Error leyendo cache'));
       }
-    } catch (e) {
-      return Left(UnknownFailure(e.toString()));
     }
   }
 
