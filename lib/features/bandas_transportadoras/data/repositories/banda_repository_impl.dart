@@ -1,6 +1,5 @@
 import 'package:crv_reprosisa/features/bandas_transportadoras/data/datasource/client_local_datasource.dart';
 import 'package:dartz/dartz.dart';
-import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/repositories/banda_repository.dart';
 import '../datasource/banda_remote_datasource.dart';
@@ -45,18 +44,51 @@ class BandaRepositoryImpl implements BandaRepository {
     try {
       final result = await dataSource.getActiveClients();
       return Right(result);
-    } catch (e) {
-      return Left(ServerFailure("Error al obtener clientes"));
+    } catch (_) {
+      try {
+        final localClients = await local.getActiveClients();
+  
+        return Right(
+          localClients
+              .map(
+                (c) => Client(
+                  id: c.id,
+                  name: c.name,
+                  company: c.company,
+                ),
+              )
+              .toList(),
+        );
+      } catch (_) {
+        return const Left(ServerFailure('Error leyendo clientes locales'));
+      }
     }
   }
-
+  
   @override
   Future<Either<Failure, List<Mine>>> getActiveMines() async {
     try {
       final result = await dataSource.getActiveMines();
       return Right(result);
-    } catch (e) {
-      return Left(ServerFailure("Error al obtener minas"));
+    } catch (_) {
+      try {
+        final localMines = await local.getActiveMines();
+  
+        return Right(
+          localMines
+              .map(
+                (m) => Mine(
+                  id: m.id,
+                  clientId: m.clientId,
+                  name: m.name,
+                  address: m.address ?? '',
+                ),
+              )
+              .toList(),
+        );
+      } catch (_) {
+        return const Left(ServerFailure('Error leyendo minas locales'));
+      }
     }
   }
 

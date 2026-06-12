@@ -7,14 +7,16 @@ import 'package:crv_reprosisa/features/assets/domain/entities/client_history.dar
 import 'package:crv_reprosisa/features/assets/domain/entities/conveyor_report_detail.dart';
 import 'package:crv_reprosisa/features/assets/domain/params/create_clients_params.dart';
 import 'package:crv_reprosisa/features/assets/domain/repositories/client_repository.dart';
+import 'package:crv_reprosisa/features/bandas_transportadoras/data/datasource/client_local_datasource.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../data/models/create_mine_request.dart';
 
 class ClientRepositoryImpl implements ClientRepository {
   final ClientRemoteDatasource remote;
+  final ClientLocalDataSource local;
 
-  ClientRepositoryImpl(this.remote);
+  ClientRepositoryImpl(this.remote, this.local);
 
   @override
   Future<Either<Failure, Clients>> createClient(
@@ -55,8 +57,11 @@ class ClientRepositoryImpl implements ClientRepository {
   Future<Either<Failure, List<Clients>>> getAllClients() async {
     try {
       final clients = await remote.getAllClients();
+      await local.saveClients(clients);
       return Right(clients);
     } on DioException catch (e) {
+      final clients = await local.getClients();
+      if (clients.isNotEmpty) return Right(clients);
       return Left(ServerFailure(e.toString()));
     } on SocketException catch (e) {
       return Left(NetworkFailure(e.toString()));
@@ -64,6 +69,7 @@ class ClientRepositoryImpl implements ClientRepository {
       return Left(UnknownFailure(e.toString()));
     }
   }
+
   @override
   Future<Either<Failure, void>> activateClient(String id) async {
     try {
@@ -87,19 +93,27 @@ class ClientRepositoryImpl implements ClientRepository {
       return Left(UnknownFailure(e.toString()));
     }
   }
-@override
-Future<Either<Failure, List<ClientHistory>>> getClientHistory(String clientId) async {
-  try {
-    final history = await remote.getClientHistory(clientId); // Método actualizado
-    return Right(history);
-  } on DioException catch (e) {
-    return Left(ServerFailure(e.toString()));
-  } catch (e) {
-    return Left(UnknownFailure(e.toString()));
-  }
-}
+
   @override
-  Future<Either<Failure, ConveyorReportDetail>> getReportDetail(String versionId) async {
+  Future<Either<Failure, List<ClientHistory>>> getClientHistory(
+    String clientId,
+  ) async {
+    try {
+      final history = await remote.getClientHistory(
+        clientId,
+      ); // Método actualizado
+      return Right(history);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, ConveyorReportDetail>> getReportDetail(
+    String versionId,
+  ) async {
     try {
       final detail = await remote.getReportDetail(versionId);
       return Right(detail);
@@ -109,6 +123,7 @@ Future<Either<Failure, List<ClientHistory>>> getClientHistory(String clientId) a
       return Left(UnknownFailure(e.toString()));
     }
   }
+
   @override
   Future<Either<Failure, void>> activateMine(String mineId) async {
     try {
@@ -132,8 +147,12 @@ Future<Either<Failure, List<ClientHistory>>> getClientHistory(String clientId) a
       return Left(UnknownFailure(e.toString()));
     }
   }
- @override
-  Future<Either<Failure, void>> createMine(String clientId, CreateMineParams params) async {
+
+  @override
+  Future<Either<Failure, void>> createMine(
+    String clientId,
+    CreateMineParams params,
+  ) async {
     try {
       final request = CreateMineRequest.fromParams(params, clientId: clientId);
       await remote.createMine(clientId, request);

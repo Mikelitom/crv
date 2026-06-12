@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/assets/presentation/providers/client_repository_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_repository_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_repository_provider.dart';
 import 'package:crv_reprosisa/features/prensas_industriales/presentation/provider/inspeccion_providers.dart';
@@ -7,10 +8,12 @@ Future<void> loadInitialDataAfterLogin(Ref ref) async {
   final pressRepo = ref.read(pressRepositoryProvider);
   final pressInspRepo = ref.read(inspeccionRepositoryProvider);
   final vehicleRepo = ref.read(vehicleRepositoryProvider);
+  final clientRepo = ref.read(clientRepositoryProvider);
 
   await pressRepo.getAllPress();
   await pressInspRepo.getLoanAreas();
   await vehicleRepo.getAllVehicle();
+  await clientRepo.getAllClients();
 
   // presses.fold(
   //   (_) {},

@@ -10,6 +10,8 @@ import 'tables/pending_vehicle_reports_table.dart';
 import 'tables/pending_press_reports_table.dart';
 import 'tables/press_table.dart';
 import 'tables/loan_areas_table.dart';
+import 'tables/clients_table.dart';
+import 'tables/mines_table.dart';
 
 part 'app_database.g.dart';
 
@@ -24,33 +26,24 @@ part 'app_database.g.dart';
     PressesTable,
     LoanAreasTable,
     PendingPressReportsTable,
+    ClientsTable,
+    MinesTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(openConnection());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
     },
+
     onUpgrade: (m, from, to) async {
-      if (from < 10) {
-        await m.deleteTable('vehicles');
-        await m.deleteTable('reports_vehicle');
-        await m.deleteTable('vehicle_report_versions');
-        await m.deleteTable('report_answers_vehicle');
-        await m.deleteTable('evidence_vehicle');
-        await m.deleteTable('pending_vehicle_reports');
-        await m.deleteTable('presses');
-        await m.deleteTable('loan_areas');
-        await m.deleteTable('pending_press_reports');
-  
-        await m.createAll();
-      }
+      await m.createAll();
     },
   );
 }
