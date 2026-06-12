@@ -27,7 +27,6 @@ class VehicleHistoryModel extends VehicleHistory {
   });
 
   factory VehicleHistoryModel.fromJson(Map<String, dynamic> json) {
-    // 1. Manejo seguro de notas: buscamos en 'general_notes', luego en 'report' si existe.
     // Esto asegura que si viene null en la lista de historial, tratamos de encontrarlo.
     final String notes = json['general_notes']?.toString() ?? 
                          json['report']?['general_notes']?.toString() ?? 

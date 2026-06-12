@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
-import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 
 import '../providers/press_history_provider.dart';
 import '../providers/press_report_detail_provider.dart';
@@ -13,6 +13,7 @@ import '../pages/pdf_viewer_page.dart';
 import '../../domain/entities/press_history.dart';
 import '../../../../core/utils/SGC-PO-MT-01-FO-08-PRESS.dart';
 import '../../../../core/config/dio_client.dart';
+import 'package:dio/dio.dart' as dio_package;
 
 class PressHistoryPage extends ConsumerStatefulWidget {
   final String pressId;
@@ -44,10 +45,20 @@ class _PressHistoryPageState extends ConsumerState<PressHistoryPage> {
     Future.microtask(() => ref.read(pressHistoryProvider.notifier).loadHistory(widget.pressId));
   }
 
+  // --- AGRUPAR VERSIONES POR FOLIO (V1, V2...) ---
+  Map<String, List<PressHistory>> _groupVersions(List<PressHistory> history) {
+    Map<String, List<PressHistory>> grouped = {};
+    for (var item in history) {
+      if (!grouped.containsKey(item.folio)) grouped[item.folio] = [];
+      grouped[item.folio]!.add(item);
+    }
+    return grouped;
+  }
+
   Future<Uint8List?> _downloadImageBytes(String url) async {
     try {
       final dio = ref.read(dioProvider); 
-      final response = await dio.get(url, options: Options(responseType: ResponseType.bytes));
+      final response = await dio.get(url, options: dio_package.Options(responseType: dio_package.ResponseType.bytes));
       return response.statusCode == 200 ? Uint8List.fromList(response.data) : null;
     } catch (e) {
       debugPrint("Error descargando imagen: $e");
@@ -119,30 +130,45 @@ class _PressHistoryPageState extends ConsumerState<PressHistoryPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(pressHistoryProvider);
+    
+    // Agrupamos el historial por folio para construir los dropdowns en la tarjeta
+    final groupedFolios = _groupVersions(state.history);
+    final foliosKeys = groupedFolios.keys.toList();
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: state.status == Status.loading
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
-              itemCount: state.history.length,
+              itemCount: foliosKeys.length,
               itemBuilder: (context, index) {
-                final item = state.history[index];
+                final folioKey = foliosKeys[index];
+                final versionsList = groupedFolios[folioKey]!;
+                
+                // Versión activa actual por defecto
+                final currentItem = versionsList.firstWhere(
+                  (v) => v.isCurrent == true, 
+                  orElse: () => versionsList.first
+                );
+
                 return PressHistoryCard(
-                  item: item,
-                  // FUNCIÓN DE DESCARGA DIRECTA
-                  onDetailsPressed: () async {
-                    final data = await _getReportData(item);
+                  versions: versionsList,
+                  onDetailsPressed: (versionId) async {
+                    final targetItem = versionsList.firstWhere((v) => v.versionId == versionId, orElse: () => currentItem);
+                    final data = await _getReportData(targetItem);
                     if (data != null) {
                       final pdfBytes = await PrensaPdfGenerator.generateEsqueleto(data);
                       await Printing.sharePdf(bytes: pdfBytes, filename: 'Reporte_${data['folio']}.pdf');
                     }
                   },
-                  onPdfPreviewPressed: () async {
-                    final data = await _getReportData(item);
+                  onPdfPreviewPressed: (versionId) async {
+                    final targetItem = versionsList.firstWhere((v) => v.versionId == versionId, orElse: () => currentItem);
+                    final data = await _getReportData(targetItem);
                     if (data != null && mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => PdfViewerPage(datos: data)));
                   },
-                  onPrintPressed: () async {
-                    final data = await _getReportData(item);
+                  onPrintPressed: (versionId) async {
+                    final targetItem = versionsList.firstWhere((v) => v.versionId == versionId, orElse: () => currentItem);
+                    final data = await _getReportData(targetItem);
                     if (data != null) {
                       final pdfBytes = await PrensaPdfGenerator.generateEsqueleto(data);
                       await Printing.layoutPdf(onLayout: (_) => pdfBytes);
