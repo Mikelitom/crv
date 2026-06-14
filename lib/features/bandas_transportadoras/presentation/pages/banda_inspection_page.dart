@@ -16,7 +16,7 @@ import '../../../../core/utils/banda_pdf_generator.dart';
 import '../../../../features/evidence/presentation/providers/evidence_service_provider.dart';
 
 class BandaInspectionPage extends ConsumerStatefulWidget {
-  final bool isReadOnly; // <--- Parámetro de edición
+  final bool isReadOnly;
   const BandaInspectionPage({super.key, this.isReadOnly = false});
 
   @override
@@ -28,11 +28,29 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
   final bool _mostrarRodilleria = true;
   bool _isSaving = false;
 
+  // 🔹 Llave global para identificar el inicio de la tabla/sección
+  final GlobalKey _sectionKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(bandaInspectionProvider.notifier).initialLoad();
+    });
+  }
+
+  // 🔹 Función para desplazar la vista exactamente al inicio de la sección
+  void _scrollToSectionStart() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _sectionKey.currentContext;
+      if (context != null) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.0, // Alinea el widget al top
+        );
+      }
     });
   }
 
@@ -93,7 +111,7 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
         "area": state.area,
         "mine_id": state.selectedMine?.id ?? "",
         "inspection_date": state.inspectionDate.toIso8601String(),
-        "section": state.seccion.isEmpty ? "" : state.seccion, // <--- Cadena de texto simple de la sección general        "conveyor_responsible": state.conveyorResponsible.isEmpty ? "N/A" : state.conveyorResponsible,
+        "section": state.seccion.isEmpty ? "" : state.seccion,
         "recommended_belt": state.recommendedBelt.isEmpty ? "" : state.recommendedBelt,
         "material": state.material.isEmpty ? "" : state.material,
         "granulometry": state.granulometry.isEmpty ? "" : state.granulometry,
@@ -127,15 +145,6 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
 
   void _showPreview(BuildContext context) async {
     final state = ref.read(bandaInspectionProvider);
-    
-    String seccionActual = state.seccion; 
-    
-    if (_currentSectionIndex < state.sections.length) {
-      seccionActual = state.sections[_currentSectionIndex].name;
-    } else if (_mostrarRodilleria) {
-      seccionActual = "RODILLERÍA";
-    }
-
     final Map<String, dynamic> generalData = {
       'planta': state.selectedMine?.name ?? "N/A", 
       'area': state.area,
@@ -157,21 +166,12 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
 
     try {
       final pdfBytes = await BandaPdfGenerator.generateReport(generalData, state.sections);
-      
       if (context.mounted) {
         Navigator.pop(context); 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(title: const Text("REPORTE TÉCNICO"), backgroundColor: const Color(0xFFB71C1C)),
-              body: PdfPreview(
-                build: (format) => pdfBytes,
-                initialPageFormat: PdfPageFormat.letter.landscape,
-              ),
-            ),
-          ),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => Scaffold(
+          appBar: AppBar(title: const Text("REPORTE TÉCNICO"), backgroundColor: const Color(0xFFB71C1C)),
+          body: PdfPreview(build: (format) => pdfBytes, initialPageFormat: PdfPageFormat.letter.landscape),
+        )));
       }
     } catch (e) {
       if (context.mounted) {
@@ -179,33 +179,6 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
         _showSnack("Error al generar vista previa: $e", Colors.red);
       }
     }
-  }
-
-  Widget _buildNavigationBackButton(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.pop(context), 
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: const Color(0xFFD32F2F),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFD32F2F).withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        child: const Icon(
-          Icons.arrow_back_ios_new_rounded, 
-          color: Colors.white,
-          size: 24,
-        ),
-      ),
-    );
   }
 
   @override
@@ -226,12 +199,7 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
           children: [
-            // --- CAMBIO AQUÍ: Integración del botón en el Header ---
-            CustomHeader(
-              title: "Inspección de Bandas",
-              actionIcon: Icons.arrow_back_ios_new_rounded,
-              onActionTap: () => Navigator.pop(context),
-            ),
+            CustomHeader(title: "Inspección de Bandas", actionIcon: Icons.arrow_back_ios_new_rounded, onActionTap: () => Navigator.pop(context)),
             const SizedBox(height: 24),
             CaptureMethodSelector(onManualFill: () {}, onScan: () {}),
             const SizedBox(height: 24),
@@ -241,7 +209,12 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
             const SizedBox(height: 32),
             _buildStepper(pasos),
             const SizedBox(height: 24),
-            if (state.sections.isNotEmpty) _buildActiveContent(state),
+            // 🔹 El widget activo se envuelve en un Container con la llave para el scroll
+            if (state.sections.isNotEmpty)
+              Container(
+                key: _sectionKey, 
+                child: _buildActiveContent(state),
+              ),
             const SizedBox(height: 32),
             _buildFooter(pasos.length, isMobile),
             const SizedBox(height: 50),
@@ -252,9 +225,7 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
   }
 
   Widget _buildActiveContent(BandaInspectionState state) {
-    if (_mostrarRodilleria && _currentSectionIndex == state.sections.length) {
-      return const RodilleriaSection();
-    }
+    if (_mostrarRodilleria && _currentSectionIndex == state.sections.length) return const RodilleriaSection();
     if (_currentSectionIndex < state.sections.length) {
       final section = state.sections[_currentSectionIndex];
       return BandaSectionTable(
@@ -274,7 +245,10 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
       children: List.generate(pasos.length, (index) {
         bool isActive = index == _currentSectionIndex;
         return InkWell(
-          onTap: () => setState(() => _currentSectionIndex = index),
+          onTap: () {
+            setState(() => _currentSectionIndex = index);
+            _scrollToSectionStart();
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -282,10 +256,7 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
-            child: Text(
-              pasos[index].toUpperCase(),
-              style: TextStyle(color: isActive ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 10),
-            ),
+            child: Text(pasos[index].toUpperCase(), style: TextStyle(color: isActive ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 10)),
           ),
         );
       }),
@@ -294,15 +265,6 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
 
   Widget _buildFooter(int total, bool isMobile) {
     bool esUltimo = _currentSectionIndex == total - 1;
-    if (isMobile) {
-      return Column(
-        children: [
-          _btnSiguiente(esUltimo, true),
-          const SizedBox(height: 12),
-          Row(children: [Expanded(child: _btnAnterior()), const SizedBox(width: 12), Expanded(child: _btnVistaPrevia())]),
-        ],
-      );
-    }
     return Row(
       children: [
         _btnAnterior(),
@@ -315,7 +277,7 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
   }
 
   Widget _btnAnterior() => OutlinedButton(
-    onPressed: _currentSectionIndex > 0 ? () => setState(() => _currentSectionIndex--) : null,
+    onPressed: _currentSectionIndex > 0 ? () { setState(() => _currentSectionIndex--); _scrollToSectionStart(); } : null,
     style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20)),
     child: const Text("ANTERIOR"),
   );
@@ -327,15 +289,12 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
     style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey.shade900, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20)),
   );
 
-  Widget _btnSiguiente(bool esUltimo, bool fullWidth) => SizedBox(
-    width: fullWidth ? double.infinity : null,
-    child: ElevatedButton(
-      onPressed: () {
-        if (!esUltimo) setState(() => _currentSectionIndex++);
-        else _guardarReporte();
-      },
-      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB71C1C), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 40)),
-      child: Text(esUltimo ? "FINALIZAR REPORTE" : "SIGUIENTE"),
-    ),
+  Widget _btnSiguiente(bool esUltimo, bool fullWidth) => ElevatedButton(
+    onPressed: () {
+      if (!esUltimo) { setState(() => _currentSectionIndex++); } else { _guardarReporte(); }
+      _scrollToSectionStart();
+    },
+    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB71C1C), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 40)),
+    child: Text(esUltimo ? "FINALIZAR REPORTE" : "SIGUIENTE"),
   );
 }

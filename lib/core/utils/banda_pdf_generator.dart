@@ -467,18 +467,7 @@ class BandaPdfGenerator {
       ],
     );
   }
-
-  // static pw.Widget _rowContainer(pw.Widget child) {
-  //   return pw.Container(
-  //     height: 14,
-  //     padding: const pw.EdgeInsets.symmetric(horizontal: 5),
-  //     alignment: pw.Alignment.centerLeft,
-  //     decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(width: 0.5))),
-  //     child: child,
-  //   );
-  // }
-
-  static pw.Widget _buildOptionsInRow(
+static pw.Widget _buildOptionsInRow(
     List<BandaOption> options,
     String? selectedValue,
     {String? fallbackLabel}
@@ -487,21 +476,17 @@ class BandaPdfGenerator {
       return pw.Text("-", style: const pw.TextStyle(fontSize: 6));
     }
 
-    print("------ PDF DEBUG ------");
-    print("options length: ${options.length}");
-    print("selectedValue: $selectedValue");
-    print("fallbackLabel: $fallbackLabel");
-
     const incisos = ['a)', 'b)', 'c)', 'd)', 'e)', 'f)'];
+    
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: List.generate(options.length, (index) {
         final opt = options[index];
-        final selected = selectedValue?.trim().toLowerCase();
-        
-        final isSelected = options.isNotEmpty
-            ? opt.id.trim() == selected
-            : opt.label.trim().toLowerCase() == selected;
+        final selected = selectedValue?.trim().toLowerCase() ?? "";
+        final optionLabel = opt.label.trim().toLowerCase();
+    
+        final isSelected = opt.id.trim().toLowerCase() == selected || 
+                           optionLabel == selected; 
         
         return pw.Padding(
           padding: const pw.EdgeInsets.only(right: 15),

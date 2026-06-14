@@ -78,7 +78,7 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
         name: a.accessory.name,
         observation: a.recommendedAction.isNotEmpty ? a.recommendedAction : "",      
         options: [],
-        selectedOptionId: a.option.id,       
+        selectedOptionId: a.option.label,       
         dimension: a.dimensions > 0 ? a.dimensions.toString() : '',
         evidenceBefore: evFiles,
         evidenceAfter: [],

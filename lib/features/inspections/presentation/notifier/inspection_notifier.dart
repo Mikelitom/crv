@@ -58,10 +58,23 @@ class InspectionNotifier extends Notifier<InspectionState> {
   }
 
   List<StatsModel> _calculateStats(List<InspectionRowUI> data) {
+    int total = data.length;
+    int completadas = 0;
+    int enProceso = 0;
+
+    for (var item in data) {
+      final stateUpper = item.state.toUpperCase();
+      if (stateUpper.contains('COMPLET') || stateUpper.contains('FINALIZADO')) {
+        completadas++;
+      } else {
+        enProceso++;
+      }
+    }
+
     return [
-      StatsModel(value: data.length.toString(), label: "Totales", color: Colors.black),
-      StatsModel(value: "0", label: "Pendientes", color: Colors.orange),
-      StatsModel(value: "0", label: "Completadas", color: Colors.green),
+      StatsModel(value: total.toString(), label: "Totales", color: Colors.black),
+      StatsModel(value: enProceso.toString(), label: "En Proceso", color: Colors.orange),
+      StatsModel(value: completadas.toString(), label: "Completados", color: Colors.green),
     ];
   }
 

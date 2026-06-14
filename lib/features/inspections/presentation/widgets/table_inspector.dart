@@ -7,6 +7,9 @@ import 'package:http/http.dart' as http;
 import '../models/inspector_row_ui.dart';
 import '../provider/inspection_providers.dart';
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-03-VEHICLE.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/presentation/Pages/prensa_inspection.dart';
+import 'package:crv_reprosisa/features/vehiculos/presentation/pages/vehicle_inspection_page.dart';
+import 'package:crv_reprosisa/features/bandas_transportadoras/presentation/pages/banda_inspection_page.dart';
 
 class TableInspector extends ConsumerStatefulWidget {
   final List<InspectionRowUI> items;
@@ -22,54 +25,82 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
   final Color headerColor = const Color(0xFFF9FAFB);
   final Color borderColor = const Color(0xFFE5E7EB);
 
-  // 👁️ VISTA PREVIA DEL PDF
-  Future<void> _viewReport(InspectionRowUI item) async {
-    final model = await ref.read(inspectionProvider.notifier).getReportDetail(item.versionId);
-    if (model == null) return;
+  // --- LÓGICA REUTILIZABLE DE CREACIÓN DE PDF ASÍNCRONA ---
+  Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
+    try {
+      final model = await ref.read(inspectionProvider.notifier).getReportDetail(item.versionId);
+      if (model == null) return null;
 
-    final pdfData = VehiculoPdfGenerator.mapDetailModelToPdfData(model);
+      final pdfData = VehiculoPdfGenerator.mapDetailModelToPdfData(model);
     
-    for (var sec in pdfData['secciones']) {
-      for (var item in sec['items']) {
-        if (item['url_antes'] != null) item['foto_antes_bytes'] = await _downloadImage(item['url_antes']);
-        if (item['url_despues'] != null) item['foto_despues_bytes'] = await _downloadImage(item['url_despues']);
+      // Descarga de imágenes
+      for (var sec in pdfData['secciones']) {
+        for (var subItem in sec['items']) {
+          if (subItem['url_antes'] != null) subItem['foto_antes_bytes'] = await _downloadImage(subItem['url_antes']);
+          if (subItem['url_despues'] != null) subItem['foto_despues_bytes'] = await _downloadImage(subItem['url_despues']);
+        }
       }
+
+      return await VehiculoPdfGenerator.generateEsqueleto(pdfData);
+    } catch (e) {
+      debugPrint("Error al procesar PDF de inspección: $e");
+      return null;
+    }
+  }
+
+  Future<void> _viewReport(InspectionRowUI item) async {
+    showDialog(
+      context: context, 
+      barrierDismissible: false, 
+      builder: (_) => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
+    );
+
+    final pdfBytes = await _buildPdfBytes(item);
+    
+    if (mounted) Navigator.pop(context);
+
+    if (pdfBytes == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error al cargar detalle o generar PDF")),
+        );
+      }
+      return;
     }
 
     if (!mounted) return;
     Navigator.push(context, MaterialPageRoute(builder: (context) => Scaffold(
       appBar: AppBar(title: const Text("Vista Previa"), backgroundColor: primaryRed),
       body: PdfPreview(
-        build: (format) => VehiculoPdfGenerator.generateEsqueleto(pdfData),
+        build: (format) => pdfBytes,
         initialPageFormat: PdfPageFormat.letter,
       ),
     )));
   }
 
-  // 🖨️ IMPRESIÓN DIRECTA DEL PDF
   Future<void> _printReport(InspectionRowUI item) async {
-    final model = await ref.read(inspectionProvider.notifier).getReportDetail(item.versionId);
-    if (model == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error al generar PDF")));
+    showDialog(
+      context: context, 
+      barrierDismissible: false, 
+      builder: (_) => const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)))
+    );
+
+    final pdfBytes = await _buildPdfBytes(item);
+    
+    if (mounted) Navigator.pop(context);
+
+    if (pdfBytes == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error al generar PDF para impresión")),
+        );
+      }
       return;
     }
 
-    final pdfData = VehiculoPdfGenerator.mapDetailModelToPdfData(model);
-    
-    for (var sec in pdfData['secciones']) {
-      for (var item in sec['items']) {
-        if (item['url_antes'] != null) item['foto_antes_bytes'] = await _downloadImage(item['url_antes']);
-        if (item['url_despues'] != null) item['foto_despues_bytes'] = await _downloadImage(item['url_despues']);
-      }
-    }
-
-    final pdfBytes = await VehiculoPdfGenerator.generateEsqueleto(pdfData);
-
-    // Lanza el diálogo de impresión nativo del dispositivo
-    await Printing.layoutPdf(
-      onLayout: (format) async => pdfBytes,
-      name: 'Reporte_${item.folio}',
+    await Printing.sharePdf(
+      bytes: pdfBytes,
+      filename: 'Reporte_${item.folio}.pdf',
     );
   }
 
@@ -80,11 +111,25 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
     } catch (e) { return null; }
   }
 
-  // ✏️ EDICIÓN NO FUNCIONAL AÚN
   Future<void> _editReport(InspectionRowUI item) async {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("La funcionalidad de edición estará disponible próximamente.")),
     );
+  }
+
+  void _navigateToForm(InspectionRowUI item, {required bool isReadOnly}) {
+    Widget page;
+    final String type = item.reportType.toUpperCase();
+    
+    if (type.contains('PRESS')) {
+      page = PrensaInspectionPage(isReadOnly: isReadOnly);
+    } else if (type.contains('VEHICLE')) {
+      page = VehicleInspectionPage(isReadOnly: isReadOnly);
+    } else {
+      page = BandaInspectionPage(isReadOnly: isReadOnly);
+    }
+    
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
   @override
@@ -144,8 +189,7 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
             subtitle: Text("${item.date} • ${item.translatedState}"),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                 IconButton(icon: const Icon(Icons.visibility, size: 20), onPressed: () => _viewReport(item)),
-                IconButton(icon: const Icon(Icons.edit_outlined, size: 20), onPressed: () => _editReport(item)),
-                IconButton(icon: const Icon(Icons.print, size: 20), onPressed: () => _printReport(item)),
+                IconButton(icon: const Icon(Icons.file_download, size: 20), onPressed: () => _printReport(item)),
             ]),
           ),
         );
@@ -160,7 +204,7 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color color = state.toUpperCase().contains('COMPLET') ? Colors.green : Colors.orange;
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.2))), child: Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w800)));
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.25))), child: Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w800)));
   }
 }
 

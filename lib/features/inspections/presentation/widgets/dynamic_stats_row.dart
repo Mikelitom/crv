@@ -22,21 +22,19 @@ class DynamicStatsRow extends StatelessWidget {
           runSpacing: 12,
           alignment: WrapAlignment.center,
           children: stats.asMap().entries.map((entry) {
-            int idx = entry.key;
             var stat = entry.value;
 
             // Iconos acordes a cada estadística
             IconData getIcon() {
               if (stat.label.toLowerCase().contains('total')) return Icons.analytics_rounded;
-              if (stat.label.toLowerCase().contains('pendiente')) return Icons.pending_actions_rounded;
+              if (stat.label.toLowerCase().contains('proceso')) return Icons.pending_actions_rounded;
               if (stat.label.toLowerCase().contains('completa')) return Icons.check_circle_rounded;
               return Icons.bar_chart_rounded;
             }
 
             return SizedBox(
-              // Ocupa todo el espacio disponible dividiendo entre 3
               width: isWide 
-                ? (constraints.maxWidth - 32) / 3 
+                ? (constraints.maxWidth - 24) / 3 
                 : constraints.maxWidth,
               child: _StatCard(
                 label: stat.label, 
@@ -75,6 +73,7 @@ class _StatCardState extends State<_StatCard> {
         decoration: BoxDecoration(
           color: Colors.white, // Fondo siempre blanco
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200, width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(isHovered ? 0.06 : 0.03),
@@ -89,7 +88,7 @@ class _StatCardState extends State<_StatCard> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min, // Corregido: propiedad de Column
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     widget.label,
@@ -102,6 +101,7 @@ class _StatCardState extends State<_StatCard> {
                   const SizedBox(height: 6),
                   FittedBox(
                     fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
                     child: Text(
                       widget.value,
                       style: const TextStyle(
@@ -119,13 +119,11 @@ class _StatCardState extends State<_StatCard> {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                // Cambia de fondo tenue a rojo sólido
                 color: isHovered ? const Color(0xFFC62828) : const Color(0xFFFDECEA),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 widget.icon,
-                // Cambia el icono de rojo a blanco
                 color: isHovered ? Colors.white : const Color(0xFFC62828),
                 size: 26,
               ),

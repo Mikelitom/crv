@@ -11,7 +11,6 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
   @override
   BandaInspectionState build() => BandaInspectionState.initial();
 
-  // --- Limpia estado y asigna usuario real ---
   void reset() {
     final authState = ref.read(authNotifierProvider);
     final userName = authState.user?.name ?? "Usuario";
@@ -23,8 +22,7 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
   }
 
   Future<void> initialLoad() async {
-    reset(); // Limpiamos y asignamos el nombre antes de cargar
-    
+    reset();
     state = state.copyWith(isLoading: true);
     try {
       final results = await Future.wait([
@@ -48,6 +46,46 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
     }
   }
 
+  // 🔹 NUEVO MÉTODO: Autocompletado de reporte guardado
+  void loadExistingReport(Map<String, dynamic> reportData) {
+    // 1. Cargar datos generales
+    state = state.copyWith(
+      conveyor: reportData['conveyor'] ?? "",
+      area: reportData['area'] ?? "",
+      conveyorResponsible: reportData['conveyor_responsible'] ?? "",
+      recommendedBelt: reportData['recommended_belt'] ?? "",
+      material: reportData['material'] ?? "",
+      granulometry: reportData['granulometry'] ?? "",
+      presentTo: reportData['present_to'] ?? "",
+    );
+
+    // 2. Hidratar secciones y componentes
+    final List<dynamic> answers = reportData['answers'] ?? [];
+    
+    final updatedSections = state.sections.map((section) {
+      final updatedComponents = section.components.map((comp) {
+        // Buscamos si existe una respuesta guardada para este accesorio
+        final answer = answers.firstWhere(
+          (a) => a['accesory_id'] == comp.id,
+          orElse: () => null,
+        );
+
+        if (answer != null) {
+          return comp.copyWith(
+            selectedOptionId: answer['option_id'],
+            observation: answer['recommended_action'] ?? "",
+            dimension: answer['dimentions']?.toString() ?? "",
+          );
+        }
+        return comp;
+      }).toList();
+
+      return section.copyWith(components: updatedComponents);
+    }).toList();
+
+    state = state.copyWith(sections: updatedSections);
+  }
+
   // --- LÓGICA DE CLIENTE Y MINA ---
   void selectClient(Client client) {
     final filtered = state.allMines.where((m) => m.clientId == client.id).toList();
@@ -60,7 +98,7 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
 
   void selectMine(Mine mine) => state = state.copyWith(selectedMine: mine);
 
-  // --- MÉTODOS DE ACTUALIZACIÓN (GETTERS / SETTERS PARA LA UI) ---
+  // --- MÉTODOS DE ACTUALIZACIÓN ---
   void updateElaboro(String val) => state = state.copyWith(elaboro: val);
   void updateArea(String val) => state = state.copyWith(area: val);
   void updateSeccion(String val) => state = state.copyWith(seccion: val);
@@ -72,19 +110,13 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
   void updatePresentTo(String val) => state = state.copyWith(presentTo: val);
   void updateGeneralComments(String val) => state = state.copyWith(generalComments: val);
 
-  // --- NUEVO MÉTODO: A partir de un texto con delimitador "/" divide material y granulometría ---
   void updateMaterialAndGranulometry(String val) {
     final parts = val.split('/');
     final material = parts.isNotEmpty ? parts[0].trim() : '';
     final granulometry = parts.length > 1 ? parts[1].trim() : '';
-
-    state = state.copyWith(
-      material: material,
-      granulometry: granulometry,
-    );
+    state = state.copyWith(material: material, granulometry: granulometry);
   }
 
-  // --- ACTUALIZACIÓN DE COMPONENTES ---
   void updateComponentOption(String sectionId, String componentId, String optionId) {
     _updateComponent(sectionId, componentId, (comp) => comp.copyWith(selectedOptionId: optionId));
   }
@@ -111,7 +143,6 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
     ));
   }
 
-  // --- Usamos copyWith en lugar de constructor manual para que la UI reaccione ---
   void _updateComponent(String sId, String cId, BandaComponent Function(BandaComponent) transform) {
     state = state.copyWith(
       sections: state.sections.map((section) {
