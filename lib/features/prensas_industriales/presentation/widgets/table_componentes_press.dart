@@ -264,8 +264,6 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
         _condBtn(item, "GOOD", "BUENO", Colors.green),
         const SizedBox(width: 8),
         _condBtn(item, "BAD", "MALO", kRedReprosisa),
-        const SizedBox(width: 8),
-        _condBtn(item, "NOT_APPLICABLE", "N/A", Colors.blueGrey),
       ],
     );
   }

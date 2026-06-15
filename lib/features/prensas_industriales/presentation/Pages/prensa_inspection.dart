@@ -17,18 +17,28 @@ import '../widgets/prestamo_devolucion.dart';
 import '../../../dashboard/presentation/widgets/header.dart';
 
 class PrensaInspectionPage extends ConsumerStatefulWidget {
- final bool isReadOnly;
+  final bool isReadOnly;
   const PrensaInspectionPage({super.key, this.isReadOnly = false});
 
   @override
-  ConsumerState<PrensaInspectionPage> createState() => _PrensaInspectionPageState();
+  ConsumerState<PrensaInspectionPage> createState() =>
+      _PrensaInspectionPageState();
 }
+
 class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
   bool isScanning = false;
   bool isLoading = true;
   List<ComponentItem> templateItems = [];
 
- @override
+  static const Set<String> excludedComponentIds = {
+    "70f9a2a0-ed74-4958-97aa-87a279cdbdd7",
+    "97b38d7b-53bf-43bb-9459-cc2db92d89ad",
+    "335fcf27-4a9c-4302-bf20-29dd0ad4b8ac",
+    "b1c263cd-5882-4153-b48a-04859e79f2ed",
+    "7c0bcebc-ce53-4a1e-8cf1-1b83e6782f53",
+  };
+
+  @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -41,28 +51,31 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
     });
   }
 
- Future<void> _fetchTemplate() async {
+  Future<void> _fetchTemplate() async {
     setState(() => isLoading = true);
+
     final state = ref.read(inspeccionProvider);
     final repo = ref.read(inspeccionRepositoryProvider);
+
     final result = await repo.getInspectionTemplate();
-    
-    final String tipoPrensa = state.selectedPress?.type?.toLowerCase() ?? "";
+
+    final String tipoPrensa =
+        state.selectedPress?.type?.toLowerCase() ?? "";
 
     result.fold(
       (failure) => setState(() => isLoading = false),
       (components) {
         List<ComponentItem> itemsFiltrados = components;
-        
-        // Lógica de filtrado: si es neumatica o movil, excluimos estos componentes
-        if (tipoPrensa.contains("neumatica") || tipoPrensa.contains("movil")) {
-          // Palabras clave únicas para filtrar los items
-          final itemsAExcluir = ["aceite", "manometro", "manguera", "plato", "soldadura"];
-          
-          itemsFiltrados = components.where((c) {
-            final nombre = c.name.toLowerCase();
-            return !itemsAExcluir.any((excluido) => nombre.contains(excluido));
-          }).toList();
+
+        final bool esNeumaticaOMovil =
+            tipoPrensa.contains("neumática") ||
+            tipoPrensa.contains("movil") ||
+            tipoPrensa.contains("móvil");
+
+        if (esNeumaticaOMovil) {
+          itemsFiltrados = components
+              .where((c) => !excludedComponentIds.contains(c.id))
+              .toList();
         }
 
         setState(() {
@@ -72,11 +85,11 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
       },
     );
   }
+
   void _showPdfPreview(BuildContext context) {
     final state = ref.read(inspeccionProvider);
-    final String fechaActual = DateFormat(
-      'dd/MM/yyyy',
-    ).format(state.inspectionDate);
+    final String fechaActual =
+        DateFormat('dd/MM/yyyy').format(state.inspectionDate);
 
     final Map<String, dynamic> pdfData = {
       "serie": state.selectedPress?.serie ?? "S/N",
@@ -88,23 +101,21 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
       "nombre_recibe": state.solicitantsName,
       "area_solicita": state.selectedLoanArea?.name ?? "N/A",
       "observaciones_footer": state.observations,
-      "items": templateItems
-          .map(
-            (item) => {
-              "quantity": item.quantity ?? 0,
-              "measureUnit": item.measureUnit,
-              "name": item.name,
-              "status": item.status.toUpperCase(),
-              "observation": item.observation,
-              "foto_antes_bytes": item.evidenceBefore.isNotEmpty
-                  ? item.evidenceBefore.first.bytes
-                  : null,
-              "foto_despues_bytes": item.evidenceAfter.isNotEmpty
-                  ? item.evidenceAfter.first.bytes
-                  : null,
-            },
-          )
-          .toList(),
+      "items": templateItems.map((item) {
+        return {
+          "quantity": item.quantity ?? 0,
+          "measureUnit": item.measureUnit,
+          "name": item.name,
+          "status": item.status.toUpperCase(),
+          "observation": item.observation,
+          "foto_antes_bytes": item.evidenceBefore.isNotEmpty
+              ? item.evidenceBefore.first.bytes
+              : null,
+          "foto_despues_bytes": item.evidenceAfter.isNotEmpty
+              ? item.evidenceAfter.first.bytes
+              : null,
+        };
+      }).toList(),
     };
 
     Navigator.push(
@@ -116,7 +127,8 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
             backgroundColor: const Color(0xFFC62828),
           ),
           body: PdfPreview(
-            build: (format) => PrensaPdfGenerator.generateEsqueleto(pdfData),
+            build: (format) =>
+                PrensaPdfGenerator.generateEsqueleto(pdfData),
             initialPageFormat: PdfPageFormat.letter.landscape,
           ),
         ),
@@ -134,19 +146,22 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
       return;
     }
 
-    // --- VALIDACIÓN DE CAMPOS DE PRÉSTAMO/DEVOLUCIÓN ---
-    final bool hasLoanData = state.selectedLoanArea != null || state.solicitantsName.isNotEmpty;
+    final bool hasLoanData =
+        state.selectedLoanArea != null || state.solicitantsName.isNotEmpty;
+
     final String currentStatus = state.status.toUpperCase();
 
-    // Si la prensa está prestada, ES OBLIGATORIO llenar los campos para la devolución
     if (currentStatus == 'LOANED' && !hasLoanData) {
-      _showSnack("La prensa está prestada. Debe llenar los campos de devolución para continuar.", Colors.red);
+      _showSnack(
+        "La prensa está prestada. Debe llenar los campos de devolución para continuar.",
+        Colors.red,
+      );
       return;
     }
 
-    final answeredItems = templateItems
-        .where((item) => item.status.isNotEmpty)
-        .toList();
+    final answeredItems =
+        templateItems.where((item) => item.status.isNotEmpty).toList();
+
     setState(() => isLoading = true);
 
     try {
@@ -164,6 +179,7 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
           final file = File(
             '${tempDir.path}/img_${DateTime.now().microsecondsSinceEpoch}.jpg',
           );
+
           await file.writeAsBytes(evFile.bytes);
 
           final uploadResult = await evidenceService.uploadEvidence(
@@ -188,7 +204,8 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
           "component_id": item.id,
           "quantity": item.quantity ?? 0,
           "status": item.status.toUpperCase(),
-          "observation": item.observation.isEmpty ? null : item.observation,
+          "observation":
+              item.observation.isEmpty ? null : item.observation,
           "evidences": evidenceList,
         });
       }
@@ -199,36 +216,37 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
         "area": state.area.isEmpty ? "General" : state.area,
         "folio": "F-${DateTime.now().millisecondsSinceEpoch}",
         "answers": answers,
-        "loan": hasLoanData ? {
-          "area_id": state.selectedLoanArea?.id,
-          "loan_date": DateTime.now().toIso8601String(),
-          "solicitants_name": state.solicitantsName,
-          "observations": state.observations,
-        } : null
+        "loan": hasLoanData
+            ? {
+                "area_id": state.selectedLoanArea?.id,
+                "loan_date": DateTime.now().toIso8601String(),
+                "solicitants_name": state.solicitantsName,
+                "observations": state.observations,
+              }
+            : null
       };
 
       final result = await ref
           .read(createPressReportProvider)
           .call(reportRequest);
 
-      result.fold((f) => _showSnack("Error: ${f.message}", Colors.red), (r) {
-        
-        // --- DETERMINAR MENSAJE DE ÉXITO DINÁMICO ---
-        String successMessage = "¡Reporte guardado!";
-        
-        if (currentStatus == 'LOANED') {
-          successMessage = "¡Devolución exitosa!";
-        } else if (currentStatus == 'AVAILABLE' && hasLoanData) {
-          successMessage = "¡Préstamo exitoso!";
-        } else {
-          successMessage = "¡Inspección guardada con éxito!";
-        }
+      result.fold(
+        (f) => _showSnack("Error: ${f.message}", Colors.red),
+        (r) {
+          String successMessage = "¡Inspección guardada con éxito!";
 
-        _showSnack(successMessage, Colors.green);
+          if (currentStatus == 'LOANED') {
+            successMessage = "¡Devolución exitosa!";
+          } else if (currentStatus == 'AVAILABLE' && hasLoanData) {
+            successMessage = "¡Préstamo exitoso!";
+          }
 
-        notifier.reset();
-        Navigator.pop(context);
-      });
+          _showSnack(successMessage, Colors.green);
+
+          notifier.reset();
+          Navigator.pop(context);
+        },
+      );
     } catch (e) {
       _showSnack("Error inesperado al guardar", Colors.red);
     } finally {
@@ -251,7 +269,9 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
       backgroundColor: const Color(0xFFF8F9FA),
       body: isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFC62828)),
+              child: CircularProgressIndicator(
+                color: Color(0xFFC62828),
+              ),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -286,7 +306,9 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                             children: [
                               const InformationGeneralEquipo(),
                               const SizedBox(height: 32),
-                              PrensaInspectionTable(items: templateItems),
+                              PrensaInspectionTable(
+                                items: templateItems,
+                              ),
                               const SizedBox(height: 32),
                               const LoanAndInspectorSection(),
                             ],
@@ -321,7 +343,12 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
     );
   }
 
-  Widget _actionBtn(String l, Color c, IconData i, VoidCallback t) =>
+  Widget _actionBtn(
+    String l,
+    Color c,
+    IconData i,
+    VoidCallback t,
+  ) =>
       ElevatedButton.icon(
         onPressed: t,
         icon: Icon(i, color: Colors.white, size: 20),
