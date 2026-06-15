@@ -237,7 +237,62 @@ class BandaPdfGenerator {
         return [];
     }
   }
+static Map<String, dynamic> mapDetailModelToPdfData(dynamic model) {
+  // 1. Construimos las secciones dinámicamente desde model.answers
+  final Map<String, List<BandaComponent>> grouped = {};
+  final Map<String, String> sectionIdMap = {};
 
+  for (var ans in model.answers) {
+    // ACCESO CORREGIDO: Usamos notación de punto (.) porque son objetos, no Mapas
+    final sectionId = ans.section.id?.toString() ?? 'sin_id';
+    final sectionName = ans.section.name?.toString() ?? 'Sin Sección';
+
+    if (!grouped.containsKey(sectionName)) {
+      grouped[sectionName] = [];
+      sectionIdMap[sectionName] = sectionId;
+    }
+
+    grouped[sectionName]!.add(BandaComponent(
+      id: ans.answerId, 
+      // ACCESO CORREGIDO: 'accessory' (con doble c) es el nombre de tu modelo
+      name: ans.accessory.name ?? 'Sin nombre',
+      // ACCESO CORREGIDO: usamos .option.id
+      selectedOptionId: ans.option.id ?? '',
+      observation: ans.recommendedAction ?? '',
+      options: [], 
+      evidenceBefore: [], // Puedes mapear ans.evidences aquí si lo necesitas
+      evidenceAfter: [],
+    ));
+  }
+
+  // 2. Convertimos a la lista que espera tu generateReport
+  final List<BandaSection> sections = grouped.entries.map((e) {
+    return BandaSection(
+      id: sectionIdMap[e.key] ?? 'sec_${e.key}',
+      name: e.key,
+      components: e.value,
+    );
+  }).toList();
+
+  return {
+    'planta': model.report['plant_name'] ?? 'N/A',
+    'area': model.conveyor['area'] ?? 'N/A',
+    'responsable': model.report['conveyor_responsible'] ?? 'N/A',
+    'seccion': 'N/A',
+    'fecha': model.report['inspection_date'] ?? 'N/A',
+    'transportador': model.conveyor['name'] ?? 'N/A',
+    'banda': model.report['recommended_belt'] ?? 'N/A',
+    'material': "${model.report['material'] ?? ''} / ${model.report['granulometry'] ?? ''}",
+    'elaboro': model.inspector['name'] ?? 'N/A',
+    'presentar': model.report['present_to'] ?? 'N/A',
+    'comentarios': model.report['general_comments'] ?? '',
+    'sections': sections, 
+  };
+}
+static Future<Uint8List> generateEsqueleto(Map<String, dynamic> data) async {
+  // Aquí usamos los mismos nombres que ya tienes, sin crear nada nuevo.
+  return await generateReport(data, data['sections'] as List<BandaSection>);
+}
   static Future<Uint8List> generateReport(
     Map<String, dynamic> data,
     List<BandaSection> sections,
@@ -250,6 +305,7 @@ class BandaPdfGenerator {
     } catch (e) {
       print("Error: No se encontro la imagen en assets/images/bandas_pdf.png");
     }
+    
 
     pdf.addPage(
       pw.MultiPage(

@@ -4,12 +4,34 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class PrensaPdfGenerator {
-  static String generateFileName(Map<String, dynamic> data) {
-    final String serie = data['serie'] ?? "SN";
-    final String fecha = data['fecha'] ?? "SF";
-    return "SGC-PO-MT-01-FO-08-$serie-$fecha.pdf";
+  
+  // --- MÉTODO REQUERIDO POR PDFREPORTMANAGER ---
+  static Map<String, dynamic> mapDetailModelToPdfData(dynamic model) {
+    // Aquí transformas tu modelo de Prensa a la estructura que el generador espera.
+    // Ajusta los campos según cómo venga tu modelo (ej. model.report, model.press, etc.)
+    return {
+      'fecha': model.report['inspection_date'] ?? 'N/A',
+      'tipo': model.press['type'] ?? 'N/A',
+      'modelo': model.press['model'] ?? 'N/A',
+      'volts': model.press['voltz'] ?? 'N/A',
+      'serie': model.press['serie'] ?? 'N/A',
+      'area': model.report['area'] ?? 'N/A',
+      'area_solicita': model.report['loan_area'] ?? '',
+      'nombre_recibe': model.report['loan_received_by'] ?? '',
+      'observaciones_footer': model.report['general_notes'] ?? '',
+      'items': model.answers.map((answer) => {
+        'name': answer.componentName,
+        'quantity': answer.quantity,
+        'measureUnit': answer.measureUnit,
+        'status': answer.status,
+        'observation': answer.observation,
+        'url_antes': answer.evidencePaths.isNotEmpty ? answer.evidencePaths[0] : null,
+        'url_despues': answer.evidencePaths.length > 1 ? answer.evidencePaths[1] : null,
+      }).toList(),
+    };
   }
 
+  // --- MÉTODO REQUERIDO POR PDFREPORTMANAGER ---
   static Future<Uint8List> generateEsqueleto(Map<String, dynamic> data) async {
     final pdf = pw.Document();
     pw.ImageProvider? logoImage;
@@ -40,7 +62,7 @@ class PrensaPdfGenerator {
 
     pdf.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.letter, // VERTICAL
+        pageFormat: PdfPageFormat.letter,
         margin: const pw.EdgeInsets.all(20),
         header: (context) => _buildSgcHeader(logoImage),
         build: (pw.Context context) => [
@@ -62,6 +84,7 @@ class PrensaPdfGenerator {
     return pdf.save();
   }
 
+  // --- MÉTODOS DE RENDERIZADO (AUXILIARES) ---
   static pw.Widget _buildSgcHeader(pw.ImageProvider? logo) {
     return pw.Table(
       border: pw.TableBorder.all(width: 1),
@@ -126,9 +149,14 @@ class PrensaPdfGenerator {
     return pw.Table(
       border: pw.TableBorder.all(width: 0.8),
       columnWidths: {
-        0: const pw.FixedColumnWidth(25), 1: const pw.FixedColumnWidth(30), 2: const pw.FlexColumnWidth(3),
-        3: const pw.FixedColumnWidth(15), 4: const pw.FixedColumnWidth(15), 5: const pw.FixedColumnWidth(20),
-        6: const pw.FlexColumnWidth(1.5), 7: const pw.FixedColumnWidth(25), 8: const pw.FixedColumnWidth(25),
+  0: const pw.FixedColumnWidth(25), 
+        1: const pw.FixedColumnWidth(30), 
+        2: const pw.FlexColumnWidth(3),
+        3: const pw.FixedColumnWidth(20), // Columna Bueno (B)
+        4: const pw.FixedColumnWidth(20), // Columna Malo (M)
+        5: const pw.FlexColumnWidth(1.5), 
+        6: const pw.FixedColumnWidth(25), 
+        7: const pw.FixedColumnWidth(25),
       },
       children: [
         pw.TableRow(decoration: const pw.BoxDecoration(color: PdfColors.grey200), children: [
@@ -140,7 +168,6 @@ class PrensaPdfGenerator {
           pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(item['name'] ?? "", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))),
           _tC(item['status'] == 'GOOD' ? "V" : ""),
           _tC(item['status'] == 'BAD' ? "X" : ""),
-          _tC(item['status'] == 'NOT_APPLICABLE' ? "N" : ""),
           pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(item['observation'] ?? "", style: const pw.TextStyle(fontSize: 7))),
           _tC_Image(item['foto_antes_provider']),
           _tC_Image(item['foto_despues_provider']),
@@ -171,7 +198,7 @@ class PrensaPdfGenerator {
 
   static pw.TableRow _footerRow(String label, String val) => pw.TableRow(children: [
     pw.Padding(padding: const pw.EdgeInsets.all(5), child: pw.Text(label, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))),
-    pw.Padding(padding: const pw.EdgeInsets.all(5), child: pw.Text(val, style: const pw.TextStyle(fontSize: 7))),
+    pw.Padding(padding: const pw.EdgeInsets.all(5), child: pw.Text(val, style: pw.TextStyle(fontSize: 7))),
   ]);
 
   static pw.Widget _buildComponentEvidenciaGrande(dynamic item) {
