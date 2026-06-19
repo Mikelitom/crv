@@ -9,7 +9,7 @@ class VehicleServicePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFFF4F7FA), // Color más limpio
       body: LayoutBuilder(
         builder: (context, constraints) {
           double horizontalPadding = constraints.maxWidth > 600 ? 32 : 16;
@@ -20,14 +20,14 @@ class VehicleServicePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 CustomHeader(
-                  title: "Control de Servicios de Flota",
+                  title: "Control de Flota Operativa",
                   actionIcon: Icons.car_repair_rounded,
                   onActionTap: () {},
                 ),
                 
                 const SizedBox(height: 32),
                 
-                // Estos ya incluyen los datos estáticos (42 totales, 5 en taller, etc)
+                // KPIs Operativos: Totales, Alertas, Próximos, Taller
                 const ServiceStatsGrid(isVehiculo: true), 
 
                 const SizedBox(height: 40),
@@ -42,8 +42,8 @@ class VehicleServicePage extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // La tabla ahora renderiza los datos de las placas SON-442-A, etc.
-                ServiceDataTable(isVehiculo: true),
+                // Tabla con lógica de estados (Crítico, Atención, Normal)
+                const ServiceDataTable(isVehiculo: true),
               ],
             ),
           );
@@ -68,7 +68,7 @@ class VehicleServicePage extends StatelessWidget {
       ),
       child: const TextField(
         decoration: InputDecoration(
-          hintText: "Buscar unidad, placa o folio...",
+          hintText: "Buscar unidad, placa o estado...",
           prefixIcon: Icon(Icons.search, color: Color(0xFFC62828), size: 24),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 18),

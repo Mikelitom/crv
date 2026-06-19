@@ -106,7 +106,20 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
         }
       }
 
-     final reportRequest = {
+      final List<Map<String, dynamic>> rollersData = state.rollers.map((r) => {
+        "table_number": r.tableNumber,
+        "base_number": r.baseNumber,
+        "is_left": r.isLeft ?? false,
+        "is_center": r.isCenter ?? false,
+        "is_right": r.isRight ?? false,
+        "is_impact": r.isImpact ?? false,
+        "is_return": r.isReturn ?? false,
+        "is_triple": r.isTriple ?? false,
+        "is_self_aligning": r.isSelfAligning ?? false,
+        "roller_type": r.rollerType ?? "",
+      }).toList();
+
+      final reportRequest = {
         "conveyor": state.conveyor.isEmpty ? "" : state.conveyor, 
         "area": state.area,
         "mine_id": state.selectedMine?.id ?? "",
@@ -120,6 +133,7 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
         "conveyor_responsible": state.conveyorResponsible,
         "folio": "B-${DateTime.now().millisecondsSinceEpoch}",
         "answers": answers,
+        "rollers": rollersData,
       };
 
       final result = await ref.read(createBandaReportUseCaseProvider).call(reportRequest);

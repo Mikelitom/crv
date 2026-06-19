@@ -5,6 +5,7 @@ import '../provider/banda_inspection_state.dart';
 import '../../domain/entities/client_mine.dart';
 import '../../domain/entities/banda_template.dart';
 import '../../../../core/error/failure.dart';
+import '../../domain/entities/roller.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
 
 class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
@@ -46,7 +47,6 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
     }
   }
 
-  // 🔹 NUEVO MÉTODO: Autocompletado de reporte guardado
   void loadExistingReport(Map<String, dynamic> reportData) {
     // 1. Cargar datos generales
     state = state.copyWith(
@@ -61,15 +61,12 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
 
     // 2. Hidratar secciones y componentes
     final List<dynamic> answers = reportData['answers'] ?? [];
-    
     final updatedSections = state.sections.map((section) {
       final updatedComponents = section.components.map((comp) {
-        // Buscamos si existe una respuesta guardada para este accesorio
         final answer = answers.firstWhere(
           (a) => a['accesory_id'] == comp.id,
           orElse: () => null,
         );
-
         if (answer != null) {
           return comp.copyWith(
             selectedOptionId: answer['option_id'],
@@ -79,14 +76,30 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
         }
         return comp;
       }).toList();
-
       return section.copyWith(components: updatedComponents);
     }).toList();
 
-    state = state.copyWith(sections: updatedSections);
+    // 3. Hidratar rodillos (Cargado fuera del bucle de secciones)
+    List<Roller> loadedRollers = state.rollers;
+    if (reportData['rollers'] != null) {
+      final List<dynamic> rollersData = reportData['rollers'];
+      loadedRollers = rollersData.map((r) => Roller(
+        tableNumber: r['table_number'] ?? 0,
+        baseNumber: r['base_number'] ?? 0,
+        isLeft: r['is_left'] ?? false,
+        isCenter: r['is_center'] ?? false,
+        isRight: r['is_right'] ?? false,
+        isImpact: r['is_impact'] ?? false,
+        isReturn: r['is_return'] ?? false,
+        isTriple: r['is_triple'] ?? false,
+        isSelfAligning: r['is_self_aligning'] ?? false,
+        rollerType: r['roller_type'] ?? '',
+      )).toList();
+    }
+
+    state = state.copyWith(sections: updatedSections, rollers: loadedRollers);
   }
 
-  // --- LÓGICA DE CLIENTE Y MINA ---
   void selectClient(Client client) {
     final filtered = state.allMines.where((m) => m.clientId == client.id).toList();
     state = state.copyWith(
@@ -96,9 +109,32 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
     );
   }
 
+  void updateRoller(int index, {
+    bool? isLeft, bool? isCenter, bool? isRight,
+    bool? isImpact, bool? isReturn, bool? isTriple,
+    bool? isSelfAligning, String? rollerType,
+  }) {
+    final updatedRollers = List<Roller>.from(state.rollers);
+    final oldRoller = updatedRollers[index];
+
+    updatedRollers[index] = Roller(
+      tableNumber: oldRoller.tableNumber,
+      baseNumber: oldRoller.baseNumber,
+      isLeft: isLeft ?? oldRoller.isLeft,
+      isCenter: isCenter ?? oldRoller.isCenter,
+      isRight: isRight ?? oldRoller.isRight,
+      isImpact: isImpact ?? oldRoller.isImpact,
+      isReturn: isReturn ?? oldRoller.isReturn,
+      isTriple: isTriple ?? oldRoller.isTriple,
+      isSelfAligning: isSelfAligning ?? oldRoller.isSelfAligning,
+      rollerType: rollerType ?? oldRoller.rollerType,
+    );
+
+    state = state.copyWith(rollers: updatedRollers);
+  }
+
   void selectMine(Mine mine) => state = state.copyWith(selectedMine: mine);
 
-  // --- MÉTODOS DE ACTUALIZACIÓN ---
   void updateElaboro(String val) => state = state.copyWith(elaboro: val);
   void updateArea(String val) => state = state.copyWith(area: val);
   void updateSeccion(String val) => state = state.copyWith(seccion: val);

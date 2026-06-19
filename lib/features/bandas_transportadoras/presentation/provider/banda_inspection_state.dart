@@ -1,5 +1,6 @@
 import '../../domain/entities/banda_template.dart';
 import '../../domain/entities/client_mine.dart';
+import '../../domain/entities/roller.dart'; // Asegúrate de importar tu entidad
 
 class BandaInspectionState {
   final bool isLoading;
@@ -7,6 +8,7 @@ class BandaInspectionState {
   final List<Mine> allMines;
   final List<Mine> filteredMines;
   final List<BandaSection> sections;
+  final List<Roller> rollers; // 🔹 Nueva lista para rodillería
 
   final Client? selectedClient;
   final Mine? selectedMine;
@@ -30,6 +32,7 @@ class BandaInspectionState {
     this.allMines = const [],
     this.filteredMines = const [],
     this.sections = const [],
+    this.rollers = const [], // 🔹 Inicialización vacía
     this.selectedClient,
     this.selectedMine,
     required this.inspectionDate,
@@ -45,7 +48,6 @@ class BandaInspectionState {
     this.generalComments = '',
   });
 
-  // --- AGREGADO: Constructor inicial para el método reset() del Notifier ---
   factory BandaInspectionState.initial() {
     return BandaInspectionState(
       isLoading: false,
@@ -53,6 +55,18 @@ class BandaInspectionState {
       allMines: const [],
       filteredMines: const [],
       sections: const [],
+     rollers: List.generate(8, (index) => Roller(
+        tableNumber: index + 1, // Puedes asignar el número de mesa automáticamente
+        baseNumber: 0,
+        isLeft: false,
+        isCenter: false,
+        isRight: false,
+        isImpact: false,
+        isReturn: false,
+        isTriple: false,
+        isSelfAligning: false,
+        rollerType: '',
+      )), // 🔹 Inicializamos con 8 filas vacías
       selectedClient: null,
       selectedMine: null,
       inspectionDate: DateTime.now(),
@@ -75,6 +89,7 @@ class BandaInspectionState {
     List<Mine>? allMines,
     List<Mine>? filteredMines,
     List<BandaSection>? sections,
+    List<Roller>? rollers, // 🔹 Añadido al copyWith
     Client? selectedClient,
     bool clearMine = false,
     Mine? selectedMine,
@@ -96,6 +111,7 @@ class BandaInspectionState {
       allMines: allMines ?? this.allMines,
       filteredMines: filteredMines ?? this.filteredMines,
       sections: sections ?? this.sections,
+      rollers: rollers ?? this.rollers, // 🔹 Asignación
       selectedClient: selectedClient ?? this.selectedClient,
       selectedMine: clearMine ? null : (selectedMine ?? this.selectedMine),
       inspectionDate: inspectionDate ?? this.inspectionDate,

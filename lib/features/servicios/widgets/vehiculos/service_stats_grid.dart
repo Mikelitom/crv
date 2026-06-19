@@ -7,99 +7,44 @@ class ServiceStatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final bool isMobile = constraints.maxWidth < 600;
-      final double spacing = 12.0;
-      final double cardWidth = isMobile 
-          ? constraints.maxWidth 
-          : (constraints.maxWidth - (spacing * 2)) / 3;
+      double spacing = 16.0;
+      int columns = constraints.maxWidth > 1000 ? 4 : (constraints.maxWidth > 600 ? 2 : 1);
+      double cardWidth = (constraints.maxWidth - (spacing * (columns - 1))) / columns;
 
       return Wrap(
-        spacing: spacing,
-        runSpacing: spacing,
+        spacing: spacing, runSpacing: spacing,
         children: [
-          _StatCard(
-            label: "Servicios Totales",
-            value: isVehiculo ? "42" : "18", // Datos estáticos
-            icon: isVehiculo ? Icons.history_edu_rounded : Icons.precision_manufacturing_rounded,
-            width: cardWidth,
-          ),
-          _StatCard(
-            label: isVehiculo ? "En Taller" : "En Reparación",
-            value: isVehiculo ? "5" : "2", // Datos estáticos
-            icon: isVehiculo ? Icons.car_repair_outlined : Icons.handyman_outlined,
-            width: cardWidth,
-          ),
-          _StatCard(
-            label: "Finalizados",
-            value: isVehiculo ? "37" : "16", // Datos estáticos
-            icon: Icons.check_circle_outline_rounded,
-            width: cardWidth,
-          ),
+          _StatCard("Vehículos Totales", "120", Icons.directions_car, Colors.blue, cardWidth),
+          _StatCard("Con Alertas", "8", Icons.warning_amber_rounded, Colors.orange, cardWidth),
+          _StatCard("Próximos a Servicio", "5", Icons.build_circle_rounded, Colors.teal, cardWidth),
+          _StatCard("En Taller", "2", Icons.local_shipping, Colors.red, cardWidth),
         ],
       );
     });
   }
 }
 
-class _StatCard extends StatefulWidget {
+class _StatCard extends StatelessWidget {
   final String label, value;
   final IconData icon;
+  final Color color;
   final double width;
-
-  const _StatCard({required this.label, required this.value, required this.icon, required this.width});
-
-  @override
-  State<_StatCard> createState() => _StatCardState();
-}
-
-class _StatCardState extends State<_StatCard> {
-  bool isHovered = false;
+  const _StatCard(this.label, this.value, this.icon, this.color, this.width);
 
   @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: widget.width,
-        height: 100, 
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(isHovered ? 0.05 : 0.02), blurRadius: 10)],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(widget.value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                  Text(
-                    widget.label, 
-                    style: const TextStyle(color: Color(0xFFC62828), fontSize: 12, fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: isHovered ? const Color(0xFFC62828) : const Color(0xFFFDECEA),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(widget.icon, color: isHovered ? Colors.white : const Color(0xFFC62828), size: 24),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    width: width,
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)]),
+    child: Row(
+      children: [
+        Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color)),
+        const SizedBox(width: 16),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
+        ]),
+      ],
+    ),
+  );
 }
