@@ -8,133 +8,137 @@ class RodilleriaSection extends StatefulWidget {
 }
 
 class _RodilleriaSectionState extends State<RodilleriaSection> {
-  // Matriz de 8 filas x 8 columnas
-  final List<List<TextEditingController>> _controllers = List.generate(
+  List<List<TextEditingController>> _rows = List.generate(
     8, (_) => List.generate(8, (_) => TextEditingController()),
   );
+  
+  List<String> _tipos = List.generate(8, (_) => "Triple");
+  int cargaAcero = 0, impacto = 0, retorno = 0;
 
-  int cargaAcero = 0, impacto = 0, retorno = 0, soporte = 0;
+  void _calcular() {
+    int nCarga = 0, nImp = 0, nRet = 0;
+    for (var row in _rows) {
+      int izq = int.tryParse(row[2].text) ?? 0;
+      int cen = int.tryParse(row[3].text) ?? 0;
+      int der = int.tryParse(row[4].text) ?? 0;
+      int imp = int.tryParse(row[5].text) ?? 0;
+      int ret = int.tryParse(row[6].text) ?? 0;
 
-  void _calcularTotales() {
-    int nCarga = 0, nImpacto = 0, nRetorno = 0, nSoporte = 0;
-
-    for (var row in _controllers) {
-      // Regla: Izq (col 2), Central (col 3), Derecho (col 4) -> Carga Acero
-      nCarga += (int.tryParse(row[2].text) ?? 0) + (int.tryParse(row[3].text) ?? 0) + (int.tryParse(row[4].text) ?? 0);
-      // Regla: Impacto (col 5)
-      nImpacto += int.tryParse(row[5].text) ?? 0;
-      // Regla: Retorno (col 6)
-      nRetorno += int.tryParse(row[6].text) ?? 0;
-      // Regla: Soporte Triple (col 7)
-      nSoporte += int.tryParse(row[7].text) ?? 0;
+      if (imp > 0) nImp += imp;
+      else if (ret > 0) nRet += ret;
+      else nCarga += (izq + cen + der);
     }
-
-    setState(() {
-      cargaAcero = nCarga;
-      impacto = nImpacto;
-      retorno = nRetorno;
-      soporte = nSoporte;
-    });
+    if (mounted) setState(() { cargaAcero = nCarga; impacto = nImp; retorno = nRet; });
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
+      margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 20, offset: const Offset(0, 10))],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 5))],
       ),
       child: Column(
         children: [
           _buildHeader(),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(width: 1000, child: _buildTechnicalTable()),
-          ),
+          _buildTechnicalTable(),
           _buildInventorySummary(),
         ],
       ),
     );
   }
 
-  Widget _buildTechnicalTable() {
-    return Table(
-      columnWidths: const {
-        0: FixedColumnWidth(80), 1: FixedColumnWidth(80),
-        2: FlexColumnWidth(1), 3: FlexColumnWidth(1), 4: FlexColumnWidth(1),
-        5: FlexColumnWidth(1), 6: FlexColumnWidth(1), 7: FlexColumnWidth(2),
-      },
-      border: TableBorder.all(color: Colors.grey.shade100),
+  Widget _buildHeader() => Padding(
+    padding: const EdgeInsets.all(20),
+    child: Row(
       children: [
-        const TableRow(
-          decoration: BoxDecoration(color: Color(0xFFF1F4F9)),
-          children: [
-            _HeaderCell("No. MESA"), _HeaderCell("No. BASE"),
-            _HeaderCell("IZQ."), _HeaderCell("CENT."), _HeaderCell("DER."),
-            _HeaderCell("IMPACTO"), _HeaderCell("RETORNO"), _HeaderCell("SOPORTE TRIPLE"),
-          ],
-        ),
-        ...List.generate(8, (i) => _buildDataRow(i)),
+        const Icon(Icons.settings_applications, color: Colors.indigo, size: 28),
+        const SizedBox(width: 12),
+        const Text("CONTROL DE RODILLERÍA", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+        const Spacer(),
+        IconButton(icon: const Icon(Icons.add_circle, color: Colors.green, size: 30), onPressed: () => setState(() {
+          _rows.add(List.generate(8, (_) => TextEditingController()));
+          _tipos.add("Triple");
+        })),
       ],
-    );
-  }
+    ),
+  );
 
-  TableRow _buildDataRow(int rowIndex) {
-    return TableRow(
-      children: List.generate(8, (colIndex) => Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: TextField(
-          controller: _controllers[rowIndex][colIndex],
-          keyboardType: TextInputType.number,
-          textAlign: TextAlign.center,
-          onChanged: (value) => _calcularTotales(), // Dispara el cálculo
-          decoration: const InputDecoration(isDense: true, border: UnderlineInputBorder()),
-        ),
-      )),
-    );
-  }
-
-  Widget _buildInventorySummary() {
+  Widget _buildTechnicalTable() {
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Table(
+        columnWidths: const {
+          0: FlexColumnWidth(1), 1: FlexColumnWidth(1), 2: FlexColumnWidth(1.2),
+          3: FlexColumnWidth(1.2), 4: FlexColumnWidth(1.2), 5: FlexColumnWidth(1.2),
+          6: FlexColumnWidth(1.2), 7: FlexColumnWidth(2.5), 8: FlexColumnWidth(2),
+        },
+        border: TableBorder.all(color: Colors.grey.shade300),
         children: [
-          const Text("RESUMEN DE REPUESTOS (TOTALES)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueGrey)),
-          const SizedBox(height: 16),
-          Wrap(spacing: 20, runSpacing: 10, children: [
-            _SummaryItem("RODILLO CARGA ACERO", "$cargaAcero"),
-            _SummaryItem("RODILLO IMPACTO", "$impacto"),
-            _SummaryItem("RODILLO RETORNO", "$retorno"),
-            _SummaryItem("SOPORTE TRIPLE", "$soporte"),
-          ]),
-          const SizedBox(height: 20),
-          const TextField(maxLines: 2, decoration: InputDecoration(labelText: "ACCIONES / OBSERVACIONES", filled: true, fillColor: Colors.white, border: OutlineInputBorder())),
+          TableRow(
+            decoration: BoxDecoration(color: Colors.grey.shade100),
+            children: ["No. Mesa", "No. Base", "Izquierdo", "Central", "Derecho", "Impacto", "Retorno", "Soporte Triple o Autoalineable", "Comentarios"]
+                .map((e) => _HeaderCell(e)).toList(),
+          ),
+          ..._rows.asMap().entries.map((e) => TableRow(children: [
+            _input(e.value[0]), _input(e.value[1]), _input(e.value[2]),
+            _input(e.value[3]), _input(e.value[4]), _input(e.value[5]),
+            _input(e.value[6]), _typeSelector(e.key), _input(e.value[7]),
+          ])),
         ],
       ),
     );
   }
 
-  // --- MÉTODOS AUXILIARES ---
-  Widget _buildHeader() { /* ... Tu diseño de Header ... */ return Container(); }
+  Widget _input(TextEditingController c) => SizedBox(
+    height: 45,
+    child: TextField(
+      controller: c,
+      textAlign: TextAlign.center,
+      onChanged: (_) => _calcular(),
+      decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 12)),
+    ),
+  );
+
+  Widget _typeSelector(int index) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: _tipos[index],
+        isExpanded: true,
+        style: const TextStyle(fontSize: 10, color: Colors.indigo, fontWeight: FontWeight.bold),
+        items: ["Triple", "Auto"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        onChanged: (v) => setState(() => _tipos[index] = v!),
+      ),
+    ),
+  );
+
+  Widget _buildInventorySummary() => Container(
+    padding: const EdgeInsets.all(25),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _SummaryItem("CARGA ACERO", "$cargaAcero"),
+        _SummaryItem("IMPACTO", "$impacto"),
+        _SummaryItem("RETORNO", "$retorno"),
+      ],
+    ),
+  );
 }
 
 class _HeaderCell extends StatelessWidget {
   final String label;
   const _HeaderCell(this.label);
-  @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.all(12), child: Center(child: Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 9, color: Color(0xFF444444)))));
+  @override Widget build(BuildContext context) => Padding(padding: const EdgeInsets.all(10), child: Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 9)));
 }
 
 class _SummaryItem extends StatelessWidget {
   final String label, total;
   const _SummaryItem(this.label, this.total);
-  @override
-  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey)),
-    Text("$total PIEZAS", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFFC62828))),
+  @override Widget build(BuildContext context) => Column(children: [
+    Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey)),
+    Text("$total PZ", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.red)),
   ]);
 }

@@ -214,8 +214,8 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
         name: a.accessory.name, // Asegúrate que 'accessory' sea el nombre correcto
         observation: a.recommendedAction ?? "",      
         options: [], // Si necesitas opciones, mapealas aquí igual que en el ejemplo
-        selectedOptionId: a.option.label ?? "",       
-        dimension: a.dimensions > 0 ? a.dimensions.toString() : '',
+selectedOptionIds: [a.option.label.toString()],
+        dimentions: a.dimentions > 0 ? a.dimentions.toString() : '',
         evidenceBefore: [], // Mapea tus evidencias aquí
         evidenceAfter: [],
       ));

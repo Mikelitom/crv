@@ -22,6 +22,33 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
     );
   }
 
+void toggleRodilleria(bool active) {
+  state = state.copyWith(
+    isRodilleriaActive: active,
+    // Si desactivas, mantenemos la lista vacía o limpia
+    // Si activas, inicializamos con los valores por defecto requeridos
+    rollers: active 
+        ? List.generate(8, (index) => Roller(
+            tableNumber: index + 1,
+            baseNumber: 0,
+            isLeft: false,
+            isCenter: false,
+            isRight: false,
+            isImpact: false,
+            isReturn: false,
+            isTriple: false,
+            isSelfAligning: false,
+            rollerType: '',
+          )) 
+        : [], // O tu lista inicial por defecto
+  );
+}
+
+  // NUEVO: Cambiar estado del reporte (COMPLETED/IN_PROGRESS)
+  void setReportStatus(String status) {
+    state = state.copyWith(reportStatus: status);
+  }
+
   Future<void> initialLoad() async {
     reset();
     state = state.copyWith(isLoading: true);
@@ -48,7 +75,6 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
   }
 
   void loadExistingReport(Map<String, dynamic> reportData) {
-    // 1. Cargar datos generales
     state = state.copyWith(
       conveyor: reportData['conveyor'] ?? "",
       area: reportData['area'] ?? "",
@@ -57,21 +83,20 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
       material: reportData['material'] ?? "",
       granulometry: reportData['granulometry'] ?? "",
       presentTo: reportData['present_to'] ?? "",
+      reportStatus: reportData['status'] ?? 'IN_PROGRESS',
+      isRodilleriaActive: reportData['rollers'] != null,
     );
 
-    // 2. Hidratar secciones y componentes
     final List<dynamic> answers = reportData['answers'] ?? [];
     final updatedSections = state.sections.map((section) {
       final updatedComponents = section.components.map((comp) {
-        final answer = answers.firstWhere(
-          (a) => a['accesory_id'] == comp.id,
-          orElse: () => null,
-        );
+        final answer = answers.firstWhere((a) => a['accesory_id'] == comp.id, orElse: () => null);
         if (answer != null) {
+          final rawOptions = answer['option_id'];
           return comp.copyWith(
-            selectedOptionId: answer['option_id'],
+            selectedOptionIds: rawOptions is List ? List<String>.from(rawOptions) : [rawOptions.toString()],
             observation: answer['recommended_action'] ?? "",
-            dimension: answer['dimentions']?.toString() ?? "",
+            dimentions: answer['dimentions']?.toString() ?? "",
           );
         }
         return comp;
@@ -79,7 +104,6 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
       return section.copyWith(components: updatedComponents);
     }).toList();
 
-    // 3. Hidratar rodillos (Cargado fuera del bucle de secciones)
     List<Roller> loadedRollers = state.rollers;
     if (reportData['rollers'] != null) {
       final List<dynamic> rollersData = reportData['rollers'];
@@ -102,11 +126,7 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
 
   void selectClient(Client client) {
     final filtered = state.allMines.where((m) => m.clientId == client.id).toList();
-    state = state.copyWith(
-      selectedClient: client,
-      filteredMines: filtered,
-      selectedMine: null,
-    );
+    state = state.copyWith(selectedClient: client, filteredMines: filtered, selectedMine: null);
   }
 
   void updateRoller(int index, {
@@ -146,19 +166,29 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
   void updatePresentTo(String val) => state = state.copyWith(presentTo: val);
   void updateGeneralComments(String val) => state = state.copyWith(generalComments: val);
 
-  void updateMaterialAndGranulometry(String val) {
-    final parts = val.split('/');
-    final material = parts.isNotEmpty ? parts[0].trim() : '';
-    final granulometry = parts.length > 1 ? parts[1].trim() : '';
-    state = state.copyWith(material: material, granulometry: granulometry);
+  // LOGICA PARA OPCIONES PERSONALIZADAS
+  void addCustomOption(String sectionId, String componentId, String label) {
+    _updateComponent(sectionId, componentId, (comp) {
+      final newCustom = List<String>.from(comp.customOptions);
+      if (!newCustom.contains(label)) newCustom.add(label);
+      return comp.copyWith(customOptions: newCustom);
+    });
   }
 
-  void updateComponentOption(String sectionId, String componentId, String optionId) {
-    _updateComponent(sectionId, componentId, (comp) => comp.copyWith(selectedOptionId: optionId));
+  void toggleComponentOption(String sectionId, String componentId, String optionId) {
+    _updateComponent(sectionId, componentId, (comp) {
+      final newSelections = List<String>.from(comp.selectedOptionIds);
+      if (newSelections.contains(optionId)) {
+        newSelections.remove(optionId);
+      } else {
+        newSelections.add(optionId);
+      }
+      return comp.copyWith(selectedOptionIds: newSelections);
+    });
   }
 
   void updateComponentDimension(String sectionId, String componentId, String dim) {
-    _updateComponent(sectionId, componentId, (comp) => comp.copyWith(dimension: dim));
+    _updateComponent(sectionId, componentId, (comp) => comp.copyWith(dimentions: dim));
   }
 
   void updateComponentObservation(String sectionId, String componentId, String obs) {
@@ -167,18 +197,32 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
 
   void addEvidence(String sectionId, String componentId, EvidenceFile file, bool isBefore) {
     _updateComponent(sectionId, componentId, (comp) => comp.copyWith(
-      evidenceBefore: isBefore ? [file] : comp.evidenceBefore,
-      evidenceAfter: isBefore ? comp.evidenceAfter : [file],
+      evidenceBefore: isBefore ? [...comp.evidenceBefore, file] : comp.evidenceBefore,
+      evidenceAfter: isBefore ? comp.evidenceAfter : [...comp.evidenceAfter, file],
     ));
   }
 
-  void removeEvidence(String sectionId, String componentId, bool isBefore) {
-    _updateComponent(sectionId, componentId, (comp) => comp.copyWith(
-      evidenceBefore: isBefore ? [] : comp.evidenceBefore,
-      evidenceAfter: isBefore ? comp.evidenceAfter : [],
-    ));
-  }
+  void removeEvidence(String sectionId, String componentId, bool isBefore, int index) {
+    _updateComponent(sectionId, componentId, (comp) {
+      final newBefore = List<EvidenceFile>.from(comp.evidenceBefore);
+      final newAfter = List<EvidenceFile>.from(comp.evidenceAfter);
 
+      if (isBefore) {
+        if (index >= 0 && index < newBefore.length) newBefore.removeAt(index);
+      } else {
+        if (index >= 0 && index < newAfter.length) newAfter.removeAt(index);
+      }
+
+      return comp.copyWith(evidenceBefore: newBefore, evidenceAfter: newAfter);
+    });
+  }
+void removeCustomOption(String sectionId, String componentId, String label) {
+  _updateComponent(sectionId, componentId, (comp) {
+    final newCustom = List<String>.from(comp.customOptions)..remove(label);
+    final newSelections = List<String>.from(comp.selectedOptionIds)..remove(label);
+    return comp.copyWith(customOptions: newCustom, selectedOptionIds: newSelections);
+  });
+}
   void _updateComponent(String sId, String cId, BandaComponent Function(BandaComponent) transform) {
     state = state.copyWith(
       sections: state.sections.map((section) {

@@ -1,6 +1,6 @@
 import '../../domain/entities/banda_template.dart';
 import '../../domain/entities/client_mine.dart';
-import '../../domain/entities/roller.dart'; // Asegúrate de importar tu entidad
+import '../../domain/entities/roller.dart';
 
 class BandaInspectionState {
   final bool isLoading;
@@ -8,7 +8,11 @@ class BandaInspectionState {
   final List<Mine> allMines;
   final List<Mine> filteredMines;
   final List<BandaSection> sections;
-  final List<Roller> rollers; // 🔹 Nueva lista para rodillería
+  final List<Roller> rollers; 
+
+  // NUEVOS CAMPOS
+  final bool isRodilleriaActive; // Controla si se envía el objeto de rodillería
+  final String reportStatus;    // 'COMPLETED' o 'IN_PROGRESS'
 
   final Client? selectedClient;
   final Mine? selectedMine;
@@ -17,7 +21,6 @@ class BandaInspectionState {
   final String area;
   final String seccion;
 
-  // Campos dinamicos para el formulario
   final String conveyor;
   final String conveyorResponsible;
   final String recommendedBelt;
@@ -32,7 +35,9 @@ class BandaInspectionState {
     this.allMines = const [],
     this.filteredMines = const [],
     this.sections = const [],
-    this.rollers = const [], // 🔹 Inicialización vacía
+    this.rollers = const [],
+    this.isRodilleriaActive = false, // Inicialmente desactivado
+    this.reportStatus = 'IN_PROGRESS', // Inicialmente en progreso
     this.selectedClient,
     this.selectedMine,
     required this.inspectionDate,
@@ -55,8 +60,8 @@ class BandaInspectionState {
       allMines: const [],
       filteredMines: const [],
       sections: const [],
-     rollers: List.generate(8, (index) => Roller(
-        tableNumber: index + 1, // Puedes asignar el número de mesa automáticamente
+      rollers: List.generate(8, (index) => Roller(
+        tableNumber: index + 1,
         baseNumber: 0,
         isLeft: false,
         isCenter: false,
@@ -66,7 +71,9 @@ class BandaInspectionState {
         isTriple: false,
         isSelfAligning: false,
         rollerType: '',
-      )), // 🔹 Inicializamos con 8 filas vacías
+      )),
+      isRodilleriaActive: false,
+      reportStatus: 'IN_PROGRESS',
       selectedClient: null,
       selectedMine: null,
       inspectionDate: DateTime.now(),
@@ -89,7 +96,9 @@ class BandaInspectionState {
     List<Mine>? allMines,
     List<Mine>? filteredMines,
     List<BandaSection>? sections,
-    List<Roller>? rollers, // 🔹 Añadido al copyWith
+    List<Roller>? rollers,
+    bool? isRodilleriaActive,
+    String? reportStatus,
     Client? selectedClient,
     bool clearMine = false,
     Mine? selectedMine,
@@ -111,7 +120,9 @@ class BandaInspectionState {
       allMines: allMines ?? this.allMines,
       filteredMines: filteredMines ?? this.filteredMines,
       sections: sections ?? this.sections,
-      rollers: rollers ?? this.rollers, // 🔹 Asignación
+      rollers: rollers ?? this.rollers,
+      isRodilleriaActive: isRodilleriaActive ?? this.isRodilleriaActive,
+      reportStatus: reportStatus ?? this.reportStatus,
       selectedClient: selectedClient ?? this.selectedClient,
       selectedMine: clearMine ? null : (selectedMine ?? this.selectedMine),
       inspectionDate: inspectionDate ?? this.inspectionDate,

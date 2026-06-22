@@ -41,7 +41,7 @@ class Answer {
   final Accessory accessory;
   final ReportOption option;
   final String recommendedAction;
-  final double dimensions;
+  final double dimentions;
   final List<Evidence> evidences;
 
   Answer({
@@ -50,7 +50,7 @@ class Answer {
     required this.accessory,
     required this.option,
     required this.recommendedAction,
-    required this.dimensions,
+    required this.dimentions,
     required this.evidences,
   });
 
@@ -61,7 +61,7 @@ class Answer {
       accessory: Accessory.fromJson(json['accesory'] as Map<String, dynamic>? ?? {}),
       option: ReportOption.fromJson(json['option'] as Map<String, dynamic>? ?? {}),
       recommendedAction: json['recommended_action'] as String? ?? '',
-      dimensions: (json['dimentions'] as num?)?.toDouble() ?? 0.0,
+      dimentions: (json['dimentions'] as num?)?.toDouble() ?? 0.0,
       evidences: (json['evidences'] as List<dynamic>?)
               ?.map((e) => Evidence.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -75,7 +75,7 @@ class Answer {
         'accesory': accessory.toMap(),
         'option': option.toMap(),
         'recommended_action': recommendedAction,
-        'dimentions': dimensions,
+        'dimentions': dimentions,
         'evidences': evidences.map((e) => e.toMap()).toList(),
       };
 }

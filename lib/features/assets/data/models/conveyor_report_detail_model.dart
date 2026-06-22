@@ -28,7 +28,7 @@ class AnswerModel extends Answer {
     required super.accessory,
     required super.option,
     required super.recommendedAction,
-    required super.dimensions,
+    required super.dimentions,
     required super.evidences,
   });
 
@@ -38,7 +38,7 @@ class AnswerModel extends Answer {
         accessory: Accessory.fromJson(json['accesory'] as Map<String, dynamic>? ?? {}),
         option: ReportOption.fromJson(json['option'] as Map<String, dynamic>? ?? {}),
         recommendedAction: json['recommended_action'] as String? ?? '',
-        dimensions: (json['dimentions'] as num?)?.toDouble() ?? 0.0,
+        dimentions: (json['dimentions'] as num?)?.toDouble() ?? 0.0,
         evidences: (json['evidences'] as List<dynamic>?)
                 ?.map((e) => Evidence.fromJson(e as Map<String, dynamic>))
                 .toList() ??

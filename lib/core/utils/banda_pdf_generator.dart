@@ -257,7 +257,7 @@ static Map<String, dynamic> mapDetailModelToPdfData(dynamic model) {
       // ACCESO CORREGIDO: 'accessory' (con doble c) es el nombre de tu modelo
       name: ans.accessory.name ?? 'Sin nombre',
       // ACCESO CORREGIDO: usamos .option.id
-      selectedOptionId: ans.option.id ?? '',
+selectedOptionIds: [ans.option.label.toString()],
       observation: ans.recommendedAction ?? '',
       options: [], 
       evidenceBefore: [], // Puedes mapear ans.evidences aquí si lo necesitas
@@ -478,7 +478,7 @@ static Future<Uint8List> generateEsqueleto(Map<String, dynamic> data) async {
                       ? c.options
                       : _obtenerOpcionesFijasParaComponente(c.name);
 
-                  print("SELECTED RAW: ${c.selectedOptionId}");
+                  print("SELECTED RAW: ${c.selectedOptionIds}");
                   print("OPTIONS IDS: ${c.options.map((e) => e.id).toList()}");
                   
                   return pw.Container(
@@ -490,7 +490,7 @@ static Future<Uint8List> generateEsqueleto(Map<String, dynamic> data) async {
                     ),
                     child: _buildOptionsInRow(
                       opcionesFijas,
-                      opcionesFijas.isEmpty ? c.selectedOptionId : c.selectedOptionId,
+                      opcionesFijas.isEmpty ? c.selectedOptionIds : c.selectedOptionIds,
                       fallbackLabel: opcionesFijas.isEmpty ? c.name.trim().toLowerCase() : null,
                     ),
                   );
@@ -525,7 +525,7 @@ static Future<Uint8List> generateEsqueleto(Map<String, dynamic> data) async {
   }
 static pw.Widget _buildOptionsInRow(
     List<BandaOption> options,
-    String? selectedValue,
+    List<String> selectedValues, // CAMBIO: Ahora recibe una lista
     {String? fallbackLabel}
   ) {
     if (options.isEmpty) {
@@ -538,11 +538,9 @@ static pw.Widget _buildOptionsInRow(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: List.generate(options.length, (index) {
         final opt = options[index];
-        final selected = selectedValue?.trim().toLowerCase() ?? "";
-        final optionLabel = opt.label.trim().toLowerCase();
-    
-        final isSelected = opt.id.trim().toLowerCase() == selected || 
-                           optionLabel == selected; 
+        
+        // Verificamos si el ID de esta opción está en la lista de seleccionados
+        final isSelected = selectedValues.contains(opt.id);
         
         return pw.Padding(
           padding: const pw.EdgeInsets.only(right: 15),
