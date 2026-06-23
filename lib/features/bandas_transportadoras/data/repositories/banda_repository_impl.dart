@@ -1,5 +1,6 @@
 import 'package:crv_reprosisa/features/bandas_transportadoras/data/datasource/client_local_datasource.dart';
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/repositories/banda_repository.dart';
 import '../datasource/banda_remote_datasource.dart';
@@ -86,22 +87,44 @@ class BandaRepositoryImpl implements BandaRepository {
     }
   }
 
- @override
-Future<Either<Failure, String>> createBandaReport(Map<String, dynamic> reportData) async {
-  try {
-    final id = await dataSource.saveBandaReport(reportData);
-    
-    // VALIDACIÓN CRÍTICA: Asegúrate de que el id no sea nulo o un mensaje de error
-    if (id.isEmpty || id.toLowerCase().contains("error")) {
-      return Left(ServerFailure("Respuesta inesperada del servidor: $id"));
-    }
-    
-    return Right(id);
-  } catch (e) {
-    // Aquí es donde verás el error real en tu consola (ej: 400 Bad Request)
-    print("LOG DE ERROR DETALLADO: $e");
-    return Left(ServerFailure("Error al guardar: ${e.toString()}"));
-  }
+  @override
+  Future<Either<Failure, String>> createBandaReport(
+    Map<String, dynamic> reportData,
+  ) async {
+    try {
+      final id = await dataSource.saveBandaReport(reportData);
 
+      // VALIDACIÓN CRÍTICA: Asegúrate de que el id no sea nulo o un mensaje de error
+      if (id.isEmpty || id.toLowerCase().contains("error")) {
+        return Left(ServerFailure("Respuesta inesperada del servidor: $id"));
+      }
+
+      return Right(id);
+    } catch (e) {
+      if (e is DioException) {
+        final isOfflineError =
+            e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout;
+
+        if (isOfflineError) {
+          await local.saveOfflineReport(reportData);
+
+          return const Left(
+            ServerFailure("Sin conexión. Reporte guardado localmente."),
+          );
+        }
+
+        if (e.response != null) {
+          return Left(
+            ServerFailure(
+              e.response?.data["detail"]?.toString() ?? "Error del servidor",
+            ),
+          );
+        }
+      }
+
+      return Left(ServerFailure(e.toString()));
+    }
   }
 }

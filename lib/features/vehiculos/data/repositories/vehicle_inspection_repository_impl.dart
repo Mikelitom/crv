@@ -1,6 +1,7 @@
 import 'package:crv_reprosisa/features/vehiculos/data/datasource/vehicle_inspection_local_datasource.dart';
 import 'package:crv_reprosisa/features/vehiculos/domain/entities/vehicle_entity.dart';
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/repositories/vehicle_inspeccion_repository.dart';
 import '../datasource/vehicle_inspection_remote_datasource.dart';
@@ -80,20 +81,35 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
   ) async {
     try {
       final id = await remoteDataSource.saveVehicleReport(reportData);
-
       return Right(id);
     } catch (e) {
-      try {
-        await localDataSource.saveOfflineReport(reportData);
+      if (e is DioException) {
+        final isOffline =
+            e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout;
 
-        return const Right(
-          'Reporte guardado localmente. Pendiente de sincronización.',
-        );
-      } catch (localError) {
-        return const Left(
-          ServerFailure('No fue posible guardar el reporte localmente.'),
-        );
+        // 🟡 SOLO offline real
+        if (isOffline) {
+          await localDataSource.saveOfflineReport(reportData);
+
+          return const Left(
+            ServerFailure("Sin conexión. Reporte guardado localmente."),
+          );
+        }
+
+        // 🔴 Error del servidor (NO guardar offline)
+        if (e.response != null) {
+          return Left(
+            ServerFailure(
+              e.response?.data['detail']?.toString() ??
+                  'Error de validación del servidor',
+            ),
+          );
+        }
       }
+
+      return Left(ServerFailure(e.toString()));
     }
   }
 }
