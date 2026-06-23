@@ -124,6 +124,21 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
             "roller_type": r.rollerType,
           }).toList() 
         : null;
+      
+      // 1. Formatear la fecha a DDMMAA
+      final now = DateTime.now();
+      final formattedDate = "${now.day.toString().padLeft(2, '0')}${now.month.toString().padLeft(2, '0')}${now.year.toString().substring(2)}";
+      
+      // 2. Extraer las iniciales correctamente usando ${}
+      // Aquí estamos llamando a la función y pasando el nombre de la mina de forma segura
+      final mineName = state.selectedMine?.name ?? "";
+      final plantaInitials = "P${_getInitials(mineName)}"; 
+      
+      final areaInitial = state.area.isNotEmpty ? state.area[0].toUpperCase() : "X";
+      final conveyorId = state.conveyor.isNotEmpty ? state.conveyor : "000";
+      
+      // 3. Construir el folio
+      final String folio = "$plantaInitials$formattedDate$areaInitial$conveyorId";
 
     final reportRequest = {
       "conveyor": state.conveyor,
@@ -137,7 +152,7 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
       "present_to": state.presentTo,
       "state": esFinalizar ? "COMPLETED" : "IN_PROGRESS", 
       "conveyor_responsible": state.conveyorResponsible,
-      "folio": "B-${DateTime.now().millisecondsSinceEpoch}",
+      "folio": folio,
       "answers": answers,
       "rollers": rollersData,
     };
@@ -159,6 +174,17 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
     if (mounted) setState(() => _isSaving = false);
   }
 }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return "GEN"; // Valor por defecto si no hay nombre
+    
+    // Divide por espacios y toma la primera letra de cada palabra
+    List<String> words = name.trim().split(RegExp(r'\s+'));
+    String initials = words.map((word) => word[0].toUpperCase()).join();
+    
+    // Si solo tiene una palabra (ej: "LaPerena"), toma las primeras 3 letras
+    return initials.length >= 3 ? initials.substring(0, 3) : initials.padRight(3, 'X');
+  }
 
   void _showSnack(String m, Color c) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m), backgroundColor: c));
