@@ -4,6 +4,7 @@ import 'package:crv_reprosisa/features/bandas_transportadoras/domain/entities/ba
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
+import '../../../bandas_transportadoras/domain/entities/roller.dart';
 import 'package:pdf/pdf.dart';
 
 // Importaciones del proyecto
@@ -40,7 +41,7 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
   final Color headerColor = const Color(0xFFF9FAFB);
   final Color borderColor = const Color(0xFFE5E7EB);
 
-  Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
+Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
     try {
       final type = item.reportType.toUpperCase();
       dynamic model;
@@ -78,9 +79,9 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
           detailModel: model,
           mapper: (m) => VehiculoPdfGenerator.mapDetailModelToPdfData(m),
           generator: (data) => VehiculoPdfGenerator.generateEsqueleto(data),
-        ); // Dentro de _buildPdfBytes de TableInspector.dart
+        );
       } else if (type.contains('CONVEYOR')) {
-        // 1. Preparar datos normalizados
+        // A. Preparar datos normalizados
         final Map<String, dynamic> datosNormalizados = {
           'planta': model.conveyor['mine'] ?? "",
           'area': model.conveyor['area'] ?? "",
@@ -94,13 +95,30 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
           'comentarios': model.report['comentarios'] ?? "",
         };
 
-        // 2. Mapear secciones
+        // B. Mapear secciones
         final sections = await _mapAnswersToSections(model.answers);
 
-        // 3. Generar
+        // C. Mapear rodillos desde el modelo (Asegúrate de ajustar 'model.rollers' según tu estructura)
+        final List<Roller> rodillos = (model.rollers as List<dynamic>?)
+            ?.map((r) => Roller(
+                  tableNumber: r.tableNumber,
+                  baseNumber: r.baseNumber,
+                  isLeft: r.isLeft,
+                  isCenter: r.isCenter,
+                  isRight: r.isRight,
+                  isImpact: r.isImpact,
+                  isReturn: r.isReturn,
+                  isTriple: r.isTriple,
+                  isSelfAligning: r.isSelfAligning,
+                  observation: r.observation,
+                ))
+            .toList() ?? [];
+
+        // D. Generar pasándole los 3 argumentos requeridos
         return await BandaPdfGenerator.generateReport(
           datosNormalizados,
           sections,
+          rodillos, 
         );
       }
       return null;

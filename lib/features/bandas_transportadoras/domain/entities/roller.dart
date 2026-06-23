@@ -8,7 +8,7 @@ class Roller {
   final bool isReturn;
   final bool isTriple;
   final bool isSelfAligning;
-  final String rollerType;
+  final String observation; 
 
   Roller({
     required this.tableNumber,
@@ -20,6 +20,6 @@ class Roller {
     required this.isReturn,
     required this.isTriple,
     required this.isSelfAligning,
-    required this.rollerType,
+    required this.observation,
   });
 }

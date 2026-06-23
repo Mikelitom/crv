@@ -10,9 +10,8 @@ class BandaInspectionState {
   final List<BandaSection> sections;
   final List<Roller> rollers; 
 
-  // NUEVOS CAMPOS
-  final bool isRodilleriaActive; // Controla si se envía el objeto de rodillería
-  final String reportStatus;    // 'COMPLETED' o 'IN_PROGRESS'
+  final bool isRodilleriaActive; 
+  final String reportStatus;    
 
   final Client? selectedClient;
   final Mine? selectedMine;
@@ -36,8 +35,8 @@ class BandaInspectionState {
     this.filteredMines = const [],
     this.sections = const [],
     this.rollers = const [],
-    this.isRodilleriaActive = false, // Inicialmente desactivado
-    this.reportStatus = 'IN_PROGRESS', // Inicialmente en progreso
+    this.isRodilleriaActive = false,
+    this.reportStatus = 'IN_PROGRESS',
     this.selectedClient,
     this.selectedMine,
     required this.inspectionDate,
@@ -60,6 +59,7 @@ class BandaInspectionState {
       allMines: const [],
       filteredMines: const [],
       sections: const [],
+      // Se añade observation: '' al inicializar los 8 rodillos
       rollers: List.generate(8, (index) => Roller(
         tableNumber: index + 1,
         baseNumber: 0,
@@ -70,7 +70,7 @@ class BandaInspectionState {
         isReturn: false,
         isTriple: false,
         isSelfAligning: false,
-        rollerType: '',
+        observation: '', 
       )),
       isRodilleriaActive: false,
       reportStatus: 'IN_PROGRESS',

@@ -86,27 +86,22 @@ class BandaRepositoryImpl implements BandaRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, String>> createBandaReport(
-    Map<String, dynamic> reportData,
-  ) async {
-    try {
-      final id = await dataSource.saveBandaReport(reportData);
-      return Right(id);
-    } catch (e, s) {
-      print("REPORT DATA COMPLETO:");
-      print(reportData);
-      print("ERROR EN CREATE REPORT: $e");
-      print(s);
-      try {
-        await local.saveOfflineReport(reportData);
-
-        return const Right(
-          'Reporte guardado localmente. Pendiente de sincronizacion.'
-        );
-      } catch (e) {
-        return Left(ServerFailure("Error al guardar reporte de banda"));
-      }
+ @override
+Future<Either<Failure, String>> createBandaReport(Map<String, dynamic> reportData) async {
+  try {
+    final id = await dataSource.saveBandaReport(reportData);
+    
+    // VALIDACIÓN CRÍTICA: Asegúrate de que el id no sea nulo o un mensaje de error
+    if (id.isEmpty || id.toLowerCase().contains("error")) {
+      return Left(ServerFailure("Respuesta inesperada del servidor: $id"));
     }
+    
+    return Right(id);
+  } catch (e) {
+    // Aquí es donde verás el error real en tu consola (ej: 400 Bad Request)
+    print("LOG DE ERROR DETALLADO: $e");
+    return Left(ServerFailure("Error al guardar: ${e.toString()}"));
+  }
+
   }
 }

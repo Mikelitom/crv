@@ -63,23 +63,29 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
     _showSnack("Selecciona cliente y mina antes de continuar", Colors.orange);
     return;
   }
+  
   setState(() => _isSaving = true);
   notifier.setReportStatus(esFinalizar ? "COMPLETED" : "IN_PROGRESS");
 
   try {
     final List<Map<String, dynamic>> answers = [];
 
+    // --- FILTRADO ESTRICTO DE RESPUESTAS ---
     for (var section in state.sections) {
       for (var component in section.components) {
+        // Solo incluimos IDs que realmente pertenecen a este componente
+        final validOptionIds = component.options.map((o) => o.id).toSet();
+        
         final fixedIds = component.selectedOptionIds
-            .where((val) => component.options.any((o) => o.id == val))
+            .where((val) => validOptionIds.contains(val))
             .toList();
             
         final customLabels = component.selectedOptionIds
-            .where((val) => !component.options.any((o) => o.id == val))
+            .where((val) => !validOptionIds.contains(val))
             .toList();
 
-        if (fixedIds.isEmpty && customLabels.isEmpty) continue;
+        // Si no hay nada seleccionado, no añadimos este componente al reporte
+        if (fixedIds.isEmpty && customLabels.isEmpty && component.observation.isEmpty) continue;
 
         final List<Map<String, String>> evidenceList = [];
         final allFiles = [...component.evidenceBefore, ...component.evidenceAfter];
@@ -95,7 +101,7 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
           );
 
           uploadResult.fold(
-            (l) => print("Error subida: ${l.message}"),
+            (l) => debugPrint("Error subida: ${l.message}"),
             (dto) => evidenceList.add({
               "file_path": dto.filePath,
               "file_type": dto.fileType,
@@ -107,8 +113,8 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
 
         answers.add({
           "accesory_id": component.id,
-          "selected_option_ids": fixedIds,      // IDs limpios
-          "custom_options": customLabels,       // Textos personalizados limpios
+          "selected_option_ids": fixedIds,
+          "custom_options": customLabels,
           "recommended_action": component.observation,
           "dimentions": component.dimentions, 
           "evidences": evidenceList,
@@ -116,29 +122,42 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
       }
     }      
 
-    final rollersData = state.isRodilleriaActive 
-        ? state.rollers.map((r) => {
-            "table_number": r.tableNumber, "base_number": r.baseNumber, "is_left": r.isLeft,
-            "is_center": r.isCenter, "is_right": r.isRight, "is_impact": r.isImpact,
-            "is_return": r.isReturn, "is_triple": r.isTriple, "is_self_aligning": r.isSelfAligning,
-            "roller_type": r.rollerType,
-          }).toList() 
-        : null;
+final List<Map<String, dynamic>> filteredRollers = state.rollers
+    .where((r) => 
+        (r.tableNumber > 0 || r.baseNumber > 0 || 
+         r.isLeft || r.isCenter || r.isRight || 
+         r.isImpact || r.isReturn || r.observation.isNotEmpty)
+    )
+    .map((r) => {
+        "table_number": r.tableNumber, 
+        "base_number": r.baseNumber, 
+        "is_left": r.isLeft ? 1 : 0,
+        "is_center": r.isCenter ? 1 : 0,
+        "is_right": r.isRight ? 1 : 0,
+        "is_impact": r.isImpact ? 1 : 0,
+        "is_return": r.isReturn ? 1 : 0,
+        "is_triple": r.isTriple ? 1 : 0,
+        "is_self_aligning": r.isSelfAligning ? 1 : 0,
+        "observation": r.observation
+    })
+    .toList();
+
+final rollersData = (state.isRodilleriaActive && filteredRollers.isNotEmpty) 
+    ? {
+        "roller_notes": state.generalComments ?? "",
+        "rollers": filteredRollers // <- Solo enviamos los que pasaron el filtro
+      } 
+    : null;
       
-      // 1. Formatear la fecha a DDMMAA
-      final now = DateTime.now();
-      final formattedDate = "${now.day.toString().padLeft(2, '0')}${now.month.toString().padLeft(2, '0')}${now.year.toString().substring(2)}";
-      
-      // 2. Extraer las iniciales correctamente usando ${}
-      // Aquí estamos llamando a la función y pasando el nombre de la mina de forma segura
-      final mineName = state.selectedMine?.name ?? "";
-      final plantaInitials = "P${_getInitials(mineName)}"; 
-      
-      final areaInitial = state.area.isNotEmpty ? state.area[0].toUpperCase() : "X";
-      final conveyorId = state.conveyor.isNotEmpty ? state.conveyor : "000";
-      
-      // 3. Construir el folio
-      final String folio = "$plantaInitials$formattedDate$areaInitial$conveyorId";
+    // --- VALIDACIÓN DE COMPLETITUD ---
+    if (esFinalizar && answers.isEmpty && filteredRollers.isEmpty) {
+      _showSnack("El reporte está vacío. Agrega datos antes de finalizar.", Colors.orange);
+      setState(() => _isSaving = false);
+      return;
+    }
+
+    final now = DateTime.now();
+    final folio = "P${_getInitials(state.selectedMine?.name ?? "")}${now.day.toString().padLeft(2, '0')}${now.month.toString().padLeft(2, '0')}${now.year.toString().substring(2)}${state.area.isNotEmpty ? state.area[0].toUpperCase() : "X"}${state.conveyor.isNotEmpty ? state.conveyor : "000"}";
 
     final reportRequest = {
       "conveyor": state.conveyor,
@@ -154,13 +173,15 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
       "conveyor_responsible": state.conveyorResponsible,
       "folio": folio,
       "answers": answers,
-      "rollers": rollersData,
+      "rollers_data": rollersData,
     };
 
     final result = await ref.read(createBandaReportUseCaseProvider).call(reportRequest);
     
     result.fold(
-      (f) => _showSnack("Error al guardar: ${f.message}", Colors.red),
+      (failure) {
+        _showSnack("Error: ${failure.message}", Colors.red);
+      },
       (id) {
         _showSnack("¡Reporte guardado con éxito!", Colors.green);
         ref.read(bandaInspectionProvider.notifier).initialLoad();
@@ -168,13 +189,13 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
       }
     );
 
-  } catch (e) {
+  } catch (e, stacktrace) {
+    debugPrint("Error inesperado: $e\n$stacktrace");
     _showSnack("Error inesperado: $e", Colors.red);
   } finally {
     if (mounted) setState(() => _isSaving = false);
   }
 }
-
   String _getInitials(String name) {
     if (name.isEmpty) return "GEN"; // Valor por defecto si no hay nombre
     
@@ -203,6 +224,7 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
       'material': "${state.material} / ${state.granulometry}",
       'elaboro': state.elaboro,
       'presentar': state.presentTo,
+      'comentarios': state.generalComments, 
     };
 
     showDialog(
@@ -210,9 +232,12 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
       barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
-
-    try {
-      final pdfBytes = await BandaPdfGenerator.generateReport(generalData, state.sections);
+try {
+      final pdfBytes = await BandaPdfGenerator.generateReport(
+        generalData, 
+        state.sections, 
+        state.rollers // <--- Este es el tercer argumento que faltaba
+      );
       if (context.mounted) {
         Navigator.pop(context); 
         Navigator.push(context, MaterialPageRoute(builder: (context) => Scaffold(

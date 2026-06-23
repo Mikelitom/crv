@@ -11,7 +11,7 @@ class RollerModel extends Roller {
     required super.isReturn,
     required super.isTriple,
     required super.isSelfAligning,
-    required super.rollerType,
+    required super.observation, // Campo nuevo
   });
 
   factory RollerModel.fromJson(Map<String, dynamic> json) => RollerModel(
@@ -24,7 +24,7 @@ class RollerModel extends Roller {
     isReturn: json['is_return'] ?? false,
     isTriple: json['is_triple'] ?? false,
     isSelfAligning: json['is_self_aligning'] ?? false,
-    rollerType: json['roller_type'] ?? '',
+    observation: json['observation'] ?? '', // Mapeo del campo nuevo
   );
 
   Map<String, dynamic> toJson() => {
@@ -37,6 +37,6 @@ class RollerModel extends Roller {
     'is_return': isReturn,
     'is_triple': isTriple,
     'is_self_aligning': isSelfAligning,
-    'roller_type': rollerType,
+    'observation': observation, // Serialización del campo nuevo
   };
 }

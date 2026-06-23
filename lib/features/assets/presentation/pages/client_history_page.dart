@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import 'package:printing/printing.dart';
-
+import '../../../bandas_transportadoras/domain/entities/roller.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/conveyor_history_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 import 'package:crv_reprosisa/features/assets/presentation/widgets/client_history_card.dart';
@@ -123,20 +123,36 @@ selectedOptionIds: [a.option.label.toString()],
             reportDetail.report['comentarios'] ?? "",
       };
 
-      final sections =
-          await _mapAnswersToSections(reportDetail.answers);
+      final sections = await _mapAnswersToSections(reportDetail.answers);
 
-      return BandaPdfGenerator.generateReport(
+      // Mapear rodillos desde el reporte
+      final List<Roller> rodillos = (reportDetail.report['rollers'] as List<dynamic>?)
+          ?.map((r) => Roller(
+                tableNumber: r['table_number'] ?? 0,
+                baseNumber: r['base_number'] ?? 0,
+                isLeft: r['is_left'] ?? false,
+                isCenter: r['is_center'] ?? false,
+                isRight: r['is_right'] ?? false,
+                isImpact: r['is_impact'] ?? false,
+                isReturn: r['is_return'] ?? false,
+                isTriple: r['is_triple'] ?? false,
+                isSelfAligning: r['is_self_aligning'] ?? false,
+                observation: r['observation'] ?? '',
+              ))
+          .toList() ?? [];
+
+      // Generar pasando los 3 argumentos
+      return await BandaPdfGenerator.generateReport(
         datosNormalizados,
         sections,
+        rodillos, // <--- Tercer argumento añadido
       );
     } catch (e) {
       debugPrint("Error generando PDF: $e");
       return null;
     }
   }
-
-  Future<void> _downloadReport(String versionId, String folio) async {
+Future<void> _downloadReport(String versionId, String folio) async {
     try {
       final reportDetail = await ref
           .read(conveyorReportDetailProvider.notifier)
@@ -173,12 +189,29 @@ selectedOptionIds: [a.option.label.toString()],
             reportDetail.report['comentarios'] ?? "",
       };
 
-      final sections =
-          await _mapAnswersToSections(reportDetail.answers);
+      final sections = await _mapAnswersToSections(reportDetail.answers);
 
+      // Mapeo de rodillos desde el detalle del reporte
+      final List<Roller> rodillos = (reportDetail.report['rollers'] as List<dynamic>?)
+          ?.map((r) => Roller(
+                tableNumber: r['table_number'] ?? 0,
+                baseNumber: r['base_number'] ?? 0,
+                isLeft: r['is_left'] ?? false,
+                isCenter: r['is_center'] ?? false,
+                isRight: r['is_right'] ?? false,
+                isImpact: r['is_impact'] ?? false,
+                isReturn: r['is_return'] ?? false,
+                isTriple: r['is_triple'] ?? false,
+                isSelfAligning: r['is_self_aligning'] ?? false,
+                observation: r['observation'] ?? '',
+              ))
+          .toList() ?? [];
+
+      // Generación pasando los 3 argumentos requeridos
       final pdfBytes = await BandaPdfGenerator.generateReport(
         datosNormalizados,
         sections,
+        rodillos, // Tercer argumento añadido
       );
 
       await Printing.sharePdf(
@@ -194,7 +227,6 @@ selectedOptionIds: [a.option.label.toString()],
       }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(clientHistoryProvider);
@@ -255,14 +287,35 @@ selectedOptionIds: [a.option.label.toString()],
 
                 final sections = await _mapAnswersToSections(reportDetail.answers);
                 
-                if (mounted) {
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => ClientPdfViewerPage(
-                      folio: e.key,
-                      pdfGenerator: () => BandaPdfGenerator.generateReport(datosNormalizados, sections), 
-                    ),
-                  ));
-                }
+               if (mounted) {
+  // 1. Mapeo de rodillos desde el reporte cargado
+  final List<Roller> rodillos = (reportDetail.report['rollers'] as List<dynamic>?)
+      ?.map((r) => Roller(
+            tableNumber: r['table_number'] ?? 0,
+            baseNumber: r['base_number'] ?? 0,
+            isLeft: r['is_left'] ?? false,
+            isCenter: r['is_center'] ?? false,
+            isRight: r['is_right'] ?? false,
+            isImpact: r['is_impact'] ?? false,
+            isReturn: r['is_return'] ?? false,
+            isTriple: r['is_triple'] ?? false,
+            isSelfAligning: r['is_self_aligning'] ?? false,
+            observation: r['observation'] ?? '',
+          ))
+      .toList() ?? [];
+
+  Navigator.push(context, MaterialPageRoute(
+    builder: (_) => ClientPdfViewerPage(
+      folio: e.key,
+      // 2. Pasamos los 3 argumentos necesarios: datos, secciones y rodillos
+      pdfGenerator: () => BandaPdfGenerator.generateReport(
+        datosNormalizados, 
+        sections, 
+        rodillos
+      ), 
+    ),
+  ));
+}
               }
             },
             onDownload: (id) => _downloadReport(id, e.key),
