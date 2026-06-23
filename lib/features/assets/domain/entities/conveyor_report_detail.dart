@@ -1,9 +1,12 @@
+// --- Modelos principales ---
+
 class ConveyorReportDetail {
   final Map<String, dynamic> report;
   final Map<String, dynamic> conveyor;
   final Map<String, dynamic> version;
   final Map<String, dynamic> inspector;
   final List<Answer> answers;
+  final List<Roller> rollers; 
 
   ConveyorReportDetail({
     required this.report,
@@ -11,6 +14,7 @@ class ConveyorReportDetail {
     required this.version,
     required this.inspector,
     required this.answers,
+    required this.rollers,
   });
 
   factory ConveyorReportDetail.fromJson(Map<String, dynamic> json) {
@@ -21,8 +25,10 @@ class ConveyorReportDetail {
       inspector: json['inspector'] as Map<String, dynamic>? ?? {},
       answers: (json['answers'] as List<dynamic>?)
               ?.map((a) => Answer.fromJson(a as Map<String, dynamic>))
-              .toList() ??
-          [],
+              .toList() ?? [],
+      rollers: (json['rollers'] as List<dynamic>?) // NUEVO: Mapeo de rodillos
+              ?.map((r) => Roller.fromJson(r as Map<String, dynamic>))
+              .toList() ?? [],
     );
   }
 
@@ -32,8 +38,63 @@ class ConveyorReportDetail {
         'version': version,
         'inspector': inspector,
         'answers': answers.map((a) => a.toMap()).toList(),
+        'rollers': rollers.map((r) => r.toMap()).toList(),
       };
 }
+
+class Roller {
+  final String id;
+  final int tableNumber;
+  final int baseNumber;
+  final bool isLeft;
+  final bool isCenter;
+  final bool isRight;
+  final bool isImpact;
+  final bool isReturn;
+  final bool isTriple;
+  final bool isSelfAligning;
+  final String observation;
+
+  Roller({
+    required this.id, required this.tableNumber, required this.baseNumber,
+    required this.isLeft, required this.isCenter, required this.isRight,
+    required this.isImpact, required this.isReturn, required this.isTriple,
+    required this.isSelfAligning, required this.observation,
+  });
+
+
+  factory Roller.fromJson(Map<String, dynamic> json) {
+    return Roller(
+      id: json['id'] as String? ?? '',
+      tableNumber: (json['table_number'] as num?)?.toInt() ?? 0,
+      baseNumber: (json['base_number'] as num?)?.toInt() ?? 0,
+      isLeft: json['is_left'] ?? false,
+      isCenter: json['is_center'] ?? false,
+      isRight: json['is_right'] ?? false,
+      isImpact: json['is_impact'] ?? false,
+      isReturn: json['is_return'] ?? false,
+      isTriple: json['is_triple'] ?? false,
+      isSelfAligning: json['is_self_aligning'] ?? false,
+      observation: json['observation'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'table_number': tableNumber,
+        'base_number': baseNumber,
+        'is_left': isLeft,
+        'is_center': isCenter,
+        'is_right': isRight,
+        'is_impact': isImpact,
+        'is_return': isReturn,
+        'is_triple': isTriple,
+        'is_self_aligning': isSelfAligning,
+        'observation': observation,
+      };
+}
+
+// --- Resto de tus clases (Answer, Accessory, etc. permanecen igual) ---
 
 class Answer {
   final String answerId;
@@ -64,8 +125,7 @@ class Answer {
       dimentions: (json['dimentions'] as num?)?.toDouble() ?? 0.0,
       evidences: (json['evidences'] as List<dynamic>?)
               ?.map((e) => Evidence.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+              .toList() ?? [],
     );
   }
 

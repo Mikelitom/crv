@@ -623,14 +623,11 @@ static pw.Widget _buildNestedTable(List<BandaComponent> components, {bool isName
     }).toList(),
   );
 }
-  static pw.Widget _buildOptionsInRow(
+static pw.Widget _buildOptionsInRow(
     List<BandaOption> opcionesFijas,
-    List<String> selectedIds, // IDs seleccionados
-    List<String> customOptions, // Nuevas opciones custom (texto)
+    List<String> selectedIds, // Aquí recibes lo que enviaste en _mapAnswersToSections
+    List<String> customOptions,
   ) {
-    final allLabels = opcionesFijas.map((e) => e.label.trim()).toList();
-    final allIds = opcionesFijas.map((e) => e.id).toList();
-
     return pw.Wrap(
       spacing: 10,
       runSpacing: 2,
@@ -638,7 +635,11 @@ static pw.Widget _buildNestedTable(List<BandaComponent> components, {bool isName
         // 1. Renderizar opciones fijas
         ...List.generate(opcionesFijas.length, (index) {
           final opt = opcionesFijas[index];
-          final isSelected = selectedIds.contains(opt.id);
+          
+          // CAMBIO: Comparamos contra el ID o el LABEL para mayor seguridad
+          final isSelected = selectedIds.contains(opt.id) || 
+                             selectedIds.contains(opt.label) ||
+                             selectedIds.contains(opt.value);
 
           return pw.Text(
             isSelected ? "[X] ${opt.label}" : "[ ] ${opt.label}",
@@ -665,7 +666,7 @@ static pw.Widget _buildNestedTable(List<BandaComponent> components, {bool isName
         }),
       ],
     );
-  } 
+  }
 
 static pw.Widget _buildMiniEvidences(BandaComponent c) {
   final allEvidences = [...c.evidenceBefore, ...c.evidenceAfter];

@@ -4,14 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import 'package:printing/printing.dart';
-import '../../../bandas_transportadoras/domain/entities/roller.dart';
+
 import 'package:crv_reprosisa/features/assets/presentation/providers/conveyor_history_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 import 'package:crv_reprosisa/features/assets/presentation/widgets/client_history_card.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/client_history.dart';
-import 'package:crv_reprosisa/features/assets/domain/entities/conveyor_report_detail.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/conveyor_report_detail.dart' hide Roller;
 import 'package:crv_reprosisa/features/assets/presentation/providers/conveyor_report_detail_provider.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/domain/entities/banda_template.dart';
+import 'package:crv_reprosisa/features/bandas_transportadoras/domain/entities/roller.dart';
 import 'package:crv_reprosisa/core/utils/banda_pdf_generator.dart'; 
 import 'client_pdf_viewer_page.dart'; 
 
@@ -43,13 +44,17 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
     return grouped;
   }
 
-  Future<List<BandaSection>> _mapAnswersToSections(List<Answer> answers) async {
+Future<List<BandaSection>> _mapAnswersToSections(List<Answer> answers) async {
     final Map<String, List<BandaComponent>> sectionsMap = {};
     
     for (var a in answers) {
       if (!sectionsMap.containsKey(a.section.name)) {
         sectionsMap[a.section.name] = [];
       }
+
+      // --- DEBUG ESTRATÉGICO ---
+      // Esto te dirá en la consola si el dato viene vacío desde el servidor
+      debugPrint("Procesando: ${a.accessory.name} | Observación recibida: '${a.recommendedAction}'");
 
       final List<EvidenceFile> evFiles = [];
       for (var ev in a.evidences) {
@@ -76,9 +81,9 @@ class _ClientHistoryPageState extends ConsumerState<ClientHistoryPage> {
       sectionsMap[a.section.name]!.add(BandaComponent(
         id: a.answerId, 
         name: a.accessory.name,
-        observation: a.recommendedAction.isNotEmpty ? a.recommendedAction : "",      
+        observation: (a.recommendedAction.isNotEmpty) ? a.recommendedAction : "N/A",      
         options: [],
-selectedOptionIds: [a.option.label.toString()],
+selectedOptionIds: [a.option.id.toString(), a.option.label.toString()],
         dimentions: a.dimentions > 0 ? a.dimentions.toString() : '',
         evidenceBefore: evFiles,
         evidenceAfter: [],
@@ -92,7 +97,7 @@ selectedOptionIds: [a.option.label.toString()],
     )).toList();
   }
 
-  Future<Uint8List?> _generatePdf(String versionId) async {
+Future<Uint8List?> _generatePdf(String versionId) async {
     try {
       final reportDetail = await ref
           .read(conveyorReportDetailProvider.notifier)
@@ -125,27 +130,24 @@ selectedOptionIds: [a.option.label.toString()],
 
       final sections = await _mapAnswersToSections(reportDetail.answers);
 
-      // Mapear rodillos desde el reporte
-      final List<Roller> rodillos = (reportDetail.report['rollers'] as List<dynamic>?)
-          ?.map((r) => Roller(
-                tableNumber: r['table_number'] ?? 0,
-                baseNumber: r['base_number'] ?? 0,
-                isLeft: r['is_left'] ?? false,
-                isCenter: r['is_center'] ?? false,
-                isRight: r['is_right'] ?? false,
-                isImpact: r['is_impact'] ?? false,
-                isReturn: r['is_return'] ?? false,
-                isTriple: r['is_triple'] ?? false,
-                isSelfAligning: r['is_self_aligning'] ?? false,
-                observation: r['observation'] ?? '',
-              ))
-          .toList() ?? [];
+      final List<dynamic> rawRodillos = reportDetail.rollers;
+      final List<Roller> rodillos = rawRodillos.map((r) => Roller(
+        tableNumber: r.tableNumber,
+        baseNumber: r.baseNumber,
+        isLeft: r.isLeft,
+        isCenter: r.isCenter,
+        isRight: r.isRight,
+        isImpact: r.isImpact,
+        isReturn: r.isReturn,
+        isTriple: r.isTriple,
+        isSelfAligning: r.isSelfAligning,
+        observation: r.observation,
+      )).toList();
 
-      // Generar pasando los 3 argumentos
       return await BandaPdfGenerator.generateReport(
         datosNormalizados,
         sections,
-        rodillos, // <--- Tercer argumento añadido
+        rodillos, 
       );
     } catch (e) {
       debugPrint("Error generando PDF: $e");
@@ -191,27 +193,26 @@ Future<void> _downloadReport(String versionId, String folio) async {
 
       final sections = await _mapAnswersToSections(reportDetail.answers);
 
-      // Mapeo de rodillos desde el detalle del reporte
-      final List<Roller> rodillos = (reportDetail.report['rollers'] as List<dynamic>?)
-          ?.map((r) => Roller(
-                tableNumber: r['table_number'] ?? 0,
-                baseNumber: r['base_number'] ?? 0,
-                isLeft: r['is_left'] ?? false,
-                isCenter: r['is_center'] ?? false,
-                isRight: r['is_right'] ?? false,
-                isImpact: r['is_impact'] ?? false,
-                isReturn: r['is_return'] ?? false,
-                isTriple: r['is_triple'] ?? false,
-                isSelfAligning: r['is_self_aligning'] ?? false,
-                observation: r['observation'] ?? '',
-              ))
-          .toList() ?? [];
+      // CORRECCIÓN: Convertimos los rodillos que vienen del API
+      // al tipo 'Roller' que espera el generador, evitando conflictos de tipos.
+      final List<Roller> rodillos = reportDetail.rollers.map((r) => Roller(
+        tableNumber: r.tableNumber,
+        baseNumber: r.baseNumber,
+        isLeft: r.isLeft,
+        isCenter: r.isCenter,
+        isRight: r.isRight,
+        isImpact: r.isImpact,
+        isReturn: r.isReturn,
+        isTriple: r.isTriple,
+        isSelfAligning: r.isSelfAligning,
+        observation: r.observation,
+      )).toList();
 
       // Generación pasando los 3 argumentos requeridos
       final pdfBytes = await BandaPdfGenerator.generateReport(
         datosNormalizados,
         sections,
-        rodillos, // Tercer argumento añadido
+        rodillos, 
       );
 
       await Printing.sharePdf(
@@ -227,7 +228,8 @@ Future<void> _downloadReport(String versionId, String folio) async {
       }
     }
   }
-  @override
+
+@override
   Widget build(BuildContext context) {
     final state = ref.watch(clientHistoryProvider);
     final filtered = state.history.where((h) => 
@@ -287,35 +289,32 @@ Future<void> _downloadReport(String versionId, String folio) async {
 
                 final sections = await _mapAnswersToSections(reportDetail.answers);
                 
-               if (mounted) {
-  // 1. Mapeo de rodillos desde el reporte cargado
-  final List<Roller> rodillos = (reportDetail.report['rollers'] as List<dynamic>?)
-      ?.map((r) => Roller(
-            tableNumber: r['table_number'] ?? 0,
-            baseNumber: r['base_number'] ?? 0,
-            isLeft: r['is_left'] ?? false,
-            isCenter: r['is_center'] ?? false,
-            isRight: r['is_right'] ?? false,
-            isImpact: r['is_impact'] ?? false,
-            isReturn: r['is_return'] ?? false,
-            isTriple: r['is_triple'] ?? false,
-            isSelfAligning: r['is_self_aligning'] ?? false,
-            observation: r['observation'] ?? '',
-          ))
-      .toList() ?? [];
+                if (mounted) {
+                  // Mapeamos los rodillos del modelo al tipo esperado por el generador
+                  final List<Roller> rodillos = reportDetail.rollers.map((r) => Roller(
+                    tableNumber: r.tableNumber,
+                    baseNumber: r.baseNumber,
+                    isLeft: r.isLeft,
+                    isCenter: r.isCenter,
+                    isRight: r.isRight,
+                    isImpact: r.isImpact,
+                    isReturn: r.isReturn,
+                    isTriple: r.isTriple,
+                    isSelfAligning: r.isSelfAligning,
+                    observation: r.observation,
+                  )).toList();
 
-  Navigator.push(context, MaterialPageRoute(
-    builder: (_) => ClientPdfViewerPage(
-      folio: e.key,
-      // 2. Pasamos los 3 argumentos necesarios: datos, secciones y rodillos
-      pdfGenerator: () => BandaPdfGenerator.generateReport(
-        datosNormalizados, 
-        sections, 
-        rodillos
-      ), 
-    ),
-  ));
-}
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => ClientPdfViewerPage(
+                      folio: e.key,
+                      pdfGenerator: () => BandaPdfGenerator.generateReport(
+                        datosNormalizados, 
+                        sections, 
+                        rodillos // Tercer argumento añadido
+                      ), 
+                    ),
+                  ));
+                }
               }
             },
             onDownload: (id) => _downloadReport(id, e.key),
