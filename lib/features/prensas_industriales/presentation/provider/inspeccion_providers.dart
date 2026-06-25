@@ -1,4 +1,5 @@
 import 'package:crv_reprosisa/core/database/database_provider.dart';
+import 'package:crv_reprosisa/core/sync/sync_providers.dart';
 import 'package:crv_reprosisa/features/prensas_industriales/data/datasource/press_inspection_local_datasource.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/adapters.dart';
@@ -39,6 +40,7 @@ final pressSyncServiceProvider = Provider<PressSyncService>((ref) {
   return PressSyncService(
     local: ref.read(inspectionLocalDataSourceProvider),
     remote: ref.read(inspeccionDataSourceProvider),
+    rateLimiter: ref.read(globalRateLimiterProvider)
   );
 });
 
