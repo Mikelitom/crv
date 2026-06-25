@@ -95,12 +95,12 @@ class Roller {
 }
 
 // --- Resto de tus clases (Answer, Accessory, etc. permanecen igual) ---
-
 class Answer {
   final String answerId;
   final ReportSection section;
   final Accessory accessory;
-  final ReportOption option;
+  final ReportOption? option; // Ahora es opcional porque puede ser null
+  final String? customOption; // NUEVO: Campo para opciones personalizadas
   final String recommendedAction;
   final double dimentions;
   final List<Evidence> evidences;
@@ -109,7 +109,8 @@ class Answer {
     required this.answerId,
     required this.section,
     required this.accessory,
-    required this.option,
+    this.option, 
+    this.customOption, 
     required this.recommendedAction,
     required this.dimentions,
     required this.evidences,
@@ -120,7 +121,9 @@ class Answer {
       answerId: json['answer_id'] as String? ?? '',
       section: ReportSection.fromJson(json['section'] as Map<String, dynamic>? ?? {}),
       accessory: Accessory.fromJson(json['accesory'] as Map<String, dynamic>? ?? {}),
-      option: ReportOption.fromJson(json['option'] as Map<String, dynamic>? ?? {}),
+      // Si option es null, lo dejamos como null
+      option: json['option'] != null ? ReportOption.fromJson(json['option'] as Map<String, dynamic>) : null,
+      customOption: json['custom_option'] as String?, // NUEVO: Leer custom_option
       recommendedAction: json['recommended_action'] as String? ?? '',
       dimentions: (json['dimentions'] as num?)?.toDouble() ?? 0.0,
       evidences: (json['evidences'] as List<dynamic>?)
@@ -133,7 +136,8 @@ class Answer {
         'answer_id': answerId,
         'section': section.toMap(),
         'accesory': accessory.toMap(),
-        'option': option.toMap(),
+        'option': option?.toMap(),
+        'custom_option': customOption,
         'recommended_action': recommendedAction,
         'dimentions': dimentions,
         'evidences': evidences.map((e) => e.toMap()).toList(),

@@ -215,36 +215,54 @@ Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
     );
   }
 
-  Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
-    final Map<String, List<BandaComponent>> sectionsMap = {};
+Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
+  final Map<String, List<BandaComponent>> sectionsMap = {};
+
+  for (var a in answers) {
+    // 1. Acceso seguro a las propiedades (funciona tanto para objetos como si 'a' fuera Map)
+    final String sectionName = (a.section?.name ?? "Sin Sección");
+    final String accessoryName = (a.accessory?.name ?? "Accesorio");
     
-    for (var a in answers) {
-      // Si 'a' es de tipo Answer (la entidad), asegúrate de que tenga los campos
-      // Si viene de un JSON, recuerda castearlo correctamente.
-      final String sectionName = a.section.name ?? "Sin Sección";
-      
-      if (!sectionsMap.containsKey(sectionName)) {
-        sectionsMap[sectionName] = [];
-      }
-      
-      sectionsMap[sectionName]!.add(BandaComponent(
-        id: a.answerId, 
-        name: a.accessory.name, // Asegúrate que 'accessory' sea el nombre correcto
-        observation: a.recommendedAction ?? "",      
-        options: [], // Si necesitas opciones, mapealas aquí igual que en el ejemplo
-selectedOptionIds: [a.option.label.toString()],
-        dimentions: a.dimentions > 0 ? a.dimentions.toString() : '',
-        evidenceBefore: [], // Mapea tus evidencias aquí
-        evidenceAfter: [],
-      ));
+    if (!sectionsMap.containsKey(sectionName)) {
+      sectionsMap[sectionName] = [];
     }
 
-    return sectionsMap.entries.map((e) => BandaSection(
-      id: e.key.hashCode.toString(), 
-      name: e.key, 
-      components: e.value
-    )).toList();
+    final List<BandaOption> opcionesFijas = BandaPdfGenerator.obtenerOpcionesFijasParaComponente(accessoryName);
+    final String labelSeleccionado = (a.option?.label ?? a.customOption ?? "").toString().trim();
+    final bool esCustom = a.option == null || !opcionesFijas.any((o) => 
+        o.label.trim().toLowerCase() == labelSeleccionado.toLowerCase()
+    );
+
+    // 4. Mapeo al BandaComponent
+    sectionsMap[sectionName]!.add(BandaComponent(
+      id: a.answerId?.toString() ?? "0",
+      name: accessoryName,
+      observation: (a.recommendedAction ?? "").trim(),
+      options: opcionesFijas, 
+      
+      // Enviamos IDs, Label y Value normalizados para el match en el PDF
+      selectedOptionIds: a.option != null 
+          ? [
+              a.option!.id.toString().trim().toLowerCase(),
+              a.option!.label.toString().trim().toLowerCase(),
+              a.option!.value.toString().trim().toLowerCase()
+            ]
+          : [], 
+      
+      customOptions: (esCustom && labelSeleccionado.isNotEmpty) ? [labelSeleccionado] : [], 
+      
+      dimentions: a.dimentions > 0 ? a.dimentions.toString() : '',
+      evidenceBefore: [], 
+      evidenceAfter: [],
+    ));
   }
+
+  return sectionsMap.entries.map((e) => BandaSection(
+    id: e.key.hashCode.toString(),
+    name: e.key,
+    components: e.value,
+  )).toList();
+}
 
   Widget _buildDesktopTable(double maxWidth) {
     return Container(

@@ -8,7 +8,7 @@ class BandaPdfGenerator {
   static final _kBorderColor = PdfColors.black;
   static final _kGreyHeader = PdfColor.fromHex("#D3D3D3");
 
-  static List<BandaOption> _obtenerOpcionesFijasParaComponente(
+  static List<BandaOption> obtenerOpcionesFijasParaComponente(
     String componentName,
   ) {
     final name = componentName.trim().toLowerCase();
@@ -354,12 +354,10 @@ class BandaPdfGenerator {
   }
 
   static Map<String, dynamic> mapDetailModelToPdfData(dynamic model) {
-    // 1. Construimos las secciones dinámicamente desde model.answers
     final Map<String, List<BandaComponent>> grouped = {};
     final Map<String, String> sectionIdMap = {};
 
     for (var ans in model.answers) {
-      // ACCESO CORREGIDO: Usamos notación de punto (.) porque son objetos, no Mapas
       final sectionId = ans.section.id?.toString() ?? 'sin_id';
       final sectionName = ans.section.name?.toString() ?? 'Sin Sección';
 
@@ -368,17 +366,21 @@ class BandaPdfGenerator {
         sectionIdMap[sectionName] = sectionId;
       }
 
+      final componentName = ans.accessory.name ?? '';
+      final List<BandaOption> opcionesFijas =
+          obtenerOpcionesFijasParaComponente(componentName);
       grouped[sectionName]!.add(
         BandaComponent(
           id: ans.answerId,
-          // ACCESO CORREGIDO: 'accessory' (con doble c) es el nombre de tu modelo
-          name: ans.accessory.name ?? 'Sin nombre',
-          // ACCESO CORREGIDO: usamos .option.id
-          selectedOptionIds: [ans.option.label.toString()],
+          name: componentName,
+          options: opcionesFijas,
+          selectedOptionIds: [
+            ans.option.id.toString(),
+            ans.option.label.toString(),
+            ans.option.value.toString(),
+          ],
           observation: ans.recommendedAction ?? '',
-          options: [],
-          evidenceBefore:
-              [], // Puedes mapear ans.evidences aquí si lo necesitas
+          evidenceBefore: [],
           evidenceAfter: [],
         ),
       );
@@ -410,16 +412,16 @@ class BandaPdfGenerator {
     };
   }
 
- static Future<Uint8List> generateEsqueleto(Map<String, dynamic> data) async {
-  final List<Roller> rodillos = data['rodillos'] ?? []; 
-  final List<BandaSection> sections = data['sections'] as List<BandaSection>;
-  
-  return await generateReport(data, sections, rodillos); 
-}
-  static Future<Uint8List> generateReport(
+  static Future<Uint8List> generateEsqueleto(Map<String, dynamic> data) async {
+    final List<Roller> rodillos = data['rodillos'] ?? [];
+    final List<BandaSection> sections = data['sections'] as List<BandaSection>;
+
+    return await generateReport(data, sections, rodillos);
+  }
+static Future<Uint8List> generateReport(
     Map<String, dynamic> data,
     List<BandaSection> sections,
-    List<Roller> rodillos, 
+    List<Roller> rodillos,
   ) async {
     final pdf = pw.Document();
     pw.ImageProvider? fullHeaderImg;
@@ -436,15 +438,99 @@ class BandaPdfGenerator {
         margin: const pw.EdgeInsets.all(15),
         header: (context) => _buildFullHeader(fullHeaderImg),
         build: (context) => [
+          // 1. Información General
           _buildInfoGrid(data),
           pw.SizedBox(height: 5),
+          
+          // 2. Tabla Resumen (la que ya tenías)
           _buildMainTable(sections),
+          
           pw.SizedBox(height: 10),
-_buildTechnicalFooter(data, rodillos), 
+          
+          // 3. NUEVO: Desglose por Secciones detallado
+          pw.Text("DESGLOSE DETALLADO POR SECCIONES", 
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8)),
+          pw.SizedBox(height: 5),
+          _buildDesglosePorSecciones(sections),
+          
+          pw.SizedBox(height: 10),
+          
+          // 4. Pie técnico (Rodillos y Comentarios)
+          _buildTechnicalFooter(data, rodillos),
         ],
       ),
     );
     return pdf.save();
+  }
+  static pw.Widget _buildDesglosePorSecciones(List<BandaSection> sections) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: sections.map((section) {
+        return pw.Container(
+          margin: const pw.EdgeInsets.only(bottom: 10),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Título de la Sección (Encabezado)
+              pw.Container(
+                color: _kGreyHeader,
+                width: double.infinity,
+                padding: const pw.EdgeInsets.all(5),
+                child: pw.Text("SECCIÓN: ${section.name.toUpperCase()}", 
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+              ),
+              
+              // Tabla detallada
+              pw.Table(
+                border: pw.TableBorder.all(width: 0.5),
+                columnWidths: {
+                  0: const pw.FlexColumnWidth(1.5), // Accesorio
+                  1: const pw.FlexColumnWidth(2.0), // Opciones
+                  2: const pw.FlexColumnWidth(1.0), // Dimensión
+                  3: const pw.FlexColumnWidth(2.0), // Observaciones
+                  4: const pw.FlexColumnWidth(2.0), // Evidencias
+                },
+                children: [
+                  // Header de la tabla de desglose
+                  pw.TableRow(decoration: pw.BoxDecoration(color: PdfColors.grey200), children: [
+                    _cell("ACCESORIO", bold: true),
+                    _cell("OPCIONES", bold: true),
+                    _cell("DIM.", bold: true),
+                    _cell("OBSERVACIÓN", bold: true),
+                    _cell("EVIDENCIAS", bold: true),
+                  ]),
+                  
+                  // Filas de datos
+                  ...section.components.map((c) => pw.TableRow(children: [
+                    pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(c.name, style: const pw.TextStyle(fontSize: 7))),
+                    pw.Padding(padding: const pw.EdgeInsets.all(2), child: _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions)),
+                    _cell(c.dimentions),
+                    pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(c.observation, style: const pw.TextStyle(fontSize: 7))),
+                    _buildEvidenciaConAccesorio(c), // Nueva función abajo
+                  ])),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // Nueva función para mostrar la imagen pequeña junto al nombre
+  static pw.Widget _buildEvidenciaConAccesorio(BandaComponent c) {
+    final allEvidences = [...c.evidenceBefore, ...c.evidenceAfter];
+    if (allEvidences.isEmpty) return pw.SizedBox();
+
+    return pw.Wrap(
+      spacing: 5,
+      runSpacing: 5,
+      children: allEvidences.map((e) => pw.Container(
+        width: 30,
+        height: 30,
+        child: pw.Image(pw.MemoryImage(e.bytes), fit: pw.BoxFit.cover),
+      )).toList(),
+    );
   }
 
   static pw.Widget _buildFullHeader(pw.ImageProvider? img) {
@@ -562,239 +648,248 @@ _buildTechnicalFooter(data, rodillos),
     );
   }
 
-static pw.Widget _buildMainTable(List<BandaSection> sections) {
-  return pw.Table(
-    border: pw.TableBorder.all(width: 0.5, color: _kBorderColor),
-    columnWidths: {
-      0: const pw.FlexColumnWidth(0.6),
-      1: const pw.FlexColumnWidth(1.2),
-      2: const pw.FlexColumnWidth(2.5), // Esta columna ahora ocupa el mayor espacio
-      3: const pw.FlexColumnWidth(1.0),
-      4: const pw.FlexColumnWidth(0.6),
-    },
-    children: [
-      pw.TableRow(
-        decoration: pw.BoxDecoration(color: _kGreyHeader),
-        children: [
-          _cell("SECCION", bold: true),
-          _cell("ACCESORIOS", bold: true),
-          _cell("OBSERVACIONES", bold: true),
-          _cell("RECOMENDACION", bold: true),
-          _cell("EVID.", bold: true),
-        ],
-      ),
-      ...sections.map((s) {
+  static pw.Widget _buildMainTable(List<BandaSection> sections) {
+    return pw.Table(
+      border: pw.TableBorder.all(width: 0.5, color: _kBorderColor),
+      columnWidths: {
+        0: const pw.FlexColumnWidth(0.6),
+        1: const pw.FlexColumnWidth(1.2),
+        2: const pw.FlexColumnWidth(
+          2.5,
+        ), // Esta columna ahora ocupa el mayor espacio
+        3: const pw.FlexColumnWidth(1.0),
+        4: const pw.FlexColumnWidth(0.6),
+      },
+      children: [
+        pw.TableRow(
+          decoration: pw.BoxDecoration(color: _kGreyHeader),
+          children: [
+            _cell("SECCION", bold: true),
+            _cell("ACCESORIOS", bold: true),
+            _cell("OBSERVACIONES", bold: true),
+            _cell("RECOMENDACION", bold: true),
+            _cell("EVID.", bold: true),
+          ],
+        ),
+        ...sections.map((s) {
+          return pw.TableRow(
+            children: [
+              _cell(s.name, bold: true),
+              // Usamos una sub-tabla para asegurar que cada fila tenga la misma altura
+              _buildNestedTable(s.components, isNameColumn: true),
+              _buildNestedTable(s.components, isOptionsColumn: true),
+              _buildNestedTable(s.components, isObsColumn: true),
+              _buildNestedTable(s.components, isEvidenceColumn: true),
+            ],
+          );
+        }).toList(),
+      ],
+    );
+  }
+static pw.Widget _buildNestedTable(
+    List<BandaComponent> components, {
+    bool isNameColumn = false,
+    bool isOptionsColumn = false,
+    bool isObsColumn = false,
+    bool isEvidenceColumn = false,
+  }) {
+    return pw.Table(
+      border: pw.TableBorder(horizontalInside: const pw.BorderSide(width: 0.5)),
+      children: components.map((c) {
         return pw.TableRow(
           children: [
-            _cell(s.name, bold: true),
-            // Usamos una sub-tabla para asegurar que cada fila tenga la misma altura
-            _buildNestedTable(s.components, isNameColumn: true),
-            _buildNestedTable(s.components, isOptionsColumn: true),
-            _buildNestedTable(s.components, isObsColumn: true),
-            _buildNestedTable(s.components, isEvidenceColumn: true),
+            pw.Container(
+              padding: const pw.EdgeInsets.all(5),
+              constraints: const pw.BoxConstraints(minHeight: 25),
+              alignment: pw.Alignment.centerLeft,
+              child: isNameColumn
+                  ? pw.Text(c.name, style: const pw.TextStyle(fontSize: 5.5))
+                  : isOptionsColumn
+? _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions) // CORREGIDO                          ? pw.Text(c.observation, style: const pw.TextStyle(fontSize: 6.5))
+                          : _buildMiniEvidences(c),
+            ),
           ],
         );
       }).toList(),
+    );
+  }
+static pw.Widget _buildOptionsInRow(
+  List<BandaOption> opcionesFijas,
+  List<String> selectedIds,
+  List<String> customOptions,
+) {
+  // 1. Normalización de IDs/Labels/Values recibidos para comparación robusta
+  final cleanSelected = selectedIds
+      .where((e) => e.isNotEmpty)
+      .map((e) => e.trim().toLowerCase())
+      .toList();
+
+  return pw.Wrap(
+    spacing: 10,
+    runSpacing: 2,
+    children: [
+      // 2. Renderizar opciones fijas del catálogo
+      ...opcionesFijas.map((opt) {
+        // Comparación con ID, Label y Value normalizados
+        final isSelected = cleanSelected.contains(opt.id.trim().toLowerCase()) ||
+                           cleanSelected.contains(opt.label.trim().toLowerCase()) ||
+                           cleanSelected.contains(opt.value.trim().toLowerCase());
+
+        return pw.Container(
+          child: pw.Text(
+            isSelected ? "[X] ${opt.label}" : "[ ] ${opt.label}",
+            style: pw.TextStyle(
+              fontSize: 5.5,
+              fontWeight: isSelected ? pw.FontWeight.bold : pw.FontWeight.normal,
+              color: isSelected ? PdfColors.red900 : PdfColors.black,
+            ),
+          ),
+        );
+      }),
+      
+      ...customOptions.where((c) => c.isNotEmpty).map((c) => pw.Container(
+        child: pw.Text(
+          "[X] ${c.trim()}",
+          style: pw.TextStyle(
+            fontSize: 5.5, 
+            fontWeight: pw.FontWeight.bold, 
+            color: PdfColors.red900,
+          ),
+        ),
+      )),
     ],
   );
 }
 
-// Método auxiliar para crear filas alineadas perfectamente
-static pw.Widget _buildNestedTable(List<BandaComponent> components, {bool isNameColumn = false, bool isOptionsColumn = false, bool isObsColumn = false, bool isEvidenceColumn = false}) {
-  return pw.Table(
-    border: pw.TableBorder(horizontalInside: const pw.BorderSide(width: 0.5)),
-    children: components.map((c) {
-      return pw.TableRow(
-        children: [
-          pw.Container(
-            padding: const pw.EdgeInsets.all(5),
-            constraints: const pw.BoxConstraints(minHeight: 25), // Altura mínima para que no se vea chueco
-            alignment: pw.Alignment.centerLeft,
-            child: isNameColumn 
-                ? pw.Text(c.name, style: const pw.TextStyle(fontSize: 5.5))
-                : isOptionsColumn 
-                    ? _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions)
-                    : isObsColumn 
-                        ? pw.Text(c.observation, style: const pw.TextStyle(fontSize: 6.5))
-                        : _buildMiniEvidences(c),
-          ),
-        ],
-      );
-    }).toList(),
-  );
-}
-static pw.Widget _buildOptionsInRow(
-    List<BandaOption> opcionesFijas,
-    List<String> selectedIds, // Aquí recibes lo que enviaste en _mapAnswersToSections
-    List<String> customOptions,
-  ) {
-    return pw.Wrap(
-      spacing: 10,
-      runSpacing: 2,
-      children: [
-        // 1. Renderizar opciones fijas
-        ...List.generate(opcionesFijas.length, (index) {
-          final opt = opcionesFijas[index];
-          
-          // CAMBIO: Comparamos contra el ID o el LABEL para mayor seguridad
-          final isSelected = selectedIds.contains(opt.id) || 
-                             selectedIds.contains(opt.label) ||
-                             selectedIds.contains(opt.value);
+  static pw.Widget _buildMiniEvidences(BandaComponent c) {
+    final allEvidences = [...c.evidenceBefore, ...c.evidenceAfter];
+    if (allEvidences.isEmpty) return pw.SizedBox();
 
-          return pw.Text(
-            isSelected ? "[X] ${opt.label}" : "[ ] ${opt.label}",
-            style: pw.TextStyle(
-              fontSize: 5.5,
-              fontWeight: isSelected
-                  ? pw.FontWeight.bold
-                  : pw.FontWeight.normal,
-              color: isSelected ? PdfColors.red900 : PdfColors.black,
+    return pw.Wrap(
+      spacing: 2,
+      runSpacing: 2,
+      children: allEvidences
+          .map(
+            (e) => pw.Container(
+              width: 12,
+              height: 12,
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey),
+              ),
+              child: pw.Image(pw.MemoryImage(e.bytes), fit: pw.BoxFit.cover),
             ),
-          );
-        }),
-        // 2. Renderizar opciones personalizadas (Custom)
-        ...customOptions.map((customLabel) {
-          return pw.Text(
-            "[X] $customLabel",
-            style: pw.TextStyle(
-              fontSize: 5.5,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.red900,
-              fontStyle: pw.FontStyle.italic,
-            ),
-          );
-        }),
-      ],
+          )
+          .toList(),
     );
   }
 
-static pw.Widget _buildMiniEvidences(BandaComponent c) {
-  final allEvidences = [...c.evidenceBefore, ...c.evidenceAfter];
-  if (allEvidences.isEmpty) return pw.SizedBox();
-
-  return pw.Wrap(
-    spacing: 2,
-    runSpacing: 2,
-    children: allEvidences.map((e) => pw.Container(
-      width: 12,
-      height: 12,
-      decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey)),
-      child: pw.Image(pw.MemoryImage(e.bytes), fit: pw.BoxFit.cover),
-    )).toList(),
-  );
-}
-
-static pw.Widget _buildTechnicalFooter(Map<String, dynamic> data, List<Roller> rodillos) {
+  static pw.Widget _buildTechnicalFooter(Map<String, dynamic> data, List<Roller> rodillos) {
     return pw.Table(
       border: pw.TableBorder.all(width: 1.0, color: _kBorderColor),
       columnWidths: {
-        0: const pw.FlexColumnWidth(2),
-        1: const pw.FlexColumnWidth(1),
-        2: const pw.FlexColumnWidth(1.5),
+        0: const pw.FlexColumnWidth(1), // COMENTARIOS más chico
+        1: const pw.FlexColumnWidth(3), // RODILLOS ocupa más espacio
+        2: const pw.FlexColumnWidth(1.2), // CROQUIS
       },
       children: [
         pw.TableRow(
           decoration: pw.BoxDecoration(color: _kGreyHeader),
           children: [
             _cell("COMENTARIOS", bold: true),
-            _cell("RODILLOS DANADOS", bold: true),
-            _cell("CROQUIS DEL TRANSPORTADOR", bold: true),
+            _cell("RODILLOS DAÑADOS", bold: true),
+            _cell("CROQUIS", bold: true),
           ],
         ),
         pw.TableRow(
           children: [
             pw.Container(
-              height: 40,
               padding: const pw.EdgeInsets.all(5),
-              child: pw.Text(
-                data['comentarios'] ?? "",
-                style: const pw.TextStyle(fontSize: 7),
-              ),
+              child: pw.Text(data['comentarios'] ?? "", style: const pw.TextStyle(fontSize: 6)),
             ),
-            // Ahora pasamos la lista 'rodillos' a la tabla
-            _buildRodillosDanadosTable(rodillos), 
-            pw.Container(height: 45),
+            _buildRodillosDanadosTable(rodillos),
+            pw.Container(),
           ],
         ),
       ],
     );
   }
 
-static pw.Widget _buildRodillosDanadosTable(List<Roller> datosRodillos) {
-  final headers = ["Mesa", "Base", "IZQ", "CEN", "DER", "IMP", "RET", "SOP", "OBS"];
-  
-  int totalCarga = datosRodillos.fold(0, (sum, item) => sum + (item.isLeft ? 1 : 0) + (item.isCenter ? 1 : 0) + (item.isRight ? 1 : 0));
-  int totalImp = datosRodillos.fold(0, (sum, item) => sum + (item.isImpact ? 1 : 0));
-  int totalRet = datosRodillos.fold(0, (sum, item) => sum + (item.isReturn ? 1 : 0));
+  static pw.Widget _buildRodillosDanadosTable(List<Roller> datosRodillos) {
+    // Usamos abreviaturas para que las columnas no se amontonen
+    final headers = ["M", "B", "IZ", "CE", "DE", "IM", "RE", "SOP", "OBS"];
 
-  return pw.Column(
-    children: [
-      pw.Table(
-        border: pw.TableBorder.all(width: 0.5, color: _kBorderColor),
-        columnWidths: {
-          0: const pw.FixedColumnWidth(30), // Mesa
-          1: const pw.FixedColumnWidth(30), // Base
-          2: const pw.FlexColumnWidth(1),   // IZQ
-          3: const pw.FlexColumnWidth(1),   // CEN
-          4: const pw.FlexColumnWidth(1),   // DER
-          5: const pw.FlexColumnWidth(1),   // IMP
-          6: const pw.FlexColumnWidth(1),   // RET
-          7: const pw.FlexColumnWidth(2),   // SOP (Triple/Auto)
-          8: const pw.FlexColumnWidth(2),   // OBS
-        },
-        children: [
-          // Fila de encabezados
-          pw.TableRow(
-            decoration: pw.BoxDecoration(color: _kGreyHeader),
-            children: headers.map((h) => pw.Container(
-              alignment: pw.Alignment.center,
-              padding: const pw.EdgeInsets.symmetric(vertical: 4),
-              child: pw.Text(h, style: pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold)),
+    return pw.Column(
+      children: [
+        pw.Table(
+          border: pw.TableBorder.all(width: 0.5, color: _kBorderColor),
+          columnWidths: {
+            0: const pw.FixedColumnWidth(20), // Mesa
+            1: const pw.FixedColumnWidth(20), // Base
+            2: const pw.FixedColumnWidth(20), // IZQ
+            3: const pw.FixedColumnWidth(20), // CEN
+            4: const pw.FixedColumnWidth(20), // DER
+            5: const pw.FixedColumnWidth(20), // IMP
+            6: const pw.FixedColumnWidth(20), // RET
+            7: const pw.FixedColumnWidth(40), // SOP
+            8: const pw.FlexColumnWidth(1),   // OBS (ocupa lo que sobra)
+          },
+          children: [
+            pw.TableRow(
+              decoration: pw.BoxDecoration(color: _kGreyHeader),
+              children: headers.map((h) => pw.Container(
+                alignment: pw.Alignment.center,
+                padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                child: pw.Text(h, style: pw.TextStyle(fontSize: 5, fontWeight: pw.FontWeight.bold)),
+              )).toList(),
+            ),
+            ...datosRodillos.map((r) => pw.TableRow(
+              children: [
+                _cell(r.tableNumber.toString()),
+                _cell(r.baseNumber.toString()),
+                _cell(r.isLeft ? "1" : ""),
+                _cell(r.isCenter ? "1" : ""),
+                _cell(r.isRight ? "1" : ""),
+                _cell(r.isImpact ? "1" : ""),
+                _cell(r.isReturn ? "1" : ""),
+                _cell(r.isTriple ? "T" : "A"), // Abrevia Triple/Auto
+                _cell(r.observation),
+              ],
             )).toList(),
-          ),
-          // Filas de datos usando los campos de tu entidad Roller
-          ...datosRodillos.map((r) => pw.TableRow(
+          ],
+        ),
+        pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(vertical: 4),
+          child: pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
             children: [
-              _cell(r.tableNumber.toString()),
-              _cell(r.baseNumber.toString()),
-              _cell(r.isLeft ? "1" : ""),
-              _cell(r.isCenter ? "1" : ""),
-              _cell(r.isRight ? "1" : ""),
-              _cell(r.isImpact ? "1" : ""),
-              _cell(r.isReturn ? "1" : ""),
-              _cell(r.isTriple ? "Triple" : "Auto"),
-              _cell(r.observation), // Tu nuevo campo de observación
+              _buildTotalBox("CARGA", "${datosRodillos.fold(0, (s, i) => s + (i.isLeft?1:0) + (i.isCenter?1:0) + (i.isRight?1:0))} PZ"),
+              _buildTotalBox("IMP", "${datosRodillos.fold(0, (s, i) => s + (i.isImpact?1:0))} PZ"),
+              _buildTotalBox("RET", "${datosRodillos.fold(0, (s, i) => s + (i.isReturn?1:0))} PZ"),
             ],
-          )).toList(),
-        ],
-      ),
-      // Sección de Totales inferior
-      pw.SizedBox(height: 10),
-      pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildTotalBox("CARGA ACERO", "$totalCarga"),
-          _buildTotalBox("IMPACTO", "$totalImp"),
-          _buildTotalBox("RETORNO", "$totalRet"),
-        ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  
+
+  // Helper para los cuadros de totales
+  static pw.Widget _buildTotalBox(String label, String value) => pw.Column(
+    children: [
+      pw.Text(label, style: const pw.TextStyle(fontSize: 7)),
+      pw.Text(
+        "$value PZ",
+        style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
       ),
     ],
   );
-}
-
-// Helper para los cuadros de totales
-static pw.Widget _buildTotalBox(String label, String value) => pw.Column(
-  children: [
-    pw.Text(label, style: const pw.TextStyle(fontSize: 7)),
-    pw.Text("$value PZ", style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-  ],
-);
   static pw.Widget _cell(String text, {bool bold = false}) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(2),
       alignment: pw.Alignment.center,
       child: pw.Text(
-        text,
+        text.isEmpty ? "-" : text, 
         textAlign: pw.TextAlign.center,
         style: pw.TextStyle(
           fontSize: 7,

@@ -26,13 +26,17 @@ class ConveyorReportDetailModel extends ConveyorReportDetail {
       );
 }
 
-// 2. Modelo de Respuesta (Answer) - ASEGÚRATE DE QUE ESTÉ EN ESTE MISMO ARCHIVO
 class AnswerModel extends Answer {
+  // Asegúrate de que la clase base 'Answer' acepte customOption en su constructor
+  // Si Answer no tiene customOption, añádelo a la entidad base también.
+  final String? customOption; 
+
   AnswerModel({
     required super.answerId,
     required super.section,
     required super.accessory,
-    required super.option,
+    super.option, // Hacemos super.option opcional
+    this.customOption, // Nuevo campo
     required super.recommendedAction,
     required super.dimentions,
     required super.evidences,
@@ -42,7 +46,15 @@ class AnswerModel extends Answer {
         answerId: json['answer_id'] as String? ?? '',
         section: ReportSection.fromJson(json['section'] as Map<String, dynamic>? ?? {}),
         accessory: Accessory.fromJson(json['accesory'] as Map<String, dynamic>? ?? {}),
-        option: ReportOption.fromJson(json['option'] as Map<String, dynamic>? ?? {}),
+        
+        // CORRECCIÓN: Manejo seguro de option cuando viene null
+        option: json['option'] != null 
+            ? ReportOption.fromJson(json['option'] as Map<String, dynamic>) 
+            : null,
+            
+        // NUEVO: Capturamos el custom_option del JSON
+        customOption: json['custom_option'] as String?, 
+        
         recommendedAction: json['recommended_action'] as String? ?? '',
         dimentions: (json['dimentions'] is String) 
             ? double.tryParse(json['dimentions'] ?? '0') ?? 0.0 
