@@ -122,17 +122,35 @@ class InspeccionRepositoryImpl implements InspeccionRepository {
     try {
       final id = await dataSource.savePressReport(reportData);
       return Right(id);
-    } catch (e) {
-      try {
+  
+    } on DioException catch (e) {
+  
+      // SOLO offline si es problema de red
+      if (isNetworkError(e)) {
         await local.saveOfflineReport(reportData);
-
+  
         return const Right(
-          'Reporte guardado localmente. Pendiente de sincronizacion.'
+          'Reporte guardado localmente. Pendiente de sincronización.',
         );
-      } catch (localError) {
-        return const Left(ServerFailure("No fue posible guardar el reporte localmente"));
       }
+  
+      // ERROR REAL DEL BACKEND (NO offline)
+      return Left(
+        ServerFailure(
+          e.response?.data?.toString() ?? 'Error de validación del servidor',
+        ),
+      );
+  
+    } catch (e) {
+      return Left(ServerFailure('Error inesperado'));
     }
+  }
+
+  bool isNetworkError(DioException e) {
+    return e.type == DioExceptionType.connectionError ||
+        e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout;
   }
 
   @override
