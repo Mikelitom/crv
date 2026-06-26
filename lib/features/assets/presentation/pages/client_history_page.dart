@@ -4,7 +4,6 @@ import 'package:crv_reprosisa/core/utils/imege_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:dio/dio.dart';
 import 'package:printing/printing.dart';
 
 import 'package:crv_reprosisa/features/assets/presentation/providers/conveyor_history_provider.dart';
