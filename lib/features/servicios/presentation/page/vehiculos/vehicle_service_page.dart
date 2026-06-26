@@ -1,7 +1,7 @@
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_list_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/service_detail_view.dart';
 import 'package:flutter/material.dart';
-import 'package:crv_reprosisa/features/servicios/widgets/vehiculos/service_detail_view.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

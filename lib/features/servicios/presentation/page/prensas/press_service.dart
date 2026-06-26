@@ -1,7 +1,6 @@
+import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dart';
 import 'package:flutter/material.dart';
-import '../../../dashboard/presentation/widgets/header.dart'; 
 import '../../widgets/vehiculos/service_stats_grid.dart';
-import '../../widgets/vehiculos/service_Data_table.dart';
 
 class PressServicePage extends StatelessWidget {
   const PressServicePage({super.key});
@@ -37,8 +36,7 @@ class PressServicePage extends StatelessWidget {
             _buildSearchSection(),
 
             const SizedBox(height: 24),
-
-            ServiceDataTable(isVehiculo: false), 
+            
           ],
         ),
       ),

@@ -1,5 +1,5 @@
+import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dart';
 import 'package:flutter/material.dart';
-import '../../../dashboard/presentation/widgets/header.dart';
 import '../../widgets/vehiculos/history_inspections_feed.dart';
 import '../../widgets/vehiculos/history_tech_info.dart';
 import '../../widgets/vehiculos/history_payment_vault.dart';

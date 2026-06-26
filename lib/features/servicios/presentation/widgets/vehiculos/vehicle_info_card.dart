@@ -1,5 +1,6 @@
-import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
 import 'package:flutter/material.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
+import 'package:intl/intl.dart'; // Importa esto para formatear fechas
 
 class VehicleInfoCard extends StatelessWidget {
   final Vehicle vehicle;
@@ -8,6 +9,12 @@ class VehicleInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Formateador de fechas
+    final DateFormat formatter = DateFormat('dd/MM/yyyy');
+    final String formattedDate = vehicle.checkoutDate != null 
+        ? formatter.format(vehicle.checkoutDate!) 
+        : 'N/A';
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -39,47 +46,25 @@ class VehicleInfoCard extends StatelessWidget {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    _infoBadge(Icons.speed, vehicle.mileage.toString()),
-                    _infoBadge(
-                      Icons.calendar_today,
-                      "Última: ${vehicle.checkoutDate}",
-                    ),
-                    _infoBadge(Icons.build, "Último servicio: 5,000 km"),
+                    _infoBadge(Icons.speed, "${vehicle.mileage} km"),
+                    _infoBadge(Icons.calendar_today, "Última salida: $formattedDate"),
+                    _infoBadge(Icons.person_outline, "Resp: ${vehicle.responsible}"),
                   ],
                 ),
               ],
             ),
           ),
-          // COLUMNA DERECHA: KPIs Grandes
+          
+          // COLUMNA DERECHA: KPIs (Aquí podrías poner contadores reales cuando tengas el servicio de conteo)
           Expanded(
             flex: 3,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _kpiItem(
-                  "3",
-                  "Hallazgos Activos",
-                  Colors.red,
-                  Icons.warning_amber_rounded,
-                ),
-                _kpiItem(
-                  "1",
-                  "Orden Abierta",
-                  Colors.orange,
-                  Icons.calendar_month,
-                ),
-                _kpiItem(
-                  "5",
-                  "Servicios",
-                  Colors.blue,
-                  Icons.check_circle_outline,
-                ),
-                _kpiItem(
-                  "12",
-                  "Inspecciones",
-                  Colors.green,
-                  Icons.fact_check_outlined,
-                ),
+                _kpiItem("3", "Hallazgos", Colors.red, Icons.warning_amber_rounded),
+                _kpiItem("1", "Orden", Colors.orange, Icons.calendar_month),
+                _kpiItem("5", "Servicios", Colors.blue, Icons.check_circle_outline),
+                _kpiItem("12", "Inspecc.", Colors.green, Icons.fact_check_outlined),
               ],
             ),
           ),
@@ -107,14 +92,10 @@ class VehicleInfoCard extends StatelessWidget {
     );
   }
 
-  // En VehicleInfoCard, dentro de _buildKpiSummary:
   Widget _kpiItem(String val, String label, Color color, IconData icon) {
     return Expanded(
-      // El Expanded asegura que todos tengan el mismo ancho
       child: Container(
-        margin: const EdgeInsets.symmetric(
-          horizontal: 8,
-        ), // Espaciado simétrico
+        margin: const EdgeInsets.symmetric(horizontal: 8),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: color.withOpacity(0.08),
