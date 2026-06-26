@@ -10,14 +10,26 @@ class RodilleriaSection extends ConsumerStatefulWidget {
 }
 
 class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
-  // Cambiamos a 1 fila inicial para que sea dinámico
   final List<List<TextEditingController>> _rows = [];
+  late TextEditingController _notesController;
+
+  @override
+  void initState() {
+    super.initState();
+    final currentNotes = ref.read(bandaInspectionProvider).rollerNotes;
+    _notesController = TextEditingController(text: currentNotes);
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
 
   int cargaAcero = 0, impacto = 0, retorno = 0;
 
   void _calcular() {
     int nCarga = 0, nImp = 0, nRet = 0;
-
     for (var row in _rows) {
       int vIzq = int.tryParse(row[2].text) ?? 0;
       int vCen = int.tryParse(row[3].text) ?? 0;
@@ -38,7 +50,6 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
         nCarga += posicionesActivas;
       }
     }
-
     if (mounted) {
       setState(() {
         cargaAcero = nCarga;
@@ -67,6 +78,9 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
 
   @override
   Widget build(BuildContext context) {
+    // Escuchamos el estado para obtener rollerNotes
+    final state = ref.watch(bandaInspectionProvider);
+
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -85,10 +99,41 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
           _buildHeader(),
           _buildTechnicalTable(),
           _buildInventorySummary(),
+          _buildNotesSection(state.rollerNotes), // <-- Nueva sección
         ],
       ),
     );
   }
+
+  Widget _buildNotesSection(String currentNotes) => Padding(
+    padding: const EdgeInsets.all(25),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "COMENTARIOS DE RODILLERÍA",
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 12,
+            color: Colors.indigo,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _notesController,
+          maxLines: 3,
+          onChanged: (v) =>
+              ref.read(bandaInspectionProvider.notifier).updateRollerNotes(v),
+          decoration: InputDecoration(
+            hintText: "Escribe notas adicionales sobre la rodillería...",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildHeader() => Padding(
     padding: const EdgeInsets.all(20),
@@ -107,7 +152,6 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
             _rows.add(List.generate(9, (_) => TextEditingController()));
             ref.read(bandaInspectionProvider.notifier).addRoller();
           }),
-          
         ),
       ],
     ),
@@ -146,17 +190,10 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
           ),
           ..._rows.asMap().entries.map(
             (e) => TableRow(
-              children: [
-                _input(e.value[0], e.key, e.value),
-                _input(e.value[1], e.key, e.value),
-                _input(e.value[2], e.key, e.value),
-                _input(e.value[3], e.key, e.value),
-                _input(e.value[4], e.key, e.value),
-                _input(e.value[5], e.key, e.value),
-                _input(e.value[6], e.key, e.value),
-                _input(e.value[7], e.key, e.value),
-                _input(e.value[8], e.key, e.value),
-              ],
+              children: List.generate(
+                9,
+                (i) => _input(e.value[i], e.key, e.value),
+              ),
             ),
           ),
         ],
@@ -197,7 +234,6 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
   );
 }
 
-// ... _HeaderCell y _SummaryItem se quedan igual ...
 class _HeaderCell extends StatelessWidget {
   final String label;
   const _HeaderCell(this.label);

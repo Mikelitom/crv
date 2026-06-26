@@ -48,6 +48,7 @@ class BandaComponent {
   final List<String> selectedOptionIds; 
   final String dimentions;
   final String observation;
+  final String comment; 
   final List<EvidenceFile> evidenceBefore;
   final List<EvidenceFile> evidenceAfter;
 
@@ -58,8 +59,9 @@ class BandaComponent {
     required this.options,
     this.customOptions = const [],
     this.selectedOptionIds = const [],
-    this.dimentions = '',
+    required this.dimentions, // Eliminé el = '', ahora es obligatorio pasarlo
     this.observation = '',
+    this.comment = '', 
     List<EvidenceFile>? evidenceBefore,
     List<EvidenceFile>? evidenceAfter,
   }) : evidenceBefore = evidenceBefore ?? [],
@@ -69,6 +71,7 @@ class BandaComponent {
     String? id, String? name, String? description,
     List<BandaOption>? options, List<String>? customOptions, 
     List<String>? selectedOptionIds, String? dimentions,
+String? comment, 
     String? observation, List<EvidenceFile>? evidenceBefore,
     List<EvidenceFile>? evidenceAfter,
   }) {
@@ -81,14 +84,20 @@ class BandaComponent {
       selectedOptionIds: selectedOptionIds ?? this.selectedOptionIds,
       dimentions: dimentions ?? this.dimentions,
       observation: observation ?? this.observation,
+      comment: comment ?? this.comment,
       evidenceBefore: evidenceBefore ?? this.evidenceBefore,
       evidenceAfter: evidenceAfter ?? this.evidenceAfter,
     );
   }
 
   Map<String, dynamic> toJson() {
-    final fixedIds = selectedOptionIds.where((val) => options.any((o) => o.id == val && o.id != o.value)).toList();
-    final customLabels = selectedOptionIds.where((val) => !options.any((o) => o.id == val)).toList();
+    final fixedIds = selectedOptionIds
+        .where((val) => options.any((o) => o.id == val && o.id != o.value))
+        .toList();
+    final customLabels = selectedOptionIds
+        .where((val) => !options.any((o) => o.id == val))
+        .toList();
+        
     return {
       'accesory_id': id,
       'name': name,

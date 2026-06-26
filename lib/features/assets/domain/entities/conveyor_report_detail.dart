@@ -1,4 +1,4 @@
-// --- Modelos principales ---
+import 'dart:typed_data'; // Necesario para Uint8List
 
 class ConveyorReportDetail {
   final Map<String, dynamic> report;
@@ -55,13 +55,20 @@ class Roller {
   final bool isSelfAligning;
   final String observation;
 
+  // CORRECCIÓN: Todos los parámetros están ahora dentro de las llaves {}
   Roller({
-    required this.id, required this.tableNumber, required this.baseNumber,
-    required this.isLeft, required this.isCenter, required this.isRight,
-    required this.isImpact, required this.isReturn, required this.isTriple,
-    required this.isSelfAligning, required this.observation,
+    required this.id,
+    required this.tableNumber,
+    required this.baseNumber,
+    required this.isLeft,
+    required this.isCenter,
+    required this.isRight,
+    required this.isImpact,
+    required this.isReturn,
+    required this.isTriple,
+    required this.isSelfAligning,
+    required this.observation,
   });
-
 
   factory Roller.fromJson(Map<String, dynamic> json) {
     return Roller(
@@ -99,10 +106,10 @@ class Answer {
   final String answerId;
   final ReportSection section;
   final Accessory accessory;
-  final ReportOption? option; // Ahora es opcional porque puede ser null
-  final String? customOption; // NUEVO: Campo para opciones personalizadas
+  final ReportOption? option; 
+  final String? customOption; 
   final String recommendedAction;
-  final double dimentions;
+  final String dimentions; // Cambiado de double a String
   final List<Evidence> evidences;
 
   Answer({
@@ -121,11 +128,16 @@ class Answer {
       answerId: json['answer_id'] as String? ?? '',
       section: ReportSection.fromJson(json['section'] as Map<String, dynamic>? ?? {}),
       accessory: Accessory.fromJson(json['accesory'] as Map<String, dynamic>? ?? {}),
-      // Si option es null, lo dejamos como null
-      option: json['option'] != null ? ReportOption.fromJson(json['option'] as Map<String, dynamic>) : null,
-      customOption: json['custom_option'] as String?, // NUEVO: Leer custom_option
+      option: json['option'] != null 
+          ? ReportOption.fromJson(json['option'] as Map<String, dynamic>) 
+          : null,
+      customOption: json['custom_option'] as String?,
       recommendedAction: json['recommended_action'] as String? ?? '',
-      dimentions: (json['dimentions'] as num?)?.toDouble() ?? 0.0,
+      
+      // Capturamos directamente como String. 
+      // Si el valor llega como entero, lo convertimos a String.
+      dimentions: json['dimentions']?.toString() ?? '',
+      
       evidences: (json['evidences'] as List<dynamic>?)
               ?.map((e) => Evidence.fromJson(e as Map<String, dynamic>))
               .toList() ?? [],
@@ -143,7 +155,6 @@ class Answer {
         'evidences': evidences.map((e) => e.toMap()).toList(),
       };
 }
-
 class ReportSection {
   final String id;
   final String name;
@@ -196,6 +207,7 @@ class ReportOption {
   Map<String, dynamic> toMap() => {'id': id, 'label': label, 'value': value};
 }
 
+
 class Evidence {
   final String id;
   final String filePath;
@@ -203,6 +215,9 @@ class Evidence {
   final String fileType;
   final String mimeType;
   final int fileSize;
+  
+  // Campo añadido para guardar la imagen en memoria
+  Uint8List? bytes; 
 
   Evidence({
     required this.id,
@@ -211,6 +226,7 @@ class Evidence {
     required this.fileType,
     required this.mimeType,
     required this.fileSize,
+    this.bytes, // Opcional en el constructor
   });
 
   factory Evidence.fromJson(Map<String, dynamic> json) {
@@ -231,5 +247,6 @@ class Evidence {
         'file_type': fileType,
         'mime_type': mimeType,
         'file_size': fileSize,
+        // No incluimos 'bytes' en el mapa porque es solo para uso en memoria (PDF)
       };
 }

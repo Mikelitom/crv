@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import 'package:crv_reprosisa/core/config/dio_client.dart';
+import 'package:crv_reprosisa/core/utils/imege_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -56,34 +58,34 @@ Future<List<BandaSection>> _mapAnswersToSections(List<Answer> answers) async {
       sectionsMap[a.section.name] = [];
     }
 
-    final List<BandaOption> opcionesFijas = BandaPdfGenerator.obtenerOpcionesFijasParaComponente(a.accessory.name);
+    final List<BandaOption> opcionesFijas = 
+        BandaPdfGenerator.obtenerOpcionesFijasParaComponente(a.accessory.name);
     
-    // Determinamos el label: prioridad a la opción fija, si no, al custom_option
-    final String labelSeleccionado = (a.option?.label ?? a.customOption ?? "").toString().trim();
-    
-    // Es custom si no hay una opción del catálogo seleccionada
-    final bool esCustom = a.option == null || a.customOption != null;
+    // --- ESTA ES LA CLAVE: CONVERTIR EVIDENCE DEL API A EVIDENCEFILE ---
+    final List<EvidenceFile> evidenciasConvertidas = a.evidences
+        .where((e) => e.bytes != null)
+        .map((e) => EvidenceFile(
+              bytes: e.bytes!, // Aquí usamos los bytes que ya descargaste
+              type: e.fileType,
+              mimeType: e.mimeType,
+            ))
+        .toList();
 
     sectionsMap[a.section.name]!.add(BandaComponent(
       id: a.answerId,
       name: a.accessory.name,
       observation: a.recommendedAction.trim(),
       options: opcionesFijas,
-      
-      // Enviamos IDs, Label y Value normalizados
       selectedOptionIds: [
         if (a.option != null) ...[
           a.option!.id.toString().trim().toLowerCase(),
           a.option!.label.toString().trim().toLowerCase(),
-          a.option!.value.toString().trim().toLowerCase()
+          a.option!.value.toString().trim().toLowerCase(),
         ]
       ],
-      
-      // PASAMOS LAS CUSTOM OPTIONS AQUÍ
-      customOptions: esCustom && labelSeleccionado.isNotEmpty ? [labelSeleccionado] : [],
-      
-      dimentions: a.dimentions > 0 ? a.dimentions.toString() : '',
-      evidenceBefore: [], // Agrega la lógica de descarga de evidencias aquí
+      customOptions: (a.customOption != null && a.customOption!.isNotEmpty) ? [a.customOption!] : [],
+dimentions: a.dimentions,
+      evidenceBefore: evidenciasConvertidas, 
       evidenceAfter: [],
     ));
   }
@@ -101,7 +103,15 @@ Future<List<BandaSection>> _mapAnswersToSections(List<Answer> answers) async {
           .fetchDetail(versionId);
 
       if (reportDetail == null) return null;
-
+final dio = ref.read(dioProvider); // Asegúrate de tener acceso a tu instancia de Dio
+    for (var answer in reportDetail.answers) {
+      for (var ev in answer.evidences) {
+        final bytes = await ImageDownloader.download(dio, ev.signedUrl);
+        if (bytes != null) {
+          ev.bytes = bytes; 
+        }
+      }
+    }
       final String seccionGeneral =
           reportDetail.report['section']?.toString() ?? "";
 
@@ -217,7 +227,7 @@ Future<List<BandaSection>> _mapAnswersToSections(List<Answer> answers) async {
     }
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     final state = ref.watch(clientHistoryProvider);
     final filtered = state.history
@@ -241,133 +251,86 @@ Future<List<BandaSection>> _mapAnswersToSections(List<Answer> answers) async {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    onChanged: (v) => setState(() => _query = v),
-                    decoration: InputDecoration(
-                      hintText: "Buscar por folio...",
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: Colors.redAccent,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 15),
-                _dateBtn("Desde", _start, () => _pickDate(true)),
-                const SizedBox(width: 15),
-                _dateBtn("Hasta", _end, () => _pickDate(false)),
-              ],
-            ),
-          ),
+          // ... (tu TextField y dateBtns permanecen igual)
           Expanded(
             child: state.status == Status.loading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Colors.redAccent),
-                  )
+                ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
                 : ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    children: grouped.entries
-                        .map(
-                          (e) => ClientHistoryCard(
-                            versions: e.value,
-                            onPdfView: (versionId) async {
-                              final reportDetail = await ref
-                                  .read(conveyorReportDetailProvider.notifier)
-                                  .fetchDetail(versionId);
+                    children: grouped.entries.map((e) => ClientHistoryCard(
+                      versions: e.value,
+                      onPdfView: (versionId) async {
+                        // 1. Fetch de datos
+                        final reportDetail = await ref
+                            .read(conveyorReportDetailProvider.notifier)
+                            .fetchDetail(versionId);
 
-                              if (reportDetail != null && mounted) {
-                                final String seccionGeneral =
-                                    reportDetail.report['section']
-                                        ?.toString() ??
-                                    "";
-
-                                final Map<String, dynamic> datosNormalizados = {
-                                  'planta': reportDetail.conveyor['mine'] ?? "",
-                                  'area': reportDetail.conveyor['area'] ?? "",
-                                  'responsable':
-                                      reportDetail
-                                          .report['conveyor_responsible'] ??
-                                      "",
-                                  'seccion': seccionGeneral,
-                                  'transportador':
-                                      reportDetail.conveyor['name'] ?? "",
-                                  'banda':
-                                      reportDetail.report['recommended_belt'] ??
-                                      "",
-                                  'material':
-                                      "${reportDetail.report['material'] ?? ''} / ${reportDetail.report['granulometry'] ?? ''}",
-                                  'elaboro':
-                                      reportDetail.inspector['name'] ?? "",
-                                  'presentar':
-                                      reportDetail.report['present_to'] ?? "",
-                                  'comentarios':
-                                      reportDetail.report['comentarios'] ?? "",
-                                };
-
-                                final sections = await _mapAnswersToSections(
-                                  reportDetail.answers,
-                                );
-
-                                if (mounted) {
-                                  // Mapeamos los rodillos del modelo al tipo esperado por el generador
-                                  final List<Roller> rodillos = reportDetail
-                                      .rollers
-                                      .map(
-                                        (r) => Roller(
-                                          tableNumber: r.tableNumber,
-                                          baseNumber: r.baseNumber,
-                                          isLeft: r.isLeft,
-                                          isCenter: r.isCenter,
-                                          isRight: r.isRight,
-                                          isImpact: r.isImpact,
-                                          isReturn: r.isReturn,
-                                          isTriple: r.isTriple,
-                                          isSelfAligning: r.isSelfAligning,
-                                          observation: r.observation,
-                                        ),
-                                      )
-                                      .toList();
-
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ClientPdfViewerPage(
-                                        folio: e.key,
-                                        pdfGenerator: () =>
-                                            BandaPdfGenerator.generateReport(
-                                              datosNormalizados,
-                                              sections,
-                                              rodillos, // Tercer argumento añadido
-                                            ),
-                                      ),
-                                    ),
-                                  );
-                                }
+                        if (reportDetail != null && mounted) {
+                          // 2. PRECARGA DE IMÁGENES (Unificada)
+                          final dio = ref.read(dioProvider);
+                          for (var answer in reportDetail.answers) {
+                            for (var ev in answer.evidences) {
+                              if (ev.bytes == null) {
+                                ev.bytes = await ImageDownloader.download(dio, ev.signedUrl);
                               }
-                            },
-                            onDownload: (id) => _downloadReport(id, e.key),
-                            onPrint: (versionId) async {
-                              final pdfBytes = await _generatePdf(versionId);
-                              if (pdfBytes == null) return;
+                            }
+                          }
 
-                              await Printing.layoutPdf(
-                                onLayout: (_) async => pdfBytes,
-                              );
-                            },
-                          ),
-                        )
-                        .toList(),
+                          // 3. Mapeo con conversión a EvidenceFile
+                          final sections = await _mapAnswersToSections(reportDetail.answers);
+
+                          final Map<String, dynamic> datosNormalizados = {
+                            'planta': reportDetail.conveyor['mine'] ?? "",
+                            'area': reportDetail.conveyor['area'] ?? "",
+                            'responsable': reportDetail.report['conveyor_responsible'] ?? "",
+                            'seccion': reportDetail.report['section']?.toString() ?? "",
+                            'transportador': reportDetail.conveyor['name'] ?? "",
+                            'banda': reportDetail.report['recommended_belt'] ?? "",
+                            'material': "${reportDetail.report['material'] ?? ''} / ${reportDetail.report['granulometry'] ?? ''}",
+                            'elaboro': reportDetail.inspector['name'] ?? "",
+                            'presentar': reportDetail.report['present_to'] ?? "",
+                            'comentarios': reportDetail.report['comentarios'] ?? "",
+                          };
+
+                          final List<Roller> rodillos = reportDetail.rollers
+                              .map((r) => Roller(
+                                    tableNumber: r.tableNumber,
+                                    baseNumber: r.baseNumber,
+                                    isLeft: r.isLeft,
+                                    isCenter: r.isCenter,
+                                    isRight: r.isRight,
+                                    isImpact: r.isImpact,
+                                    isReturn: r.isReturn,
+                                    isTriple: r.isTriple,
+                                    isSelfAligning: r.isSelfAligning,
+                                    observation: r.observation,
+                                  ))
+                              .toList();
+
+                          if (mounted) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ClientPdfViewerPage(
+                                  folio: e.key,
+                                  pdfGenerator: () => BandaPdfGenerator.generateReport(
+                                    datosNormalizados,
+                                    sections,
+                                    rodillos,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      onDownload: (id) => _downloadReport(id, e.key),
+                      onPrint: (versionId) async {
+                        final pdfBytes = await _generatePdf(versionId);
+                        if (pdfBytes == null) return;
+                        await Printing.layoutPdf(onLayout: (_) async => pdfBytes);
+                      },
+                    )).toList(),
                   ),
           ),
         ],

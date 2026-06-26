@@ -4,16 +4,16 @@ class BandaOptionModel extends BandaOption {
   BandaOptionModel({required super.id, required super.label, required super.value});
 
   factory BandaOptionModel.fromJson(Map<String, dynamic> json) => BandaOptionModel(
-    id: json['id'],
-    label: json['label'],
-    value: json['value'],
-  );
+        id: json['id'] ?? '',
+        label: json['label'] ?? '',
+        value: json['value'] ?? '',
+      );
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'label': label,
-    'value': value,
-  };
+        'id': id,
+        'label': label,
+        'value': value,
+      };
 }
 
 class BandaComponentModel extends BandaComponent {
@@ -22,35 +22,63 @@ class BandaComponentModel extends BandaComponent {
     required super.name,
     super.description,
     required List<BandaOptionModel> super.options,
+    required super.customOptions,
+    required super.selectedOptionIds,
+    required super.dimentions,
+    required super.observation,
+    required super.comment, 
+    super.evidenceBefore,
+    super.evidenceAfter,
   });
 
   factory BandaComponentModel.fromJson(Map<String, dynamic> json) => BandaComponentModel(
-    id: json['id'],
-    name: json['name'],
-    description: json['description'],
-    options: (json['options'] as List).map((e) => BandaOptionModel.fromJson(e)).toList(),
-  );
+        id: json['id'] ?? '',
+        name: json['name'] ?? '',
+        description: json['description'],
+        options: (json['options'] as List? ?? [])
+            .map((e) => BandaOptionModel.fromJson(e))
+            .toList(),
+        customOptions: List<String>.from(json['custom_options'] ?? []),
+        selectedOptionIds: List<String>.from(json['selected_option_ids'] ?? []),
+        dimentions: json['dimentions'] ?? '',
+        comment: json['comment'] ?? '', // AGREGADO
+        observation: json['observation'] ?? '',
+        evidenceBefore: [], // Las evidencias usualmente se gestionan en memoria
+        evidenceAfter: [],
+      );
 
+  @override
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'description': description,
-    'options': options.map((e) => (e as BandaOptionModel).toJson()).toList(),
-  };
+        'id': id,
+        'name': name,
+        'description': description,
+        'options': options.map((e) => (e as BandaOptionModel).toJson()).toList(),
+        'custom_options': customOptions,
+        'selected_option_ids': selectedOptionIds,
+        'dimentions': dimentions,
+        'observation': observation,
+        'comment': comment, // AGREGADO
+      };
 }
 
 class BandaSectionModel extends BandaSection {
-  BandaSectionModel({required super.id, required super.name, required List<BandaComponentModel> super.components});
+  BandaSectionModel({
+    required super.id, 
+    required super.name, 
+    required List<BandaComponentModel> super.components
+  });
 
   factory BandaSectionModel.fromJson(Map<String, dynamic> json) => BandaSectionModel(
-    id: json['id'],
-    name: json['name'],
-    components: (json['components'] as List).map((e) => BandaComponentModel.fromJson(e)).toList(),
-  );
+        id: json['id'] ?? '',
+        name: json['name'] ?? '',
+        components: (json['components'] as List? ?? [])
+            .map((e) => BandaComponentModel.fromJson(e))
+            .toList(),
+      );
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'components': components.map((e) => (e as BandaComponentModel).toJson()).toList(),
-  };
+        'id': id,
+        'name': name,
+        'components': components.map((e) => (e as BandaComponentModel).toJson()).toList(),
+      };
 }

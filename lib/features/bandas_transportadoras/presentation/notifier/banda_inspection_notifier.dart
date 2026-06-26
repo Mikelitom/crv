@@ -50,6 +50,18 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
     state = state.copyWith(reportStatus: status);
   }
 
+  void updateComponentComment(
+    String sectionId,
+    String componentId,
+    String comment,
+  ) {
+    _updateComponent(
+      sectionId,
+      componentId,
+      (comp) => comp.copyWith(comment: comment),
+    );
+  }
+
   Future<void> initialLoad() async {
     reset();
     state = state.copyWith(isLoading: true);
@@ -304,6 +316,10 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
         selectedOptionIds: newSelections,
       );
     });
+  }
+
+  void updateRollerNotes(String notes) {
+    state = state.copyWith(rollerNotes: notes);
   }
 
   void _updateComponent(

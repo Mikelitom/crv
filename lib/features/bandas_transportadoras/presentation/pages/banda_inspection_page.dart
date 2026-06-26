@@ -53,14 +53,42 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
       }
     });
   }
-
+bool _validarDatosGenerales() {
+  final state = ref.read(bandaInspectionProvider);
+  
+  if (state.selectedClient == null || state.selectedMine == null) {
+    _showSnack("Error: Debe seleccionar Cliente y Planta", Colors.red);
+    return false;
+  }
+  
+  if (state.area.length < 2 || 
+      state.conveyor.length < 2 || 
+      state.material.length < 2 || 
+      state.granulometry.length < 2 || 
+      state.presentTo.length < 2) {
+    _showSnack("Error: Área, Transportador, Material, Granulometría y Presentar a deben tener al menos 2 caracteres", Colors.red);
+    return false;
+  }
+  
+  return true;
+}
 Future<void> _guardarReporte({required bool esFinalizar}) async {
   final state = ref.read(bandaInspectionProvider);
   final evidenceService = ref.read(evidenceServiceProvider);
   final notifier = ref.read(bandaInspectionProvider.notifier);
 
+  // 1. VALIDACIÓN PREVENTIVA DE CAMPOS (Evita el error string_too_short)
   if (state.selectedClient == null || state.selectedMine == null) {
     _showSnack("Selecciona cliente y mina antes de continuar", Colors.orange);
+    return;
+  }
+  
+  if (state.area.length < 2 || 
+      state.conveyor.length < 2 || 
+      state.material.length < 2 || 
+      state.granulometry.length < 2 || 
+      state.presentTo.length < 2) {
+    _showSnack("Error: Área, Transportador, Material, Granulometría y Presentar a deben tener al menos 2 caracteres.", Colors.red);
     return;
   }
   
@@ -70,10 +98,8 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
   try {
     final List<Map<String, dynamic>> answers = [];
 
-    // --- FILTRADO ESTRICTO DE RESPUESTAS ---
     for (var section in state.sections) {
-      for (var component in section.components) {
-        // Solo incluimos IDs que realmente pertenecen a este componente
+      for (var component in section.components) { 
         final validOptionIds = component.options.map((o) => o.id).toSet();
         
         final fixedIds = component.selectedOptionIds
@@ -84,8 +110,8 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
             .where((val) => !validOptionIds.contains(val))
             .toList();
 
-        // Si no hay nada seleccionado, no añadimos este componente al reporte
-        if (fixedIds.isEmpty && customLabels.isEmpty && component.observation.isEmpty) continue;
+        // Se agregó la validación para incluir el componente si tiene comment
+        if (fixedIds.isEmpty && customLabels.isEmpty && component.observation.isEmpty && component.comment.isEmpty) continue;
 
         final List<Map<String, String>> evidenceList = [];
         final allFiles = [...component.evidenceBefore, ...component.evidenceAfter];
@@ -117,39 +143,39 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
           "custom_options": customLabels,
           "recommended_action": component.observation,
           "dimentions": component.dimentions, 
+          "comment": component.comment, // Campo agregado
           "evidences": evidenceList,
         });
       }
     }      
 
-final List<Map<String, dynamic>> filteredRollers = state.rollers
-    .where((r) => 
-        (r.tableNumber > 0 || r.baseNumber > 0 || 
-         r.isLeft || r.isCenter || r.isRight || 
-         r.isImpact || r.isReturn || r.observation.isNotEmpty)
-    )
-    .map((r) => {
-        "table_number": r.tableNumber, 
-        "base_number": r.baseNumber, 
-        "is_left": r.isLeft ? 1 : 0,
-        "is_center": r.isCenter ? 1 : 0,
-        "is_right": r.isRight ? 1 : 0,
-        "is_impact": r.isImpact ? 1 : 0,
-        "is_return": r.isReturn ? 1 : 0,
-        "is_triple": r.isTriple ? 1 : 0,
-        "is_self_aligning": r.isSelfAligning ? 1 : 0,
-        "observation": r.observation
-    })
-    .toList();
+    final List<Map<String, dynamic>> filteredRollers = state.rollers
+        .where((r) => 
+            (r.tableNumber > 0 || r.baseNumber > 0 || 
+             r.isLeft || r.isCenter || r.isRight || 
+             r.isImpact || r.isReturn || r.observation.isNotEmpty)
+        )
+        .map((r) => {
+            "table_number": r.tableNumber, 
+            "base_number": r.baseNumber, 
+            "is_left": r.isLeft ? 1 : 0,
+            "is_center": r.isCenter ? 1 : 0,
+            "is_right": r.isRight ? 1 : 0,
+            "is_impact": r.isImpact ? 1 : 0,
+            "is_return": r.isReturn ? 1 : 0,
+            "is_triple": r.isTriple ? 1 : 0,
+            "is_self_aligning": r.isSelfAligning ? 1 : 0,
+            "observation": r.observation
+        })
+        .toList();
 
-final rollersData = (state.isRodilleriaActive && filteredRollers.isNotEmpty) 
-    ? {
-        "roller_notes": state.generalComments ?? "",
-        "rollers": filteredRollers // <- Solo enviamos los que pasaron el filtro
-      } 
-    : null;
+    final rollersData = (state.isRodilleriaActive && filteredRollers.isNotEmpty) 
+        ? {
+            "roller_notes": state.rollerNotes,
+            "rollers": filteredRollers
+          } 
+        : null;
       
-    // --- VALIDACIÓN DE COMPLETITUD ---
     if (esFinalizar && answers.isEmpty && filteredRollers.isEmpty) {
       _showSnack("El reporte está vacío. Agrega datos antes de finalizar.", Colors.orange);
       setState(() => _isSaving = false);
@@ -180,7 +206,11 @@ final rollersData = (state.isRodilleriaActive && filteredRollers.isNotEmpty)
     
     result.fold(
       (failure) {
-        _showSnack("Error: ${failure.message}", Colors.red);
+        // Mejor manejo de error para mostrar al usuario
+        String msg = failure.message.contains("string_too_short") 
+            ? "Campos incompletos: Asegúrate de llenar Área, Transportador, Material y Granulometría con al menos 2 letras." 
+            : "Error: ${failure.message}";
+        _showSnack(msg, Colors.red);
       },
       (id) {
         _showSnack("¡Reporte guardado con éxito!", Colors.green);
@@ -199,11 +229,9 @@ final rollersData = (state.isRodilleriaActive && filteredRollers.isNotEmpty)
   String _getInitials(String name) {
     if (name.isEmpty) return "GEN"; // Valor por defecto si no hay nombre
     
-    // Divide por espacios y toma la primera letra de cada palabra
     List<String> words = name.trim().split(RegExp(r'\s+'));
     String initials = words.map((word) => word[0].toUpperCase()).join();
     
-    // Si solo tiene una palabra (ej: "LaPerena"), toma las primeras 3 letras
     return initials.length >= 3 ? initials.substring(0, 3) : initials.padRight(3, 'X');
   }
 
@@ -211,48 +239,79 @@ final rollersData = (state.isRodilleriaActive && filteredRollers.isNotEmpty)
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m), backgroundColor: c));
   }
 
-  void _showPreview(BuildContext context) async {
-    final state = ref.read(bandaInspectionProvider);
-    final Map<String, dynamic> generalData = {
-      'planta': state.selectedMine?.name ?? "N/A", 
-      'area': state.area,
-      'responsable': state.conveyorResponsible,
-      'seccion': state.seccion,
-      'fecha': state.inspectionDate.toString().split(' ')[0],
-      'transportador': state.conveyor, 
-      'banda': state.recommendedBelt,
-      'material': "${state.material} / ${state.granulometry}",
-      'elaboro': state.elaboro,
-      'presentar': state.presentTo,
-      'comentarios': state.generalComments, 
-    };
+Future<void> _showPreview(BuildContext context) async {
+    // 1. Validar antes de iniciar cualquier proceso
+    if (!_validarDatosGenerales()) return;
 
+    // 2. Mostrar indicador de carga mejorado
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.white)),
+      builder: (_) => const Dialog(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text("Generando PDF, por favor espere..."),
+            ],
+          ),
+        ),
+      ),
     );
-try {
+
+    try {
+      final state = ref.read(bandaInspectionProvider);
+      final Map<String, dynamic> generalData = {
+        'planta': state.selectedMine?.name ?? "N/A",
+        'area': state.area,
+        'responsable': state.conveyorResponsible,
+        'seccion': state.seccion,
+        'fecha': state.inspectionDate.toString().split(' ')[0],
+        'transportador': state.conveyor,
+        'banda': state.recommendedBelt,
+        'material': "${state.material} / ${state.granulometry}",
+        'elaboro': state.elaboro,
+        'presentar': state.presentTo,
+        'comentarios': state.generalComments,
+      };
+
+      // 3. Generación del reporte
       final pdfBytes = await BandaPdfGenerator.generateReport(
-        generalData, 
-        state.sections, 
-        state.rollers // <--- Este es el tercer argumento que faltaba
+        generalData,
+        state.sections,
+        state.rollers,
       );
+
+      // 4. Navegación a la vista previa
       if (context.mounted) {
-        Navigator.pop(context); 
-        Navigator.push(context, MaterialPageRoute(builder: (context) => Scaffold(
-          appBar: AppBar(title: const Text("REPORTE TÉCNICO"), backgroundColor: const Color(0xFFB71C1C)),
-          body: PdfPreview(build: (format) => pdfBytes, initialPageFormat: PdfPageFormat.letter.landscape),
-        )));
+        Navigator.pop(context); // Cierra el diálogo de carga
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppBar(
+                title: const Text("REPORTE TÉCNICO"),
+                backgroundColor: const Color(0xFFB71C1C),
+              ),
+              body: PdfPreview(
+                build: (format) => pdfBytes,
+                initialPageFormat: PdfPageFormat.letter.landscape,
+              ),
+            ),
+          ),
+        );
       }
     } catch (e) {
+      // 5. Manejo de errores
       if (context.mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context); // Cierra el diálogo de carga en caso de error
         _showSnack("Error al generar vista previa: $e", Colors.red);
       }
     }
   }
-
 @override
   Widget build(BuildContext context) {
     final state = ref.watch(bandaInspectionProvider);
@@ -280,16 +339,12 @@ try {
             const SizedBox(height: 32),
             _buildStepper(pasos),
             const SizedBox(height: 24),
-            
-            // 1. Contenedor de contenido actual
             if (state.sections.isNotEmpty)
               Container(
                 key: _sectionKey,
                 child: _buildActiveContent(state),
               ),
 
-            // 2. BOTÓN CONDICIONAL: Aparece solo si no está activa la rodillería 
-            // y estamos en la última sección de las predefinidas
             if (!state.isRodilleriaActive && _currentSectionIndex == state.sections.length - 1)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
@@ -297,7 +352,6 @@ try {
                   child: OutlinedButton.icon(
                     onPressed: () {
                       ref.read(bandaInspectionProvider.notifier).toggleRodilleria(true);
-                      // Opcional: saltar automáticamente a la nueva sección de rodillería
                       setState(() => _currentSectionIndex = state.sections.length);
                     },
                     icon: const Icon(Icons.add_circle_outline),
@@ -318,12 +372,10 @@ try {
     );
   }
 Widget _buildActiveContent(BandaInspectionState state) {
-  // 1. Si la rodillería está activa, mostramos la sección
   if (state.isRodilleriaActive && _currentSectionIndex == state.sections.length) {
     return const RodilleriaSection();
   }
 
-  // 2. Si es una sección normal
   if (_currentSectionIndex < state.sections.length) {
     final section = state.sections[_currentSectionIndex];
     return BandaSectionTable(
@@ -334,7 +386,6 @@ Widget _buildActiveContent(BandaInspectionState state) {
     );
   }
 
-  // 3. SI NO ESTÁ ACTIVA, MOSTRAMOS EL BOTÓN PARA ACTIVARLA
   if (!state.isRodilleriaActive) {
     return Center(
       child: Column(
@@ -408,11 +459,28 @@ Widget _buildFooter(int total, bool isMobile) {
     child: const Text("ANTERIOR"),
   );
 
-  Widget _btnVistaPrevia() => ElevatedButton.icon(
-    onPressed: () => _showPreview(context),
-    icon: const Icon(Icons.remove_red_eye),
-    label: const Text("VISTA PREVIA"),
-    style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey.shade900, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20)),
+ Widget _btnVistaPrevia() => ElevatedButton.icon(
+    // Si _isSaving es true, el botón se deshabilita (null)
+    onPressed: _isSaving 
+        ? null 
+        : () async {
+            if (_validarDatosGenerales()) {
+              await _showPreview(context);
+            }
+          },
+    // Cambiamos el icono por un indicador de carga si está guardando
+    icon: _isSaving
+        ? const SizedBox(
+            width: 16, height: 16, 
+            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+          )
+        : const Icon(Icons.remove_red_eye),
+    label: Text(_isSaving ? "GENERANDO..." : "VISTA PREVIA"),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.blueGrey.shade900, 
+      foregroundColor: Colors.white, 
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20)
+    ),
   );
 
 void _confirmarGuardado() {
@@ -442,19 +510,26 @@ void _confirmarGuardado() {
   );
 }
 Widget _btnSiguiente(bool esUltimo) => ElevatedButton(
-  onPressed: () {
-    if (!esUltimo) {
-      setState(() => _currentSectionIndex++);
-      _scrollToSectionStart();
-    } else {
-      _confirmarGuardado(); 
-    }
-  },
-  style: ElevatedButton.styleFrom(
-    backgroundColor: const Color(0xFFB71C1C), 
-    foregroundColor: Colors.white, 
-    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 40)
-  ),
-  child: Text(esUltimo ? "FINALIZAR REPORTE" : "SIGUIENTE"),
-);
+    onPressed: _isSaving
+        ? null
+        : () {
+            if (!esUltimo) {
+              setState(() => _currentSectionIndex++);
+              _scrollToSectionStart();
+            } else {
+              _confirmarGuardado(); 
+            }
+          },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFFB71C1C), 
+      foregroundColor: Colors.white, 
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 40)
+    ),
+    child: _isSaving && esUltimo
+        ? const SizedBox(
+            width: 20, height: 20, 
+            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+          )
+        : Text(esUltimo ? "FINALIZAR REPORTE" : "SIGUIENTE"),
+  );
 }

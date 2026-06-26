@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
+import 'package:flutter/foundation.dart'; // <--- Esta línea define debugPrint
 import 'package:pdf/widgets.dart' as pw;
 import '../../features/bandas_transportadoras/domain/entities/roller.dart';
 import '../../features/bandas_transportadoras/domain/entities/banda_template.dart';
@@ -352,65 +353,110 @@ class BandaPdfGenerator {
         return [];
     }
   }
+static pw.Widget _buildEvidenciasPorAccesorio(BandaSection section) {
+  // Filtramos solo los componentes que tienen evidencias
+  final componentsWithEvidence = section.components.where((c) => 
+    c.evidenceBefore.isNotEmpty || c.evidenceAfter.isNotEmpty
+  ).toList();
 
-  static Map<String, dynamic> mapDetailModelToPdfData(dynamic model) {
-    final Map<String, List<BandaComponent>> grouped = {};
-    final Map<String, String> sectionIdMap = {};
+  if (componentsWithEvidence.isEmpty) return pw.SizedBox();
 
-    for (var ans in model.answers) {
-      final sectionId = ans.section.id?.toString() ?? 'sin_id';
-      final sectionName = ans.section.name?.toString() ?? 'Sin Sección';
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      ...componentsWithEvidence.map((c) {
+        final allEvidences = [...c.evidenceBefore, ...c.evidenceAfter];
+        
+        return pw.Container(
+          margin: const pw.EdgeInsets.only(top: 10),
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Nombre del accesorio
+              pw.Container(
+                width: 80, 
+                child: pw.Text(c.name, style:  pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))
+              ),
+              // Imágenes de evidencia
+              pw.Expanded(
+                child: pw.Wrap(
+                  spacing: 5,
+                  runSpacing: 5,
+                  children: allEvidences.map((e) => pw.Container(
+                    width: 60, height: 60,
+                    decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
+                    child: pw.Image(pw.MemoryImage(e.bytes), fit: pw.BoxFit.cover),
+                  )).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    ],
+  );
+}
+static Map<String, dynamic> mapDetailModelToPdfData(dynamic model) {
+  final Map<String, List<BandaComponent>> grouped = {};
+  final Map<String, String> sectionIdMap = {};
 
-      if (!grouped.containsKey(sectionName)) {
-        grouped[sectionName] = [];
-        sectionIdMap[sectionName] = sectionId;
-      }
+  for (var ans in model.answers) {
+    final sectionId = ans.section.id?.toString() ?? 'sin_id';
+    final sectionName = ans.section.name?.toString() ?? 'Sin Sección';
 
-      final componentName = ans.accessory.name ?? '';
-      final List<BandaOption> opcionesFijas =
-          obtenerOpcionesFijasParaComponente(componentName);
-      grouped[sectionName]!.add(
-        BandaComponent(
-          id: ans.answerId,
-          name: componentName,
-          options: opcionesFijas,
-          selectedOptionIds: [
-            ans.option.id.toString(),
-            ans.option.label.toString(),
-            ans.option.value.toString(),
-          ],
-          observation: ans.recommendedAction ?? '',
-          evidenceBefore: [],
-          evidenceAfter: [],
-        ),
-      );
+    if (!grouped.containsKey(sectionName)) {
+      grouped[sectionName] = [];
+      sectionIdMap[sectionName] = sectionId;
     }
 
-    // 2. Convertimos a la lista que espera tu generateReport
-    final List<BandaSection> sections = grouped.entries.map((e) {
-      return BandaSection(
-        id: sectionIdMap[e.key] ?? 'sec_${e.key}',
-        name: e.key,
-        components: e.value,
-      );
-    }).toList();
+    final componentName = ans.accessory.name ?? '';
+    final List<BandaOption> opcionesFijas =
+        obtenerOpcionesFijasParaComponente(componentName);
 
-    return {
-      'planta': model.report['plant_name'] ?? 'N/A',
-      'area': model.conveyor['area'] ?? 'N/A',
-      'responsable': model.report['conveyor_responsible'] ?? 'N/A',
-      'seccion': 'N/A',
-      'fecha': model.report['inspection_date'] ?? 'N/A',
-      'transportador': model.conveyor['name'] ?? 'N/A',
-      'banda': model.report['recommended_belt'] ?? 'N/A',
-      'material':
-          "${model.report['material'] ?? ''} / ${model.report['granulometry'] ?? ''}",
-      'elaboro': model.inspector['name'] ?? 'N/A',
-      'presentar': model.report['present_to'] ?? 'N/A',
-      'comentarios': model.report['general_comments'] ?? '',
-      'sections': sections,
-    };
+    grouped[sectionName]!.add(
+      BandaComponent(
+        id: ans.answerId,
+        name: componentName,
+        options: opcionesFijas,
+        selectedOptionIds: [
+          ans.option?.id?.toString() ?? '',
+          ans.option?.label?.toString() ?? '',
+          ans.option?.value?.toString() ?? '',
+        ],
+        observation: ans.recommendedAction ?? '',
+        // AQUÍ ESTABA EL ERROR: Agregamos la dimensión desde el modelo 'ans'
+        dimentions: ans.dimentions?.toString() ?? '',
+        evidenceBefore: ans.evidenceBefore ?? [],
+        evidenceAfter: ans.evidenceAfter ?? [],
+      ),
+    );
   }
+
+  // 2. Convertimos a la lista que espera tu generateReport
+  final List<BandaSection> sections = grouped.entries.map((e) {
+    return BandaSection(
+      id: sectionIdMap[e.key] ?? 'sec_${e.key}',
+      name: e.key,
+      components: e.value,
+    );
+  }).toList();
+
+  return {
+    'planta': model.report['plant_name'] ?? 'N/A',
+    'area': model.conveyor['area'] ?? 'N/A',
+    'responsable': model.report['conveyor_responsible'] ?? 'N/A',
+    'seccion': 'N/A',
+    'fecha': model.report['inspection_date'] ?? 'N/A',
+    'transportador': model.conveyor['name'] ?? 'N/A',
+    'banda': model.report['recommended_belt'] ?? 'N/A',
+    'material':
+        "${model.report['material'] ?? ''} / ${model.report['granulometry'] ?? ''}",
+    'elaboro': model.inspector['name'] ?? 'N/A',
+    'presentar': model.report['present_to'] ?? 'N/A',
+    'comentarios': model.report['general_comments'] ?? '',
+    'sections': sections,
+  };
+}
 
   static Future<Uint8List> generateEsqueleto(Map<String, dynamic> data) async {
     final List<Roller> rodillos = data['rodillos'] ?? [];
@@ -419,49 +465,107 @@ class BandaPdfGenerator {
     return await generateReport(data, sections, rodillos);
   }
 static Future<Uint8List> generateReport(
-    Map<String, dynamic> data,
-    List<BandaSection> sections,
-    List<Roller> rodillos,
-  ) async {
-    final pdf = pw.Document();
-    pw.ImageProvider? fullHeaderImg;
-    try {
-      final headerBytes = await rootBundle.load('assets/images/bandas_pdf.png');
-      fullHeaderImg = pw.MemoryImage(headerBytes.buffer.asUint8List());
-    } catch (e) {
-      print("Error: No se encontro la imagen en assets/images/bandas_pdf.png");
-    }
+  Map<String, dynamic> data,
+  List<BandaSection> sections,
+  List<Roller> rodillos,
+) async {
+  final pdf = pw.Document();
+  pw.ImageProvider? fullHeaderImg;
+  try {
+    final headerBytes = await rootBundle.load('assets/images/bandas_pdf.png');
+    fullHeaderImg = pw.MemoryImage(headerBytes.buffer.asUint8List());
+  } catch (e) {
+    debugPrint("Error al cargar imagen: $e");
+  }
 
+  // --- 1. PORTADA: Información General y Tablas Resumen ---
+  pdf.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.letter,
+      margin: const pw.EdgeInsets.all(15),
+      header: (context) => _buildFullHeader(fullHeaderImg),
+      build: (context) => [
+        _buildInfoGrid(data),
+        pw.SizedBox(height: 5),
+        _buildMainTable(sections),
+        pw.SizedBox(height: 10),
+        _buildTechnicalFooter(data, rodillos),
+      ],
+    ),
+  );
+
+  // --- 2. DESGLOSE: Una página por sección ---
+  for (var section in sections) {
     pdf.addPage(
-      pw.MultiPage(
+      pw.Page(
         pageFormat: PdfPageFormat.letter,
         margin: const pw.EdgeInsets.all(15),
-        header: (context) => _buildFullHeader(fullHeaderImg),
-        build: (context) => [
-          // 1. Información General
-          _buildInfoGrid(data),
-          pw.SizedBox(height: 5),
-          
-          // 2. Tabla Resumen (la que ya tenías)
-          _buildMainTable(sections),
-          
-          pw.SizedBox(height: 10),
-          
-          // 3. NUEVO: Desglose por Secciones detallado
-          pw.Text("DESGLOSE DETALLADO POR SECCIONES", 
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8)),
-          pw.SizedBox(height: 5),
-          _buildDesglosePorSecciones(sections),
-          
-          pw.SizedBox(height: 10),
-          
-          // 4. Pie técnico (Rodillos y Comentarios)
-          _buildTechnicalFooter(data, rodillos),
-        ],
+        build: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            _buildFullHeader(fullHeaderImg),
+            pw.SizedBox(height: 10),
+            _buildInfoGrid(data),
+            pw.SizedBox(height: 15),
+            _buildTablaDesglose(section),
+            pw.SizedBox(height: 10),
+            _buildEvidenciasPorAccesorio(section),
+            pw.Spacer(),
+            pw.Container(
+              padding: const pw.EdgeInsets.all(8),
+              decoration: pw.BoxDecoration(border: pw.Border.all(color: _kBorderColor)),
+              child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                pw.Text("COMENTARIOS:", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8)),
+                pw.Text(data['comentarios'] ?? "", style: const pw.TextStyle(fontSize: 7)),
+              ]),
+            ),
+          ],
+        ),
       ),
     );
-    return pdf.save();
   }
+
+  return pdf.save();
+}
+
+static pw.Widget _buildTablaDesglose(BandaSection section) {
+  return pw.Table(
+    border: pw.TableBorder.all(width: 0.5),
+    columnWidths: {
+      0: const pw.FixedColumnWidth(60), // SECCION
+      1: const pw.FlexColumnWidth(2),   // ACCESORIOS
+      2: const pw.FlexColumnWidth(3),   // OBSERVACIONES
+      3: const pw.FixedColumnWidth(45), // DIMENSIONES (Aquí está la columna)
+    },
+    children: [
+      pw.TableRow(decoration: pw.BoxDecoration(color: _kGreyHeader), children: [
+        _cell("SECCION", bold: true),
+        _cell("ACCESORIOS", bold: true),
+        _cell("OBSERVACIONES", bold: true),
+        _cell("DIM.", bold: true), 
+      ]),
+      ...section.components.asMap().entries.map((entry) {
+        int idx = entry.key;
+        BandaComponent c = entry.value;
+
+        return pw.TableRow(children: [
+          pw.Container(
+            alignment: pw.Alignment.topCenter,
+            padding: const pw.EdgeInsets.only(top: 4),
+            child: pw.Text(
+              idx == 0 ? section.name.toUpperCase() : "", 
+              textAlign: pw.TextAlign.center,
+              style:  pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+          pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(c.name, style: const pw.TextStyle(fontSize: 7))),
+          pw.Padding(padding: const pw.EdgeInsets.all(2), child: _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions)),
+          _cell(c.dimentions), // <--- Aquí se pintan las dimensiones
+        ]);
+      }).toList(),
+    ],
+  );
+}
   static pw.Widget _buildDesglosePorSecciones(List<BandaSection> sections) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -654,9 +758,7 @@ static Future<Uint8List> generateReport(
       columnWidths: {
         0: const pw.FlexColumnWidth(0.6),
         1: const pw.FlexColumnWidth(1.2),
-        2: const pw.FlexColumnWidth(
-          2.5,
-        ), // Esta columna ahora ocupa el mayor espacio
+        2: const pw.FlexColumnWidth(2.5,), 
         3: const pw.FlexColumnWidth(1.0),
         4: const pw.FlexColumnWidth(0.6),
       },
@@ -667,8 +769,8 @@ static Future<Uint8List> generateReport(
             _cell("SECCION", bold: true),
             _cell("ACCESORIOS", bold: true),
             _cell("OBSERVACIONES", bold: true),
-            _cell("RECOMENDACION", bold: true),
-            _cell("EVID.", bold: true),
+            _cell("ACCIONES Y RECOMENDACIONES", bold: true),
+            _cell("EVIDENCIA.", bold: true),
           ],
         ),
         ...sections.map((s) {
@@ -678,7 +780,7 @@ static Future<Uint8List> generateReport(
               // Usamos una sub-tabla para asegurar que cada fila tenga la misma altura
               _buildNestedTable(s.components, isNameColumn: true),
               _buildNestedTable(s.components, isOptionsColumn: true),
-              _buildNestedTable(s.components, isObsColumn: true),
+              _buildNestedTable(s.components, isRecomendacionColumn: true), // <--- NUEVO
               _buildNestedTable(s.components, isEvidenceColumn: true),
             ],
           );
@@ -690,7 +792,7 @@ static pw.Widget _buildNestedTable(
     List<BandaComponent> components, {
     bool isNameColumn = false,
     bool isOptionsColumn = false,
-    bool isObsColumn = false,
+    bool isRecomendacionColumn = false, // <--- Nueva bandera
     bool isEvidenceColumn = false,
   }) {
     return pw.Table(
@@ -702,11 +804,13 @@ static pw.Widget _buildNestedTable(
               padding: const pw.EdgeInsets.all(5),
               constraints: const pw.BoxConstraints(minHeight: 25),
               alignment: pw.Alignment.centerLeft,
-              child: isNameColumn
+              child: isNameColumn 
                   ? pw.Text(c.name, style: const pw.TextStyle(fontSize: 5.5))
-                  : isOptionsColumn
-? _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions) // CORREGIDO                          ? pw.Text(c.observation, style: const pw.TextStyle(fontSize: 6.5))
-                          : _buildMiniEvidences(c),
+                  : isOptionsColumn 
+                      ? _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions)
+                  : isRecomendacionColumn 
+                      ? pw.Text(c.observation, style: const pw.TextStyle(fontSize: 6.5)) // <--- SOLO TEXTO
+                  : _buildMiniEvidences(c), // <--- SOLO EVIDENCIAS
             ),
           ],
         );

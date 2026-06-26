@@ -27,8 +27,6 @@ class ConveyorReportDetailModel extends ConveyorReportDetail {
 }
 
 class AnswerModel extends Answer {
-  // Asegúrate de que la clase base 'Answer' acepte customOption en su constructor
-  // Si Answer no tiene customOption, añádelo a la entidad base también.
   final String? customOption; 
 
   AnswerModel({
@@ -56,16 +54,14 @@ class AnswerModel extends Answer {
         customOption: json['custom_option'] as String?, 
         
         recommendedAction: json['recommended_action'] as String? ?? '',
-        dimentions: (json['dimentions'] is String) 
-            ? double.tryParse(json['dimentions'] ?? '0') ?? 0.0 
-            : (json['dimentions'] as num?)?.toDouble() ?? 0.0,
+       dimentions: json['dimentions'] != null 
+    ? json['dimentions'].toString(): '',
         evidences: (json['evidences'] as List?)
                 ?.map((e) => Evidence.fromJson(e as Map<String, dynamic>))
                 .toList() ?? [],
       );
 }
 
-// 3. Modelo de Rodillo
 class RollerModel extends Roller {
   RollerModel({
     required super.id,

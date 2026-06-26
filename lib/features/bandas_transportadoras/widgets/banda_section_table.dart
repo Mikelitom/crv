@@ -208,6 +208,7 @@ Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
               ),
             ),
           ),
+          Expanded(flex: 2, child: Center(child: Text("Comentarios", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
           Expanded(
             flex: 3,
             child: Center(
@@ -222,7 +223,7 @@ Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
     );
   }
 
-  Widget _buildDesktopRow(BandaComponent item) {
+Widget _buildDesktopRow(BandaComponent item) {
     return Container(
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: _kBorder.withOpacity(0.5))),
@@ -231,31 +232,28 @@ Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // 1. Nombre Accesorio
             Expanded(
-              flex: 3,
+              flex: 2,
               child: _cell(
                 Text(
                   item.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
                 ),
               ),
             ),
-            Expanded(flex: 4, child: _cell(_buildCheckboxes(item))),
-            Expanded(flex: 2, child: _cell(_buildDimInput(item))),
+            // 2. Checkboxes (Opciones)
+            Expanded(flex: 3, child: _cell(_buildCheckboxes(item))),
+            // 3. Dimensiones
+            Expanded(flex: 1, child: _cell(_buildDimInput(item))),
+            // 4. Observaciones
+            Expanded(flex: 3, child: _cell(_buildObsInput(item))),
+            // 5. NUEVA COLUMNA: Comentarios por accesorio
+            Expanded(flex: 2, child: _cell(_buildCommentInput(item))),
+            // 6. Evidencias
             Expanded(
-              flex: 5,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: _buildObsInput(item),
-              ),
-            ),
-          Expanded(
-              flex: 3,
+              flex: 2,
               child: Container(
-                // Añadimos el borde a la izquierda de la columna de evidencias
                 decoration: BoxDecoration(
                   border: Border(left: BorderSide(color: _kBorder.withOpacity(0.5))),
                 ),
@@ -263,7 +261,7 @@ Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _buildEvidenceList(item, true),
-                    const Divider(height: 1, color: Color(0xFFD1DBE7)), // Línea divisoria horizontal
+                    const Divider(height: 1, color: Color(0xFFD1DBE7)),
                     _buildEvidenceList(item, false),
                   ],
                 ),
@@ -272,6 +270,50 @@ Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
           ],
         ),
       ),
+    );
+  }
+
+  // Nuevo método para el input de comentarios
+  Widget _buildCommentInput(BandaComponent item) => TextFormField(
+    key: ValueKey('comment_${item.id}'),
+initialValue: item.comment ?? '',
+    maxLines: 2,
+    style: const TextStyle(fontSize: 11),
+    onChanged: (v) => ref
+        .read(bandaInspectionProvider.notifier)
+        .updateComponentComment(widget.sectionId, item.id, v),
+    decoration: const InputDecoration(
+      hintText: "...",
+      border: InputBorder.none,
+      contentPadding: EdgeInsets.all(8),
+    ),
+  );
+
+  // Ajuste en el diálogo para que el Custom Option sea Rojo automáticamente
+  void _showAddOptionDialog(BandaComponent item) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context, 
+      builder: (_) => AlertDialog(
+        title: const Text("Nueva opción"), 
+        content: TextField(controller: controller), 
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+          ElevatedButton(
+            onPressed: () { 
+              if(controller.text.isNotEmpty) {
+                final label = controller.text;
+                // 1. Agregamos la opción
+                ref.read(bandaInspectionProvider.notifier).addCustomOption(widget.sectionId, item.id, label);
+                // 2. Activamos/seleccionamos automáticamente para que se ponga en rojo
+                ref.read(bandaInspectionProvider.notifier).toggleComponentOption(widget.sectionId, item.id, label);
+              } 
+              Navigator.pop(context); 
+            }, 
+            child: const Text("Guardar")
+          )
+        ]
+      )
     );
   }
 Future<void> _showImageSourceOptions(BandaComponent item, bool isBefore) async {
@@ -361,16 +403,15 @@ Widget _buildCheckboxes(BandaComponent item) {
     TextButton.icon(icon: const Icon(Icons.add, size: 14), label: const Text("Otra"), onPressed: () => _showAddOptionDialog(item)),
   ]);
 }
-  void _showAddOptionDialog(BandaComponent item) {
-    final controller = TextEditingController();
-    showDialog(context: context, builder: (_) => AlertDialog(title: const Text("Nueva opción"), content: TextField(controller: controller), actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
-      ElevatedButton(onPressed: () { if(controller.text.isNotEmpty) ref.read(bandaInspectionProvider.notifier).addCustomOption(widget.sectionId, item.id, controller.text); Navigator.pop(context); }, child: const Text("Guardar"))
-    ]));
-  }
 
-  
-
+Widget _buildEvidenceColumn(BandaComponent item) => Column(
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: [
+    _buildEvidenceList(item, true),
+    const Divider(height: 1),
+    _buildEvidenceList(item, false),
+  ],
+);
 Widget _buildEvidenceList(BandaComponent item, bool isBefore) {
     final files = isBefore ? item.evidenceBefore : item.evidenceAfter;
     return Column(children: [

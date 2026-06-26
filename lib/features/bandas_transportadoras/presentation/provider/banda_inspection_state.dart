@@ -12,6 +12,7 @@ class BandaInspectionState {
 
   final bool isRodilleriaActive; 
   final String reportStatus;    
+  final String rollerNotes; // Campo incluido
 
   final Client? selectedClient;
   final Mine? selectedMine;
@@ -37,6 +38,7 @@ class BandaInspectionState {
     this.rollers = const [],
     this.isRodilleriaActive = false,
     this.reportStatus = 'IN_PROGRESS',
+    this.rollerNotes = '', // Inicializado
     this.selectedClient,
     this.selectedMine,
     required this.inspectionDate,
@@ -74,6 +76,7 @@ class BandaInspectionState {
       )),
       isRodilleriaActive: false,
       reportStatus: 'IN_PROGRESS',
+      rollerNotes: '', // Inicializado
       selectedClient: null,
       selectedMine: null,
       inspectionDate: DateTime.now(),
@@ -98,6 +101,7 @@ class BandaInspectionState {
     List<BandaSection>? sections,
     List<Roller>? rollers,
     bool? isRodilleriaActive,
+    String? rollerNotes, // Agregado al copyWith
     String? reportStatus,
     Client? selectedClient,
     bool clearMine = false,
@@ -123,6 +127,7 @@ class BandaInspectionState {
       rollers: rollers ?? this.rollers,
       isRodilleriaActive: isRodilleriaActive ?? this.isRodilleriaActive,
       reportStatus: reportStatus ?? this.reportStatus,
+      rollerNotes: rollerNotes ?? this.rollerNotes, // Asignación en copyWith
       selectedClient: selectedClient ?? this.selectedClient,
       selectedMine: clearMine ? null : (selectedMine ?? this.selectedMine),
       inspectionDate: inspectionDate ?? this.inspectionDate,
