@@ -1,9 +1,9 @@
+import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
 import 'package:flutter/material.dart';
 import 'package:crv_reprosisa/features/servicios/widgets/vehiculos/vehicle_info_card.dart';
-import '../../page/vehiculos/vehicle_service_page.dart';
 
 class ServiceDetailView extends StatelessWidget {
-  final VehicleMock vehicle;
+  final Vehicle vehicle;
 
   const ServiceDetailView({super.key, required this.vehicle});
 
@@ -21,45 +21,26 @@ class ServiceDetailView extends StatelessWidget {
 
         // 3. CUERPO DEL DASHBOARD (Secciones detalladas)
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+          child: ListView( // Usamos ListView para poder hacer scroll si el contenido es mucho
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Columna: Componentes
-                  Expanded(
-                    child: _buildSection(
-                      "Componentes con atención",
-                      Icons.engineering,
-                      Colors.red,
-                      _buildComponentesList(),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-
-                  // Columna: Inspecciones
-                  Expanded(
-                    child: _buildSection(
-                      "Últimas inspecciones",
-                      Icons.history,
-                      Colors.blue,
-                      _buildInspeccionesList(),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-
-                  // Columna: Orden Abierta
-                  Expanded(
-                    child: _buildSection(
-                      "Orden de servicio abierta",
-                      Icons.assignment,
-                      Colors.orange,
-                      _buildOrdenServicioCard(),
-                    ),
-                  ),
-                ],
+              // IntrinsicHeight fuerza a las columnas a medir lo mismo
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch, // ESTO ES LA CLAVE
+                  children: [
+                    Expanded(child: _buildSection("Componentes", Icons.engineering, Colors.red, _buildComponentesList())),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildSection("Inspecciones", Icons.history, Colors.blue, _buildInspeccionesList())),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildSection("Orden Abierta", Icons.assignment, Colors.orange, _buildOrdenServicioCard())),
+                  ],
+                ),
               ),
+              const SizedBox(height: 16),
+              // Esta sección ahora ocupará el mismo ancho que la Row de arriba
+              _buildRecurrenciaSection(),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -187,6 +168,45 @@ class ServiceDetailView extends StatelessWidget {
       ),
     ],
   );
+
+  Widget _buildRecurrenciaSection() {
+    // Datos simulados (esto vendría de tu API)
+    final incidencias = [
+      {'name': 'Filtro de aceite', 'veces': 5},
+      {'name': 'Balatas', 'veces': 3},
+      {'name': 'Banda de accesorios', 'veces': 2},
+    ];
+  
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[200]!)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(children: [
+            Icon(Icons.trending_up, color: Colors.purple, size: 20),
+            SizedBox(width: 8),
+            Text("Incidencias más recurrentes", style: TextStyle(fontWeight: FontWeight.bold)),
+          ]),
+          const Divider(),
+          ...incidencias.map((i) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              children: [
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text(i['name'] as String, style: const TextStyle(fontSize: 12)),
+                  Text("${i['veces']} veces", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                ]),
+                const SizedBox(height: 4),
+                LinearProgressIndicator(value: (i['veces'] as int) / 6, backgroundColor: Colors.grey[100], color: Colors.purple),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
 
   Widget _buildOrdenServicioCard() {
     final String estado = "IN_PROGRESS"; // Esto vendría de tu API

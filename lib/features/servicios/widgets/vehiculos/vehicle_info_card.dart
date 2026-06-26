@@ -1,8 +1,8 @@
-import 'package:crv_reprosisa/features/servicios/page/vehiculos/vehicle_service_page.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
 import 'package:flutter/material.dart';
 
 class VehicleInfoCard extends StatelessWidget {
-  final VehicleMock vehicle;
+  final Vehicle vehicle;
 
   const VehicleInfoCard({super.key, required this.vehicle});
 

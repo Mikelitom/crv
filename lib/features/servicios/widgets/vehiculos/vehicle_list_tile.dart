@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class VehicleListTile extends StatelessWidget {
   final String model;
   final String plate;
-  final String status; // WORKSHOP, AVAILABLE, OCCUPIED
+  final String status;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -18,51 +18,53 @@ class VehicleListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Definición de colores según estatus
-    Color statusColor = status == 'WORKSHOP' 
-        ? const Color(0xFFC62828) // Rojo corporativo
-        : const Color(0xFF388E3C); // Verde para disponible
+    Color statusColor = status == "WORKSHOP" ? Colors.orange : (status == "AVAILABLE" ? Colors.green : Colors.blue);
 
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8, left: 16, right: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFFFF1F1) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: isSelected ? const Color(0xFFC62828) : Colors.grey[200]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(children: [
+                  const Icon(Icons.directions_car, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Text(plate, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                ]),
+                _buildBadge(status, statusColor),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(model, style: TextStyle(color: Colors.grey[700], fontSize: 12)),
+            const SizedBox(height: 8),
+            Row(children: [
+              const Icon(Icons.warning_amber_rounded, size: 12, color: Colors.orange),
+              const Text(" 3 hallazgos", style: TextStyle(color: Colors.grey, fontSize: 10)),
+              const SizedBox(width: 8),
+              const Icon(Icons.calendar_today, size: 12, color: Colors.grey),
+              const Text(" 15 Jun 2026", style: TextStyle(color: Colors.grey, fontSize: 10)),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBadge(String status, Color color) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: isSelected 
-            ? Border.all(color: const Color(0xFFC62828), width: 2) 
-            : Border.all(color: Colors.transparent),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        title: Text(
-          model,
-          style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1C1B1F)),
-        ),
-        subtitle: Text(
-          plate,
-          style: TextStyle(color: Colors.grey[600]),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: statusColor),
-          ),
-          child: Text(
-            status,
-            style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 10),
-          ),
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+      child: Text(status, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold)),
     );
   }
 }

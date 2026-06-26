@@ -1,7 +1,5 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:printing/printing.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/client_history.dart';
 
 class ClientHistoryCard extends StatefulWidget {
