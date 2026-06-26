@@ -201,14 +201,15 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      Expanded(
-                        child: _actionBtn(
-                          "FINALIZAR",
-                          const Color(0xFFC62828),
-                          Icons.check_circle,
-                          _finalizar,
-                        ),
-                      ),
+                   // En tu método build(), donde defines los botones:
+Expanded(
+  child: _actionBtn(
+    "FINALIZAR",
+    const Color(0xFFC62828),
+    Icons.check_circle,
+    _showStatusDialog, // <--- Cambio aquí: Llama al diálogo
+  ),
+),
                     ],
                   ),
                   const SizedBox(height: 50),
@@ -217,7 +218,89 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
             ),
     );
   }
+Future<void> _showStatusDialog() async {
+  // 1. Obtén el estado actual desde el ref
+  final state = ref.read(vehicleInspectionProvider);
+  
+  // 2. Validar si está completo
+  final bool estaCompleto = state.items.every((item) => item.selectedOptionId != null);
+  
+  final String? result = await showDialog<String>(
+    context: context,
+    builder: (context) => AlertDialog(
+      // Responsividad: Limitamos el ancho al 90% de la pantalla para evitar desbordes
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.9,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          Icon(
+            estaCompleto ? Icons.check_circle : Icons.warning_amber_rounded, 
+            color: estaCompleto ? Colors.green : Colors.orange
+          ),
+          const SizedBox(width: 10),
+          Expanded( // Expanded evita que un título largo rompa el diseño
+            child: Text(
+              estaCompleto ? "Reporte Listo" : "Reporte Incompleto",
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+      content: Text(
+        estaCompleto 
+            ? "¿Deseas finalizar y enviar el reporte como COMPLETADO?" 
+            : "Faltan componentes por inspeccionar. El reporte se guardará automáticamente como EN PROCESO.",
+        style: const TextStyle(fontSize: 14, color: Colors.black87),
+      ),
+      // Usamos Wrap para que los botones se acomoden en filas si no caben en una
+      actions: [
+        Wrap(
+          spacing: 8.0,
+          runSpacing: 8.0,
+          alignment: WrapAlignment.end,
+          children: [
+            // BOTÓN CANCELAR
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
+              child: const Text("CANCELAR", style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            
+            // BOTÓN EN PROCESO
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context, "IN_PROGRESS"),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.grey),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text("EN PROCESO"),
+            ),
+            
+            // BOTÓN COMPLETAR
+            if (estaCompleto)
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, "COMPLETED"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC62828),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text("COMPLETAR"),
+              ),
+          ],
+        ),
+      ],
+    ),
+  );
 
+  // 3. Ejecutar acción si hubo una selección
+  if (result != null) {
+    ref.read(vehicleInspectionProvider.notifier).updateReportState(result);
+    await _finalizar();
+  }
+}
   Widget _actionBtn(String l, Color c, IconData i, VoidCallback t) => SizedBox(
     height: 55,
     child: ElevatedButton.icon(

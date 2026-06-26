@@ -7,7 +7,7 @@ import '../../features/bandas_transportadoras/domain/entities/banda_template.dar
 
 class BandaPdfGenerator {
   static final _kBorderColor = PdfColors.black;
-  static final _kGreyHeader = PdfColor.fromHex("#D3D3D3");
+  static final _kGreyHeader = PdfColor.fromHex("#D3D3D5");
 
   static List<BandaOption> obtenerOpcionesFijasParaComponente(
     String componentName,
@@ -353,49 +353,7 @@ class BandaPdfGenerator {
         return [];
     }
   }
-static pw.Widget _buildEvidenciasPorAccesorio(BandaSection section) {
-  // Filtramos solo los componentes que tienen evidencias
-  final componentsWithEvidence = section.components.where((c) => 
-    c.evidenceBefore.isNotEmpty || c.evidenceAfter.isNotEmpty
-  ).toList();
 
-  if (componentsWithEvidence.isEmpty) return pw.SizedBox();
-
-  return pw.Column(
-    crossAxisAlignment: pw.CrossAxisAlignment.start,
-    children: [
-      ...componentsWithEvidence.map((c) {
-        final allEvidences = [...c.evidenceBefore, ...c.evidenceAfter];
-        
-        return pw.Container(
-          margin: const pw.EdgeInsets.only(top: 10),
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              // Nombre del accesorio
-              pw.Container(
-                width: 80, 
-                child: pw.Text(c.name, style:  pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))
-              ),
-              // Imágenes de evidencia
-              pw.Expanded(
-                child: pw.Wrap(
-                  spacing: 5,
-                  runSpacing: 5,
-                  children: allEvidences.map((e) => pw.Container(
-                    width: 60, height: 60,
-                    decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
-                    child: pw.Image(pw.MemoryImage(e.bytes), fit: pw.BoxFit.cover),
-                  )).toList(),
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    ],
-  );
-}
 static Map<String, dynamic> mapDetailModelToPdfData(dynamic model) {
   final Map<String, List<BandaComponent>> grouped = {};
   final Map<String, String> sectionIdMap = {};
@@ -493,32 +451,38 @@ static Future<Uint8List> generateReport(
       ],
     ),
   );
-
-  // --- 2. DESGLOSE: Una página por sección ---
-  for (var section in sections) {
+for (var section in sections) {
+  pdf.addPage(
+    pw.Page(
+      pageFormat: PdfPageFormat.letter,
+      margin: const pw.EdgeInsets.all(15),
+      build: (context) => pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          _buildFullHeader(fullHeaderImg),
+          pw.SizedBox(height: 10),
+          _buildInfoGrid(data),
+          pw.SizedBox(height: 15),
+          // Aquí llamamos al desglose fijo
+          pw.Expanded(child: _buildTablaDesglose(section)), 
+        ],
+      ),
+    ),
+  );
+}
+  if (rodillos.isNotEmpty) {
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.letter,
         margin: const pw.EdgeInsets.all(15),
         build: (context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             _buildFullHeader(fullHeaderImg),
             pw.SizedBox(height: 10),
-            _buildInfoGrid(data),
-            pw.SizedBox(height: 15),
-            _buildTablaDesglose(section),
+            pw.Text("DETALLE TÉCNICO DE RODILLERÍA", 
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
             pw.SizedBox(height: 10),
-            _buildEvidenciasPorAccesorio(section),
-            pw.Spacer(),
-            pw.Container(
-              padding: const pw.EdgeInsets.all(8),
-              decoration: pw.BoxDecoration(border: pw.Border.all(color: _kBorderColor)),
-              child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-                pw.Text("COMENTARIOS:", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8)),
-                pw.Text(data['comentarios'] ?? "", style: const pw.TextStyle(fontSize: 7)),
-              ]),
-            ),
+            _buildRodilleriaFullPage(data, rodillos), // <--- AQUÍ SE MUESTRA
           ],
         ),
       ),
@@ -527,115 +491,212 @@ static Future<Uint8List> generateReport(
 
   return pdf.save();
 }
-
 static pw.Widget _buildTablaDesglose(BandaSection section) {
-  return pw.Table(
-    border: pw.TableBorder.all(width: 0.5),
-    columnWidths: {
-      0: const pw.FixedColumnWidth(60), // SECCION
-      1: const pw.FlexColumnWidth(2),   // ACCESORIOS
-      2: const pw.FlexColumnWidth(3),   // OBSERVACIONES
-      3: const pw.FixedColumnWidth(45), // DIMENSIONES (Aquí está la columna)
-    },
-    children: [
-      pw.TableRow(decoration: pw.BoxDecoration(color: _kGreyHeader), children: [
-        _cell("SECCION", bold: true),
-        _cell("ACCESORIOS", bold: true),
-        _cell("OBSERVACIONES", bold: true),
-        _cell("DIM.", bold: true), 
-      ]),
-      ...section.components.asMap().entries.map((entry) {
-        int idx = entry.key;
-        BandaComponent c = entry.value;
+  final componentesConDatos = section.components.where((c) => 
+    (c.comment != null && c.comment!.trim().isNotEmpty) || 
+    (c.observation.trim().isNotEmpty)
+  ).toList();
 
-        return pw.TableRow(children: [
-          pw.Container(
-            alignment: pw.Alignment.topCenter,
-            padding: const pw.EdgeInsets.only(top: 4),
-            child: pw.Text(
-              idx == 0 ? section.name.toUpperCase() : "", 
-              textAlign: pw.TextAlign.center,
-              style:  pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
-            ),
-          ),
-          pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(c.name, style: const pw.TextStyle(fontSize: 7))),
-          pw.Padding(padding: const pw.EdgeInsets.all(2), child: _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions)),
-          _cell(c.dimentions), // <--- Aquí se pintan las dimensiones
-        ]);
-      }).toList(),
+  final mid = (componentesConDatos.length / 2).ceil();
+  final leftGroup = componentesConDatos.sublist(0, mid);
+  final rightGroup = componentesConDatos.sublist(mid);
+
+  return pw.Column(
+    children: [
+      // 1. TABLA ÚNICA DE ACCESORIOS (SIN ANIDAR)
+      pw.Table(
+        border: pw.TableBorder.all(width: 0.5),
+        columnWidths: {
+          0: const pw.FlexColumnWidth(0.5), // SECCION
+          1: const pw.FlexColumnWidth(0.9), // ACCESORIOS
+          2: const pw.FlexColumnWidth(1.8), // OBSERVACIONES
+          3: const pw.FlexColumnWidth(0.6), // DIMENSIONES
+        },
+        children: [
+          pw.TableRow(decoration: pw.BoxDecoration(color: _kGreyHeader), children: [
+            _cell("SECCION", bold: true),
+            _cell("ACCESORIOS", bold: true),
+            _cell("OBSERVACIONES", bold: true),
+            _cell("DIMENSIONES", bold: true),
+          ]),
+          ...section.components.map((c) => pw.TableRow(
+            children: [
+              // La sección solo se pone en la primera fila o como prefieras
+              pw.Container(alignment: pw.Alignment.center, padding: const pw.EdgeInsets.all(4), child: pw.Text(section.name.toUpperCase(), style:  pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold))),
+              pw.Container(padding: const pw.EdgeInsets.all(4), child: pw.Text(c.name, style: const pw.TextStyle(fontSize: 6))),
+              pw.Container(padding: const pw.EdgeInsets.all(4), child: _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions)),
+              pw.Container(padding: const pw.EdgeInsets.all(4), child: pw.Text(c.dimentions, style: const pw.TextStyle(fontSize: 6))),
+            ],
+          )).toList(),
+        ],
+      ),
+
+      pw.SizedBox(height: 10),
+
+      pw.SizedBox(height: 10),
+
+      // 2. TUS IMÁGENES, COMENTARIOS Y ACCIONES ABAJO
+      pw.Table(
+        border: pw.TableBorder.all(width: 0.5),
+        columnWidths: {0: const pw.FlexColumnWidth(1), 1: const pw.FlexColumnWidth(1)},
+        children: [
+          pw.TableRow(decoration: pw.BoxDecoration(color: _kGreyHeader), children: [
+            pw.Text("Imag.", style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+            pw.Text("Imag.", style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+          ]),
+          pw.TableRow(children: [
+            pw.Container(height: 250, padding: const pw.EdgeInsets.all(5), child: _renderComponentBlock(leftGroup)),
+            pw.Container(height: 250, padding: const pw.EdgeInsets.all(5), child: _renderComponentBlock(rightGroup)),
+          ]),
+          pw.TableRow(decoration: pw.BoxDecoration(color: _kGreyHeader), children: [
+            pw.Text("COMENTARIOS", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
+            pw.Text("COMENTARIOS", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
+          ]),
+          pw.TableRow(children: [_buildComentariosPorSeccion(leftGroup), _buildComentariosPorSeccion(rightGroup)]),
+          pw.TableRow(decoration: pw.BoxDecoration(color: _kGreyHeader), children: [
+            pw.Text("ACCIONES", style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+            pw.Text("ACCIONES", style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+          ]),
+          pw.TableRow(children: [
+            pw.Container(height: 80, child: _buildAccionesPorSeccion(leftGroup)),
+            pw.Container(height: 80, child: _buildAccionesPorSeccion(rightGroup)),
+          ]),
+        ],
+      ),
     ],
   );
 }
-  static pw.Widget _buildDesglosePorSecciones(List<BandaSection> sections) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: sections.map((section) {
-        return pw.Container(
-          margin: const pw.EdgeInsets.only(bottom: 10),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              // Título de la Sección (Encabezado)
-              pw.Container(
-                color: _kGreyHeader,
-                width: double.infinity,
-                padding: const pw.EdgeInsets.all(5),
-                child: pw.Text("SECCIÓN: ${section.name.toUpperCase()}", 
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
-              ),
-              
-              // Tabla detallada
-              pw.Table(
-                border: pw.TableBorder.all(width: 0.5),
-                columnWidths: {
-                  0: const pw.FlexColumnWidth(1.5), // Accesorio
-                  1: const pw.FlexColumnWidth(2.0), // Opciones
-                  2: const pw.FlexColumnWidth(1.0), // Dimensión
-                  3: const pw.FlexColumnWidth(2.0), // Observaciones
-                  4: const pw.FlexColumnWidth(2.0), // Evidencias
-                },
-                children: [
-                  // Header de la tabla de desglose
-                  pw.TableRow(decoration: pw.BoxDecoration(color: PdfColors.grey200), children: [
-                    _cell("ACCESORIO", bold: true),
-                    _cell("OPCIONES", bold: true),
-                    _cell("DIM.", bold: true),
-                    _cell("OBSERVACIÓN", bold: true),
-                    _cell("EVIDENCIAS", bold: true),
-                  ]),
-                  
-                  // Filas de datos
-                  ...section.components.map((c) => pw.TableRow(children: [
-                    pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(c.name, style: const pw.TextStyle(fontSize: 7))),
-                    pw.Padding(padding: const pw.EdgeInsets.all(2), child: _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions)),
-                    _cell(c.dimentions),
-                    pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(c.observation, style: const pw.TextStyle(fontSize: 7))),
-                    _buildEvidenciaConAccesorio(c), // Nueva función abajo
-                  ])),
-                ],
-              ),
-            ],
-          ),
+static pw.Widget _buildNestedTable(
+    List<BandaComponent> components, {
+    bool isNameColumn = false,
+    bool isOptionsColumn = false,
+    bool isRecomendacionColumn = false,
+    bool isCommentColumn = false,
+    bool isEvidenceColumn = false,
+  }) {
+    return pw.Table(
+      border: pw.TableBorder(horizontalInside: const pw.BorderSide(width: 0.5)),
+      children: components.map((c) {
+        return pw.TableRow(
+          children: [
+            pw.Container(
+              padding: const pw.EdgeInsets.all(5),
+              // IMPORTANTE: Unificar la altura mínima para todas las columnas
+              constraints: const pw.BoxConstraints(minHeight: 30), 
+              alignment: pw.Alignment.centerLeft,
+              child: isNameColumn 
+                  ? pw.Text(c.name, style: const pw.TextStyle(fontSize: 6))
+                  : isOptionsColumn 
+                      ? _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions)
+                  : isRecomendacionColumn 
+                      ? pw.Text(c.observation, style: const pw.TextStyle(fontSize: 6))
+                  : isCommentColumn 
+                      ? pw.Text(c.comment ?? "", style: const pw.TextStyle(fontSize: 6))
+                  : _buildMiniEvidences(c),
+            ),
+          ],
         );
       }).toList(),
     );
   }
+static pw.Widget _buildNestedTableColumn(List<BandaComponent> components, {required String type}) {
+  return pw.Table(
+    border: pw.TableBorder(horizontalInside: const pw.BorderSide(width: 0.5)),
+    children: components.map((c) => pw.TableRow(children: [
+      pw.Container(
+        padding: const pw.EdgeInsets.all(4),
+        child: type == 'name' 
+            ? pw.Text(c.name, style: const pw.TextStyle(fontSize: 6))
+            : type == 'obs' 
+                ? _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions)
+                : pw.Text(c.dimentions, style: const pw.TextStyle(fontSize: 6)),
+      ),
+    ])).toList(),
+  );
+}
 
-  // Nueva función para mostrar la imagen pequeña junto al nombre
-  static pw.Widget _buildEvidenciaConAccesorio(BandaComponent c) {
-    final allEvidences = [...c.evidenceBefore, ...c.evidenceAfter];
-    if (allEvidences.isEmpty) return pw.SizedBox();
+static pw.Widget _buildAccionesPorSeccion(List<BandaComponent> components) {
+  final conAcciones = components.where((c) => c.observation.trim().isNotEmpty).toList();
+  
+  if (conAcciones.isEmpty) return pw.Padding(padding: const pw.EdgeInsets.all(5), child: pw.Text("-", style: const pw.TextStyle(fontSize: 7)));
 
-    return pw.Wrap(
-      spacing: 5,
-      runSpacing: 5,
-      children: allEvidences.map((e) => pw.Container(
-        width: 30,
-        height: 30,
-        child: pw.Image(pw.MemoryImage(e.bytes), fit: pw.BoxFit.cover),
+  return pw.Padding(
+    padding: const pw.EdgeInsets.all(5),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: conAcciones.map((c) => pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 4),
+        child: pw.Text("${c.name.toUpperCase()}: ${c.observation}", style: const pw.TextStyle(fontSize: 7)),
       )).toList(),
+    ),
+  );
+}
+static pw.Widget _buildComentariosPorSeccion(List<BandaComponent> components) {
+  final componentesConComentarios = components.where((c) => 
+    c.comment != null && c.comment!.trim().isNotEmpty
+  ).toList();
+
+  if (componentesConComentarios.isEmpty) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(5),
+      child: pw.Text("Sin comentarios en esta sección.", style: const pw.TextStyle(fontSize: 7)),
     );
   }
+
+  return pw.Padding(
+    padding: const pw.EdgeInsets.all(5),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: componentesConComentarios.map((c) {
+        return pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 4),
+          child: pw.RichText(
+            text: pw.TextSpan(
+              children: [
+                pw.TextSpan(
+                  text: "${c.name.toUpperCase()}: ",
+                  style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold),
+                ),
+                pw.TextSpan(
+                  text: c.comment!,
+                  style: const pw.TextStyle(fontSize: 7),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    ),
+  );
+}
+static pw.Widget _renderComponentBlock(List<BandaComponent> components) {
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: components.map((c) {
+      final allEvidences = [...c.evidenceBefore, ...c.evidenceAfter];
+      if (allEvidences.isEmpty) return pw.SizedBox();
+
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(c.name.toUpperCase(), style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 3),
+          pw.Wrap(
+            spacing: 5,
+            runSpacing: 5,
+            children: allEvidences.map((e) => pw.Container(
+              width: 130, // Fotos más grandes
+              height: 130,
+              decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey)),
+              child: pw.Image(pw.MemoryImage(e.bytes), fit: pw.BoxFit.cover),
+            )).toList(),
+          ),
+          pw.SizedBox(height: 10),
+        ],
+      );
+    }).toList(),
+  );
+}
 
   static pw.Widget _buildFullHeader(pw.ImageProvider? img) {
     return pw.Container(
@@ -756,11 +817,13 @@ static pw.Widget _buildTablaDesglose(BandaSection section) {
     return pw.Table(
       border: pw.TableBorder.all(width: 0.5, color: _kBorderColor),
       columnWidths: {
-        0: const pw.FlexColumnWidth(0.6),
-        1: const pw.FlexColumnWidth(1.2),
-        2: const pw.FlexColumnWidth(2.5,), 
-        3: const pw.FlexColumnWidth(1.0),
-        4: const pw.FlexColumnWidth(0.6),
+     0: const pw.FlexColumnWidth(0.6), // SECCION
+      1: const pw.FlexColumnWidth(1.0), // ACCESORIOS
+      2: const pw.FlexColumnWidth(2.0), // OBSERVACIONES
+      3: const pw.FlexColumnWidth(0.8), // ACCIONES Y RECOMENDACIONES
+      4: const pw.FlexColumnWidth(0.8), // COMENTARIOS <--- NUEVA
+      5: const pw.FlexColumnWidth(0.5), // EVIDENCIA
+
       },
       children: [
         pw.TableRow(
@@ -770,53 +833,26 @@ static pw.Widget _buildTablaDesglose(BandaSection section) {
             _cell("ACCESORIOS", bold: true),
             _cell("OBSERVACIONES", bold: true),
             _cell("ACCIONES Y RECOMENDACIONES", bold: true),
+            _cell("COMENTARIOS.", bold: true), // <--- Título Columna
             _cell("EVIDENCIA.", bold: true),
           ],
         ),
         ...sections.map((s) {
           return pw.TableRow(
             children: [
-              _cell(s.name, bold: true),
-              // Usamos una sub-tabla para asegurar que cada fila tenga la misma altura
-              _buildNestedTable(s.components, isNameColumn: true),
-              _buildNestedTable(s.components, isOptionsColumn: true),
-              _buildNestedTable(s.components, isRecomendacionColumn: true), // <--- NUEVO
-              _buildNestedTable(s.components, isEvidenceColumn: true),
+           _cell(s.name, bold: true),
+            _buildNestedTable(s.components, isNameColumn: true),
+            _buildNestedTable(s.components, isOptionsColumn: true),
+            _buildNestedTable(s.components, isRecomendacionColumn: true),
+            _buildNestedTable(s.components, isCommentColumn: true), // <--- Nueva columna
+            _buildNestedTable(s.components, isEvidenceColumn: true),
             ],
           );
         }).toList(),
       ],
     );
   }
-static pw.Widget _buildNestedTable(
-    List<BandaComponent> components, {
-    bool isNameColumn = false,
-    bool isOptionsColumn = false,
-    bool isRecomendacionColumn = false, // <--- Nueva bandera
-    bool isEvidenceColumn = false,
-  }) {
-    return pw.Table(
-      border: pw.TableBorder(horizontalInside: const pw.BorderSide(width: 0.5)),
-      children: components.map((c) {
-        return pw.TableRow(
-          children: [
-            pw.Container(
-              padding: const pw.EdgeInsets.all(5),
-              constraints: const pw.BoxConstraints(minHeight: 25),
-              alignment: pw.Alignment.centerLeft,
-              child: isNameColumn 
-                  ? pw.Text(c.name, style: const pw.TextStyle(fontSize: 5.5))
-                  : isOptionsColumn 
-                      ? _buildOptionsInRow(c.options, c.selectedOptionIds, c.customOptions)
-                  : isRecomendacionColumn 
-                      ? pw.Text(c.observation, style: const pw.TextStyle(fontSize: 6.5)) // <--- SOLO TEXTO
-                  : _buildMiniEvidences(c), // <--- SOLO EVIDENCIAS
-            ),
-          ],
-        );
-      }).toList(),
-    );
-  }
+
 static pw.Widget _buildOptionsInRow(
   List<BandaOption> opcionesFijas,
   List<String> selectedIds,
@@ -918,66 +954,160 @@ static pw.Widget _buildOptionsInRow(
     );
   }
 
-  static pw.Widget _buildRodillosDanadosTable(List<Roller> datosRodillos) {
-    // Usamos abreviaturas para que las columnas no se amontonen
-    final headers = ["M", "B", "IZ", "CE", "DE", "IM", "RE", "SOP", "OBS"];
+static pw.Widget _buildRodillosDanadosTable(List<Roller> datosRodillos) {
+  final headers = ["M", "B", "IZ", "CE", "DE", "IM", "RE", "SOP", "OBS"];
 
-    return pw.Column(
-      children: [
-        pw.Table(
-          border: pw.TableBorder.all(width: 0.5, color: _kBorderColor),
-          columnWidths: {
-            0: const pw.FixedColumnWidth(20), // Mesa
-            1: const pw.FixedColumnWidth(20), // Base
-            2: const pw.FixedColumnWidth(20), // IZQ
-            3: const pw.FixedColumnWidth(20), // CEN
-            4: const pw.FixedColumnWidth(20), // DER
-            5: const pw.FixedColumnWidth(20), // IMP
-            6: const pw.FixedColumnWidth(20), // RET
-            7: const pw.FixedColumnWidth(40), // SOP
-            8: const pw.FlexColumnWidth(1),   // OBS (ocupa lo que sobra)
-          },
-          children: [
-            pw.TableRow(
-              decoration: pw.BoxDecoration(color: _kGreyHeader),
-              children: headers.map((h) => pw.Container(
-                alignment: pw.Alignment.center,
-                padding: const pw.EdgeInsets.symmetric(vertical: 2),
-                child: pw.Text(h, style: pw.TextStyle(fontSize: 5, fontWeight: pw.FontWeight.bold)),
-              )).toList(),
-            ),
-            ...datosRodillos.map((r) => pw.TableRow(
-              children: [
-                _cell(r.tableNumber.toString()),
-                _cell(r.baseNumber.toString()),
-                _cell(r.isLeft ? "1" : ""),
-                _cell(r.isCenter ? "1" : ""),
-                _cell(r.isRight ? "1" : ""),
-                _cell(r.isImpact ? "1" : ""),
-                _cell(r.isReturn ? "1" : ""),
-                _cell(r.isTriple ? "T" : "A"), // Abrevia Triple/Auto
-                _cell(r.observation),
-              ],
-            )).toList(),
-          ],
-        ),
-        pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(vertical: 4),
-          child: pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildTotalBox("CARGA", "${datosRodillos.fold(0, (s, i) => s + (i.isLeft?1:0) + (i.isCenter?1:0) + (i.isRight?1:0))} PZ"),
-              _buildTotalBox("IMP", "${datosRodillos.fold(0, (s, i) => s + (i.isImpact?1:0))} PZ"),
-              _buildTotalBox("RET", "${datosRodillos.fold(0, (s, i) => s + (i.isReturn?1:0))} PZ"),
-            ],
-          ),
-        ),
-      ],
-    );
+  // --- LÓGICA DE CÁLCULO EXACTA (IGUAL A RODILLERIASECTION) ---
+  int nCarga = 0;
+  int nImp = 0;
+  int nRet = 0;
+
+  for (var r in datosRodillos) {
+    // Contamos cuántas posiciones activas tiene esta fila (1, 2 o 3)
+    final int posicionesActivas = (r.isLeft ? 1 : 0) + (r.isCenter ? 1 : 0) + (r.isRight ? 1 : 0);
+    
+    // Aplicamos la misma lógica que en tu widget de inspección:
+    if (r.isImpact) {
+      nImp += posicionesActivas;
+    } else if (r.isReturn) {
+      nRet += posicionesActivas;
+    } else {
+      nCarga += posicionesActivas;
+    }
   }
 
-  
+  return pw.Column(
+    children: [
+      pw.Table(
+        border: pw.TableBorder.all(width: 0.5, color: _kBorderColor),
+        // ... (Mantén tu columnWidths igual)
+        columnWidths: {
+          0: const pw.FixedColumnWidth(20), 1: const pw.FixedColumnWidth(20),
+          2: const pw.FixedColumnWidth(20), 3: const pw.FixedColumnWidth(20),
+          4: const pw.FixedColumnWidth(20), 5: const pw.FixedColumnWidth(20),
+          6: const pw.FixedColumnWidth(20), 7: const pw.FixedColumnWidth(40),
+          8: const pw.FlexColumnWidth(1),
+        },
+        children: [
+          pw.TableRow(
+            decoration: pw.BoxDecoration(color: _kGreyHeader),
+            children: headers.map((h) => pw.Container(
+              alignment: pw.Alignment.center,
+              padding: const pw.EdgeInsets.symmetric(vertical: 2),
+              child: pw.Text(h, style: pw.TextStyle(fontSize: 5, fontWeight: pw.FontWeight.bold)),
+            )).toList(),
+          ),
+          ...datosRodillos.map((r) => pw.TableRow(
+            children: [
+              _cell(r.tableNumber.toString()),
+              _cell(r.baseNumber.toString()),
+              _cell(r.isLeft ? "1" : ""),
+              _cell(r.isCenter ? "1" : ""),
+              _cell(r.isRight ? "1" : ""),
+              _cell(r.isImpact ? "1" : ""),
+              _cell(r.isReturn ? "1" : ""),
+              _cell(r.isTriple ? "T" : "A"),
+              _cell(r.observation),
+            ],
+          )).toList(),
+        ],
+      ),
+      pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(vertical: 4),
+        child: pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+          children: [
+            // USAMOS LAS VARIABLES CALCULADAS ARRIBA
+            _buildTotalBox("CARGA", "$nCarga"),
+            _buildTotalBox("IMP", "$nImp"),
+            _buildTotalBox("RET", "$nRet"),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+static pw.Widget _buildRodilleriaFullPage(Map<String, dynamic> data, List<Roller> rodillos) {
+  // 1. Cálculos de totales
+  int nCarga = 0, nImp = 0, nRet = 0, nSop = 0;
+  for (var r in rodillos) {
+    final int posicionesActivas = (r.isLeft ? 1 : 0) + (r.isCenter ? 1 : 0) + (r.isRight ? 1 : 0);
+    if (r.isImpact) nImp += posicionesActivas;
+    else if (r.isReturn) nRet += posicionesActivas;
+    else nCarga += posicionesActivas;
+    if (r.isTriple) nSop += 1;
+  }
 
+  return pw.Column(
+    children: [
+      // 2. Información General (Igual que en la portada)
+      _buildInfoGrid(data),
+      pw.SizedBox(height: 10),
+
+      // 3. Tabla Principal de Detalle
+      pw.Table(
+        border: pw.TableBorder.all(width: 0.5),
+        columnWidths: {
+          0: const pw.FixedColumnWidth(40), 
+          1: const pw.FixedColumnWidth(40),
+          ...List.generate(7, (i) => i + 2).asMap().map((k, v) => MapEntry(v, const pw.FlexColumnWidth(1))),
+        },
+        children: [
+          pw.TableRow(decoration: pw.BoxDecoration(color: _kGreyHeader), children: [
+            _cell("No. MESA", bold: true), _cell("No. BASE", bold: true),
+            _cell("IZQ", bold: true), _cell("CEN", bold: true), _cell("DER", bold: true),
+            _cell("IMPACTO", bold: true), _cell("RETORNO", bold: true), _cell("SOPORTE", bold: true),
+          ]),
+          ...List.generate(20, (index) {
+            final r = index < rodillos.length ? rodillos[index] : null;
+            return pw.TableRow(children: [
+              _cell(r?.tableNumber.toString() ?? ""),
+              _cell(r?.baseNumber.toString() ?? ""),
+              _cell(r?.isLeft == true ? "1" : ""),
+              _cell(r?.isCenter == true ? "1" : ""),
+              _cell(r?.isRight == true ? "1" : ""),
+              _cell(r?.isImpact == true ? "1" : ""),
+              _cell(r?.isReturn == true ? "1" : ""),
+              _cell(r?.isTriple == true ? "T" : "A"),
+            ]);
+          }),
+        ],
+      ),
+
+      // 4. Cuadro de Totales (Amarillo)
+      pw.Table(
+        border: pw.TableBorder.all(width: 0.5),
+        children: [
+          pw.TableRow(decoration: pw.BoxDecoration(color: PdfColors.yellow), children: [
+            _cell("DESCRIPCION DE RODILLO", bold: true),
+            _cell("TOTAL", bold: true),
+            _cell("UNIDAD", bold: true),
+          ]),
+          _resumenRow("RODILLO REPUESTO DE CARGA ACERO", "$nCarga"),
+          _resumenRow("RODILLO REPUESTO DE IMPACTO DE CARGA", "$nImp"),
+          _resumenRow("RODILLO REPUESTO DE RETORNO", "$nRet"),
+          _resumenRow("SOPORTE TRIPLE DE CARGA", "$nSop"),
+        ],
+      ),
+
+      // 5. Bloque de Notas (Roller Notes)
+      pw.SizedBox(height: 10),
+      pw.Container(
+        width: double.infinity,
+        padding: const pw.EdgeInsets.all(5),
+        decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
+        child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+          pw.Text("COMENTARIOS DE RODILLERÍA:", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8)),
+          pw.Text(data['rollerNotes'] ?? "", style: const pw.TextStyle(fontSize: 7)),
+        ]),
+      ),
+
+    ],
+  );
+}
+static pw.TableRow _resumenRow(String desc, String total) => pw.TableRow(children: [
+  _cell(desc), _cell(total, bold: true), _cell("PIEZA"),
+]);
   // Helper para los cuadros de totales
   static pw.Widget _buildTotalBox(String label, String value) => pw.Column(
     children: [

@@ -16,6 +16,9 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
       loanAreas: state.loanAreas
     );
   }
+  void updateState(String status) {
+    state = state.copyWith(state: status);
+  }
 
   Future<void> onSerieSelected(String serie) async {
     state = state.copyWith(isLoading: true, status: '');

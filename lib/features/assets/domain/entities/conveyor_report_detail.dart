@@ -101,7 +101,6 @@ class Roller {
       };
 }
 
-// --- Resto de tus clases (Answer, Accessory, etc. permanecen igual) ---
 class Answer {
   final String answerId;
   final ReportSection section;
@@ -109,7 +108,8 @@ class Answer {
   final ReportOption? option; 
   final String? customOption; 
   final String recommendedAction;
-  final String dimentions; // Cambiado de double a String
+  final String dimentions;
+  final String? comment; // <--- Campo agregado
   final List<Evidence> evidences;
 
   Answer({
@@ -120,6 +120,7 @@ class Answer {
     this.customOption, 
     required this.recommendedAction,
     required this.dimentions,
+    this.comment, // <--- Agregado al constructor
     required this.evidences,
   });
 
@@ -134,9 +135,9 @@ class Answer {
       customOption: json['custom_option'] as String?,
       recommendedAction: json['recommended_action'] as String? ?? '',
       
-      // Capturamos directamente como String. 
-      // Si el valor llega como entero, lo convertimos a String.
+      // Capturamos la dimensión y el comentario
       dimentions: json['dimentions']?.toString() ?? '',
+      comment: json['comment'] as String?, // <--- Lectura del JSON
       
       evidences: (json['evidences'] as List<dynamic>?)
               ?.map((e) => Evidence.fromJson(e as Map<String, dynamic>))
@@ -152,6 +153,7 @@ class Answer {
         'custom_option': customOption,
         'recommended_action': recommendedAction,
         'dimentions': dimentions,
+        'comment': comment, // <--- Envío al mapa
         'evidences': evidences.map((e) => e.toMap()).toList(),
       };
 }

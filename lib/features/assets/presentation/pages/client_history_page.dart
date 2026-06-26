@@ -76,6 +76,7 @@ Future<List<BandaSection>> _mapAnswersToSections(List<Answer> answers) async {
       name: a.accessory.name,
       observation: a.recommendedAction.trim(),
       options: opcionesFijas,
+      comment: a.comment ?? '', // <--- AQUÍ ESTÁ EL CAMBIO CRÍTICO
       selectedOptionIds: [
         if (a.option != null) ...[
           a.option!.id.toString().trim().toLowerCase(),

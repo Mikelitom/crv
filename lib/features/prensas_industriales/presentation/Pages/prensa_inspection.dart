@@ -136,6 +136,87 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
     );
   }
 
+Future<void> _showStatusDialog() async {
+  // 1. Identificar componentes faltantes
+  final componentesFaltantes = templateItems.where((item) => item.status.isEmpty).toList();
+  final bool estaCompleto = componentesFaltantes.isEmpty;
+  
+  final String? result = await showDialog<String>(
+    context: context,
+    builder: (context) => AlertDialog(
+      // Responsividad: Máximo 90% del ancho de pantalla
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.9,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          Icon(
+            estaCompleto ? Icons.check_circle : Icons.warning_amber_rounded, 
+            color: estaCompleto ? Colors.green : Colors.orange.shade800
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              estaCompleto ? "Reporte Listo" : "Reporte Incompleto",
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+      content: Text(
+        estaCompleto 
+            ? "¿Deseas finalizar y enviar el reporte como COMPLETADO?" 
+            : "Faltan ${componentesFaltantes.length} componentes por inspeccionar. Se guardará como EN PROCESO.",
+        style: const TextStyle(fontSize: 14, color: Colors.black87),
+      ),
+      // Usamos Wrap para que los botones no causen overflow en móviles
+      actions: [
+        Wrap(
+          spacing: 8.0, 
+          runSpacing: 8.0,
+          alignment: WrapAlignment.end,
+          children: [
+            // CANCELAR
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
+              child: const Text("CANCELAR", style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            
+            // EN PROCESO
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context, "IN_PROGRESS"),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.grey),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text("EN PROCESO"),
+            ),
+            
+            // COMPLETAR
+            if (estaCompleto)
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, "COMPLETED"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC62828),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text("COMPLETAR"),
+              ),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  // 2. Ejecutar la acción
+  if (result != null) {
+    ref.read(inspeccionProvider.notifier).updateState(result);
+    await _guardarInspeccion();
+  }
+}
   Future<void> _guardarInspeccion() async {
     final state = ref.read(inspeccionProvider);
     final notifier = ref.read(inspeccionProvider.notifier);
@@ -214,6 +295,7 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
         "press_id": state.selectedPress!.id,
         "inspection_date": DateTime.now().toIso8601String(),
         "area": state.area.isEmpty ? "General" : state.area,
+        "state": state.state, 
         "folio": "F-${DateTime.now().millisecondsSinceEpoch}",
         "answers": answers,
         "loan": hasLoanData
@@ -326,14 +408,14 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      Expanded(
-                        child: _actionBtn(
-                          "FINALIZAR REPORTE",
-                          const Color(0xFFC62828),
-                          Icons.check_circle,
-                          _guardarInspeccion,
-                        ),
-                      ),
+                    Expanded(
+  child: _actionBtn(
+    "FINALIZAR",
+    const Color(0xFFC62828),
+    Icons.check_circle,
+    _showStatusDialog, // <--- LLAMA AL DIÁLOGO, NO A _finalizar DIRECTO
+  ),
+),
                     ],
                   ),
                   const SizedBox(height: 60),

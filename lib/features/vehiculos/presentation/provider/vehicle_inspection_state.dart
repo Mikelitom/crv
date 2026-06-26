@@ -12,6 +12,7 @@ class VehicleInspectionState {
   final bool requiresService;
   final bool isLoading;
   final bool isScanning;
+  final String state;
   final String serviceObservations;
   final String generalNotes;        
 
@@ -27,6 +28,7 @@ class VehicleInspectionState {
     this.isLoading = false,
     this.isScanning = false,
     this.serviceObservations = '',
+    this.state= "IN_PROGRESS", 
     this.generalNotes = "",
   });
 
@@ -43,6 +45,7 @@ class VehicleInspectionState {
     bool? isLoading,
     bool? isScanning,
     String? serviceObservations,
+    String? state,
     String? generalNotes,
   }) {
     return VehicleInspectionState(
@@ -56,6 +59,7 @@ class VehicleInspectionState {
       requiresService: requiresService ?? this.requiresService,
       isLoading: isLoading ?? this.isLoading,
       isScanning: isScanning ?? this.isScanning,
+      state: state ?? this.state,
       serviceObservations: serviceObservations ?? this.serviceObservations,
       generalNotes: generalNotes ?? this.generalNotes,
     );

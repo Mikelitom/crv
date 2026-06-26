@@ -15,7 +15,9 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
     });
     return VehicleInspectionState(inspectionDate: DateTime.now());
   }
-
+void updateReportState(String newState) {
+    state = state.copyWith(state: newState);
+  }
   Future<void> loadVehicles() async {
     final useCase = ref.read(getActiveVehiclesUseCaseProvider);
     final result = await useCase();
@@ -109,6 +111,7 @@ void setGeneralNotes(String v) => state = state.copyWith(generalNotes: v);
 
       final reportRequest = {
         "vehicle_id": state.selectedVehicle!.id,
+        "state": state.state, 
         "inspection_date": DateTime.now().toIso8601String(),
         "location": "Hermosillo",
         "mileage": int.tryParse(state.mileage) ?? 0,

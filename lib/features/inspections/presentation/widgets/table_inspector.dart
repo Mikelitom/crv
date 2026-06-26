@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:crv_reprosisa/core/utils/loading_overlay.dart';
 import 'package:crv_reprosisa/features/assets/presentation/pages/pdf_viewer_page.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/domain/entities/banda_template.dart';
 import 'package:flutter/material.dart';
@@ -128,25 +129,21 @@ Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
     }
   }
 
-  Future<void> _viewReport(InspectionRowUI item) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(color: Color(0xFFC62828)),
-      ),
-    );
+Future<void> _viewReport(InspectionRowUI item) async {
+    LoadingOverlay.show(context, "Cargando datos del reporte...");
+    
     final pdfBytes = await _buildPdfBytes(item);
-    if (mounted) Navigator.pop(context);
+        if (mounted) LoadingOverlay.hide(context);
+    
     if (pdfBytes == null) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Error al cargar detalle o generar PDF"),
-          ),
+          const SnackBar(content: Text("Error al cargar detalle o generar PDF")),
         );
+      }
       return;
     }
+    
     if (!mounted) return;
     Navigator.push(
       context,
@@ -166,20 +163,21 @@ Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
   }
 
   Future<void> _printReport(InspectionRowUI item) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(color: Color(0xFFC62828)),
-      ),
-    );
+    // Paso 1: Mensaje de carga para generación
+    LoadingOverlay.show(context, "Generando PDF para impresión...");
+    
     final pdfBytes = await _buildPdfBytes(item);
-    if (mounted) Navigator.pop(context);
-    if (pdfBytes != null)
+    
+    // Paso 2: Ocultar
+    if (mounted) LoadingOverlay.hide(context);
+    
+    if (pdfBytes != null) {
+      // Paso 3: Opcional, un mensaje rápido antes de imprimir
       await Printing.sharePdf(
         bytes: pdfBytes,
         filename: 'Reporte_${item.folio}.pdf',
       );
+    }
   }
 
   void _navigateToForm(InspectionRowUI item, {required bool isReadOnly}) {
@@ -219,7 +217,7 @@ Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
   final Map<String, List<BandaComponent>> sectionsMap = {};
 
   for (var a in answers) {
-    // 1. Acceso seguro a las propiedades (funciona tanto para objetos como si 'a' fuera Map)
+    // 1. Acceso seguro a las propiedades del objeto 'a'
     final String sectionName = (a.section?.name ?? "Sin Sección");
     final String accessoryName = (a.accessory?.name ?? "Accesorio");
     
@@ -227,20 +225,21 @@ Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
       sectionsMap[sectionName] = [];
     }
 
-    final List<BandaOption> opcionesFijas = BandaPdfGenerator.obtenerOpcionesFijasParaComponente(accessoryName);
+    final List<BandaOption> opcionesFijas = 
+        BandaPdfGenerator.obtenerOpcionesFijasParaComponente(accessoryName);
+    
     final String labelSeleccionado = (a.option?.label ?? a.customOption ?? "").toString().trim();
     final bool esCustom = a.option == null || !opcionesFijas.any((o) => 
         o.label.trim().toLowerCase() == labelSeleccionado.toLowerCase()
     );
 
-    // 4. Mapeo al BandaComponent
+    // 2. Mapeo al BandaComponent con manejo de tipos corregido
     sectionsMap[sectionName]!.add(BandaComponent(
       id: a.answerId?.toString() ?? "0",
       name: accessoryName,
       observation: (a.recommendedAction ?? "").trim(),
+      comment: (a.comment ?? "").trim(), // <--- Mapeo correcto del comentario
       options: opcionesFijas, 
-      
-      // Enviamos IDs, Label y Value normalizados para el match en el PDF
       selectedOptionIds: a.option != null 
           ? [
               a.option!.id.toString().trim().toLowerCase(),
@@ -250,8 +249,7 @@ Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
           : [], 
       
       customOptions: (esCustom && labelSeleccionado.isNotEmpty) ? [labelSeleccionado] : [], 
-      
-      dimentions: a.dimentions > 0 ? a.dimentions.toString() : '',
+      dimentions: a.dimentions?.toString() ?? '', 
       evidenceBefore: [], 
       evidenceAfter: [],
     ));
@@ -263,7 +261,6 @@ Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
     components: e.value,
   )).toList();
 }
-
   Widget _buildDesktopTable(double maxWidth) {
     return Container(
       decoration: BoxDecoration(

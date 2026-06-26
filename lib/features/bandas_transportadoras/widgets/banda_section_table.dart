@@ -28,6 +28,8 @@ class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
   final ImagePicker _picker = ImagePicker();
   final Color _kRed = const Color(0xFFB71C1C);
   final Color _kBorder = const Color.fromARGB(255, 209, 219, 231);
+  final Color _kSurface = const Color(0xFFF1F5F9); // Fondo más profesional
+  final Color _kText = const Color.fromARGB(255, 29, 29, 29);
 
 Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
   final ImageSource? source = await showModalBottomSheet<ImageSource>(
@@ -64,25 +66,22 @@ Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
     // Opcional: mostrar un SnackBar aquí informando que no se pudo acceder
   }
 }
-  @override
+ @override
   Widget build(BuildContext context) {
+    bool isDesktop = MediaQuery.of(context).size.width > 800;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         children: [
           _buildInstitutionalHeader(),
-          _buildTableHead(),
-          ...widget.items
-              .map(
-                (item) => MediaQuery.of(context).size.width > 800
-                    ? _buildDesktopRow(item)
-                    : _buildMobileList(item),
-              )
-              .toList(),
+          // Solo mostramos el encabezado de columnas en Desktop
+          if (isDesktop) _buildTableHead(), 
+          ...widget.items.map((item) => isDesktop ? _buildDesktopRow(item) : _buildMobileList(item)),
         ],
       ),
     );
@@ -289,7 +288,6 @@ initialValue: item.comment ?? '',
     ),
   );
 
-  // Ajuste en el diálogo para que el Custom Option sea Rojo automáticamente
   void _showAddOptionDialog(BandaComponent item) {
     final controller = TextEditingController();
     showDialog(
@@ -303,9 +301,7 @@ initialValue: item.comment ?? '',
             onPressed: () { 
               if(controller.text.isNotEmpty) {
                 final label = controller.text;
-                // 1. Agregamos la opción
                 ref.read(bandaInspectionProvider.notifier).addCustomOption(widget.sectionId, item.id, label);
-                // 2. Activamos/seleccionamos automáticamente para que se ponga en rojo
                 ref.read(bandaInspectionProvider.notifier).toggleComponentOption(widget.sectionId, item.id, label);
               } 
               Navigator.pop(context); 
@@ -335,27 +331,50 @@ Future<void> _pick(BandaComponent item, bool isBefore, ImageSource source) async
     ref.read(bandaInspectionProvider.notifier).addEvidence(widget.sectionId, item.id, EvidenceFile(bytes: bytes, type: 'image', mimeType: 'image/jpeg'), isBefore);
   }
 }
-  Widget _buildMobileList(BandaComponent item) {
+Widget _buildMobileList(BandaComponent item) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: _kBorder)),
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Nombre del componente en negro
           Text(
-            item.name,
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+            item.name, 
+            style: TextStyle(
+              fontWeight: FontWeight.w900, 
+              fontSize: 14, 
+              color: _kText // _kText es negro profesional
+            )
           ),
+          const SizedBox(height: 10),
+          
           _buildCheckboxes(item),
-          _buildDimInput(item),
-          _buildObsInput(item),
+          const SizedBox(height: 10),
+          
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                child: _buildInputMobile("Dimensión", _buildDimInput(item)),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildInputMobile("Comentario", _buildCommentInput(item)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          
+          _buildInputMobile("Acciones y Recomendaciones", _buildObsInput(item)),
+          const SizedBox(height: 10),
+          
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center, 
             children: [
               _buildEvidenceList(item, true),
-              const SizedBox(width: 16),
+              const SizedBox(width: 30),
               _buildEvidenceList(item, false),
             ],
           ),
@@ -363,6 +382,31 @@ Future<void> _pick(BandaComponent item, bool isBefore, ImageSource source) async
       ),
     );
   }
+
+  // Títulos de campos ahora estrictamente en negro
+  Widget _buildInputMobile(String label, Widget input) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label.toUpperCase(), 
+        style: const TextStyle(
+          fontSize: 9, 
+          fontWeight: FontWeight.bold, 
+          color: Colors.black // Título negro
+        ),
+      ),
+      Container(
+        margin: const EdgeInsets.only(top: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: _kSurface, // Tu fondo gris suave
+          borderRadius: BorderRadius.circular(8)
+        ),
+        child: input,
+      ),
+    ],
+  );
+
 Widget _buildCheckboxes(BandaComponent item) {
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     // 1. Catálogo Fijo

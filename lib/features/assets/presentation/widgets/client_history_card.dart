@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:crv_reprosisa/core/utils/loading_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
@@ -40,33 +41,44 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
     );
   }
 
-  // Manejador asíncrono para la descarga nativa
-  Future<void> _handleDownload(String versionId) async {
-    if (_isDownloading) return;
-    setState(() => _isDownloading = true);
+Future<void> _handleDownload(String versionId) async {
+    LoadingOverlay.show(context, "Descargando reporte...");
     try {
       await widget.onDownload(versionId);
     } catch (e) {
       debugPrint("Error al descargar: $e");
     } finally {
-      if (mounted) setState(() => _isDownloading = false);
+      if (mounted) LoadingOverlay.hide(context);
     }
   }
 
-  // Manejador asíncrono para la impresión nativa
   Future<void> _handlePrint(String versionId) async {
-    if (_isPrinting) return;
-    setState(() => _isPrinting = true);
+    LoadingOverlay.show(context, "Preparando impresión...");
     try {
       await widget.onPrint(versionId);
     } catch (e) {
       debugPrint("Error al imprimir: $e");
     } finally {
-      if (mounted) setState(() => _isPrinting = false);
+      if (mounted) LoadingOverlay.hide(context);
     }
   }
-
-  @override
+Future<void> _handleViewPdf(String versionId) async {
+  LoadingOverlay.show(context, "Generando vista previa...");
+  
+  try {
+    // Es vital que el await sea directo aquí
+    await widget.onPdfView(versionId);
+  } catch (e) {
+    debugPrint("Error al ver PDF: $e");
+    // Opcional: mostrar un SnackBar de error aquí
+  } finally {
+    // Esto asegura que siempre se oculte, incluso si hay error
+    if (mounted) {
+      LoadingOverlay.hide(context);
+    }
+  }
+}
+@override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -173,6 +185,30 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
             ),
             const SizedBox(height: 14),
           ],
+          
+          // --- AQUÍ INTEGRADO EL CAMBIO DE COMENTARIOS ---
+          if (selected.comment != null && selected.comment!.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text("COMENTARIOS DEL REPORTE", 
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade500)),
+            ),
+            Container(
+              padding: const EdgeInsets.all(12),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300)
+              ),
+              child: Text(
+                selected.comment!,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade800, fontStyle: FontStyle.italic),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+          
           _infoContainer(),
           const SizedBox(height: 16),
           Divider(color: Colors.grey.shade300, thickness: 1.5),
@@ -182,7 +218,6 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
       ),
     );
   }
-
   Widget _infoContainer() {
     return Container(
       padding: const EdgeInsets.all(12),

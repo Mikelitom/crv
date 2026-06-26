@@ -21,6 +21,7 @@ class ClientHistory {
   final bool isCurrent;
   final int answersCount;
   final int evidencesCount;
+  final String? comment; // <--- 1. PROPIEDAD AGREGADA
 
   ClientHistory({
     required this.clientId,
@@ -45,6 +46,7 @@ class ClientHistory {
     required this.isCurrent,
     required this.answersCount,
     required this.evidencesCount,
+    this.comment, // <--- 2. CONSTRUCTOR AGREGADO
   });
 
   @override
@@ -79,6 +81,7 @@ class ClientHistory {
     bool? isCurrent,
     int? answersCount,
     int? evidencesCount,
+    String? comment, // <--- 3. AGREGADO A COPYWITH
   }) {
     return ClientHistory(
       clientId: clientId ?? this.clientId,
@@ -103,6 +106,7 @@ class ClientHistory {
       isCurrent: isCurrent ?? this.isCurrent,
       answersCount: answersCount ?? this.answersCount,
       evidencesCount: evidencesCount ?? this.evidencesCount,
+      comment: comment ?? this.comment, // <--- 4. ASIGNACIÓN EN COPYWITH
     );
   }
 }

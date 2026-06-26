@@ -33,10 +33,11 @@ class AnswerModel extends Answer {
     required super.answerId,
     required super.section,
     required super.accessory,
-    super.option, // Hacemos super.option opcional
-    this.customOption, // Nuevo campo
+    super.option, 
+    this.customOption, 
     required super.recommendedAction,
     required super.dimentions,
+    super.comment, // Aseguramos pasar el comment a la clase base
     required super.evidences,
   });
 
@@ -45,21 +46,32 @@ class AnswerModel extends Answer {
         section: ReportSection.fromJson(json['section'] as Map<String, dynamic>? ?? {}),
         accessory: Accessory.fromJson(json['accesory'] as Map<String, dynamic>? ?? {}),
         
-        // CORRECCIÓN: Manejo seguro de option cuando viene null
         option: json['option'] != null 
             ? ReportOption.fromJson(json['option'] as Map<String, dynamic>) 
             : null,
             
-        // NUEVO: Capturamos el custom_option del JSON
         customOption: json['custom_option'] as String?, 
         
         recommendedAction: json['recommended_action'] as String? ?? '',
-       dimentions: json['dimentions'] != null 
-    ? json['dimentions'].toString(): '',
+        
+        dimentions: json['dimentions'] != null 
+            ? json['dimentions'].toString() 
+            : '',
+            
+        // Leemos el comentario desde el JSON
+        comment: json['comment'] as String?, 
+        
         evidences: (json['evidences'] as List?)
                 ?.map((e) => Evidence.fromJson(e as Map<String, dynamic>))
                 .toList() ?? [],
       );
+
+  @override
+  Map<String, dynamic> toMap() {
+    final map = super.toMap();
+    map['custom_option'] = customOption;
+    return map;
+  }
 }
 
 class RollerModel extends Roller {

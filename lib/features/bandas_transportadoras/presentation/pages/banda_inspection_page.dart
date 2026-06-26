@@ -432,30 +432,46 @@ Widget _buildActiveContent(BandaInspectionState state) {
 
 Widget _buildFooter(int total, bool isMobile) {
     bool esUltimo = _currentSectionIndex == total - 1;
-    // Si es móvil, usamos un Column para que los botones tengan espacio
+    
+    // En móvil, los botones se apilan ocupando todo el ancho
     if (isMobile) {
       return Column(
         children: [
-          Row(children: [_btnAnterior(), const Spacer(), _btnSiguiente(esUltimo)]),
+          // Fila superior: Anterior y Siguiente
+          Row(
+            children: [
+              Expanded(child: _btnAnterior()),
+              const SizedBox(width: 12),
+              Expanded(child: _btnSiguiente(esUltimo)),
+            ],
+          ),
           const SizedBox(height: 12),
+          // Vista Previa ocupa todo el ancho
           SizedBox(width: double.infinity, child: _btnVistaPrevia()),
         ],
       );
     }
-    // Si es escritorio, mantenemos el Row original
+    
+    // En escritorio, se mantienen en una fila horizontal
     return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
         _btnAnterior(),
-        const Spacer(),
+        const SizedBox(width: 12),
         _btnVistaPrevia(),
         const SizedBox(width: 12),
         _btnSiguiente(esUltimo),
       ],
     );
   }
-  Widget _btnAnterior() => OutlinedButton(
-    onPressed: _currentSectionIndex > 0 ? () { setState(() => _currentSectionIndex--); _scrollToSectionStart(); } : null,
-    style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20)),
+Widget _btnAnterior() => OutlinedButton(
+    onPressed: _currentSectionIndex > 0 && !_isSaving 
+        ? () { setState(() => _currentSectionIndex--); _scrollToSectionStart(); } 
+        : null,
+    style: OutlinedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+      minimumSize: const Size(120, 56), // Tamaño mínimo para ser táctil
+    ),
     child: const Text("ANTERIOR"),
   );
 
@@ -483,27 +499,66 @@ Widget _buildFooter(int total, bool isMobile) {
     ),
   );
 
-void _confirmarGuardado() {
-  showDialog(
+Future<void> _confirmarGuardado() async {
+  // Ajuste de lógica si es necesario
+  const bool estaCompleto = true; 
+
+  await showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text("¿Cómo deseas enviar el reporte?"),
+      // 1. Responsividad: Limitamos el ancho al 90% de la pantalla
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.9,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Row(
+        children: [
+          Icon(Icons.check_circle, color: Colors.green),
+          SizedBox(width: 10),
+          Expanded( // 2. Expanded evita el overflow si el título es largo
+            child: Text(
+              "Confirmar Envío",
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+      content: const Text(
+        "¿Deseas enviar el reporte como COMPLETADO o guardarlo como BORRADOR?",
+        style: TextStyle(fontSize: 14, color: Colors.black87),
+      ),
+      // 3. Usamos actions con un Wrap para que los botones fluyan responsivamente
       actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-            // GUARDAR BORRADOR -> 'IN_PROGRESS'
-            _guardarReporte(esFinalizar: false); 
-          },
-          child: const Text("GUARDAR BORRADOR"),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            // FINALIZAR REPORTE -> 'COMPLETED'
-            _guardarReporte(esFinalizar: true); 
-          },
-          child: const Text("FINALIZAR REPORTE"),
+        Wrap(
+          spacing: 8.0, // Espacio horizontal entre botones
+          runSpacing: 4.0, // Espacio vertical si se apilan
+          alignment: WrapAlignment.end,
+          children: [
+            // BOTÓN BORRADOR
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _guardarReporte(esFinalizar: false); 
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.grey),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text("BORRADOR"),
+            ),
+              ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _guardarReporte(esFinalizar: true); 
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC62828),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text("FINALIZAR"),
+            ),
+          ],
         ),
       ],
     ),
@@ -523,13 +578,26 @@ Widget _btnSiguiente(bool esUltimo) => ElevatedButton(
     style: ElevatedButton.styleFrom(
       backgroundColor: const Color(0xFFB71C1C), 
       foregroundColor: Colors.white, 
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 40)
+      // Igualamos el padding para que tengan la misma altura y forma
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+      // Eliminamos el minimumSize fijo y dejamos que se ajuste al contenido
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(25), // Radio igual al de tu botón ANTERIOR
+      ),
+      elevation: 0,
     ),
     child: _isSaving && esUltimo
         ? const SizedBox(
             width: 20, height: 20, 
             child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
           )
-        : Text(esUltimo ? "FINALIZAR REPORTE" : "SIGUIENTE"),
+        : Text(
+            esUltimo ? "FINALIZAR" : "SIGUIENTE", // Redujimos el texto
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold, 
+              fontSize: 13 // Letra un poco más chica
+            ),
+          ),
   );
 }
