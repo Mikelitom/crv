@@ -54,17 +54,16 @@ class VehicleInfoCard extends StatelessWidget {
               ],
             ),
           ),
-          
-          // COLUMNA DERECHA: KPIs (Aquí podrías poner contadores reales cuando tengas el servicio de conteo)
+          // COLUMNA DERECHA: KPIs Grandes
           Expanded(
             flex: 3,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _kpiItem("3", "Hallazgos", Colors.red, Icons.warning_amber_rounded),
-                _kpiItem("1", "Orden", Colors.orange, Icons.calendar_month),
+                _kpiItem("3", "Hallazgos Activos", Colors.red, Icons.warning_amber_rounded),
+                _kpiItem("1", "Orden Abierta", Colors.orange, Icons.calendar_month),
                 _kpiItem("5", "Servicios", Colors.blue, Icons.check_circle_outline),
-                _kpiItem("12", "Inspecc.", Colors.green, Icons.fact_check_outlined),
+                _kpiItem("12", "Inspecciones", Colors.green, Icons.fact_check_outlined),
               ],
             ),
           ),

@@ -194,6 +194,8 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     );
   }
 
+  // --- CONTENIDO DE SECCIONES --
+
   Widget _buildInspeccionesList() => Column(
     children: [
       ListTile(
@@ -269,4 +271,6 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       ),
     );
   }
+
+  
 }

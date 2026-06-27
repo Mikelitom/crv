@@ -4,15 +4,15 @@ import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/pages/inspections_page.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/widgets/quick_actions_i.dart';
-import 'package:crv_reprosisa/features/servicios/presentation/page/prensas/press_service.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/page/vehiculos/vehicle_service_page.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/page/prensas/press_service_page.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/presentation/pages/banda_inspection_page.dart';
 import 'package:crv_reprosisa/features/prensas_industriales/presentation/Pages/prensa_inspection.dart';
 import 'package:crv_reprosisa/features/vehiculos/presentation/pages/vehicle_inspection_page.dart';
 import 'package:crv_reprosisa/features/user_management/presentation/pages/users_admin_page.dart';
 import 'package:crv_reprosisa/features/profile/presentation/page/profile_page.dart';
-import 'package:flutter/material.dart';
 
 // Importación de widgets de layout y UI
 import '../../layout/responsive_dashboard_layout.dart';
