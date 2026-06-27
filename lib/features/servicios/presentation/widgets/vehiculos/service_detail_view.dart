@@ -1,6 +1,6 @@
 import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
 import 'package:flutter/material.dart';
-import 'package:crv_reprosisa/features/servicios/widgets/vehiculos/vehicle_info_card.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/vehicle_info_card.dart';
 
 class ServiceDetailView extends StatelessWidget {
   final Vehicle vehicle;

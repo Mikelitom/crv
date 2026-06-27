@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../dashboard/presentation/widgets/header.dart';
+import '../../../../dashboard/presentation/widgets/header.dart';
 import '../../widgets/vehiculos/document_vault_panel.dart';
 import '../../widgets/vehiculos/history_inspections_feed.dart';
 import '../../widgets/vehiculos/history_tech_info.dart';
