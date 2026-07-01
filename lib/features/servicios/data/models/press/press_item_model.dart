@@ -1,5 +1,5 @@
-import 'package:crv_reprosisa/features/servicios/domain/entities/press_item_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:crv_reprosisa/features/servicios/domain/entities/press_item_entity.dart';
 
 class PressItemModel extends PressItemEntity {
   const PressItemModel({
@@ -18,6 +18,13 @@ class PressItemModel extends PressItemEntity {
   });
 
   factory PressItemModel.fromJson(Map<String, dynamic> json) {
+    // Convertimos de forma segura:
+    // 1. Tomamos el valor como num (puede ser int o double).
+    // 2. Usamos .toInt() para forzarlo a entero.
+    // 3. Usamos ?? 0 para evitar nulos.
+    final rawQuantity = json['quantity'];
+    final int parsedQuantity = (rawQuantity is num) ? rawQuantity.toInt() : 0;
+
     return PressItemModel(
       id: json['id'] ?? '',
       pressId: json['press_id'] ?? '',
@@ -25,7 +32,7 @@ class PressItemModel extends PressItemEntity {
       componentId: json['component_id'] ?? '',
       componentName: json['component_name'] ?? 'Sin nombre',
       reportAnswerId: json['report_answer_id'] ?? '',
-      quantity: json['quantity'] ?? 0,
+      quantity: parsedQuantity,
       measureUnit: json['measure_unit'] ?? '',
       description: json['description'] ?? '',
       observation: json['observation'] ?? '',
@@ -34,24 +41,5 @@ class PressItemModel extends PressItemEntity {
           ? DateTime.parse(json['completed_at']) 
           : null,
     );
-  }
-
-  // Getters para UI (traducción y color como hicimos en vehicle)
-  String get statusTranslated {
-    switch (status.toUpperCase()) {
-      case 'PENDING': return 'Pendiente';
-      case 'IN_PROGRESS': return 'En proceso';
-      case 'COMPLETED': return 'Completado';
-      default: return 'Desconocido';
-    }
-  }
-
-  Color get statusColor {
-    switch (status.toUpperCase()) {
-      case 'PENDING': return Colors.blue;
-      case 'IN_PROGRESS': return Colors.orange;
-      case 'COMPLETED': return Colors.green;
-      default: return Colors.grey;
-    }
   }
 }

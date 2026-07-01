@@ -76,7 +76,7 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
     );
   }
 
-  // --- MODO MÓVIL: Estilo Tabla Compacta ---
+// --- MODO MÓVIL: Estilo Tabla Compacta ---
   Widget _buildMobileView() {
     return ListView.builder(
       shrinkWrap: true,
@@ -86,13 +86,49 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
         final row = _rows[index];
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.grey.shade300), 
+            borderRadius: BorderRadius.circular(8)
+          ),
           child: Column(
             children: [
-              Row(children: [_cell("Mesa", row[0], index, row, isHeader: true), _cell("Base", row[1], index, row, isHeader: true)]),
-              Row(children: [_cell("IZQ", row[2], index, row), _cell("CEN", row[3], index, row), _cell("DER", row[4], index, row), _cell("IMP", row[5], index, row), _cell("RET", row[6], index, row)]),
-              _field("Tipo Soporte", row[7], index, row),
-              _field("Observaciones", row[8], index, row),
+              // Fila superior: Mesa, Base y Botón Eliminar
+              Row(
+                children: [
+                  _cell("Mesa", row[0], index, row, isHeader: true), 
+                  _cell("Base", row[1], index, row, isHeader: true),
+                  Container(
+                    decoration: BoxDecoration(color: Colors.grey.shade100, border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
+                    child: IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                      onPressed: () => _removeRow(index),
+                      tooltip: "Eliminar fila",
+                    ),
+                  ),
+                ],
+              ),
+              // Fila media: Opciones de rodillos
+              Row(
+                children: [
+                  _cell("IZQ", row[2], index, row), 
+                  _cell("CEN", row[3], index, row), 
+                  _cell("DER", row[4], index, row), 
+                  _cell("IMP", row[5], index, row), 
+                  _cell("RET", row[6], index, row)
+                ],
+              ),
+              // Campos de texto largos
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: [
+                    _field("Tipo Soporte", row[7], index, row),
+                    const SizedBox(height: 8),
+                    _field("Observaciones", row[8], index, row),
+                  ],
+                ),
+              ),
             ],
           ),
         );
@@ -145,7 +181,23 @@ Widget _field(String label, TextEditingController c, int idx, List<TextEditingCo
       ),
     );
   }
+void _removeRow(int index) {
+    setState(() {
+      // 1. Es crucial liberar los recursos de los controladores antes de eliminar la fila
+      for (var controller in _rows[index]) {
+        controller.dispose();
+      }
+      
+      // 2. Eliminamos la referencia de la lista local
+      _rows.removeAt(index);
+    });
 
+    // 3. Eliminamos el dato correspondiente en tu Provider
+    ref.read(bandaInspectionProvider.notifier).removeRoller(index);
+    
+    // 4. Recalculamos los totales después del cambio
+    _calcular();
+  }
   Widget _input(TextEditingController c, int index, List<TextEditingController> row) => TextField(
     controller: c, textAlign: TextAlign.center, onChanged: (_) { _calcular(); _syncRollerToProvider(index, row); },
     decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(8)),
