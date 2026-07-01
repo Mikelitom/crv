@@ -17,16 +17,16 @@ class PressInfoCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // COLUMNA IZQUIERDA: Info detallada
           Expanded(
             flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("${press.model} - ${press.serie}", 
-                     style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text("${press.model} - ${press.serie}", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-                Row(
+                Wrap( // SOLUCIÓN AL OVERFLOW: Wrap permite saltar de línea
+                  spacing: 24,
+                  runSpacing: 8,
                   children: [
                     _infoBadge(Icons.speed, "9,800 km"),
                     _infoBadge(Icons.calendar_today, "Última: 15/06/2026"),
@@ -36,7 +36,6 @@ class PressInfoCard extends StatelessWidget {
               ],
             ),
           ),
-          // COLUMNA DERECHA: KPIs Grandes
           Expanded(
             flex: 3,
             child: Row(
@@ -54,35 +53,26 @@ class PressInfoCard extends StatelessWidget {
     );
   }
 
-  Widget _infoBadge(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 24),
-      child: Row(children: [
-        Icon(icon, size: 18, color: Colors.grey[600]),
-        const SizedBox(width: 8),
-        Text(text, style: TextStyle(color: Colors.grey[800], fontWeight: FontWeight.w500)),
-      ]),
-    );
-  }
+  Widget _infoBadge(IconData icon, String text) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 18, color: Colors.grey[600]),
+      const SizedBox(width: 8),
+      Text(text, style: TextStyle(color: Colors.grey[800], fontWeight: FontWeight.w500)),
+    ],
+  );
 
-  // En VehicleInfoCard, dentro de _buildKpiSummary:
-  Widget _kpiItem(String val, String label, Color color, IconData icon) {
-    return Expanded( // El Expanded asegura que todos tengan el mismo ancho
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8), // Espaciado simétrico
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08), 
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.2))
-        ),
-        child: Column(children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 6),
-          Text(val, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color)),
-          Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
-        ]),
-      ),
-    );
-  }
+  Widget _kpiItem(String val, String label, Color color, IconData icon) => Expanded(
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.2))),
+      child: Column(children: [
+        Icon(icon, color: color, size: 22),
+        const SizedBox(height: 6),
+        Text(val, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color)),
+        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+      ]),
+    ),
+  );
 }

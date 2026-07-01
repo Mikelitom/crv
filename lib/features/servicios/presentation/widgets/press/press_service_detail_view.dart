@@ -1,5 +1,4 @@
 import 'package:crv_reprosisa/features/assets/domain/entities/press.dart';
-import 'package:crv_reprosisa/features/servicios/presentation/widgets/press/press_info_card.dart';
 import 'package:flutter/material.dart';
 
 class PressServiceDetailView extends StatelessWidget {
@@ -9,36 +8,47 @@ class PressServiceDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 900;
+
     return Column(
       children: [
-        // 1. HEADER (Título y botones de acción)
-        _buildHeader(),
-
-        // 2. TARJETA DE INFO (KPIs y datos generales)
-        PressInfoCard(press: press),
+        _buildHeader(isMobile),
+        
+        // Contadores integrados
+        _buildIntegratedKpiSection(isMobile),
 
         const SizedBox(height: 24),
 
-        // 3. CUERPO DEL DASHBOARD
         Expanded(
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             children: [
-              // Usamos IntrinsicHeight para que los 3 contenedores tengan el mismo alto
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(child: _buildSection("Componentes", Icons.engineering, Colors.red, _buildComponentesList())),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildSection("Inspecciones", Icons.history, Colors.blue, _buildInspeccionesList())),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildSection("Orden Abierta", Icons.assignment, Colors.orange, _buildOrdenServicioCard())),
-                  ],
-                ),
-              ),
+              // LAYOUT RESPONSIVO DE SECCIONES
+              isMobile
+                  ? Column(
+                      children: [
+                        _buildSection("Componentes", Icons.engineering, Colors.red, _buildComponentesList()),
+                        const SizedBox(height: 16),
+                        _buildSection("Inspecciones", Icons.history, Colors.blue, _buildInspeccionesList()),
+                        const SizedBox(height: 16),
+                        _buildSection("Orden Abierta", Icons.assignment, Colors.orange, _buildOrdenServicioCard()),
+                      ],
+                    )
+                  : IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(child: _buildSection("Componentes", Icons.engineering, Colors.red, _buildComponentesList())),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildSection("Inspecciones", Icons.history, Colors.blue, _buildInspeccionesList())),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildSection("Orden Abierta", Icons.assignment, Colors.orange, _buildOrdenServicioCard())),
+                        ],
+                      ),
+                    ),
+              
               const SizedBox(height: 16),
-              // SECCIÓN DE RECURRENCIA (Ocupa el ancho completo)
               _buildRecurrenciaSection(),
               const SizedBox(height: 32),
             ],
@@ -48,36 +58,82 @@ class PressServiceDetailView extends StatelessWidget {
     );
   }
 
-  // --- WIDGETS DE ESTRUCTURA ---
+  // --- KPI SECTION RESPONSIVA ---
+  Widget _buildIntegratedKpiSection(bool isMobile) => Container(
+    margin: const EdgeInsets.symmetric(horizontal: 24),
+    padding: const EdgeInsets.all(24),
+    decoration: BoxDecoration(
+      color: Colors.white, 
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]
+    ),
+    child: isMobile 
+      ? Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.center, children: [
+          _kpiItem("3", "Hallazgos Activos", Colors.red, Icons.warning_amber_rounded, isMobile),
+          _kpiItem("1", "Orden Abierta", Colors.orange, Icons.calendar_month, isMobile),
+          _kpiItem("5", "Servicios", Colors.blue, Icons.check_circle_outline, isMobile),
+          _kpiItem("12", "Inspecciones", Colors.green, Icons.fact_check_outlined, isMobile),
+        ])
+      : Row(children: [
+          _kpiItem("3", "Hallazgos Activos", Colors.red, Icons.warning_amber_rounded, isMobile),
+          _kpiItem("1", "Orden Abierta", Colors.orange, Icons.calendar_month, isMobile),
+          _kpiItem("5", "Servicios", Colors.blue, Icons.check_circle_outline, isMobile),
+          _kpiItem("12", "Inspecciones", Colors.green, Icons.fact_check_outlined, isMobile),
+        ]),
+  );
 
-  Widget _buildHeader() {
+  Widget _kpiItem(String val, String label, Color color, IconData icon, bool isMobile) => Expanded(
+    child: Column(children: [
+      Icon(icon, color: color, size: 22),
+      const SizedBox(height: 8),
+      Text(val, style: TextStyle(fontWeight: FontWeight.bold, fontSize: isMobile ? 16 : 20, color: color)),
+      Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+    ]),
+  );
+
+  // --- HEADER RESPONSIVO ---
+  Widget _buildHeader(bool isMobile) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text("Detalle de Unidad", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Row(
-            children: [
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE)))),
+      child: isMobile 
+        ? Column(children: [
+            Text("${press.model} - ${press.serie}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               OutlinedButton.icon(onPressed: () {}, icon: const Icon(Icons.picture_as_pdf), label: const Text("Exportar")),
               const SizedBox(width: 12),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
-                onPressed: () {},
-                icon: const Icon(Icons.add),
-                label: const Text("NUEVA ORDEN"),
+              ElevatedButton(onPressed: () {}, child: const Text("NUEVA ORDEN")),
+            ])
+          ])
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Detalle de Unidad", style: TextStyle(fontSize: 14, color: Colors.grey)),
+                  Text("${press.model} - ${press.serie}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Row(
+                children: [
+                  OutlinedButton.icon(onPressed: () {}, icon: const Icon(Icons.picture_as_pdf), label: const Text("Exportar")),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
+                    onPressed: () {},
+                    icon: const Icon(Icons.add),
+                    label: const Text("NUEVA ORDEN"),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
     );
   }
 
+  // --- RESTO DE MÉTODOS ---
   Widget _buildSection(String title, IconData icon, Color color, Widget content) {
     return Container(
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[200]!)),
@@ -95,8 +151,6 @@ class PressServiceDetailView extends StatelessWidget {
       ),
     );
   }
-
-  // --- CONTENIDO DE SECCIONES ---
 
   Widget _buildComponentesList() {
     return Column(
