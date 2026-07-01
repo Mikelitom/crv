@@ -1,239 +1,234 @@
 import 'package:crv_reprosisa/features/assets/domain/entities/press.dart';
+import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/providers/service_press_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class PressServiceDetailView extends StatelessWidget {
+class PressServiceDetailView extends ConsumerStatefulWidget {
   final Press press;
 
   const PressServiceDetailView({super.key, required this.press});
 
   @override
+  ConsumerState<PressServiceDetailView> createState() => _PressServiceDetailViewState();
+}
+
+class _PressServiceDetailViewState extends ConsumerState<PressServiceDetailView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(pressItemNotifierProvider.notifier).loadPendingItems(widget.press.id);
+ref.read(pressIncidenceNotifierProvider.notifier).loadIncidences(widget.press.id);    
+ref.read(pressServiceOrderNotifierProvider.notifier).loadOrders(widget.press.id);});
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 900;
-
-    return Column(
-      children: [
-        _buildHeader(isMobile),
-        
-        // Contadores integrados
-        _buildIntegratedKpiSection(isMobile),
-
-        const SizedBox(height: 24),
-
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            children: [
-              // LAYOUT RESPONSIVO DE SECCIONES
-              isMobile
-                  ? Column(
-                      children: [
-                        _buildSection("Componentes", Icons.engineering, Colors.red, _buildComponentesList()),
-                        const SizedBox(height: 16),
-                        _buildSection("Inspecciones", Icons.history, Colors.blue, _buildInspeccionesList()),
-                        const SizedBox(height: 16),
-                        _buildSection("Orden Abierta", Icons.assignment, Colors.orange, _buildOrdenServicioCard()),
-                      ],
-                    )
-                  : IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: _buildSection("Componentes", Icons.engineering, Colors.red, _buildComponentesList())),
-                          const SizedBox(width: 16),
-                          Expanded(child: _buildSection("Inspecciones", Icons.history, Colors.blue, _buildInspeccionesList())),
-                          const SizedBox(width: 16),
-                          Expanded(child: _buildSection("Orden Abierta", Icons.assignment, Colors.orange, _buildOrdenServicioCard())),
-                        ],
-                      ),
-                    ),
-              
-              const SizedBox(height: 16),
-              _buildRecurrenciaSection(),
-              const SizedBox(height: 32),
-            ],
-          ),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F7),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _buildContainer(child: _buildHeader(widget.press)),
+            const SizedBox(height: 16),
+            _buildSummarySection(), // Contadores KPI
+            const SizedBox(height: 16),
+            _buildSectionContainer("COMPONENTES", _buildComponentesList()),
+            const SizedBox(height: 16),
+            _buildSectionContainer("INSPECCIONES", _buildInspeccionesList()),
+            const SizedBox(height: 16),
+            _buildSectionContainer("ORDEN ABIERTA", _buildOrdenServicioCard()),
+            const SizedBox(height: 16),
+            _buildSectionContainer("INCIDENTES", _buildRecurrenciaSection()),
+          ],
         ),
-      ],
+      ),
     );
   }
 
-  // --- KPI SECTION RESPONSIVA ---
-  Widget _buildIntegratedKpiSection(bool isMobile) => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 24),
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      color: Colors.white, 
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]
+  // --- ESTRUCTURA ---
+  Widget _buildContainer({required Widget child}) => Container(
+    width: double.infinity,
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]),
+    child: child,
+  );
+
+  Widget _buildSectionContainer(String title, Widget content) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey)),
+        const Divider(height: 24),
+        content,
+      ],
     ),
-    child: isMobile 
-      ? Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.center, children: [
-          _kpiItem("3", "Hallazgos Activos", Colors.red, Icons.warning_amber_rounded, isMobile),
-          _kpiItem("1", "Orden Abierta", Colors.orange, Icons.calendar_month, isMobile),
-          _kpiItem("5", "Servicios", Colors.blue, Icons.check_circle_outline, isMobile),
-          _kpiItem("12", "Inspecciones", Colors.green, Icons.fact_check_outlined, isMobile),
-        ])
-      : Row(children: [
-          _kpiItem("3", "Hallazgos Activos", Colors.red, Icons.warning_amber_rounded, isMobile),
-          _kpiItem("1", "Orden Abierta", Colors.orange, Icons.calendar_month, isMobile),
-          _kpiItem("5", "Servicios", Colors.blue, Icons.check_circle_outline, isMobile),
-          _kpiItem("12", "Inspecciones", Colors.green, Icons.fact_check_outlined, isMobile),
-        ]),
   );
 
-  Widget _kpiItem(String val, String label, Color color, IconData icon, bool isMobile) => Expanded(
-    child: Column(children: [
-      Icon(icon, color: color, size: 22),
-      const SizedBox(height: 8),
-      Text(val, style: TextStyle(fontWeight: FontWeight.bold, fontSize: isMobile ? 16 : 20, color: color)),
-      Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
-    ]),
-  );
+// --- UI COMPONENTES (CON AGRUPAMIENTO DE INCIDENCIAS) ---
+Widget _buildComponentesList() {
+  final state = ref.watch(pressItemNotifierProvider);
 
-  // --- HEADER RESPONSIVO ---
-  Widget _buildHeader(bool isMobile) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE)))),
-      child: isMobile 
-        ? Column(children: [
-            Text("${press.model} - ${press.serie}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              OutlinedButton.icon(onPressed: () {}, icon: const Icon(Icons.picture_as_pdf), label: const Text("Exportar")),
-              const SizedBox(width: 12),
-              ElevatedButton(onPressed: () {}, child: const Text("NUEVA ORDEN")),
-            ])
-          ])
-        : Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Detalle de Unidad", style: TextStyle(fontSize: 14, color: Colors.grey)),
-                  Text("${press.model} - ${press.serie}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                ],
-              ),
-              Row(
-                children: [
-                  OutlinedButton.icon(onPressed: () {}, icon: const Icon(Icons.picture_as_pdf), label: const Text("Exportar")),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
-                    onPressed: () {},
-                    icon: const Icon(Icons.add),
-                    label: const Text("NUEVA ORDEN"),
-                  ),
-                ],
-              ),
-            ],
-          ),
-    );
+  if (state.status == Status.loading) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+  if (state.data.isEmpty) return const Padding(padding: EdgeInsets.all(20), child: Text("Sin componentes pendientes"));
+
+  // Lógica de agrupamiento: Creamos un mapa para contar cuántas veces aparece cada nombre
+  final Map<String, int> conteoIncidencias = {};
+  for (var item in state.data) {
+    conteoIncidencias[item.componentName] = (conteoIncidencias[item.componentName] ?? 0) + 1;
   }
 
-  // --- RESTO DE MÉTODOS ---
-  Widget _buildSection(String title, IconData icon, Color color, Widget content) {
-    return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[200]!)),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [Icon(icon, color: color, size: 20), const SizedBox(width: 8), Text(title, style: const TextStyle(fontWeight: FontWeight.bold))],
-            ),
-          ),
-          const Divider(height: 1),
-          Padding(padding: const EdgeInsets.all(8.0), child: content),
-        ],
-      ),
-    );
-  }
+  return ListView.separated(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: conteoIncidencias.length,
+    separatorBuilder: (_, __) => const Divider(height: 1),
+    itemBuilder: (context, index) {
+      final name = conteoIncidencias.keys.elementAt(index);
+      final count = conteoIncidencias[name]!;
 
-  Widget _buildComponentesList() {
-    return Column(
-      children: [
-        _buildListTile("Filtro de aceite", "Incidencias previas: 3", true),
-        _buildListTile("Banda de accesorios", "Incidencias previas: 1", false),
-      ],
-    );
-  }
-
-  Widget _buildListTile(String title, String subtitle, bool isCritical) {
-    return ListTile(
-      title: Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 11)),
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(color: isCritical ? Colors.red : Colors.orange, borderRadius: BorderRadius.circular(4)),
-        child: Text(isCritical ? "CRÍTICO" : "ATENCIÓN", style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
-      ),
-    );
-  }
-
-  Widget _buildInspeccionesList() => const ListTile(
-    title: Text("15/06/2026", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-    subtitle: Text("Realizado por: M. Fajardo", style: TextStyle(fontSize: 11)),
-    leading: Icon(Icons.check_circle, color: Colors.green, size: 20),
-  );
-
-  Widget _buildOrdenServicioCard() {
-    return Column(
-      children: [
-        Row(
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text("OS-2026-005", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  Text("Incidencias detectadas: $count", style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                ],
+              ),
+            ),
+            // Un pequeño indicador visual del contador
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-              child: const Text("IN_PROGRESS", style: TextStyle(color: Colors.blue, fontSize: 9, fontWeight: FontWeight.bold)),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+              child: Text("$count Veces", style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 10)),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        const Text("Taller: Toyota Mérida | Apertura: 18/06/2026", style: TextStyle(fontSize: 11)),
-        const SizedBox(height: 12),
-        ElevatedButton(onPressed: () {}, child: const Text("COMPLETAR")),
-        const Divider(height: 30),
-        const Align(alignment: Alignment.centerLeft, child: Text("Historial reciente:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-      ],
-    );
-  }
+      );
+    },
+  );
+}
 
-  Widget _buildRecurrenciaSection() {
-    final incidencias = [
-      {'name': 'Filtro de aceite', 'veces': 5},
-      {'name': 'Balatas', 'veces': 3},
-      {'name': 'Banda de accesorios', 'veces': 2},
-    ];
-  
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[200]!)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(children: [Icon(Icons.trending_up, color: Colors.purple, size: 20), SizedBox(width: 8), Text("Incidencias más recurrentes", style: TextStyle(fontWeight: FontWeight.bold))]),
-          const Divider(height: 30),
-          ...incidencias.map((i) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
+  // --- HEADER Y KPI ---
+  Widget _buildHeader(Press p) => Padding(
+    padding: const EdgeInsets.all(20),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("${p.model} - ${p.serie}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("Estado: ${p.operationState}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          ],
+        ),
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
+          onPressed: () {},
+          icon: const Icon(Icons.add, size: 16),
+          label: const Text("ORDEN"),
+        ),
+      ],
+    ),
+  );
+
+Widget _buildSummarySection() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    // Usamos MainAxisAlignment.spaceEvenly para que se distribuyan solos
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
+      children: [
+        Expanded(child: _counterCard("0", "Alertas", Colors.red)),
+        const SizedBox(width: 8),
+        Expanded(child: _counterCard("0", "Abierta", Colors.orange)),
+        const SizedBox(width: 8),
+        Expanded(child: _counterCard("0", "Total", Colors.blue)),
+        const SizedBox(width: 8),
+        Expanded(child: _counterCard("0", "Insp.", Colors.green)),
+      ],
+    ),
+  );
+
+  Widget _counterCard(String value, String label, Color color) => Container(
+    // Aumentamos el padding vertical para que no se vea tan aplastado
+    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+    decoration: BoxDecoration(
+      color: Colors.white, 
+      borderRadius: BorderRadius.circular(16), // Bordes más redondeados
+      border: Border.all(color: color.withOpacity(0.3)), // Borde un poco más visible
+      boxShadow: [
+        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4, offset: const Offset(0, 2))
+      ]
+    ),
+    child: Column(
+      children: [
+        Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
+      ]
+    ),
+  );
+  Widget _buildInspeccionesList() => const ListTile(title: Text("Sin inspecciones"), contentPadding: EdgeInsets.zero);
+Widget _buildOrdenServicioCard() {
+    final state = ref.watch(pressServiceOrderNotifierProvider);
+
+    if (state.status == Status.loading) return const Center(child: CircularProgressIndicator());
+    if (state.orders.isEmpty) return const Padding(padding: EdgeInsets.all(16), child: Text("No hay órdenes abiertas"));
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: state.orders.length,
+      separatorBuilder: (_, __) => const Divider(),
+      itemBuilder: (context, index) {
+        final order = state.orders[index];
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(order.description, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          subtitle: Text("Estado: ${order.status} | Fecha: ${order.formattedDate}", style: const TextStyle(fontSize: 11)),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+        );
+      },
+    );
+  }Widget _buildRecurrenciaSection() {
+    final state = ref.watch(pressIncidenceNotifierProvider);
+
+    if (state.status == Status.loading) return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
+    if (state.incidences.isEmpty) return const Text("Sin incidencias registradas");
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: state.incidences.length,
+      separatorBuilder: (_, __) => const Divider(height: 16),
+      itemBuilder: (context, index) {
+        final item = state.incidences[index];
+        // Normalizamos el progreso (asumiendo un máximo de 10 para visualización)
+        final progress = (item.incidenceCount / 10).clamp(0.0, 1.0);
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text(i['name'] as String, style: const TextStyle(fontSize: 12)),
-                  Text("${i['veces']} veces", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                ]),
-                const SizedBox(height: 6),
-                LinearProgressIndicator(value: (i['veces'] as int) / 6, backgroundColor: Colors.grey[100], color: Colors.purple),
+                Text(item.componentName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                Text("${item.incidenceCount} veces", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.purple)),
               ],
             ),
-          )),
-        ],
-      ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(value: progress, color: Colors.purple, backgroundColor: Colors.purple.withOpacity(0.1)),
+          ],
+        );
+      },
     );
-  }
-}
+  }}

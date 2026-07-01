@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class PressItemEntity {
   final String id;
   final String pressId;
@@ -26,4 +28,23 @@ class PressItemEntity {
     required this.status,
     this.completedAt,
   });
+
+  // Getters movidos a la entidad para acceso directo desde la UI
+  String get statusTranslated {
+    switch (status.toUpperCase()) {
+      case 'PENDING': return 'Pendiente';
+      case 'IN_PROGRESS': return 'En proceso';
+      case 'COMPLETED': return 'Completado';
+      default: return 'Desconocido';
+    }
+  }
+
+  Color get statusColor {
+    switch (status.toUpperCase()) {
+      case 'PENDING': return Colors.blue;
+      case 'IN_PROGRESS': return Colors.orange;
+      case 'COMPLETED': return Colors.green;
+      default: return Colors.grey;
+    }
+  }
 }
