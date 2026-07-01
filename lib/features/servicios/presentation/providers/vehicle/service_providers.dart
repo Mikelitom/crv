@@ -7,23 +7,29 @@ import 'package:crv_reprosisa/features/servicios/data/repository/service_items_r
 import 'package:crv_reprosisa/features/servicios/data/repository/service_items_repository_impl_g.dart';
 import 'package:crv_reprosisa/features/servicios/data/repository/v_service_repository_impl.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/attach_item_repository.dart';
+import 'package:crv_reprosisa/features/servicios/domain/repositories/complete_vehicle_service_repository.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/create_service_repository.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/incidence_repository_g.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/service_item_repository.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/v_service_repository.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/attach_item_usecase.dart';
+import 'package:crv_reprosisa/features/servicios/domain/usecases/complete_vehicle_service_usecase.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/create_service_usecase.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/get_service_items_usecase.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/get_service_items_usecase_g.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/get_services_by_vehicle.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/attach_items_notifier.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/notifiers/complete_vehicle_service_notifier.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/incidence_notifier_g.dart';
-import 'package:crv_reprosisa/features/servicios/presentation/notifiers/service_items_notifier.dart' show ServiceItemsNotifier;
+import 'package:crv_reprosisa/features/servicios/presentation/notifiers/service_items_notifier.dart'
+    show ServiceItemsNotifier;
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/v_service_notifier.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/attach_item_state.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/incidence_state_g.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/service_items_state.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/v_service_state.dart';
+import 'package:crv_reprosisa/features/servicios/data/repository/complete_vehicle_service_repository_impl.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/vehicle_complete_service_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final serviceRemoteDataSourceProvider = Provider<ServiceDataSource>((ref) {
@@ -68,10 +74,10 @@ final attachItemsUseCaseProvider = Provider<AttachItemsUseCase>((ref) {
 });
 
 // 3. Notifier (UI)
-final attachItemsNotifierProvider = NotifierProvider<AttachItemsNotifier, AttachItemsState>(() {
-  return AttachItemsNotifier();
-
-});
+final attachItemsNotifierProvider =
+    NotifierProvider<AttachItemsNotifier, AttachItemsState>(() {
+      return AttachItemsNotifier();
+    });
 // --- PROVIDERS PARA SERVICE ITEMS ---
 
 // 1. Repositorio
@@ -85,9 +91,10 @@ final getServiceItemsUseCaseProvider = Provider<GetServiceItemsUseCase>((ref) {
 });
 
 // 3. Notifier
-final serviceItemsNotifierProvider = NotifierProvider<ServiceItemsNotifier, ServiceItemsState>(() {
-  return ServiceItemsNotifier();
-});// --- PROVIDERS PARA INCIDENCIAS (_G) ---
+final serviceItemsNotifierProvider =
+    NotifierProvider<ServiceItemsNotifier, ServiceItemsState>(() {
+      return ServiceItemsNotifier();
+    }); // --- PROVIDERS PARA INCIDENCIAS (_G) ---
 
 // 1. Repositorio
 final incidenceRepositoryProvider = Provider<IncidenceRepository>((ref) {
@@ -95,11 +102,34 @@ final incidenceRepositoryProvider = Provider<IncidenceRepository>((ref) {
 });
 
 // 2. Caso de Uso
-final getIncidenceSummaryUseCaseProvider = Provider<GetIncidenceSummaryUseCaseG>((ref) {
-  return GetIncidenceSummaryUseCaseG(ref.watch(incidenceRepositoryProvider));
-});
+final getIncidenceSummaryUseCaseProvider =
+    Provider<GetIncidenceSummaryUseCaseG>((ref) {
+      return GetIncidenceSummaryUseCaseG(
+        ref.watch(incidenceRepositoryProvider),
+      );
+    });
 
 // 3. Notifier
-final incidenceNotifierProvider = NotifierProvider<IncidenceNotifierG, IncidenceStateG>(() {
-  return IncidenceNotifierG();
-});
+final incidenceNotifierProvider =
+    NotifierProvider<IncidenceNotifierG, IncidenceStateG>(() {
+      return IncidenceNotifierG();
+    });
+
+final completeVehicleServiceRepositoryProvider =
+    Provider<CompleteVehicleServiceRepository>((ref) {
+      return CompleteVehicleServiceRepositoryImpl(
+        ref.watch(serviceRemoteDataSourceProvider),
+      );
+    });
+
+final completeVehicleServiceUseCaseProvider =
+    Provider<CompleteVehicleServiceUsecase>((ref) {
+      return CompleteVehicleServiceUsecase(
+        ref.watch(completeVehicleServiceRepositoryProvider),
+      );
+    });
+
+final completeVehicleServiceNotifierProvider =
+    NotifierProvider<CompleteVehicleServiceNotifier, CompleteServiceState>(() {
+      return CompleteVehicleServiceNotifier();
+    });

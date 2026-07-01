@@ -12,6 +12,7 @@ abstract class ServiceDataSource {
   Future<void> createService(CreateServiceOrderModel model);
   Future<List<IncidenceModel>> getIncidenceSummary(String vehicleId);
   Future<List<ServiceOrderModel>> getPendingServicesByVehicle(String vehicleId);
+  Future<bool> completeService(String serviceId);
 }
 
 class ServiceDataSourceImpl implements ServiceDataSource {
@@ -73,9 +74,7 @@ class ServiceDataSourceImpl implements ServiceDataSource {
 
   @override
   Future<List<ServiceItemModel>> getServiceItems(String serviceId) async {
-    final response = await dio.get(
-      '/vehicle/service/service-items/$serviceId',
-    );
+    final response = await dio.get('/vehicle/service/service-items/$serviceId');
 
     if (response.statusCode == 200) {
       final List<dynamic> data = response.data;
@@ -85,18 +84,33 @@ class ServiceDataSourceImpl implements ServiceDataSource {
         'Error al obtener ítems del servicio: ${response.statusCode}',
       );
     }
-    
   }
+
   @override
   Future<List<IncidenceModel>> getIncidenceSummary(String vehicleId) async {
     // Implementación del nuevo endpoint
-    final response = await dio.get('/vehicle/service/vehicles/$vehicleId/incidence-summary');
+    final response = await dio.get(
+      '/vehicle/service/vehicles/$vehicleId/incidence-summary',
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> data = response.data;
       return data.map((json) => IncidenceModel.fromJson(json)).toList();
     } else {
-      throw Exception('Error al obtener resumen de incidencias: ${response.statusCode}');
+      throw Exception(
+        'Error al obtener resumen de incidencias: ${response.statusCode}',
+      );
+    }
+  }
+
+  @override
+  Future<bool> completeService(String serviceId) async {
+    final response = await dio.patch('/vehicle/service/$serviceId/complete');
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Error al completar el servicio: ${response.statusCode}');
     }
   }
 }
