@@ -6,7 +6,7 @@ class Press {
   final String serie;
   final String size;
   final bool isActive;
-  final String? operationState;
+  final String operationState;
   final String? currentLocation;
   final String? responsible;
   final String? serviceReason;
@@ -22,7 +22,7 @@ class Press {
     required this.serie,
     required this.size,
     required this.isActive,
-    this.operationState,
+    required this.operationState,
     this.currentLocation,
     this.responsible,
     this.serviceReason,

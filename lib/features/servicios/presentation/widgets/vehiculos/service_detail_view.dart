@@ -2,14 +2,12 @@ import 'dart:typed_data';
 
 import 'package:crv_reprosisa/features/servicios/data/models/v_service_order_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/service_item_model.dart';
-import 'package:crv_reprosisa/features/servicios/presentation/notifiers/pending_component_notifier_v.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/pending_component_provider_v.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/create_order_dialog.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:crv_reprosisa/core/config/dio_client.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/vehicle_report_detail_entity.dart';
-import 'package:crv_reprosisa/features/assets/presentation/pages/vehicle_report_detail_page.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_history_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_report_detail.dart';
 import 'package:crv_reprosisa/features/servicios/domain/entities/v_service_order.dart';
@@ -50,34 +48,34 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     });
   }
 
-  Future<void> _showDetail(String versionId) async {
-    await ref.read(vehicleReportDetailProvider.notifier).fetchDetail(versionId);
+  // Future<void> _showDetail(String versionId) async {
+  //   await ref.read(vehicleReportDetailProvider.notifier).fetchDetail(versionId);
 
-    if (!mounted) return;
+  //   if (!mounted) return;
 
-    final state = ref.read(vehicleReportDetailProvider);
+  //   final state = ref.read(vehicleReportDetailProvider);
 
-    if (state.error != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(state.error!)));
-      return;
-    }
+  //   if (state.error != null) {
+  //     ScaffoldMessenger.of(
+  //       context,
+  //     ).showSnackBar(SnackBar(content: Text(state.error!)));
+  //     return;
+  //   }
 
-    if (state.data == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No se pudo obtener el reporte.")),
-      );
-      return;
-    }
+  //   if (state.data == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text("No se pudo obtener el reporte.")),
+  //     );
+  //     return;
+  //   }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => VehicleReportDetailPage(reportData: state.data!),
-      ),
-    );
-  }
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (_) => VehicleReportDetailPage(reportData: state.data!),
+  //     ),
+  //   );
+  // }
 
   Future<void> _showPdf(String versionId) async {
     // Descargar el reporte
@@ -650,10 +648,9 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
             ? order.id.substring(0, 8).toUpperCase()
             : order.id.toUpperCase();
 
-        final String displayReportId =
-            order.reportId != null && order.reportId!.length >= 6
-            ? order.reportId!.substring(0, 6)
-            : (order.reportId ?? "N/A");
+        final String displayReportId = order.reportId.length >= 6
+            ? order.reportId.substring(0, 6)
+            : (order.reportId);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -846,8 +843,9 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
 
   Widget _buildInspeccionesList() {
     final historyState = ref.watch(vehicleHistoryProvider);
-    if (historyState.status == Status.loading)
+    if (historyState.status == Status.loading) {
       return const Center(child: CircularProgressIndicator());
+    }
     if (historyState.history.isEmpty) return const Text("Sin inspecciones");
     return Column(
       children: historyState.history

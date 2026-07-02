@@ -53,7 +53,7 @@ class _PressServicePageState extends ConsumerState<PressServicePage> {
                 decoration: BoxDecoration(
                   color: Colors.white, 
                   borderRadius: BorderRadius.circular(16), 
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)]
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10)]
                 ),
                 child: Column(
                   children: [
@@ -107,7 +107,7 @@ class _PressServicePageState extends ConsumerState<PressServicePage> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isSelected ? Colors.red.withOpacity(0.05) : Colors.transparent, 
+        color: isSelected ? Colors.red.withValues(alpha: 0.05) : Colors.transparent, 
         border: Border(bottom: BorderSide(color: Colors.grey[200]!))
       ),
       child: Column(
@@ -115,7 +115,7 @@ class _PressServicePageState extends ConsumerState<PressServicePage> {
         children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Row(children: [const Icon(Icons.precision_manufacturing, size: 16), const SizedBox(width: 8), Text(v.serie, style: const TextStyle(fontWeight: FontWeight.bold))]),
-            _buildCompactBadge(v.model, statusColor),
+            _buildCompactBadge(v.operationState, statusColor),
           ]),
           Text("${v.serie} ${v.model}", style: const TextStyle(fontSize: 12)),
         ],
@@ -126,7 +126,7 @@ class _PressServicePageState extends ConsumerState<PressServicePage> {
   Widget _buildCompactBadge(String status, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), 
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(4)), 
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)), 
       child: Text(status, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold))
     );
   }

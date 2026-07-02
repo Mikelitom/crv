@@ -9,7 +9,7 @@ class PressModel extends Press {
     required super.serie,
     required super.size,
     required super.isActive,
-    super.operationState,
+    required super.operationState,
     super.currentLocation,
     super.responsible,
     super.loanComment,
@@ -56,14 +56,17 @@ class PressModel extends Press {
 
   // Lógica de traducción de Estados
   static String _mapStateToSpanish(String state) {
-    if (state.contains('IN_SERVICE') || state.contains('MANTENIMIENTO'))
+    if (state.contains('IN_SERVICE') || state.contains('MANTENIMIENTO')) {
       return "En Mantenimiento";
+    }
     if (state.contains('LOANED') ||
         state.contains('PRESTAMO') ||
-        state.contains('LOANED'))
+        state.contains('LOANED')) {
       return "En Préstamo";
-    if (state.contains('AVAILABLE') || state.contains('DISPONIBLE'))
+    }
+    if (state.contains('AVAILABLE') || state.contains('DISPONIBLE')) {
       return "Disponible";
+    }
     return "En Operación";
   }
 
