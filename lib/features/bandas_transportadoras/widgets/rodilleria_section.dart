@@ -17,7 +17,9 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
   @override
   void initState() {
     super.initState();
-    _notesController = TextEditingController(text: ref.read(bandaInspectionProvider).rollerNotes);
+    _notesController = TextEditingController(
+      text: ref.read(bandaInspectionProvider).rollerNotes,
+    );
   }
 
   @override
@@ -34,27 +36,38 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
       int vDer = int.tryParse(row[4].text) ?? 0;
       int vImp = int.tryParse(row[5].text) ?? 0;
       int vRet = int.tryParse(row[6].text) ?? 0;
-      int posicionesActivas = (vIzq > 0 ? 1 : 0) + (vCen > 0 ? 1 : 0) + (vDer > 0 ? 1 : 0);
-      if (vImp > 0) nImp += posicionesActivas;
-      else if (vRet > 0) nRet += posicionesActivas;
-      else nCarga += posicionesActivas;
+      int posicionesActivas =
+          (vIzq > 0 ? 1 : 0) + (vCen > 0 ? 1 : 0) + (vDer > 0 ? 1 : 0);
+      if (vImp > 0)
+        nImp += posicionesActivas;
+      else if (vRet > 0)
+        nRet += posicionesActivas;
+      else
+        nCarga += posicionesActivas;
     }
-    if (mounted) setState(() { cargaAcero = nCarga; impacto = nImp; retorno = nRet; });
+    if (mounted)
+      setState(() {
+        cargaAcero = nCarga;
+        impacto = nImp;
+        retorno = nRet;
+      });
   }
 
   void _syncRollerToProvider(int index, List<TextEditingController> row) {
-    ref.read(bandaInspectionProvider.notifier).updateRoller(
-      index,
-      tableNumber: int.tryParse(row[0].text) ?? 0,
-      baseNumber: int.tryParse(row[1].text) ?? 0,
-      isLeft: (int.tryParse(row[2].text) ?? 0) > 0,
-      isCenter: (int.tryParse(row[3].text) ?? 0) > 0,
-      isRight: (int.tryParse(row[4].text) ?? 0) > 0,
-      isImpact: (int.tryParse(row[5].text) ?? 0) > 0,
-      isReturn: (int.tryParse(row[6].text) ?? 0) > 0,
-      supportType: row[7].text,
-      observation: row[8].text,
-    );
+    ref
+        .read(bandaInspectionProvider.notifier)
+        .updateRoller(
+          index,
+          tableNumber: int.tryParse(row[0].text) ?? 0,
+          baseNumber: int.tryParse(row[1].text) ?? 0,
+          isLeft: (int.tryParse(row[2].text) ?? 0) > 0,
+          isCenter: (int.tryParse(row[3].text) ?? 0) > 0,
+          isRight: (int.tryParse(row[4].text) ?? 0) > 0,
+          isImpact: (int.tryParse(row[5].text) ?? 0) > 0,
+          isReturn: (int.tryParse(row[6].text) ?? 0) > 0,
+          supportType: row[7].text,
+          observation: row[8].text,
+        );
   }
 
   @override
@@ -62,13 +75,23 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
     final state = ref.watch(bandaInspectionProvider);
     return Container(
       margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15)]),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15),
+        ],
+      ),
       child: Column(
         children: [
           _buildHeader(),
-          LayoutBuilder(builder: (context, constraints) {
-            return constraints.maxWidth < 600 ? _buildMobileView() : _buildTechnicalTable();
-          }),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return constraints.maxWidth < 600
+                  ? _buildMobileView()
+                  : _buildTechnicalTable();
+            },
+          ),
           _buildInventorySummary(),
           _buildNotesSection(state.rollerNotes),
         ],
@@ -76,7 +99,7 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
     );
   }
 
-// --- MODO MÓVIL: Estilo Tabla Compacta ---
+  // --- MODO MÓVIL: Estilo Tabla Compacta ---
   Widget _buildMobileView() {
     return ListView.builder(
       shrinkWrap: true,
@@ -88,37 +111,50 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: Colors.grey.shade300), 
-            borderRadius: BorderRadius.circular(8)
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
             children: [
-              // Fila superior: Mesa, Base y Botón Eliminar
+              // Fila superior: Mesa, Base y Botón de Eliminar
               Row(
                 children: [
-                  _cell("Mesa", row[0], index, row, isHeader: true), 
+                  _cell("Mesa", row[0], index, row, isHeader: true),
                   _cell("Base", row[1], index, row, isHeader: true),
+                  // Botón de eliminar en móvil
                   Container(
-                    decoration: BoxDecoration(color: Colors.grey.shade100, border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.grey.shade300,
+                          width: 1.0, // Asegúrate de tener al menos una coma si hay más parámetros
+                        ),
+                      ),
+                    ),
                     child: IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                      icon: const Icon(
+                        Icons.delete,
+                        color: Colors.red,
+                        size: 20,
+                      ),
                       onPressed: () => _removeRow(index),
                       tooltip: "Eliminar fila",
                     ),
                   ),
                 ],
               ),
-              // Fila media: Opciones de rodillos
+              // Fila media: Opciones
               Row(
                 children: [
-                  _cell("IZQ", row[2], index, row), 
-                  _cell("CEN", row[3], index, row), 
-                  _cell("DER", row[4], index, row), 
-                  _cell("IMP", row[5], index, row), 
-                  _cell("RET", row[6], index, row)
+                  _cell("IZQ", row[2], index, row),
+                  _cell("CEN", row[3], index, row),
+                  _cell("DER", row[4], index, row),
+                  _cell("IMP", row[5], index, row),
+                  _cell("RET", row[6], index, row),
                 ],
               ),
-              // Campos de texto largos
+              // Campos de texto finales
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
@@ -136,18 +172,44 @@ class _RodilleriaSectionState extends ConsumerState<RodilleriaSection> {
     );
   }
 
-  Widget _cell(String label, TextEditingController c, int idx, List<TextEditingController> row, {bool isHeader = false}) => Expanded(
+  Widget _cell(
+    String label,
+    TextEditingController c,
+    int idx,
+    List<TextEditingController> row, {
+    bool isHeader = false,
+  }) => Expanded(
     child: Container(
-      decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.grey.shade300), bottom: BorderSide(color: Colors.grey.shade300)), color: isHeader ? Colors.grey.shade100 : null),
+      decoration: BoxDecoration(
+        border: Border(
+          right: BorderSide(color: Colors.grey.shade300),
+          bottom: BorderSide(color: Colors.grey.shade300),
+        ),
+        color: isHeader ? Colors.grey.shade100 : null,
+      ),
       child: TextField(
-        controller: c, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12),
-        decoration: InputDecoration(hintText: label, border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(vertical: 10)),
-        onChanged: (_) { _calcular(); _syncRollerToProvider(idx, row); },
+        controller: c,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 12),
+        decoration: InputDecoration(
+          hintText: label,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+        ),
+        onChanged: (_) {
+          _calcular();
+          _syncRollerToProvider(idx, row);
+        },
       ),
     ),
   );
 
-Widget _field(String label, TextEditingController c, int idx, List<TextEditingController> row) => TextField(
+  Widget _field(
+    String label,
+    TextEditingController c,
+    int idx,
+    List<TextEditingController> row,
+  ) => TextField(
     controller: c,
     style: const TextStyle(fontSize: 12),
     decoration: InputDecoration(
@@ -159,13 +221,19 @@ Widget _field(String label, TextEditingController c, int idx, List<TextEditingCo
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.indigo.shade300, width: 2), // Un toque sutil al enfocar
+        borderSide: BorderSide(
+          color: Colors.indigo.shade300,
+          width: 2,
+        ), // Un toque sutil al enfocar
       ),
       filled: true,
       fillColor: Colors.white, // Fondo blanco para que combine con las celdas
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
     ),
-    onChanged: (_) { _calcular(); _syncRollerToProvider(idx, row); },
+    onChanged: (_) {
+      _calcular();
+      _syncRollerToProvider(idx, row);
+    },
   );
 
   // --- MODO ESCRITORIO ---
@@ -173,78 +241,167 @@ Widget _field(String label, TextEditingController c, int idx, List<TextEditingCo
     return Container(
       padding: const EdgeInsets.all(16),
       child: Table(
+        columnWidths: const {
+          9: FixedColumnWidth(50), // Columna de eliminar con tamaño fijo
+        },
         border: TableBorder.all(color: Colors.grey.shade300),
         children: [
-          TableRow(decoration: BoxDecoration(color: Colors.grey.shade100), children: ["No. Mesa", "No. Base", "IZQ", "CEN", "DER", "IMP", "RET", "TIPO SOPORTE", "OBS"].map((e) => _HeaderCell(e)).toList()),
-          ..._rows.asMap().entries.map((e) => TableRow(children: List.generate(9, (i) => _input(e.value[i], e.key, e.value)))),
+          // 1. CABECERA: Agregamos "ACCIÓN" al final
+          TableRow(
+            decoration: BoxDecoration(color: Colors.grey.shade100),
+            children: [
+              ...[
+                "No. Mesa",
+                "No. Base",
+                "IZQ",
+                "CEN",
+                "DER",
+                "IMP",
+                "RET",
+                "TIPO SOPORTE",
+                "OBS",
+              ].map((e) => _HeaderCell(e)).toList(),
+              // Agregamos la columna extra después de mapear
+              const _HeaderCell("Borrar"),
+            ],
+          ),
+          // 2. FILAS: Mapeamos los datos y añadimos el botón al final
+          ..._rows.asMap().entries.map((e) {
+            final int index = e.key;
+            final List<TextEditingController> rowControllers = e.value;
+
+            // Generamos las 9 celdas originales
+            List<Widget> cells = List.generate(
+              9,
+              (i) => _input(rowControllers[i], index, rowControllers),
+            );
+
+            // Añadimos el botón de eliminar al final
+            cells.add(
+              Center(
+                child: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+                  onPressed: () => _removeRow(
+                    index,
+                  ), // Llamamos al método que definimos antes
+                  tooltip: "Eliminar fila",
+                ),
+              ),
+            );
+
+            return TableRow(children: cells);
+          }),
         ],
       ),
     );
   }
-void _removeRow(int index) {
+
+  void _removeRow(int index) {
     setState(() {
-      // 1. Es crucial liberar los recursos de los controladores antes de eliminar la fila
+      // 1. IMPORTANTE: Primero limpiamos los controladores de la fila eliminada
       for (var controller in _rows[index]) {
         controller.dispose();
       }
-      
-      // 2. Eliminamos la referencia de la lista local
+      // 2. Eliminamos la lista de controladores de la memoria de la vista
       _rows.removeAt(index);
     });
 
-    // 3. Eliminamos el dato correspondiente en tu Provider
+    // 3. Avisamos al provider para que sincronice los datos
     ref.read(bandaInspectionProvider.notifier).removeRoller(index);
-    
-    // 4. Recalculamos los totales después del cambio
+
+    // 4. Recalculamos los totales (Carga, Impacto, Retorno)
     _calcular();
   }
-  Widget _input(TextEditingController c, int index, List<TextEditingController> row) => TextField(
-    controller: c, textAlign: TextAlign.center, onChanged: (_) { _calcular(); _syncRollerToProvider(index, row); },
-    decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(8)),
+
+  Widget _input(
+    TextEditingController c,
+    int index,
+    List<TextEditingController> row,
+  ) => TextField(
+    controller: c,
+    textAlign: TextAlign.center,
+    onChanged: (_) {
+      _calcular();
+      _syncRollerToProvider(index, row);
+    },
+    decoration: const InputDecoration(
+      border: InputBorder.none,
+      contentPadding: EdgeInsets.all(8),
+    ),
   );
 
   Widget _buildHeader() => Padding(
     padding: const EdgeInsets.all(20),
-    child: Row(children: [
-      const Icon(Icons.settings_applications, color: Colors.indigo, size: 28),
-      const SizedBox(width: 12),
-      Expanded(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: const Text("CONTROL DE RODILLERÍA", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)))),
-      IconButton(icon: const Icon(Icons.add_circle, color: Colors.green, size: 30), onPressed: () => setState(() { _rows.add(List.generate(9, (_) => TextEditingController())); ref.read(bandaInspectionProvider.notifier).addRoller(); })),
-    ]),
+    child: Row(
+      children: [
+        const Icon(Icons.settings_applications, color: Colors.indigo, size: 28),
+        const SizedBox(width: 12),
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: const Text(
+              "CONTROL DE RODILLERÍA",
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.add_circle, color: Colors.green, size: 30),
+          onPressed: () => setState(() {
+            _rows.add(List.generate(9, (_) => TextEditingController()));
+            ref.read(bandaInspectionProvider.notifier).addRoller();
+          }),
+        ),
+      ],
+    ),
   );
 
-Widget _buildNotesSection(String currentNotes) => Padding(
+  Widget _buildNotesSection(String currentNotes) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text("COMENTARIOS DE RODILLERÍA", 
-        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Color(0xFF0F172A))),
-      const SizedBox(height: 10),
-      TextFormField(
-        controller: _notesController,
-        maxLines: 3,
-        style: const TextStyle(fontSize: 13),
-        onChanged: (v) => ref.read(bandaInspectionProvider.notifier).updateRollerNotes(v),
-        decoration: InputDecoration(
-          hintText: "Escribe notas...",
-          // Mismo borde exacto que la tabla
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "COMENTARIOS DE RODILLERÍA",
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 12,
+            color: Color(0xFF0F172A),
           ),
-          filled: true,
-          fillColor: Colors.white,
         ),
-      ),
-    ]),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _notesController,
+          maxLines: 3,
+          style: const TextStyle(fontSize: 13),
+          onChanged: (v) =>
+              ref.read(bandaInspectionProvider.notifier).updateRollerNotes(v),
+          decoration: InputDecoration(
+            hintText: "Escribe notas...",
+            // Mismo borde exacto que la tabla
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+          ),
+        ),
+      ],
+    ),
   );
 
   Widget _buildInventorySummary() => Container(
     padding: const EdgeInsets.all(25),
-    child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-      _SummaryItem("CARGA ACERO", "$cargaAcero"),
-      _SummaryItem("IMPACTO", "$impacto"),
-      _SummaryItem("RETORNO", "$retorno"),
-    ]),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _SummaryItem("CARGA ACERO", "$cargaAcero"),
+        _SummaryItem("IMPACTO", "$impacto"),
+        _SummaryItem("RETORNO", "$retorno"),
+      ],
+    ),
   );
 }
 
@@ -252,15 +409,31 @@ class _HeaderCell extends StatelessWidget {
   final String label;
   const _HeaderCell(this.label);
   @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.all(10), child: Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 9)));
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.all(10),
+    child: Text(
+      label,
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 9),
+    ),
+  );
 }
 
 class _SummaryItem extends StatelessWidget {
   final String label, total;
   const _SummaryItem(this.label, this.total);
   @override
-  Widget build(BuildContext context) => Column(children: [
-    Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey)),
-    Text("$total PZ", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.red)),
-  ]);
+  Widget build(BuildContext context) => Column(
+    children: [
+      Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey)),
+      Text(
+        "$total PZ",
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w900,
+          color: Colors.red,
+        ),
+      ),
+    ],
+  );
 }
