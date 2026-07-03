@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-08-PRESS.dart';
 import 'package:crv_reprosisa/features/assets/presentation/pages/pdf_viewer_page.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/widgets/press/press_create_order_dialog.dart';
 import 'package:dio/dio.dart' as dio_package;
 
 import 'package:crv_reprosisa/core/config/dio_client.dart';
@@ -28,7 +29,6 @@ class PressServiceDetailView extends ConsumerStatefulWidget {
 
 class _PressServiceDetailViewState
     extends ConsumerState<PressServiceDetailView> {
-    
   final List<String> ordenOficial = [
     "NIVELES DE ACEITE",
     "MANOMETRO EN CERO",
@@ -68,6 +68,7 @@ class _PressServiceDetailViewState
       ref
           .read(pressServiceOrderNotifierProvider.notifier)
           .loadOrders(widget.press.id);
+      ref.read(pressHistoryProvider.notifier).loadHistory(widget.press.id);
     });
   }
 
@@ -75,27 +76,72 @@ class _PressServiceDetailViewState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildContainer(child: _buildHeader(widget.press)),
-            const SizedBox(height: 16),
-            _buildSummarySection(), // Contadores KPI
-            const SizedBox(height: 16),
-            _buildSectionContainer("COMPONENTES", _buildComponentesList()),
-            const SizedBox(height: 16),
-            _buildSectionContainer("INSPECCIONES", _buildInspeccionesList()),
-            const SizedBox(height: 16),
-            _buildSectionContainer("ORDEN ABIERTA", _buildOrdenServicioCard()),
-            const SizedBox(height: 16),
-            _buildSectionContainer("INCIDENTES", _buildRecurrenciaSection()),
-          ],
-        ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isDesktop = constraints.maxWidth > 850;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildContainer(child: _buildHeader(widget.press)),
+                const SizedBox(height: 16),
+                _buildSummarySection(),
+                const SizedBox(height: 16),
+                isDesktop
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _buildLeftColumn()),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildRightColumn()),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          _buildLeftColumn(),
+                          const SizedBox(height: 16),
+                          _buildRightColumn(),
+                        ],
+                      ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
+  Widget _buildLeftColumn() => Column(
+    children: [
+      _buildSectionContainer(
+        "COMPONENTES",
+        _buildComponentesList(),
+        height: 300,
+      ),
+      const SizedBox(height: 16),
+      _buildSectionContainer(
+        "INCIDENTES",
+        _buildRecurrenciaSection(),
+        height: 250,
+      ),
+    ],
+  );
+
+  Widget _buildRightColumn() => Column(
+    children: [
+      _buildSectionContainer(
+        "INSPECCIONES",
+        _buildInspeccionesList(),
+        height: 300,
+      ),
+      const SizedBox(height: 16),
+      _buildSectionContainer(
+        "ORDEN ABIERTA",
+        _buildOrdenServicioCard(),
+        height: 300,
+      ),
+    ],
+  );
   // --- ESTRUCTURA ---
   Widget _buildContainer({required Widget child}) => Container(
     width: double.infinity,
@@ -113,38 +159,44 @@ class _PressServiceDetailViewState
     child: child,
   );
 
-  Widget _buildSectionContainer(String title, Widget content) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            color: Colors.grey,
+  Widget _buildSectionContainer(
+    String title,
+    Widget content, {
+    double height = 300,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: height,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        const Divider(height: 24),
-        content,
-      ],
-    ),
-  );
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: Colors.grey,
+            ),
+          ),
+          const Divider(height: 24),
+          Expanded(child: content),
+        ],
+      ),
+    );
+  }
 
-  // --- UI COMPONENTES (CON AGRUPAMIENTO DE INCIDENCIAS) ---
   Widget _buildComponentesList() {
     final state = ref.watch(pressItemNotifierProvider);
 
@@ -164,16 +216,17 @@ class _PressServiceDetailViewState
       );
     }
 
-    // Lógica de agrupamiento: Creamos un mapa para contar cuántas veces aparece cada nombre
+    // Lógica de agrupamiento
     final Map<String, int> conteoIncidencias = {};
     for (var item in state.data) {
       conteoIncidencias[item.componentName] =
           (conteoIncidencias[item.componentName] ?? 0) + 1;
     }
 
+    // CORRECCIÓN: Quitamos shrinkWrap y physics para que el scroll nativo tome el control
     return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      padding:
+          EdgeInsets.zero, // Ajuste estético para evitar espacios en blanco
       itemCount: conteoIncidencias.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
@@ -203,7 +256,6 @@ class _PressServiceDetailViewState
                   ],
                 ),
               ),
-              // Un pequeño indicador visual del contador
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -279,14 +331,32 @@ class _PressServiceDetailViewState
                 backgroundColor: const Color(0xFFC62828),
                 foregroundColor: Colors.white,
               ),
-              onPressed: () {},
+              onPressed: () {
+                // Abrimos el diálogo de creación
+                showDialog(
+                  context: context,
+                  builder: (_) =>
+                      PressCreateOrderDialog(pressId: widget.press.id),
+                ).then((value) {
+                  // Si el diálogo devuelve 'true', recargamos las órdenes
+                  if (value == true) {
+                    ref
+                        .read(pressServiceOrderNotifierProvider.notifier)
+                        .loadOrders(widget.press.id);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Orden creada correctamente"),
+                      ),
+                    );
+                  }
+                });
+              },
               icon: const Icon(Icons.add, size: 16),
               label: const Text("ORDEN"),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        // Usamos Wrap para que los chips de info se ajusten al ancho
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -385,50 +455,70 @@ class _PressServiceDetailViewState
     if (historyState.status == Status.loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (historyState.history.isEmpty) return const Text("Sin inspecciones");
-    return Column(
-      children: historyState.history
-          .map(
-            (h) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                "${h.inspectionDate.day}/${h.inspectionDate.month}/${h.inspectionDate.year}",
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
+
+    if (historyState.history.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text("Sin inspecciones"),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: EdgeInsets.zero,
+      itemCount: historyState.history.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final h = historyState.history[index];
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            "${h.inspectionDate.day}/${h.inspectionDate.month}/${h.inspectionDate.year}",
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(
+            "Por: ${h.responsibleName}",
+            style: const TextStyle(fontSize: 10),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: "Ver",
+                icon: const Icon(Icons.visibility, size: 18),
+                onPressed: () async {
+                  final data = await _getReportData(h);
+                  if (data != null && mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PdfViewerPage(datos: data),
+                      ),
+                    );
+                  }
+                },
               ),
-              subtitle: Text(
-                "Por: ${h.responsibleName}",
-                style: const TextStyle(fontSize: 10),
+              IconButton(
+                tooltip: "PDF",
+                icon: const Icon(Icons.picture_as_pdf, size: 18),
+                onPressed: () async {
+                  final data = await _getReportData(h);
+                  if (data != null) {
+                    final pdfBytes = await PrensaPdfGenerator.generateEsqueleto(
+                      data,
+                    );
+                    await Printing.sharePdf(
+                      bytes: pdfBytes,
+                      filename: 'Reporte_${data['folio']}.pdf',
+                    );
+                  }
+                },
               ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    tooltip: "Ver",
-                    icon: const Icon(Icons.visibility),
-                    onPressed: () async {
-                      final data = await _getReportData(h);
-                      if (data != null && mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => PdfViewerPage(datos: data)));
-                    },
-                  ),
-                  IconButton(
-                    tooltip: "PDF",
-                    icon: const Icon(Icons.picture_as_pdf),
-                    onPressed: () async {
-                      final data = await _getReportData(h);
-                      if (data != null) {
-                        final pdfBytes = await PrensaPdfGenerator.generateEsqueleto(data);
-                        await Printing.sharePdf(bytes: pdfBytes, filename: 'Reporte_${data['folio']}.pdf');
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-          )
-          .toList(),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -446,10 +536,9 @@ class _PressServiceDetailViewState
     }
 
     return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero, // Ajuste para evitar espacios innecesarios
       itemCount: state.orders.length,
-      separatorBuilder: (_, _) => const Divider(),
+      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final order = state.orders[index];
         return ListTile(
@@ -469,8 +558,10 @@ class _PressServiceDetailViewState
   }
 
   Widget _buildRecurrenciaSection() {
+    // Observamos el estado del nuevo provider de incidencias
     final state = ref.watch(pressIncidenceNotifierProvider);
 
+    // 1. Estados de carga o error
     if (state.status == Status.loading) {
       return const Center(
         child: Padding(
@@ -479,12 +570,20 @@ class _PressServiceDetailViewState
         ),
       );
     }
+
     if (state.incidences.isEmpty) {
-      return const Text("Sin incidencias registradas");
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text("Sin incidencias registradas"),
+        ),
+      );
     }
+
+    // 2. CORRECCIÓN: ListView.separated sin shrinkWrap ni physics
+    // Esto permite el scroll nativo dentro del contenedor limitado.
     return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       itemCount: state.incidences.length,
       separatorBuilder: (_, _) => const Divider(height: 16),
       itemBuilder: (context, index) {
@@ -582,30 +681,41 @@ class _PressServiceDetailViewState
 
   Future<Uint8List?> _downloadImageBytes(String url) async {
     try {
-      final dio = ref.read(dioProvider); 
-      final response = await dio.get(url, options: dio_package.Options(responseType: dio_package.ResponseType.bytes));
-      return response.statusCode == 200 ? Uint8List.fromList(response.data) : null;
+      final dio = ref.read(dioProvider);
+      final response = await dio.get(
+        url,
+        options: dio_package.Options(
+          responseType: dio_package.ResponseType.bytes,
+        ),
+      );
+      return response.statusCode == 200
+          ? Uint8List.fromList(response.data)
+          : null;
     } catch (e) {
       debugPrint("Error descargando imagen: $e");
       return null;
     }
   }
 
-
   Future<Map<String, dynamic>> _mapAnswerToMap(dynamic answer) async {
     Uint8List? bytesAntes;
     Uint8List? bytesDespues;
-    if (answer.evidencePaths.length >= 1) bytesAntes = await _downloadImageBytes(answer.evidencePaths[0]);
-    if (answer.evidencePaths.length >= 2) bytesDespues = await _downloadImageBytes(answer.evidencePaths[1]);
+    if (answer.evidencePaths.length >= 1)
+      bytesAntes = await _downloadImageBytes(answer.evidencePaths[0]);
+    if (answer.evidencePaths.length >= 2)
+      bytesDespues = await _downloadImageBytes(answer.evidencePaths[1]);
 
     return {
-      'name': answer.componentName, 
+      'name': answer.componentName,
       'status': answer.status,
-      'observation': (answer.observation == "Notaas" || answer.observation.isEmpty) ? '' : answer.observation,
+      'observation':
+          (answer.observation == "Notaas" || answer.observation.isEmpty)
+          ? ''
+          : answer.observation,
       'measureUnit': answer.measureUnit,
       'quantity': answer.quantity,
       'foto_antes_bytes': bytesAntes,
-      'foto_despues_bytes': bytesDespues 
+      'foto_despues_bytes': bytesDespues,
     };
   }
 }

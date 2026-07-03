@@ -2,7 +2,7 @@
 import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:crv_reprosisa/features/servicios/data/datasource/press_service_datasource.dart';
 import 'package:crv_reprosisa/features/servicios/domain/entities/press_service_order_entity.dart';
-import 'package:crv_reprosisa/features/servicios/domain/entities/press_service_order_repository.dart';
+import 'package:crv_reprosisa/features/servicios/domain/repositories/press_service_order_repository.dart';
 import 'package:dartz/dartz.dart';
 
 class PressServiceOrderRepositoryImpl implements PressServiceOrderRepository {

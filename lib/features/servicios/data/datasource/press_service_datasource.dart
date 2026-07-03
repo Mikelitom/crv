@@ -1,4 +1,5 @@
 // lib/features/assets/data/datasource/press_service_datasource.dart
+import 'package:crv_reprosisa/features/servicios/data/models/press/press_create_order_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/press/press_incidence_entity.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/press/press_item_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/press/press_service_order_model.dart';
@@ -8,7 +9,7 @@ abstract class PressServiceDataSource {
   Future<List<PressItemModel>> getPendingItems(String pressId);
   Future<List<PressIncidenceModel>> getIncidenceSummary(String pressId); 
   Future<List<PressServiceOrderModel>> getServiceOrders(String pressId);
-}
+Future<void> createServiceOrder(PressCreateOrderModel order);}
 
 class PressServiceDataSourceImpl implements PressServiceDataSource {
   final Dio dio;
@@ -44,6 +45,17 @@ class PressServiceDataSourceImpl implements PressServiceDataSource {
       return data.map((json) => PressServiceOrderModel.fromJson(json)).toList();
     } else {
       throw Exception('Error al obtener órdenes de servicio');
+    }
+  }
+@override
+  Future<void> createServiceOrder(PressCreateOrderModel order) async {
+    try {
+      final response = await dio.post('/press/service', data: order.toJson());
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error al crear la orden: ${response.statusMessage}');
+      }
+    } catch (e) {
+      throw Exception('Error en el DataSource al crear orden: $e');
     }
   }
 }

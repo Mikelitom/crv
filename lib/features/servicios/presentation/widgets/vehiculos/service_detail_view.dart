@@ -48,35 +48,6 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     });
   }
 
-  // Future<void> _showDetail(String versionId) async {
-  //   await ref.read(vehicleReportDetailProvider.notifier).fetchDetail(versionId);
-
-  //   if (!mounted) return;
-
-  //   final state = ref.read(vehicleReportDetailProvider);
-
-  //   if (state.error != null) {
-  //     ScaffoldMessenger.of(
-  //       context,
-  //     ).showSnackBar(SnackBar(content: Text(state.error!)));
-  //     return;
-  //   }
-
-  //   if (state.data == null) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text("No se pudo obtener el reporte.")),
-  //     );
-  //     return;
-  //   }
-
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (_) => VehicleReportDetailPage(reportData: state.data!),
-  //     ),
-  //   );
-  // }
-
   Future<void> _showPdf(String versionId) async {
     // Descargar el reporte
     await ref.read(vehicleReportDetailProvider.notifier).fetchDetail(versionId);
@@ -121,7 +92,6 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
 
   @override
   Widget build(BuildContext context) {
-    // Escucha global para feedback visual de adjuntar componentes
     ref.listen(attachItemsNotifierProvider, (previous, next) {
       if (next.status == Status.success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -145,34 +115,128 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildContainer(child: _buildHeader(v)),
-            const SizedBox(height: 16),
-            _buildSummarySection(state.services),
-            const SizedBox(height: 16),
-            _buildSectionContainer("COMPONENTES", _buildComponentesList()),
-            const SizedBox(height: 16),
-            _buildSectionContainer("INSPECCIONES", _buildInspeccionesList()),
-            const SizedBox(height: 16),
-            _buildSectionContainer(
-              "ORDEN ABIERTA",
-              _buildOrdenServicioCard(state.services, context, ref),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isDesktop = constraints.maxWidth > 850;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildContainer(child: _buildHeader(v)),
+                const SizedBox(height: 16),
+                _buildSummarySection(state.services),
+                const SizedBox(height: 16),
+                isDesktop
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _buildLeftColumn()),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildRightColumn(state, context, ref),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          _buildLeftColumn(),
+                          const SizedBox(height: 16),
+                          _buildRightColumn(state, context, ref),
+                        ],
+                      ),
+              ],
             ),
-            const SizedBox(height: 16),
-            _buildSectionContainer("INCIDENTES", _buildRecurrenciaSection()),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLeftColumn() => Column(
+    children: [
+      _buildSectionContainer(
+        "COMPONENTES",
+        _buildComponentesList(),
+        height: 300,
+      ),
+      const SizedBox(height: 16),
+      _buildSectionContainer(
+        "INCIDENTES",
+        _buildRecurrenciaSection(),
+        height: 250,
+      ),
+      const SizedBox(height: 16),
+      _buildSectionContainer(
+        "GESTIÓN DE EVIDENCIAS",
+        _buildEvidenciasList(),
+        height: 200,
+      ),
+    ],
+  );
+
+  Widget _buildRightColumn(state, context, ref) => Column(
+    children: [
+      _buildSectionContainer(
+        "INSPECCIONES",
+        _buildInspeccionesList(),
+        height: 300,
+      ),
+      const SizedBox(height: 16),
+      _buildSectionContainer(
+        "ORDEN ABIERTA",
+        _buildOrdenServicioCard(state.services, context, ref),
+        height: 300,
+      ),
+    ],
+  );
+
+  Widget _buildEvidenciasList() {
+    // Aquí puedes mapear tus datos reales
+    final items = List.generate(5, (index) => "Inspeccion INS-102-$index");
+
+    return SizedBox(
+      height: 150, // Altura fija para que aparezca el scroll si hay muchos
+      child: ListView.separated(
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const Divider(height: 16),
+        itemBuilder: (context, index) => Row(
+          children: [
+            const Icon(Icons.folder_outlined, color: Colors.blueGrey),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    items[index],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const Text(
+                    "2026-07-02 - 2 archivos",
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
           ],
         ),
       ),
     );
   }
 
-  // --- MÉTODOS DE ESTRUCTURA ---
-  Widget _buildContainer({required Widget child}) {
+  Widget _buildSectionContainer(
+    String title,
+    Widget content, {
+    double height = 300,
+  }) {
     return Container(
       width: double.infinity,
+      height: height, // Altura fija que delimita el espacio
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -184,7 +248,33 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
           ),
         ],
       ),
-      child: child,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header del contenedor
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Colors.grey,
+                ),
+              ),
+              if (title == "GESTIÓN DE EVIDENCIAS")
+                const Icon(Icons.add, size: 20, color: Colors.red),
+            ],
+          ),
+          const Divider(height: 24),
+
+          // AQUÍ LA CORRECCIÓN:
+          // Al usar Expanded, el contenido (ListView) se limita al espacio sobrante.
+          // Si el ListView es largo, mostrará su propia barra de scroll.
+          Expanded(child: content),
+        ],
+      ),
     );
   }
 
@@ -274,10 +364,9 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     );
   }
 
-  Widget _buildSectionContainer(String title, Widget content) {
+  Widget _buildContainer({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -289,21 +378,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: Colors.grey,
-            ),
-          ),
-          const Divider(height: 24),
-          content,
-        ],
-      ),
+      child: child,
     );
   }
 
@@ -369,8 +444,6 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     );
   }
 
-  // --- MÉTODOS DE ESTRUCTURA ---
-
   Widget _buildComponentesList() {
     final state = ref.watch(pendingComponentNotifierProvider);
 
@@ -399,9 +472,10 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       );
     }
 
+    // CORRECCIÓN: Quitamos shrinkWrap y physics para que el scroll nativo funcione
     return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      padding:
+          EdgeInsets.zero, // Ajuste estético para que no haya padding extra
       itemCount: state.data.length,
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
@@ -633,9 +707,9 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       );
     }
 
+    // CORRECCIÓN: Quitamos shrinkWrap y physics para que el scroll nativo tome el control
     return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero, // Ajuste estético
       itemCount: activeOrders.length,
       separatorBuilder: (_, __) => const Padding(
         padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -666,7 +740,6 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                     color: Color(0xFFC62828),
                   ),
                 ),
-                // Aquí mantenemos tu diseño original con los dos iconos
                 Row(
                   children: [
                     IconButton(
@@ -721,24 +794,15 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                               completeVehicleServiceNotifierProvider.notifier,
                             )
                             .completeService(order.id);
-                        await ref
-                            .read(
-                              completeVehicleServiceNotifierProvider.notifier,
-                            )
-                            .completeService(order.id);
-
                         ref
                             .read(serviceListNotifierProvider.notifier)
                             .loadServices(widget.vehicle.vehicleId);
-
                         ref
                             .read(pendingComponentNotifierProvider.notifier)
                             .loadPendingComponents(widget.vehicle.vehicleId);
-
                         ref
                             .read(vehicleHistoryProvider.notifier)
                             .loadHistory(widget.vehicle.vehicleId);
-
                         ref
                             .read(incidenceNotifierProvider.notifier)
                             .loadIncidences(widget.vehicle.vehicleId);
@@ -843,44 +907,48 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
 
   Widget _buildInspeccionesList() {
     final historyState = ref.watch(vehicleHistoryProvider);
+
     if (historyState.status == Status.loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (historyState.history.isEmpty) return const Text("Sin inspecciones");
-    return Column(
-      children: historyState.history
-          .map(
-            (h) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                "${h.inspectionDate.day}/${h.inspectionDate.month}/${h.inspectionDate.year}",
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
+
+    if (historyState.history.isEmpty) {
+      return const Center(child: Text("Sin inspecciones"));
+    }
+
+    return ListView.separated(
+      padding: EdgeInsets.zero,
+      itemCount: historyState.history.length,
+      separatorBuilder: (_, __) => const Divider(height: 16),
+      itemBuilder: (context, index) {
+        final h = historyState.history[index];
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            "${h.inspectionDate.day}/${h.inspectionDate.month}/${h.inspectionDate.year}",
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(
+            "Por: ${h.responsibleName}",
+            style: const TextStyle(fontSize: 10),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: "Ver",
+                icon: const Icon(Icons.visibility, size: 20),
+                onPressed: () => _viewPdfPreview(h.versionId),
               ),
-              subtitle: Text(
-                "Por: ${h.responsibleName}",
-                style: const TextStyle(fontSize: 10),
+              IconButton(
+                tooltip: "PDF",
+                icon: const Icon(Icons.picture_as_pdf, size: 20),
+                onPressed: () => _showPdf(h.versionId),
               ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    tooltip: "Ver",
-                    icon: const Icon(Icons.visibility),
-                    onPressed: () => _viewPdfPreview(h.versionId),
-                  ),
-                  IconButton(
-                    tooltip: "PDF",
-                    icon: const Icon(Icons.picture_as_pdf),
-                    onPressed: () => _showPdf(h.versionId),
-                  ),
-                ],
-              ),
-            ),
-          )
-          .toList(),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -981,10 +1049,15 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       );
     }
 
-    // 2. Renderizado dinámico de la lista
-    return Column(
-      children: state.incidences.map((incidencia) {
-        // Normalizamos el progreso (asumimos un máximo de 10 para la escala visual)
+    // 2. CORRECCIÓN: Usamos ListView.builder en lugar de Column
+    // Al quitar shrinkWrap y physics, el ListView ocupa el espacio
+    // asignado por el Expanded del padre y habilita el scroll automáticamente.
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: state.incidences.length,
+      itemBuilder: (context, index) {
+        final incidencia = state.incidences[index];
+        // Normalizamos el progreso
         final progress = (incidencia.incidenceCount / 10).clamp(0.0, 1.0);
 
         return Padding(
@@ -1020,7 +1093,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
             ],
           ),
         );
-      }).toList(),
+      },
     );
   }
 

@@ -7,23 +7,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import '../../../bandas_transportadoras/domain/entities/roller.dart';
 import 'package:pdf/pdf.dart';
-
-// Importaciones del proyecto
+import 'package:http/http.dart' as http; // Asegúrate de tener esta dependencia
 import '../models/inspector_row_ui.dart';
 import '../provider/inspection_providers.dart';
 import 'package:crv_reprosisa/core/config/dio_client.dart';
 import 'package:crv_reprosisa/core/utils/pdf_report_manager.dart';
-
-// Generadores de PDF
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-03-VEHICLE.dart';
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-08-PRESS.dart';
 import 'package:crv_reprosisa/core/utils/banda_pdf_generator.dart';
-
-// Providers de los módulos de Assets
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_report_detail_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/conveyor_report_detail_provider.dart';
-
-// Páginas para navegación
 import 'package:crv_reprosisa/features/prensas_industriales/presentation/Pages/prensa_inspection.dart';
 import 'package:crv_reprosisa/features/vehiculos/presentation/pages/vehicle_inspection_page.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/presentation/pages/banda_inspection_page.dart';

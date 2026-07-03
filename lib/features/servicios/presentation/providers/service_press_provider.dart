@@ -1,12 +1,17 @@
+import 'package:crv_reprosisa/features/servicios/data/repository/create_press_service_repository_impl.dart';
 import 'package:crv_reprosisa/features/servicios/data/repository/press_incidence_repository_impl.dart';
 import 'package:crv_reprosisa/features/servicios/data/repository/press_service_order_repository_impl.dart';
-import 'package:crv_reprosisa/features/servicios/domain/entities/press_service_order_repository.dart';
+import 'package:crv_reprosisa/features/servicios/domain/repositories/create_press_service_repository.dart';
+import 'package:crv_reprosisa/features/servicios/domain/repositories/press_service_order_repository.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/press_incidence_repoitory.dart';
+import 'package:crv_reprosisa/features/servicios/domain/usecases/create_press_service_use_case.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/get_pending_press_item_usecase.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/get_press_incidence_sumary_usecase.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/get_press_service_orders.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/notifiers/press_create_order_notifier.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/press_incidence_notifier.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/press_service_order_notifier.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/providers/press/press_create_order_state.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/press/press_service_order_state.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/press/press_incidence_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -68,4 +73,19 @@ final getPressServiceOrdersUseCaseProvider = Provider<GetPressServiceOrdersUseCa
 // Notifier
 final pressServiceOrderNotifierProvider = NotifierProvider<PressServiceOrderNotifier, PressServiceOrderState>(() {
   return PressServiceOrderNotifier();
+});// --- PROVIDERS PARA CREAR ORDEN (PRESS) ---
+
+// Repositorio
+final createPressServiceRepositoryProvider = Provider<CreatePressServiceRepository>((ref) {
+  return CreatePressServiceRepositoryImpl(ref.watch(pressDataSourceProvider));
+});
+
+// Caso de Uso
+final createPressServiceUseCaseProvider = Provider<CreatePressServiceUseCase>((ref) {
+  return CreatePressServiceUseCase(ref.watch(createPressServiceRepositoryProvider));
+});
+
+// Notifier
+final pressCreateOrderNotifierProvider = NotifierProvider<PressCreateOrderNotifier, PressCreateOrderState>(() {
+  return PressCreateOrderNotifier();
 });
