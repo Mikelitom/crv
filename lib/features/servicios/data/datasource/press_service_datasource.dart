@@ -1,7 +1,9 @@
 // lib/features/assets/data/datasource/press_service_datasource.dart
+import 'package:crv_reprosisa/features/servicios/data/models/press/press_attach_item_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/press/press_create_order_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/press/press_incidence_entity.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/press/press_item_model.dart';
+import 'package:crv_reprosisa/features/servicios/data/models/press/press_service_item_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/press/press_service_order_model.dart';
 import 'package:dio/dio.dart';
 
@@ -9,7 +11,10 @@ abstract class PressServiceDataSource {
   Future<List<PressItemModel>> getPendingItems(String pressId);
   Future<List<PressIncidenceModel>> getIncidenceSummary(String pressId); 
   Future<List<PressServiceOrderModel>> getServiceOrders(String pressId);
-Future<void> createServiceOrder(PressCreateOrderModel order);}
+Future<void> createServiceOrder(PressCreateOrderModel order);
+Future<void> attachPressItems(String serviceId, PressAttachItemModel model);
+Future<List<PressServiceItemModel>> getServiceItems(String serviceId);
+}
 
 class PressServiceDataSourceImpl implements PressServiceDataSource {
   final Dio dio;
@@ -58,4 +63,30 @@ class PressServiceDataSourceImpl implements PressServiceDataSource {
       throw Exception('Error en el DataSource al crear orden: $e');
     }
   }
+@override
+  Future<void> attachPressItems(String serviceId, PressAttachItemModel model) async {
+    try {
+      final response = await dio.post(
+        '/press/service/$serviceId/items', 
+        data: model.toJson(),
+      );
+      
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error al adjuntar ítems: ${response.statusMessage}');
+      }
+    } catch (e) {
+      throw Exception('Error en el DataSource al adjuntar ítems: $e');
+    }
+  }
+  @override
+Future<List<PressServiceItemModel>> getServiceItems(String serviceId) async {
+  final response = await dio.get('/press/service/service-items/$serviceId');
+  
+  if (response.statusCode == 200) {
+    final List<dynamic> data = response.data;
+    return data.map((json) => PressServiceItemModel.fromJson(json)).toList();
+  } else {
+    throw Exception('Error al obtener ítems del servicio');
+  }
+}
 }

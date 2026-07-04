@@ -74,6 +74,25 @@ class _PressServiceDetailViewState
 
   @override
   Widget build(BuildContext context) {
+    // Escucha el estado del notifier para mostrar retroalimentación al usuario
+    ref.listen(pressAttachItemsNotifierProvider, (previous, next) {
+      if (next.status == Status.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Componentes agregados con éxito"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else if (next.status == Status.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: ${next.error ?? "Ocurrió un error"}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
       body: LayoutBuilder(
@@ -534,26 +553,319 @@ class _PressServiceDetailViewState
         child: Text("No hay órdenes abiertas"),
       );
     }
-
     return ListView.separated(
-      padding: EdgeInsets.zero, // Ajuste para evitar espacios innecesarios
+      padding: EdgeInsets.zero,
       itemCount: state.orders.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: Divider(thickness: 1),
+      ),
       itemBuilder: (context, index) {
         final order = state.orders[index];
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(
-            order.description,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          ),
-          subtitle: Text(
-            "Estado: ${order.status} | Fecha: ${order.formattedDate}",
-            style: const TextStyle(fontSize: 11),
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+
+        // Formateo del ID
+        final String displayId = order.id.length >= 8
+            ? order.id.substring(0, 8).toUpperCase()
+            : order.id.toUpperCase();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  displayId,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Color(0xFFC62828),
+                  ),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.add_box, color: Colors.green),
+                      tooltip: "Agregar componentes",
+                      onPressed: () =>
+                          _showAddPressItemsDialog(context, ref, order.id),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.list_alt, color: Colors.blue),
+                      tooltip: "Ver componentes adjuntos",
+                      onPressed: () =>
+                          _showPressServiceItemsDialog(context, ref, order.id),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              order.description,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "Fecha: ${order.formattedDate}",
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // Aquí puedes llamar a tu lógica de completar orden
+                  // ref.read(completePressServiceNotifierProvider.notifier).completeService(order.id);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC62828),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text("COMPLETAR ORDEN"),
+              ),
+            ),
+          ],
         );
       },
+    );
+  }
+
+  void _showAddPressItemsDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String serviceId,
+  ) {
+    final Set<String> selectedIds = {};
+    // Cargamos los pendientes actuales de la prensa
+    ref
+        .read(pressItemNotifierProvider.notifier)
+        .loadPendingItems(widget.press.id);
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final pendingState = ref.watch(pressItemNotifierProvider);
+
+          return Dialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 420, maxHeight: 600),
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Seleccionar componentes",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // FIX: El loading debe ocupar el espacio disponible de forma controlada
+                  if (pendingState.status == Status.loading)
+                    const Expanded(
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+
+                  // FIX: Solo mostramos la lista si NO está cargando y hay datos
+                  if (pendingState.status != Status.loading &&
+                      pendingState.data.isNotEmpty)
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: pendingState.data.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, i) {
+                          final item = pendingState.data[i];
+                          final isSelected = selectedIds.contains(item.id);
+                          return InkWell(
+                            onTap: () => setDialogState(
+                              () => isSelected
+                                  ? selectedIds.remove(item.id)
+                                  : selectedIds.add(item.id),
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Colors.red.withValues(alpha: 0.05)
+                                    : Colors.transparent,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Colors.red
+                                      : Colors.grey.shade200,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isSelected
+                                        ? Icons.check_circle
+                                        : Icons.circle_outlined,
+                                    color: isSelected
+                                        ? Colors.red
+                                        : Colors.grey,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Text(
+                                    item.componentName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                  // Mensaje si está vacío
+                  if (pendingState.status != Status.loading &&
+                      pendingState.data.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: Text("No hay componentes pendientes"),
+                      ),
+                    ),
+
+                  const SizedBox(height: 32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Cancelar"),
+                      ),
+                      const SizedBox(width: 12),
+                      FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFC62828),
+                        ),
+                        onPressed: selectedIds.isEmpty
+                            ? null
+                            : () async {
+                                await ref
+                                    .read(
+                                      pressAttachItemsNotifierProvider.notifier,
+                                    )
+                                    .attachItems(
+                                      serviceId,
+                                      selectedIds.toList(),
+                                    );
+
+                                ref
+                                    .read(pressItemNotifierProvider.notifier)
+                                    .loadPendingItems(widget.press.id);
+                                ref
+                                    .read(
+                                      pressServiceOrderNotifierProvider
+                                          .notifier,
+                                    )
+                                    .loadOrders(widget.press.id);
+
+                                if (context.mounted) Navigator.pop(context);
+                              },
+                        child: const Text("Confirmar"),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // 2. DIÁLOGO PARA VER COMPONENTES ADJUNTOS
+  void _showPressServiceItemsDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String serviceId,
+  ) {
+    // IMPORTANTE: Asegúrate de que este método en el notifier llame al endpoint correcto
+    ref
+        .read(pressServiceItemsNotifierProvider.notifier)
+        .loadServiceItems(serviceId);
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+          padding: const EdgeInsets.all(24),
+          child: Consumer(
+            builder: (context, ref, _) {
+              final state = ref.watch(pressServiceItemsNotifierProvider);
+
+              if (state.status == Status.loading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Componentes adjuntos",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Se usa Flexible para que la lista no rompa el diseño del diálogo
+                  Flexible(
+                    child: state.items.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text("Sin componentes adjuntos"),
+                          )
+                        : ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: state.items.length,
+                            separatorBuilder: (_, __) => const Divider(),
+                            itemBuilder: (context, index) {
+                              final item = state.items[index];
+
+                              // DEBUG: Si esto imprime "null" o "" en la consola, ahí está el problema
+                              debugPrint(
+                                "Ítem $index: Desc=${item.description}, Status=${item.status}",
+                              );
+
+                              return ListTile(
+                                title: Text(
+                                  item.description.isNotEmpty
+                                      ? item.description
+                                      : "Sin descripción",
+                                ),
+                                subtitle: Text("Estado: ${item.status}"),
+                              );
+                            },
+                          ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Cerrar"),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
     );
   }
 
