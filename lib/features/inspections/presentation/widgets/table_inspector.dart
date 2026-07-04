@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import '../../../bandas_transportadoras/domain/entities/roller.dart';
 import 'package:pdf/pdf.dart';
+import '../../../../core/utils/imege_downloader.dart';
 import 'package:http/http.dart' as http; // Asegúrate de tener esta dependencia
 import '../models/inspector_row_ui.dart';
 import '../provider/inspection_providers.dart';
@@ -36,92 +37,128 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
   final Color borderColor = const Color(0xFFE5E7EB);
 
 Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
-    try {
-      final type = item.reportType.toUpperCase();
-      dynamic model;
+  try {
+    final type = item.reportType.toUpperCase();
+    final dio = ref.read(dioProvider);
 
-      // 1. OBTENCIÓN DE DATOS SEGÚN EL TIPO
-      if (type.contains('PRESS')) {
-        await ref
-            .read(pressReportDetailProvider.notifier)
-            .fetchDetail(item.versionId);
-        model = ref.read(pressReportDetailProvider).data;
-      } else if (type.contains('VEHICLE')) {
-        model = await ref
-            .read(inspectionProvider.notifier)
-            .getReportDetail(item.versionId);
-      } else if (type.contains('CONVEYOR')) {
-        await ref
-            .read(conveyorReportDetailProvider.notifier)
-            .fetchDetail(item.versionId);
-        model = ref.read(conveyorReportDetailProvider).data;
-      }
-
-      if (model == null) return null;
-
-      // 2. GENERACIÓN DE PDF SEGÚN EL TIPO
-      if (type.contains('PRESS')) {
-        return await PdfReportManager.generatePdf(
-          dio: ref.read(dioProvider),
-          detailModel: model,
-          mapper: (m) => PrensaPdfGenerator.mapDetailModelToPdfData(m),
-          generator: (data) => PrensaPdfGenerator.generateEsqueleto(data),
-        );
-      } else if (type.contains('VEHICLE')) {
-        return await PdfReportManager.generatePdf(
-          dio: ref.read(dioProvider),
-          detailModel: model,
-          mapper: (m) => VehiculoPdfGenerator.mapDetailModelToPdfData(m),
-          generator: (data) => VehiculoPdfGenerator.generateEsqueleto(data),
-        );
-      } else if (type.contains('CONVEYOR')) {
-        // A. Preparar datos normalizados
-        final Map<String, dynamic> datosNormalizados = {
-          'planta': model.conveyor['mine'] ?? "",
-          'area': model.conveyor['area'] ?? "",
-          'responsable': model.report['conveyor_responsible'] ?? "",
-          'seccion': model.report['section']?.toString() ?? "",
-          'transportador': model.conveyor['name'] ?? "",
-          'banda': model.report['recommended_belt'] ?? "",
-          'material': "${model.report['material'] ?? ''} / ${model.report['granulometry'] ?? ''}",
-          'elaboro': model.inspector['name'] ?? "",
-          'presentar': model.report['present_to'] ?? "",
-          'comentarios': model.report['comentarios'] ?? "",
-        };
-
-        // B. Mapear secciones
-        final sections = await _mapAnswersToSections(model.answers);
-
-        // C. Mapear rodillos desde el modelo (Asegúrate de ajustar 'model.rollers' según tu estructura)
-        final List<Roller> rodillos = (model.rollers as List<dynamic>?)
-            ?.map((r) => Roller(
-                  tableNumber: r.tableNumber,
-                  baseNumber: r.baseNumber,
-                  isLeft: r.isLeft,
-                  isCenter: r.isCenter,
-                  isRight: r.isRight,
-                  isImpact: r.isImpact,
-                  isReturn: r.isReturn,
-                  isTriple: r.isTriple,
-                  isSelfAligning: r.isSelfAligning,
-                  observation: r.observation,
-                ))
-            .toList() ?? [];
-
-        // D. Generar pasándole los 3 argumentos requeridos
-        return await BandaPdfGenerator.generateReport(
-          datosNormalizados,
-          sections,
-          rodillos, 
-        );
-      }
-      return null;
-    } catch (e) {
-      debugPrint("Error al procesar PDF de ${item.reportType}: $e");
-      return null;
+    // 1. OBTENCIÓN DE DATOS
+    dynamic model;
+    if (type.contains('PRESS')) {
+      await ref.read(pressReportDetailProvider.notifier).fetchDetail(item.versionId);
+      model = ref.read(pressReportDetailProvider).data;
+    } else if (type.contains('VEHICLE')) {
+      model = await ref.read(inspectionProvider.notifier).getReportDetail(item.versionId);
+    } else if (type.contains('CONVEYOR')) {
+      await ref.read(conveyorReportDetailProvider.notifier).fetchDetail(item.versionId);
+      model = ref.read(conveyorReportDetailProvider).data;
     }
-  }
 
+    if (model == null) return null;
+
+    // 2. GENERACIÓN SEGÚN TIPO
+    if (type.contains('PRESS')) {
+      // --- SOLUCIÓN: MAPA TEMPORAL DE IMÁGENES ---
+      final Map<int, Map<String, Uint8List>> cacheImagenes = {};
+
+      for (int i = 0; i < model.answers.length; i++) {
+        var answer = model.answers[i];
+        if (answer.evidencePaths != null && answer.evidencePaths is List) {
+          final paths = answer.evidencePaths as List;
+          final Map<String, Uint8List> fotos = {};
+          
+          for (int j = 0; j < paths.length; j++) {
+            final bytes = await ImageDownloader.download(dio, paths[j]);
+            if (bytes != null) {
+              if (j == 0) fotos['antes'] = bytes;
+              if (j == 1) fotos['despues'] = bytes;
+            }
+          }
+          cacheImagenes[i] = fotos; // Usamos el índice de la respuesta como llave
+        }
+      }
+
+      return await PdfReportManager.generatePdf(
+        dio: dio,
+        detailModel: model,
+        mapper: (m) {
+          // A. Ejecuta el mapper original
+          final data = PrensaPdfGenerator.mapDetailModelToPdfData(m);
+          
+          // B. Inyecta los bytes descargados al mapa resultante
+          for (int i = 0; i < data['items'].length; i++) {
+            if (cacheImagenes.containsKey(i)) {
+              data['items'][i]['foto_antes_bytes'] = cacheImagenes[i]!['antes'];
+              data['items'][i]['foto_despues_bytes'] = cacheImagenes[i]!['despues'];
+            }
+          }
+          return data;
+        },
+        generator: (data) => PrensaPdfGenerator.generateEsqueleto(data),
+      );
+    } 
+    
+    else if (type.contains('VEHICLE')) {
+      return await PdfReportManager.generatePdf(
+        dio: dio,
+        detailModel: model,
+        mapper: (m) => VehiculoPdfGenerator.mapDetailModelToPdfData(m),
+        generator: (data) => VehiculoPdfGenerator.generateEsqueleto(data),
+      );
+    } 
+    
+    else if (type.contains('CONVEYOR')) {
+      // --- DESCARGA DE IMÁGENES PARA CONVEYOR (Ya funciona) ---
+      for (var answer in model.answers) {
+        if (answer.evidences != null) {
+          for (var ev in answer.evidences) {
+            if (ev.bytes == null && ev.signedUrl != null) {
+              ev.bytes = await ImageDownloader.download(dio, ev.signedUrl);
+            }
+          }
+        }
+      }
+
+      final Map<String, dynamic> datosNormalizados = {
+        'planta': model.conveyor['mine'] ?? "",
+        'area': model.conveyor['area'] ?? "",
+        'responsable': model.report['conveyor_responsible'] ?? "",
+        'seccion': model.report['section']?.toString() ?? "",
+        'transportador': model.conveyor['name'] ?? "",
+        'banda': model.report['recommended_belt'] ?? "",
+        'material': "${model.report['material'] ?? ''} / ${model.report['granulometry'] ?? ''}",
+        'elaboro': model.inspector['name'] ?? "",
+        'presentar': model.report['present_to'] ?? "",
+        'comentarios': model.report['comentarios'] ?? "",
+      };
+
+      final sections = await _mapAnswersToSections(model.answers);
+      final List<Roller> rodillos = (model.rollers as List<dynamic>?)
+          ?.map((r) => Roller(
+                tableNumber: r.tableNumber,
+                baseNumber: r.baseNumber,
+                isLeft: r.isLeft,
+                isCenter: r.isCenter,
+                isRight: r.isRight,
+                isImpact: r.isImpact,
+                isReturn: r.isReturn,
+                isTriple: r.isTriple,
+                isSelfAligning: r.isSelfAligning,
+                observation: r.observation,
+              ))
+          .toList() ?? [];
+
+      return await BandaPdfGenerator.generateReport(
+        datosNormalizados,
+        sections,
+        rodillos, 
+      );
+    }
+    return null;
+  } catch (e) {
+    debugPrint("Error al procesar PDF de ${item.reportType}: $e");
+    return null;
+  }
+}
 Future<void> _viewReport(InspectionRowUI item) async {
     LoadingOverlay.show(context, "Cargando datos del reporte...");
     
@@ -226,12 +263,23 @@ Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
         o.label.trim().toLowerCase() == labelSeleccionado.toLowerCase()
     );
 
-    // 2. Mapeo al BandaComponent con manejo de tipos corregido
+    // --- CAMBIO: CONVERSIÓN DE EVIDENCIAS ---
+    // Filtramos los elementos que tengan bytes descargados (previamente poblados en _buildPdfBytes)
+    final List<EvidenceFile> evidenciasConvertidas = (a.evidences as List<dynamic>?)
+        ?.where((e) => e.bytes != null)
+        .map((e) => EvidenceFile(
+              bytes: e.bytes!, // Usamos los bytes descargados por ImageDownloader
+              type: e.fileType ?? 'image/png',
+              mimeType: e.mimeType ?? 'image/png',
+            ))
+        .toList() ?? [];
+
+    // 2. Mapeo al BandaComponent con las evidencias integradas
     sectionsMap[sectionName]!.add(BandaComponent(
       id: a.answerId?.toString() ?? "0",
       name: accessoryName,
       observation: (a.recommendedAction ?? "").trim(),
-      comment: (a.comment ?? "").trim(), // <--- Mapeo correcto del comentario
+      comment: (a.comment ?? "").trim(),
       options: opcionesFijas, 
       selectedOptionIds: a.option != null 
           ? [
@@ -243,7 +291,7 @@ Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
       
       customOptions: (esCustom && labelSeleccionado.isNotEmpty) ? [labelSeleccionado] : [], 
       dimentions: a.dimentions?.toString() ?? '', 
-      evidenceBefore: [], 
+      evidenceBefore: evidenciasConvertidas, // Aquí se asignan las fotos
       evidenceAfter: [],
     ));
   }
