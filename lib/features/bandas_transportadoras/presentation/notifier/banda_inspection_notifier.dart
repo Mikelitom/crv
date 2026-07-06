@@ -28,11 +28,17 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
       rollers: active ? [] : [],
     );
   }
-
-  // Agrega esto a tu BandaInspectionNotifier
-  void addRoller() {
+void removeRoller(int index) {
+  final currentRollers = List<Roller>.from(state.rollers);
+  if (index >= 0 && index < currentRollers.length) {
+    currentRollers.removeAt(index);
+    state = state.copyWith(rollers: currentRollers);
+  }
+}
+  // Agrega esto a tu 
+void addRoller() {
     final newRoller = Roller(
-      tableNumber: 0,
+      tableNumber: state.rollers.length + 1, // Sugerencia: autoincrementar número
       baseNumber: 0,
       isLeft: false,
       isCenter: false,

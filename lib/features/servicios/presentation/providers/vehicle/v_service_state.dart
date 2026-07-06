@@ -1,10 +1,10 @@
-import '../../domain/entities/v_service_order.dart';
-import 'package:crv_reprosisa/features/assets/presentation/states/status.dart'; // Tu enum de estado
+// IMPORTANTE: Asegúrate de importar el modelo con V
+import 'package:crv_reprosisa/features/servicios/data/models/v_service_order_model.dart';
+import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 
-// Si usas Freezed, puedes usar @freezed, si no, una clase simple:
 class ServiceListState {
   final Status status;
-  final List<ServiceOrder> services;
+  final List<ServiceOrderModel> services; // <--- Cambia ServiceOrder a ServiceOrderModelV
   final String? error;
 
   const ServiceListState({
@@ -15,7 +15,7 @@ class ServiceListState {
 
   ServiceListState copyWith({
     Status? status,
-    List<ServiceOrder>? services,
+    List<ServiceOrderModel>? services, // <--- Cambia aquí también
     String? error,
   }) {
     return ServiceListState(

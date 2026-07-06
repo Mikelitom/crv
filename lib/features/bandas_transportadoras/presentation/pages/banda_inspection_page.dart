@@ -317,8 +317,15 @@ Future<void> _showPreview(BuildContext context) async {
     final state = ref.watch(bandaInspectionProvider);
     final bool isMobile = MediaQuery.of(context).size.width < 600;
 
+    // 1. Calculamos los pasos dinámicamente
     List<String> pasos = state.sections.map((s) => s.name).toList();
     if (state.isRodilleriaActive) pasos.add("RODILLERÍA");
+
+    // 2. Seguridad: Si eliminamos la rodillería y el índice actual era el de rodillería,
+    // ajustamos el índice a la última sección disponible.
+    if (_currentSectionIndex >= pasos.length) {
+      _currentSectionIndex = pasos.isNotEmpty ? pasos.length - 1 : 0;
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -327,9 +334,10 @@ Future<void> _showPreview(BuildContext context) async {
         child: Column(
           children: [
             CustomHeader(
-                title: "Inspección de Bandas",
-                actionIcon: Icons.arrow_back_ios_new_rounded,
-                onActionTap: () => Navigator.pop(context)),
+              title: "Inspección de Bandas",
+              actionIcon: Icons.arrow_back_ios_new_rounded,
+              onActionTap: () => Navigator.pop(context),
+            ),
             const SizedBox(height: 24),
             CaptureMethodSelector(onManualFill: () {}, onScan: () {}),
             const SizedBox(height: 24),
@@ -339,12 +347,15 @@ Future<void> _showPreview(BuildContext context) async {
             const SizedBox(height: 32),
             _buildStepper(pasos),
             const SizedBox(height: 24),
-            if (state.sections.isNotEmpty)
+            
+            // Contenido activo
+            if (state.sections.isNotEmpty || state.isRodilleriaActive)
               Container(
                 key: _sectionKey,
                 child: _buildActiveContent(state),
               ),
 
+            // Botón para agregar rodillería solo si no está activa y estamos al final
             if (!state.isRodilleriaActive && _currentSectionIndex == state.sections.length - 1)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
@@ -372,10 +383,27 @@ Future<void> _showPreview(BuildContext context) async {
     );
   }
 Widget _buildActiveContent(BandaInspectionState state) {
+  // 1. Caso: Rodillería Activa y estamos en su pestaña
   if (state.isRodilleriaActive && _currentSectionIndex == state.sections.length) {
-    return const RodilleriaSection();
+    return Column(
+      children: [
+        const RodilleriaSection(),
+        const SizedBox(height: 20),
+        // Botón de eliminar sección de rodillería
+        TextButton.icon(
+          onPressed: _desactivarRodilleria,
+          icon: const Icon(Icons.delete_forever, color: Colors.red),
+          label: const Text(
+            "ELIMINAR SECCIÓN DE RODILLERÍA",
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
   }
 
+  // 2. Caso: Sección normal (Tabla de componentes)
   if (_currentSectionIndex < state.sections.length) {
     final section = state.sections[_currentSectionIndex];
     return BandaSectionTable(
@@ -386,14 +414,22 @@ Widget _buildActiveContent(BandaInspectionState state) {
     );
   }
 
+  // 3. Caso: Rodillería Inactiva (Botón para agregarla)
   if (!state.isRodilleriaActive) {
     return Center(
       child: Column(
         children: [
-          const Text("¿Deseas incluir reporte de rodillería?", style: TextStyle(color: Colors.grey)),
+          const Text(
+            "¿Deseas incluir reporte de rodillería?",
+            style: TextStyle(color: Colors.grey),
+          ),
           const SizedBox(height: 10),
           ElevatedButton.icon(
-            onPressed: () => ref.read(bandaInspectionProvider.notifier).toggleRodilleria(true),
+            onPressed: () {
+              ref.read(bandaInspectionProvider.notifier).toggleRodilleria(true);
+              // Opcional: mover el stepper automáticamente al nuevo índice
+              setState(() => _currentSectionIndex = state.sections.length);
+            },
             icon: const Icon(Icons.add_circle_outline),
             label: const Text("AGREGAR RODILLERÍA"),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
@@ -431,39 +467,37 @@ Widget _buildActiveContent(BandaInspectionState state) {
   }
 
 Widget _buildFooter(int total, bool isMobile) {
-    bool esUltimo = _currentSectionIndex == total - 1;
-    
-    // En móvil, los botones se apilan ocupando todo el ancho
-    if (isMobile) {
-      return Column(
-        children: [
-          // Fila superior: Anterior y Siguiente
-          Row(
-            children: [
-              Expanded(child: _btnAnterior()),
-              const SizedBox(width: 12),
-              Expanded(child: _btnSiguiente(esUltimo)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Vista Previa ocupa todo el ancho
-          SizedBox(width: double.infinity, child: _btnVistaPrevia()),
-        ],
-      );
-    }
-    
-    // En escritorio, se mantienen en una fila horizontal
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+  // Determinamos si la sección actual es la última, basándonos en el total de pasos
+  // Esto se ajustará automáticamente cuando elimines la rodillería y el 'total' disminuya
+  bool esUltimo = _currentSectionIndex == total - 1;
+
+  if (isMobile) {
+    return Column(
       children: [
-        _btnAnterior(),
-        const SizedBox(width: 12),
-        _btnVistaPrevia(),
-        const SizedBox(width: 12),
-        _btnSiguiente(esUltimo),
+        Row(
+          children: [
+            Expanded(child: _btnAnterior()),
+            const SizedBox(width: 12),
+            Expanded(child: _btnSiguiente(esUltimo)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(width: double.infinity, child: _btnVistaPrevia()),
       ],
     );
   }
+
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.end,
+    children: [
+      _btnAnterior(),
+      const SizedBox(width: 12),
+      _btnVistaPrevia(),
+      const SizedBox(width: 12),
+      _btnSiguiente(esUltimo),
+    ],
+  );
+}
 Widget _btnAnterior() => OutlinedButton(
     onPressed: _currentSectionIndex > 0 && !_isSaving 
         ? () { setState(() => _currentSectionIndex--); _scrollToSectionStart(); } 
@@ -564,6 +598,18 @@ Future<void> _confirmarGuardado() async {
     ),
   );
 }
+void _desactivarRodilleria() {
+    // 1. Desactivamos en el provider
+    ref.read(bandaInspectionProvider.notifier).toggleRodilleria(false);
+    
+    // 2. Regresamos el índice al final de las secciones normales
+    final state = ref.read(bandaInspectionProvider);
+    setState(() {
+      _currentSectionIndex = state.sections.length - 1;
+    });
+    
+    _showSnack("Sección de rodillería eliminada", Colors.grey);
+  }
 Widget _btnSiguiente(bool esUltimo) => ElevatedButton(
     onPressed: _isSaving
         ? null

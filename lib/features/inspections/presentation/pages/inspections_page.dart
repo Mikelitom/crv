@@ -5,7 +5,6 @@ import 'package:crv_reprosisa/features/dashboard/presentation/widgets/header.dar
 import 'package:crv_reprosisa/features/prensas_industriales/presentation/Pages/prensa_inspection.dart';
 import 'package:crv_reprosisa/features/vehiculos/presentation/pages/vehicle_inspection_page.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/presentation/pages/banda_inspection_page.dart';
-import '../models/inspector_row_ui.dart';
 import '../widgets/dynamic_stats_row.dart';
 import '../widgets/quick_actions_i.dart';
 import '../widgets/table_inspector.dart';
