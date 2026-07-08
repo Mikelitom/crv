@@ -14,7 +14,7 @@ class CatalogDataTable extends ConsumerWidget {
   final Color primaryRed;
   final Function(dynamic) onEdit;
   final Function(dynamic, bool) onToggleStatus;
-
+final String Function(String?)? statusTranslator; 
   const CatalogDataTable({
     super.key,
     required this.items,
@@ -22,6 +22,7 @@ class CatalogDataTable extends ConsumerWidget {
     required this.primaryRed,
     required this.onEdit,
     required this.onToggleStatus,
+    this.statusTranslator, 
   });
 
   dynamic _getProperty(dynamic item, String key) {
@@ -145,12 +146,38 @@ class CatalogDataTable extends ConsumerWidget {
     );
   }
 
-  List<DataCell> _getDesktopCells(BuildContext ctx, WidgetRef ref, dynamic item, TextStyle cs) {
+List<DataCell> _getDesktopCells(BuildContext ctx, WidgetRef ref, dynamic item, TextStyle cs) {
+    // 1. Obtenemos el estado original
+    final String rawStatus = _getProperty(item, 'operationState');
+    
+    // 2. Traducimos si el traductor está disponible, si no, usamos el original
+    final String displayStatus = (statusTranslator != null) 
+        ? statusTranslator!(rawStatus) 
+        : rawStatus;
+
+    // 3. Construimos las celdas usando displayStatus
     List<DataCell> cells = type == "cliente" 
-      ? [DataCell(Text(_getProperty(item, 'name'), style: cs)), DataCell(Text(_getProperty(item, 'company'), style: cs)), DataCell(Text(_getProperty(item, 'email'), style: cs))] 
+      ? [
+          DataCell(Text(_getProperty(item, 'name'), style: cs)), 
+          DataCell(Text(_getProperty(item, 'company'), style: cs)), 
+          DataCell(Text(_getProperty(item, 'email'), style: cs))
+        ] 
       : type == "vehiculo" 
-        ? [DataCell(_buildIdentifierCell(_getProperty(item, 'plate'))), DataCell(Text("${_getProperty(item, 'brand')} ${_getProperty(item, 'model')}", style: cs)), DataCell(Text(_getProperty(item, 'year'), style: cs)), DataCell(_buildStatusBadge(_getProperty(item, 'operationState'))), DataCell(Text(_getProperty(item, 'currentLocation'), style: cs))] 
-        : [DataCell(_buildIdentifierCell(_getProperty(item, 'serie'))), DataCell(Text(_getProperty(item, 'size'), style: cs)), DataCell(Text(_getProperty(item, 'type'), style: cs)), DataCell(Text(_getProperty(item, 'model'), style: cs)), DataCell(_buildStatusBadge(_getProperty(item, 'operationState'))), DataCell(Text(_getProperty(item, 'currentLocation'), style: cs))];
+        ? [
+            DataCell(_buildIdentifierCell(_getProperty(item, 'plate'))), 
+            DataCell(Text("${_getProperty(item, 'brand')} ${_getProperty(item, 'model')}", style: cs)), 
+            DataCell(Text(_getProperty(item, 'year'), style: cs)), 
+            DataCell(_buildStatusBadge(displayStatus)), // <--- Usamos el estado traducido
+            DataCell(Text(_getProperty(item, 'currentLocation'), style: cs))
+          ] 
+        : [
+            DataCell(_buildIdentifierCell(_getProperty(item, 'serie'))), 
+            DataCell(Text(_getProperty(item, 'size'), style: cs)), 
+            DataCell(Text(_getProperty(item, 'type'), style: cs)), 
+            DataCell(Text(_getProperty(item, 'model'), style: cs)), 
+            DataCell(_buildStatusBadge(displayStatus)), // <--- Usamos el estado traducido
+            DataCell(Text(_getProperty(item, 'currentLocation'), style: cs))
+          ];
     
     cells.add(DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
       _buildActionButton(Icons.visibility_rounded, Colors.green.shade50, Colors.green, () => showDialog(context: ctx, builder: (_) => AssetDetailModal(item: item, type: type, primaryRed: primaryRed))),
@@ -168,15 +195,45 @@ class CatalogDataTable extends ConsumerWidget {
     child: Text(text, style: TextStyle(fontFamily: 'Courier', fontWeight: FontWeight.bold, color: primaryRed, fontSize: 13)),
   );
 
-  Widget _buildStatusBadge(String s) {
-    bool isAvailable = (s == "Disponible" || s == "AVAILABLE");
+ Widget _buildStatusBadge(String s) {
+    Color bgColor;
+    Color textColor;
+    
+    // Lógica de colores según el estado traducido
+    switch (s.toUpperCase()) {
+      case 'DISPONIBLE':
+        bgColor = Colors.green.shade100;
+        textColor = Colors.green.shade800;
+        break;
+      case 'TALLER':
+        bgColor = Colors.blue.shade100;
+        textColor = Colors.blue.shade800;
+        break;
+      case 'OCUPADO':
+        bgColor = Colors.orange.shade100;
+        textColor = Colors.orange.shade900;
+        break;
+      default:
+        bgColor = Colors.grey.shade200;
+        textColor = Colors.grey.shade700;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: isAvailable ? Colors.green.shade100 : Colors.amber.shade100, borderRadius: BorderRadius.circular(12)),
-      child: Text(s.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isAvailable ? Colors.green.shade800 : Colors.amber.shade900)),
+      decoration: BoxDecoration(
+        color: bgColor, 
+        borderRadius: BorderRadius.circular(12)
+      ),
+      child: Text(
+        s.toUpperCase(), 
+        style: TextStyle(
+          fontSize: 10, 
+          fontWeight: FontWeight.w900, 
+          color: textColor
+        )
+      ),
     );
   }
-
   Future<void> _handleToggle(WidgetRef ref, dynamic item, bool isActive, BuildContext context) async {
     final String itemId = (type == "vehiculo") ? (item.vehicleId ?? "") : (item.id ?? "");
     if (itemId.isEmpty) return;

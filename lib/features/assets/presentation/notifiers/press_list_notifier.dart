@@ -4,10 +4,12 @@ import '../states/press_list_state.dart';
 import '../states/status.dart';
 
 class PressListNotifier extends Notifier<PressListState> {
+  // ELIMINAMOS 'watch' del constructor.
+  // El Notifier siempre debe tener un constructor vacío o inexistente.
+  PressListNotifier(); 
 
   @override
   PressListState build() {
-  
     return const PressListState();
   }
 
@@ -15,6 +17,8 @@ class PressListNotifier extends Notifier<PressListState> {
     if (state.status == Status.loading) return;
 
     state = state.copyWith(status: Status.loading);
+    
+    // Obtenemos el caso de uso a través de 'ref', que está disponible globalmente en la clase
     final getAllPress = ref.read(getAllPressUseCaseProvider);
     final result = await getAllPress();
 

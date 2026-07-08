@@ -167,28 +167,63 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage>
         return _buildViewLayer(presses.status, presses.press, "prensa", _searchQuery);
     }
   }
-
-  Widget _buildViewLayer(Status status, List<dynamic> items, String type, String query) {
+String _translateStatus(String? status) {
+  if (status == null) return "N/A";
+  switch (status.toUpperCase()) {
+    case 'AVAILABLE': return 'DISPONIBLE';
+    case 'WORKSHOP': return 'TALLER';
+    case 'OCCUPIED': return 'OCUPADO';
+    case 'ACTIVE': return 'ACTIVO';
+    case 'INACTIVE': return 'INACTIVO';
+    default: return status;
+  }
+}
+Widget _buildViewLayer(Status status, List<dynamic> items, String type, String query) {
     if (status == Status.loading) {
       return const SizedBox(height: 250, child: Center(child: CircularProgressIndicator()));
     }
-    
+
+    final q = query.toLowerCase().trim();
     final filtered = items.where((item) {
-      final q = query.toLowerCase().trim();
       if (q.isEmpty) return true;
+
+      // Unificamos los campos a buscar según el tipo
+      String searchableText = "";
       if (type == "cliente") {
-        return (item.name?.toLowerCase() ?? "").contains(q) || (item.company?.toLowerCase() ?? "").contains(q);
+        searchableText = "${item.name} ${item.company} ${item.email}".toLowerCase();
+      } else if (type == "vehiculo") {
+        // Agregamos ubicación, modelo y unidad a la búsqueda
+        searchableText = "${item.plate} ${item.brand} ${item.model} ${item.currentLocation} ${item.unit}".toLowerCase();
+      } else {
+        searchableText = "${item.serie} ${item.model} ${item.currentLocation}".toLowerCase();
       }
-      if (type == "vehiculo") {
-        return (item.plate?.toLowerCase() ?? "").contains(q) || (item.brand?.toLowerCase() ?? "").contains(q);
-      }
-      return (item.serie?.toLowerCase() ?? "").contains(q) || (item.model?.toLowerCase() ?? "").contains(q);
+      
+      return searchableText.contains(q);
     }).toList();
+
+    // --- NUEVO: MENSANJE DE NO COINCIDENCIAS ---
+    if (filtered.isEmpty && q.isNotEmpty) {
+      return SizedBox(
+        height: 250,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.search_off, size: 48, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text("No se encontraron coincidencias para: \"$query\"", 
+                   style: const TextStyle(color: Colors.grey, fontSize: 14)),
+            ],
+          ),
+        ),
+      );
+    }
 
     return CatalogDataTable(
       items: filtered,
       type: type,
       primaryRed: primaryRed,
+      statusTranslator: _translateStatus,
       onEdit: (item) {
         if (type == "vehiculo") {
           showDialog(context: context, builder: (_) => UpdateVehicleDialog(vehicle: item));
@@ -201,7 +236,6 @@ class _AssetsAdminPageState extends ConsumerState<AssetsAdminPage>
       onToggleStatus: (item, isActive) {},
     );
   }
-
   Widget _buildDynamicCreateButton() {
     String text = "Nuevo";
     Widget dialog = const SizedBox();

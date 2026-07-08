@@ -8,7 +8,6 @@ import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import '../widgets/user_search_field.dart';
 import '../widgets/user_filter_bar.dart';
 import '../widgets/user_data_table.dart';
-import '../provider/user_management_notifier_provider.dart';
 
 class UsersAdminPage extends ConsumerStatefulWidget {
   const UsersAdminPage({super.key});
@@ -22,12 +21,30 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
   String _selectedStatus = 'Todos los Estados';
   String _selectedRole = 'Todos los Roles';
 
+  // --- MAPAS DE TRADUCCIÓN ---
+  final Map<String, String> _roleMap = {
+    'Administrador': 'admin',
+    'Administrador de Área': 'admin_area',
+    'Técnico': 'technician',
+  };
+
+  final Map<String, String> _scopeMap = {
+    'General': 'ALL',
+    'Bandas': 'CONVEYOR',
+    'Vehículo': 'VEHICLE',
+    'Prensas': 'PRESS',
+    'Pendiente': 'NONE',
+  };
+
+  String _getFriendlyName(String value, Map<String, String> map) {
+    return map.entries.firstWhere((e) => e.value == value, orElse: () => MapEntry(value, value)).key;
+  }
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(userManagementProvider.notifier).getUsers());
   }
-
   void _openRequestsTray(List<User> pending) {
     showDialog(
       context: context,
@@ -89,39 +106,41 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
     );
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     final state = ref.watch(userManagementProvider);
-    final allUsers = state.users;// --- PANTALLA DE CARGA ---
+    final allUsers = state.users;
+
     if (state.status == UserManagementStatus.loading) {
       return const Scaffold(
         backgroundColor: Color(0xFFF8F9FA),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(color: Color(0xFFC62828)),
-              SizedBox(height: 16),
-              Text("Cargando usuarios...", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))),
       );
     }
 
     final pendingUsers = allUsers.where((u) => u.scope.toUpperCase() == 'NONE').toList();
     final verifiedUsers = allUsers.where((u) => u.scope.toUpperCase() != 'NONE').toList();
 
-    // LÓGICA DE FILTRADO COMPLETA
+    // LÓGICA DE FILTRADO TOTAL (Búsqueda + Filtros)
     final filteredUsers = verifiedUsers.where((user) {
-      final matchesSearch = user.name.toLowerCase().contains(_searchQuery.toLowerCase());
+      final q = _searchQuery.toLowerCase();
+      
+      // Convertimos valores técnicos del usuario a legibles para búsqueda
+      final friendlyRole = _getFriendlyName(user.role.isNotEmpty ? user.role.first : '', _roleMap).toLowerCase();
+      final friendlyScope = _getFriendlyName(user.scope, _scopeMap).toLowerCase();
+      
+      final matchesSearch = user.name.toLowerCase().contains(q) || 
+                            friendlyRole.contains(q) || 
+                            friendlyScope.contains(q);
       
       final matchesStatus = _selectedStatus == 'Todos los Estados' || 
           (user.isActive && _selectedStatus == 'Habilitados') || 
           (!user.isActive && _selectedStatus == 'Deshabilitados');
       
+      // Filtro de rol seleccionado (usando el valor técnico del mapa)
+      final technicalRole = _roleMap[_selectedRole];
       final matchesRole = _selectedRole == 'Todos los Roles' || 
-          user.role.contains(_selectedRole.toLowerCase());
+                          user.role.contains(technicalRole);
 
       return matchesSearch && matchesStatus && matchesRole;
     }).toList();
@@ -131,7 +150,6 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isMobile = constraints.maxWidth < 600;
-
           return SingleChildScrollView(
             padding: EdgeInsets.all(isMobile ? 16 : 32),
             child: Column(
@@ -152,20 +170,14 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
                     _buildRequestButton(pendingUsers),
                   ],
                 ),
-                
                 const SizedBox(height: 24),
-                
-                // BARRA DE BÚSQUEDA
                 UserSearchField(
                   width: double.infinity, 
                   query: _searchQuery, 
                   onChanged: (v) => setState(() => _searchQuery = v), 
                   onClear: () => setState(() => _searchQuery = '')
                 ),
-                
                 const SizedBox(height: 12),
-
-                // BARRA DE FILTROS (ESTADO Y ROL)
                 UserFilterBar(
                   selectedStatus: _selectedStatus,
                   selectedRole: _selectedRole,
@@ -177,16 +189,10 @@ class _UsersAdminPageState extends ConsumerState<UsersAdminPage> {
                     _selectedRole = 'Todos los Roles';
                   }),
                 ),
-
                 const SizedBox(height: 16),
-                
                 Container(
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white, 
-                    borderRadius: BorderRadius.circular(28), 
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 25)]
-                  ),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(28), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 25)]),
                   child: UserDataTable(
                     users: filteredUsers,
                     onToggleStatus: (id, v) => ref.read(userManagementProvider.notifier).toggleUserStatus(id, v),
