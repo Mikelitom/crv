@@ -26,17 +26,27 @@ class VehicleHistoryModel extends VehicleHistory {
     required super.evidencePaths,
   });
 
+  /// Getter centralizado para la traducción de estados
+  String get translatedState {
+    switch (state.toUpperCase()) {
+      case 'COMPLETED': return 'COMPLETADO';
+      case 'IN_PROGRESS': return 'EN PROCESO';
+      case 'PENDING': return 'PENDIENTE';
+      case 'AVAILABLE': return 'DISPONIBLE'; // Corregido: Available
+      case 'IN_SERVICE': return 'EN SERVICIO';
+      default: return state;
+    }
+  }
+
   factory VehicleHistoryModel.fromJson(Map<String, dynamic> json) {
-    // Esto asegura que si viene null en la lista de historial, tratamos de encontrarlo.
+    // 1. Limpieza de notas
     final String notes = json['general_notes']?.toString() ?? 
                          json['report']?['general_notes']?.toString() ?? 
                          '';
 
-    // 2. Manejo flexible de evidencias: 
-    // Extraemos la URL de manera segura manejando tanto el objeto como el string.
+    // 2. Manejo flexible de evidencias
     final List<String> paths = (json['evidences'] as List<dynamic>?)?.map((e) {
       if (e is Map) {
-        // Priorizamos 'signed_url', si no existe buscamos 'file_path'
         return e['signed_url']?.toString() ?? e['file_path']?.toString() ?? '';
       }
       return e.toString();
@@ -52,7 +62,7 @@ class VehicleHistoryModel extends VehicleHistory {
       vehicleType: json['vehicle_type']?.toString() ?? '',
       reportId: json['report_id']?.toString() ?? '',
       folio: json['folio']?.toString() ?? '',
-      state: json['state']?.toString() ?? '',
+      state: json['state']?.toString() ?? 'PENDING',
       inspectionDate: DateTime.tryParse(json['inspection_date']?.toString() ?? '') ?? DateTime.now(),
       mileage: json['mileage'] is int ? json['mileage'] : int.tryParse(json['mileage']?.toString() ?? '0') ?? 0,
       requiresService: json['requires_service'] == true || json['requires_service'].toString() == 'true',
@@ -77,6 +87,6 @@ class VehicleHistoryModel extends VehicleHistory {
         "inspection_date": inspectionDate.toIso8601String(),
         "responsible_name": responsibleName,
         "evidences_count": evidencesCount,
-        "evidences": evidencePaths, // Añadido para consistencia
+        "evidences": evidencePaths,
       };
 }

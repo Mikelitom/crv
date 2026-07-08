@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:crv_reprosisa/features/assets/domain/params/create_vehicle_params.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/type_list_notifier_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_list_notifier_provider.dart';
@@ -13,43 +15,42 @@ class CreateVehicleDialog extends ConsumerStatefulWidget {
   const CreateVehicleDialog({super.key});
 
   @override
-  ConsumerState<CreateVehicleDialog> createState() =>
-      _CreateVehicleDialogState();
+  ConsumerState<CreateVehicleDialog> createState() => _CreateVehicleDialogState();
 }
 
 class _CreateVehicleDialogState extends ConsumerState<CreateVehicleDialog> {
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
+  File? _imageFile;
 
   String? selectedTypeId;
   final brandController = TextEditingController();
   final modelController = TextEditingController();
   final yearController = TextEditingController();
   final licensePlateController = TextEditingController();
-  final unitController = TextEditingController(); // Controlador para Unidad
+  final unitController = TextEditingController();
 
   bool _success = false;
+
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? pickedFile = await _picker.pickImage(source: source, maxWidth: 800);
+    if (pickedFile != null) setState(() => _imageFile = File(pickedFile.path));
+  }
 
   @override
   void initState() {
     super.initState();
-
     ref.listenManual(createVehicleProvider, (previous, next) async {
       if (!mounted) return;
-
       if (next.status == Status.success) {
         setState(() => _success = true);
         ref.read(vehicleListProvider.notifier).loadVehicles();
         await Future.delayed(const Duration(seconds: 1));
-        if (!mounted) return;
-        Navigator.pop(context, true);
+        if (mounted) Navigator.pop(context, true);
       }
-
       if (next.status == Status.error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error ?? "Error al registrar vehículo"),
-            behavior: SnackBarBehavior.floating,
-          ),
+          SnackBar(content: Text(next.error ?? "Error al registrar vehículo"), backgroundColor: Colors.red),
         );
       }
     });
@@ -61,7 +62,7 @@ class _CreateVehicleDialogState extends ConsumerState<CreateVehicleDialog> {
     modelController.dispose();
     yearController.dispose();
     licensePlateController.dispose();
-    unitController.dispose(); 
+    unitController.dispose();
     super.dispose();
   }
 
@@ -73,29 +74,19 @@ class _CreateVehicleDialogState extends ConsumerState<CreateVehicleDialog> {
 
     return BaseAssetDialog(
       title: _success ? "" : "Registrar nuevo vehículo",
-      onConfirm: _success
-          ? null
-          : () async {
-              if (!_formKey.currentState!.validate()) return;
-              if (selectedTypeId == null) return;
-
-              final year = int.tryParse(yearController.text.trim());
-              final unit = int.tryParse(unitController.text.trim()); // Parseo de unidad
-              
-              if (year == null || unit == null) return;
-
-              final vehicle = CreateVehicleParams(
-                typeId: selectedTypeId!,
-                brand: brandController.text.trim(),
-                model: modelController.text.trim(),
-                unit: unit, // Asignación de unidad
-                year: year,
-                plate: licensePlateController.text.trim(),
-              );
-
-              await ref.read(createVehicleProvider.notifier).create(vehicle);
-            },
       isLoading: (state.status == Status.loading || typeState.status == Status.loading) && !_success,
+      onConfirm: _success ? null : () async {
+        if (!_formKey.currentState!.validate() || selectedTypeId == null) return;
+        final vehicle = CreateVehicleParams(
+          typeId: selectedTypeId!,
+          brand: brandController.text.trim(),
+          model: modelController.text.trim(),
+          unit: int.tryParse(unitController.text.trim()) ?? 0,
+          year: int.tryParse(yearController.text.trim()) ?? 0,
+          plate: licensePlateController.text.trim(),
+        );
+        await ref.read(createVehicleProvider.notifier).create(vehicle);
+      },
       children: [
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
@@ -108,156 +99,81 @@ class _CreateVehicleDialogState extends ConsumerState<CreateVehicleDialog> {
   Widget _buildForm(TypeListState typeState, VehicleListState vehicleState) {
     return Form(
       key: _formKey,
-      child: Column(
-        key: const ValueKey("form"),
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20),
-            child: DropdownButtonFormField<String>(
-              value: selectedTypeId,
-              validator: (value) => value == null ? "Seleccione un tipo de vehículo" : null,
-              decoration: InputDecoration(
-                hintText: "Seleccionar tipo",
-                filled: true,
-                fillColor: const Color(0xFFF8F9FA),
-                contentPadding: const EdgeInsets.all(18),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              items: typeState.types.map<DropdownMenuItem<String>>((type) => 
-                DropdownMenuItem<String>(
-                  value: type.id.toString(),
-                  child: Text(type.name),
-                )).toList(),
-              onChanged: (value) => setState(() => selectedTypeId = value),
+      child: Column(key: const ValueKey("form"), children: [
+        Center(
+          child: GestureDetector(
+            onTap: () => _showImageSourceDialog(),
+            child: Container(
+              height: 100, width: 100,
+              decoration: BoxDecoration(color: const Color(0xFFF8F9FA), borderRadius: BorderRadius.circular(16)),
+              child: _imageFile != null 
+                  ? ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.file(_imageFile!, fit: BoxFit.cover))
+                  : const Icon(Icons.camera_alt, size: 40, color: Colors.grey),
             ),
           ),
-
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: _customBuildField(
-                  brandController,
-                  "Marca",
-                  "Toyota",
-                  validator: (value) => value == null || value.trim().isEmpty ? "Marca obligatoria" : null,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 1,
-                child: _customBuildField(
-                  unitController,
-                  "Unidad",
-                  "101",
-                  keyboardType: TextInputType.number, // Teclado numérico para unidad
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) return "Obligatorio";
-                    if (int.tryParse(value) == null) return "Número inválido";
-                    return null;
-                  },
-                ),
-              ),
-            ],
-          ),
-
-          _customBuildField(
-            modelController,
-            "Modelo",
-            "Corolla",
-            validator: (value) => value == null || value.trim().isEmpty ? "Modelo obligatorio" : null,
-          ),
-
-          Row(
-            children: [
-              Expanded(
-                child: _customBuildField(
-                  yearController,
-                  "Año",
-                  "2026",
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) return "Año obligatorio";
-                    final year = int.tryParse(value);
-                    if (year == null) return "Número inválido";
-                    if (year < 1900 || year > DateTime.now().year + 1) return "Año inválido";
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _customBuildField(
-                  licensePlateController,
-                  "Placas",
-                  "ABC-123",
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) return "Placas obligatorias";
-                    final exists = vehicleState.vehicles.any((v) => v.plate.toUpperCase() == value.trim().toUpperCase());
-                    if (exists) return "Ya registrada";
-                    return null;
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSuccessState() {
-    return SizedBox(
-      key: const ValueKey("success"),
-      height: 220,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedScale(
-              scale: _success ? 1 : 0.5,
-              duration: const Duration(milliseconds: 300),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(color: Colors.green.shade100, shape: BoxShape.circle),
-                child: Icon(Icons.check, size: 60, color: Colors.green.shade600),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text("Vehículo registrado", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ],
         ),
-      ),
-    );
-  }
-
-  // Función auxiliar corregida con keyboardType
-  Widget _customBuildField(
-    TextEditingController controller,
-    String label,
-    String hint, {
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType, // Se aplica el tipo de teclado
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: const Color(0xFFF8F9FA),
-            contentPadding: const EdgeInsets.all(18),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-          ),
+        const SizedBox(height: 20),
+        DropdownButtonFormField<String>(
+          value: selectedTypeId,
+          decoration: _inputDecoration("Seleccionar tipo"),
+          items: typeState.types.map((t) => DropdownMenuItem(value: t.id.toString(), child: Text(t.name))).toList(),
+          onChanged: (v) => setState(() => selectedTypeId = v),
+          validator: (v) => v == null ? "Seleccione un tipo" : null,
         ),
         const SizedBox(height: 16),
-      ],
+        Row(children: [
+          Expanded(child: _customBuildField(brandController, "Marca", "Toyota")),
+          const SizedBox(width: 16),
+          Expanded(child: _customBuildField(unitController, "Unidad", "101", keyboardType: TextInputType.number)),
+        ]),
+        _customBuildField(modelController, "Modelo", "Corolla"),
+        Row(children: [
+          Expanded(child: _customBuildField(yearController, "Año", "2026", keyboardType: TextInputType.number, validator: (v) {
+             final y = int.tryParse(v!);
+             return (y == null || y < 1900 || y > 2027) ? "Año inválido" : null;
+          })),
+          const SizedBox(width: 16),
+          Expanded(child: _customBuildField(licensePlateController, "Placas", "ABC1234", validator: (v) {
+             final exists = vehicleState.vehicles.any((vh) => vh.plate.toUpperCase() == v!.toUpperCase());
+             if (exists) return "Ya registrada";
+             if (v!.length < 6 || v.length > 7) return "Mínimo 6, máximo 7";
+             return null;
+          })),
+        ]),
+      ]),
     );
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(context: context, builder: (ctx) => SafeArea(child: Wrap(children: [
+      ListTile(leading: const Icon(Icons.camera_alt), title: const Text('Cámara'), onTap: () { _pickImage(ImageSource.camera); Navigator.pop(ctx); }),
+      ListTile(leading: const Icon(Icons.photo_library), title: const Text('Galería'), onTap: () { _pickImage(ImageSource.gallery); Navigator.pop(ctx); }),
+    ])));
+  }
+
+  InputDecoration _inputDecoration(String hint) => InputDecoration(
+    hintText: hint, filled: true, fillColor: const Color(0xFFF8F9FA),
+    contentPadding: const EdgeInsets.all(18),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+  );
+
+  Widget _buildSuccessState() => SizedBox(height: 220, child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+    const Icon(Icons.check_circle, size: 80, color: Colors.green),
+    const SizedBox(height: 16),
+    const Text("Vehículo registrado", style: TextStyle(fontWeight: FontWeight.bold))
+  ])));
+
+  Widget _customBuildField(TextEditingController controller, String label, String hint, {TextInputType? keyboardType, String? Function(String?)? validator}) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        validator: validator ?? (v) => v!.isEmpty ? "Obligatorio" : null,
+        decoration: _inputDecoration(hint),
+      ),
+      const SizedBox(height: 16),
+    ]);
   }
 }

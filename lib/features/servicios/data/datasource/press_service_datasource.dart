@@ -9,11 +9,13 @@ import 'package:dio/dio.dart';
 
 abstract class PressServiceDataSource {
   Future<List<PressItemModel>> getPendingItems(String pressId);
-  Future<List<PressIncidenceModel>> getIncidenceSummary(String pressId); 
+  Future<List<PressIncidenceModel>> getIncidenceSummary(String pressId);
   Future<List<PressServiceOrderModel>> getServiceOrders(String pressId);
-Future<void> createServiceOrder(PressCreateOrderModel order);
-Future<void> attachPressItems(String serviceId, PressAttachItemModel model);
-Future<List<PressServiceItemModel>> getServiceItems(String serviceId);
+  Future<void> createServiceOrder(PressCreateOrderModel order);
+  Future<void> attachPressItems(String serviceId, PressAttachItemModel model);
+  Future<List<PressServiceItemModel>> getServiceItems(String serviceId);
+  Future<List<dynamic>> getPendingMaintenanceGlobal();
+  Future<List<dynamic>> getLoansMultiFilter();
 }
 
 class PressServiceDataSourceImpl implements PressServiceDataSource {
@@ -22,8 +24,10 @@ class PressServiceDataSourceImpl implements PressServiceDataSource {
 
   @override
   Future<List<PressItemModel>> getPendingItems(String pressId) async {
-    final response = await dio.get('/press/service/press/$pressId/pending-items');
-    
+    final response = await dio.get(
+      '/press/service/press/$pressId/pending-items',
+    );
+
     if (response.statusCode == 200) {
       final List<dynamic> data = response.data;
       return data.map((json) => PressItemModel.fromJson(json)).toList();
@@ -31,9 +35,12 @@ class PressServiceDataSourceImpl implements PressServiceDataSource {
       throw Exception('Error al obtener componentes pendientes de prensa');
     }
   }
+
   @override
   Future<List<PressIncidenceModel>> getIncidenceSummary(String pressId) async {
-    final response = await dio.get('/press/service/press/$pressId/incidence-summary');
+    final response = await dio.get(
+      '/press/service/press/$pressId/incidence-summary',
+    );
     if (response.statusCode == 200) {
       final List<dynamic> data = response.data;
       return data.map((json) => PressIncidenceModel.fromJson(json)).toList();
@@ -41,10 +48,11 @@ class PressServiceDataSourceImpl implements PressServiceDataSource {
       throw Exception('Error al obtener el resumen de incidencias');
     }
   }
+
   @override
   Future<List<PressServiceOrderModel>> getServiceOrders(String pressId) async {
     final response = await dio.get('/press/service/press/$pressId');
-    
+
     if (response.statusCode == 200) {
       final List<dynamic> data = response.data;
       return data.map((json) => PressServiceOrderModel.fromJson(json)).toList();
@@ -52,7 +60,8 @@ class PressServiceDataSourceImpl implements PressServiceDataSource {
       throw Exception('Error al obtener órdenes de servicio');
     }
   }
-@override
+
+  @override
   Future<void> createServiceOrder(PressCreateOrderModel order) async {
     try {
       final response = await dio.post('/press/service', data: order.toJson());
@@ -63,14 +72,18 @@ class PressServiceDataSourceImpl implements PressServiceDataSource {
       throw Exception('Error en el DataSource al crear orden: $e');
     }
   }
-@override
-  Future<void> attachPressItems(String serviceId, PressAttachItemModel model) async {
+
+  @override
+  Future<void> attachPressItems(
+    String serviceId,
+    PressAttachItemModel model,
+  ) async {
     try {
       final response = await dio.post(
-        '/press/service/$serviceId/items', 
+        '/press/service/$serviceId/items',
         data: model.toJson(),
       );
-      
+
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception('Error al adjuntar ítems: ${response.statusMessage}');
       }
@@ -78,15 +91,46 @@ class PressServiceDataSourceImpl implements PressServiceDataSource {
       throw Exception('Error en el DataSource al adjuntar ítems: $e');
     }
   }
+
   @override
-Future<List<PressServiceItemModel>> getServiceItems(String serviceId) async {
-  final response = await dio.get('/press/service/service-items/$serviceId');
-  
-  if (response.statusCode == 200) {
-    final List<dynamic> data = response.data;
-    return data.map((json) => PressServiceItemModel.fromJson(json)).toList();
-  } else {
-    throw Exception('Error al obtener ítems del servicio');
+  Future<List<PressServiceItemModel>> getServiceItems(String serviceId) async {
+    final response = await dio.get('/press/service/service-items/$serviceId');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = response.data;
+      return data.map((json) => PressServiceItemModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Error al obtener ítems del servicio');
+    }
   }
-}
+
+  // En tu PressServiceDataSourceImpl
+  @override
+  Future<List<dynamic>> getPendingMaintenanceGlobal() async {
+    final response = await dio.post(
+      '/press_service/multi-filter',
+      data: {"status": "PENDING"},
+    );
+
+    if (response.statusCode == 200) {
+      return response.data as List<dynamic>;
+    } else {
+      throw Exception(
+        'Error al obtener mantenimientos pendientes: ${response.statusCode}',
+      );
+    }
+  }
+
+  // En tu PressServiceDataSourceImpl
+  @override
+  Future<List<dynamic>> getLoansMultiFilter() async {
+    // El endpoint requiere un body vacío {}
+    final response = await dio.post('/loans/multi-filter', data: {});
+
+    if (response.statusCode == 200) {
+      return response.data as List<dynamic>;
+    } else {
+      throw Exception('Error al obtener préstamos: ${response.statusCode}');
+    }
+  }
 }

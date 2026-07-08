@@ -1,9 +1,12 @@
-import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_list_notifier_provider.dart';
-import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
-import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/service_detail_view.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/recent_movements_table.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/asset_distribution_chart.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/mainting_pending.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/usage_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:crv_reprosisa/features/assets/domain/entities/vehicle.dart';
+import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_list_notifier_provider.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/service_detail_view.dart';
 
 class VehicleServicePage extends ConsumerStatefulWidget {
   const VehicleServicePage({super.key});
@@ -13,106 +16,174 @@ class VehicleServicePage extends ConsumerStatefulWidget {
 }
 
 class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
-  Vehicle? selectedVehicle; // Cambiamos de VehicleMock a tu clase Vehicle real
-  bool isPanelOpen = true;
+  Vehicle? selectedVehicle;
+  String searchQuery = "";
+  bool showList = false; // Control de visibilidad para móvil
 
   @override
   void initState() {
     super.initState();
-    // Cargamos los vehículos al entrar a la página
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(vehicleListProvider.notifier).loadVehicles();
-    });
+    Future.microtask(() => ref.read(vehicleListProvider.notifier).loadVehicles());
+  }
+
+  // --- MÉTODOS DE ESTILO ---
+  Widget _buildPlateBadge(String plate) => Text(plate.toUpperCase(), style: const TextStyle(color: Color(0xFFC62828), fontWeight: FontWeight.w900, fontSize: 14));
+  Widget _buildVehicleAvatar() => const CircleAvatar(backgroundColor: Color(0xFFF4F7FA), child: Icon(Icons.directions_car, color: Color(0xFFC62828), size: 20));
+
+  Widget _buildStatusBadge(String status) {
+    Color color = _getStatusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+      child: Text(_translateStatus(status), style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  String _translateStatus(String status) {
+    switch (status.toUpperCase()) {
+      case 'AVAILABLE': return 'DISPONIBLE';
+      case 'WORKSHOP': return 'TALLER';
+      case 'OCCUPIED': return 'OCUPADO';
+      default: return status;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'AVAILABLE': return Colors.green;
+      case 'WORKSHOP': return Colors.orange;
+      case 'OCCUPIED': return Colors.blue;
+      default: return Colors.grey;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Escuchamos el estado del provider
     final state = ref.watch(vehicleListProvider);
+    final filtered = state.vehicles.where((v) => v.plate.toLowerCase().contains(searchQuery.toLowerCase())).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA),
-      body: Stack(
-        children: [
-          // PANEL DERECHO: Detalle
-          Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: selectedVehicle == null
-                  ? const Center(child: Text("Selecciona un activo"))
+      floatingActionButton: LayoutBuilder(builder: (context, constraints) {
+        return constraints.maxWidth <= 800
+            ? FloatingActionButton(
+                backgroundColor: const Color(0xFFC62828),
+                onPressed: () => setState(() => showList = !showList),
+                child: const Icon(Icons.menu, color: Colors.white),
+              )
+            : const SizedBox.shrink();
+      }),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          bool isWide = constraints.maxWidth > 800;
+          return Stack(
+            children: [
+              // Dashboard al fondo
+              Positioned(
+                left: isWide ? 380 : 16, right: 16, top: 16, bottom: 16,
+                child: selectedVehicle == null 
+                  ? _buildDashboard(state.vehicles) 
                   : ServiceDetailView(key: ValueKey(selectedVehicle!.vehicleId), vehicle: selectedVehicle!),
-            ),
-          ),
-
-          // PANEL IZQUIERDO: Flotante
-          if (isPanelOpen)
-            Positioned(
-              left: 16, top: 16, bottom: 80, width: 350,
-              child: Container(
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)]),
-                child: Column(
-                  children: [
-                    Padding(padding: const EdgeInsets.all(16), child: TextField(decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: "Buscar...", border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))))),
-                    Expanded(
-                      child: state.status == Status.loading 
-                        ? const Center(child: CircularProgressIndicator())
-                        : ListView.builder(
-                            itemCount: state.vehicles.length,
-                            itemBuilder: (context, index) {
-                              final v = state.vehicles[index];
-                              return InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    selectedVehicle = v;
-                                    isPanelOpen = false;
-                                  });
-                                },
-                                child: _buildCompactVehicleTile(v, selectedVehicle?.vehicleId == v.vehicleId),
-                              );
-                            },
+              ),
+              
+              // Lista con el diseño original pero animada
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                left: isWide || showList ? 16 : -400,
+                top: 16, bottom: 16,
+                child: Container(
+                  width: 350,
+                  decoration: BoxDecoration(
+                    color: Colors.white, 
+                    borderRadius: BorderRadius.circular(24), 
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: TextField(
+                          onChanged: (v) => setState(() => searchQuery = v),
+                          decoration: const InputDecoration(
+                            hintText: "Buscar por placa...",
+                            prefixIcon: Icon(Icons.search, color: Color(0xFFC62828)),
+                            filled: true,
+                            fillColor: Color(0xFFF8F9FA),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(16)), borderSide: BorderSide.none),
                           ),
-                    ),
-                  ],
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1, indent: 20, endIndent: 20),
+                          itemBuilder: (_, i) => ListTile(
+                            leading: _buildVehicleAvatar(),
+                            title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              _buildPlateBadge(filtered[i].plate),
+                              Text("${filtered[i].brand} ${filtered[i].model}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                            ]),
+                            trailing: _buildStatusBadge(filtered[i].operationState),
+                            onTap: () => setState(() { selectedVehicle = filtered[i]; if (!isWide) showList = false; }),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          
-          // BOTÓN FLOTANTE
-          Positioned(
-            left: 16, bottom: 16,
-            child: FloatingActionButton(
-              backgroundColor: Colors.white,
-              elevation: 4,
-              onPressed: () => setState(() => isPanelOpen = !isPanelOpen),
-              child: Icon(isPanelOpen ? Icons.close : Icons.list, color: const Color(0xFFC62828)),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
 
-  // Ajustado para tu modelo real
-  Widget _buildCompactVehicleTile(Vehicle v, bool isSelected) {
-    Color statusColor = v.operationState == "WORKSHOP" ? Colors.orange : Colors.blue;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: isSelected ? Colors.red.withOpacity(0.05) : Colors.transparent, border: Border(bottom: BorderSide(color: Colors.grey[200]!))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Row(children: [const Icon(Icons.directions_car, size: 16), const SizedBox(width: 8), Text(v.plate, style: const TextStyle(fontWeight: FontWeight.bold))]),
-            _buildCompactBadge(v.operationState, statusColor),
-          ]),
-          Text("${v.brand} ${v.model}", style: const TextStyle(fontSize: 12)),
-        ],
-      ),
-    );
+  Widget _buildDashboard(List<Vehicle> vehicles) {
+    final occupiedCount = vehicles.where((v) => v.operationState.toUpperCase() == 'OCCUPIED').length;
+    final availableCount = vehicles.where((v) => v.operationState.toUpperCase() == 'AVAILABLE').length;
+    final workshopCount = vehicles.where((v) => v.operationState.toUpperCase() == 'WORKSHOP').length;
+
+    return LayoutBuilder(builder: (context, constraints) {
+      double maxWidth = constraints.maxWidth;
+      int crossAxisCount = maxWidth > 1200 ? 3 : (maxWidth > 700 ? 2 : 1);
+      double cardWidth = (maxWidth - 32 - (16 * (crossAxisCount - 1))) / crossAxisCount;
+
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Dashboard", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 16, runSpacing: 16,
+              children: [
+                _buildAnimatedCard(AssetDistributionChart(total: vehicles.length, occupied: occupiedCount, available: availableCount, workshop: workshopCount), cardWidth),
+                _buildAnimatedCard(const UsageTrendChart(), cardWidth),
+                _buildAnimatedCard(const MaintenancePendingCard(pendingCount: 0), cardWidth),
+              ],
+            ),
+            const SizedBox(height: 16),
+            RecentMovementsTable(vehicles: vehicles),
+          ],
+        ),
+      );
+    });
   }
 
-  Widget _buildCompactBadge(String status, Color color) {
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(4)), child: Text(status, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold)));
+  Widget _buildAnimatedCard(Widget child, double width) {
+    return StatefulBuilder(builder: (context, setSt) {
+      bool hovered = false;
+      return MouseRegion(
+        onEnter: (_) => setSt(() => hovered = true),
+        onExit: (_) => setSt(() => hovered = false),
+        child: AnimatedScale(
+          scale: hovered ? 1.02 : 1.0, duration: const Duration(milliseconds: 200),
+          child: SizedBox(width: width > 360 ? width : 360, height: 380, child: child),
+        ),
+      );
+    });
   }
 }

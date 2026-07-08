@@ -69,20 +69,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         );
       }
     });
-    return Scaffold(
+return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA),
-      // 👈 Añadimos un AppBar para que el usuario pueda desloguearse si está bloqueado
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text("Mi Perfil", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Color(0xFFC62828)),
-            onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
-          ),
-          const SizedBox(width: 10),
-        ],
+        // Eliminamos el 'actions' que contenía el IconButton con el icono de logout
+        title: const Text(
+          "Mi Perfil", 
+          style: TextStyle(
+            color: Colors.black, 
+            fontWeight: FontWeight.bold
+          )
+        ),
       ),
       body: _buildBody(profileState),
     );

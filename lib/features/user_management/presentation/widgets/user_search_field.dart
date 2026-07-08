@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class UserSearchField extends StatelessWidget {
+class UserSearchField extends StatefulWidget {
   final double width;
   final String query;
   final ValueChanged<String> onChanged;
@@ -15,48 +15,49 @@ class UserSearchField extends StatelessWidget {
   });
 
   @override
+  State<UserSearchField> createState() => _UserSearchFieldState();
+}
+
+class _UserSearchFieldState extends State<UserSearchField> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void didUpdateWidget(UserSearchField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Solo actualiza si el texto externo cambió (evita saltos de cursor)
+    if (widget.query != _controller.text) {
+      _controller.text = widget.query;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      width: width,
+      width: widget.width,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: TextField(
-        onChanged: onChanged,
-        // Agregamos un controlador o usamos el texto actual para el icono de borrar
-        controller: TextEditingController.fromValue(
-          TextEditingValue(
-            text: query,
-            selection: TextSelection.collapsed(offset: query.length),
-          ),
-        ),
+        controller: _controller,
+        onChanged: widget.onChanged,
         decoration: InputDecoration(
-          hintText: "Buscar por nombre...",
+          hintText: "Buscar por nombre, rol o área...",
           hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
           prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFC62828)),
-          suffixIcon: query.isNotEmpty 
-            ? IconButton(
-                icon: const Icon(Icons.clear, size: 18, color: Colors.grey), 
-                onPressed: onClear
-              )
+          suffixIcon: widget.query.isNotEmpty 
+            ? IconButton(icon: const Icon(Icons.clear, size: 18, color: Colors.grey), onPressed: widget.onClear)
             : null,
-          filled: true, 
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18), 
-            borderSide: BorderSide.none
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(color: Colors.grey.withOpacity(0.1)),
-          ),
+          filled: true, fillColor: Colors.white,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none),
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         ),
       ),

@@ -16,6 +16,14 @@ class UserFilterBar extends StatelessWidget {
     required this.onReset,
   });
 
+  // Lista de roles amigables para el usuario
+  static const List<String> _friendlyRoles = [
+    'Todos los Roles',
+    'Administrador',
+    'Administrador de Área',
+    'Técnico',
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -41,12 +49,7 @@ class UserFilterBar extends StatelessWidget {
             'Deshabilitados',
           ], onStatusChanged),
           Container(width: 1, height: 24, color: Colors.grey.withOpacity(0.2)),
-          _buildDropdown(selectedRole, [
-            'Todos los Roles',
-            'admin',
-            'Admin Área',
-            'technician',
-          ], onRoleChanged),
+          _buildDropdown(selectedRole, _friendlyRoles, onRoleChanged),
           IconButton(
             onPressed: onReset,
             icon: const Icon(
@@ -65,9 +68,13 @@ class UserFilterBar extends StatelessWidget {
     List<String> items,
     Function(String?) onChanged,
   ) {
+    // Si el valor actual no está en la lista (por ejemplo, después de un reset), 
+    // aseguramos que el Dropdown no falle mostrando el primer elemento.
+    final safeValue = items.contains(value) ? value : items.first;
+
     return DropdownButtonHideUnderline(
       child: DropdownButton<String>(
-        value: value,
+        value: safeValue,
         style: const TextStyle(
           color: Colors.black87,
           fontSize: 13,
@@ -81,4 +88,3 @@ class UserFilterBar extends StatelessWidget {
     );
   }
 }
-

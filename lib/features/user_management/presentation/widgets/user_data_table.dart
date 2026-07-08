@@ -14,8 +14,13 @@ class UserDataTable extends StatelessWidget {
     required this.onRoleChanged,
     required this.onScopeChanged,
   });
+static const Map<String, String> _roleMap = {
+    'Administrador': 'admin',
+    'Administrador de Área': 'admin_area',
+    'Técnico': 'technician',
+  };
 
-  static const Map<String, String> _scopeMap = {
+ static const Map<String, String> _scopeMap = {
     'General': 'ALL',
     'Bandas': 'CONVEYOR',
     'Vehículo': 'VEHICLE',
@@ -28,6 +33,13 @@ class UserDataTable extends StatelessWidget {
     if (clean == 'NONE') return 'Pendiente';
     return _scopeMap.entries
         .firstWhere((e) => e.value == clean, orElse: () => MapEntry(scope, scope))
+        .key;
+  }
+
+  // Helper para convertir el rol técnico (BD) a nombre amigable
+  String _getFriendlyRole(String role) {
+    return _roleMap.entries
+        .firstWhere((e) => e.value == role, orElse: () => MapEntry(role, role))
         .key;
   }
 
@@ -81,34 +93,27 @@ class UserDataTable extends StatelessWidget {
     );
   }
 
-  DataRow _buildDataRow(User user) {
+DataRow _buildDataRow(User user) {
     final isPending = user.scope.toUpperCase() == 'NONE';
     return DataRow(
       cells: [
         DataCell(Transform.scale(
           scale: 0.7,
-          child: Switch(
-            value: user.isActive,
-            activeColor: Colors.green,
-            onChanged: (v) => onToggleStatus(user.id, v),
-          ),
+          child: Switch(value: user.isActive, activeColor: Colors.green, onChanged: (v) => onToggleStatus(user.id, v)),
         )),
         DataCell(_userCell(user.name, user.isActive, isPending)),
         DataCell(_buildDropdown(
-          current: user.role.first,
-          items: ['admin', 'technician'],
+          current: _getFriendlyRole(user.role.first), // Convertimos técnico a amigable
+          items: _roleMap.keys.toList(),
           isActive: user.isActive,
-          onChanged: (val) => onRoleChanged(user.id, [val!]),
+          onChanged: (val) => onRoleChanged(user.id, [_roleMap[val]!]), // Guardamos técnico
         )),
         DataCell(_buildDropdown(
           current: _getFriendlyScope(user.scope),
           items: _scopeMap.keys.toList(),
           isActive: user.isActive,
           isHighlight: isPending,
-          onChanged: (val) {
-            final backendValue = _scopeMap[val];
-            if (backendValue != null) onScopeChanged(user.id, backendValue);
-          },
+          onChanged: (val) => onScopeChanged(user.id, _scopeMap[val]!),
         )),
       ],
     );
