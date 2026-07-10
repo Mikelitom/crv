@@ -62,7 +62,7 @@ final vehicleSyncServiceProvider = Provider<VehicleSyncService>((ref) {
 
 // Notifier
 final vehicleInspectionProvider =
-    NotifierProvider<VehicleInspectionNotifier, VehicleInspectionState>(() {
+    NotifierProvider.autoDispose<VehicleInspectionNotifier, VehicleInspectionState>(() {
       return VehicleInspectionNotifier();
     });
 
@@ -74,3 +74,4 @@ final allPlatesProvider = FutureProvider<List<String>>((ref) async {
     (vehicles) => vehicles.map((v) => v.plate).toList(),
   );
 });
+

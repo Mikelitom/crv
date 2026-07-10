@@ -4,6 +4,7 @@ import 'package:crv_reprosisa/features/vehiculos/domain/entities/vehicle_entity.
 
 abstract class VehicleInspectionRepository {
   Future<Either<Failure, List<Vehicle>>> getActiveVehicles();
+  Future<Either<Failure, String>> updateVehicleReport(String reportId, Map<String, dynamic> data);
   Future<Either<Failure, String>> saveVehicleReport(
     Map<String, dynamic> reportData,
   );

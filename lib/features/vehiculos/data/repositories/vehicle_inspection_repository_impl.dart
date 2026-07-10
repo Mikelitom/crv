@@ -47,7 +47,16 @@ class VehicleInspectionRepositoryImpl implements VehicleInspectionRepository {
       }
     }
   }
-
+@override
+  Future<Either<Failure, String>> updateVehicleReport(String reportId, Map<String, dynamic> data) async {
+    try {
+      final result = await remoteDataSource.updateVehicleReport(reportId, data);
+      return Right(result);
+    } catch (e) {
+      // CORRECCIÓN: Pasamos el error directamente sin 'message:' y sin llaves
+      return Left(ServerFailure(e.toString()));
+    }
+  }
   @override
   Future<Either<Failure, Map<String, dynamic>>> getVehicleTemplate() async {
     try {

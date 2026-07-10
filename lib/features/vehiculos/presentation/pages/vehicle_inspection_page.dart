@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
@@ -12,27 +13,32 @@ import '../../../prensas_industriales/presentation/widgets/capture_method_select
 import '../../data/models/component_vehicle_model.dart';
 
 class VehicleInspectionPage extends ConsumerStatefulWidget {
-  // Definición del parámetro para evitar el error 'isReadOnly isn't defined'
   final bool isReadOnly;
+  final InspectionRowUI? itemToEdit;
 
-  const VehicleInspectionPage({super.key, this.isReadOnly = false});
+  const VehicleInspectionPage({
+    super.key, 
+    this.isReadOnly = false, 
+    this.itemToEdit,
+  });
 
   @override
   ConsumerState<VehicleInspectionPage> createState() =>
       _VehicleInspectionPageState();
 }
-
 class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
-  // Controlador para el campo de Notas
-  late TextEditingController _notesController;
+  final TextEditingController _notesController = TextEditingController();
 
-  @override
+@override
   void initState() {
     super.initState();
-    final state = ref.read(vehicleInspectionProvider);
-    _notesController = TextEditingController(text: state.generalNotes);
+    if (widget.itemToEdit != null) {
+      Future.microtask(() {
+        ref.read(vehicleInspectionProvider.notifier)
+           .loadReportDetail(widget.itemToEdit!.versionId);
+      });
+    }
   }
-
   @override
   void dispose() {
     _notesController.dispose();
@@ -74,43 +80,62 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
     );
   }
 
-  Future<void> _finalizar() async {
+Future<void> _finalizar() async {
+    // Determinamos si estamos editando para mostrar un mensaje más preciso
+    final bool esEdicion = widget.itemToEdit != null;
+    
+    // Llamamos al método que ya configuramos en el Notifier
     final resultId = await ref
         .read(vehicleInspectionProvider.notifier)
         .finalizarInspeccion();
-    if (resultId != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("¡Inspección guardada con éxito!"),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Error al guardar el reporte"),
-          backgroundColor: Colors.red,
-        ),
-      );
+
+    if (mounted) {
+      if (resultId != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              esEdicion 
+                  ? "¡Inspección actualizada con éxito!" 
+                  : "¡Inspección guardada con éxito!"
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              esEdicion 
+                  ? "Error al actualizar el reporte" 
+                  : "Error al guardar el reporte"
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
-
-  @override
+@override
   Widget build(BuildContext context) {
     final state = ref.watch(vehicleInspectionProvider);
     final notifier = ref.read(vehicleInspectionProvider.notifier);
 
+    // Sincroniza el controlador cuando los datos llegan de la API (modo edición)
+    ref.listen(vehicleInspectionProvider.select((s) => s.generalNotes), (prev, next) {
+      if (next != null && _notesController.text != next) {
+        _notesController.text = next;
+      }
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await ref.read(vehicleSyncServiceProvider).syncPendingReports();
         },
         child: const Icon(Icons.sync),
       ),
-
       body: state.isLoading
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFFC62828)),
@@ -120,7 +145,7 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
               child: Column(
                 children: [
                   CustomHeader(
-                    title: "Inspección de Unidades",
+                    title: widget.itemToEdit != null ? "Editar Inspección" : "Inspección de Unidades",
                     actionIcon: Icons.arrow_back_ios_new_rounded,
                     onActionTap: () => Navigator.pop(context),
                   ),
@@ -136,55 +161,45 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                         ? const SizedBox(
                             height: 300,
                             child: Center(
-                              child: Icon(
-                                Icons.qr_code_scanner,
-                                size: 80,
-                                color: Colors.grey,
-                              ),
+                              child: Icon(Icons.qr_code_scanner, size: 80, color: Colors.grey),
                             ),
                           )
                         : Column(
+                            key: const ValueKey('form_column'),
                             children: [
                               const GeneralVehicleInfo(),
                               const SizedBox(height: 24),
+                              
                               ...state.templateSections.map((section) {
                                 final List<ComponentVehicleModel> sectionItems =
                                     (section['components'] as List).map((c) {
-                                      final existing = state.items.where(
-                                        (i) => i.id == c['id'],
-                                      );
-                                      if (existing.isNotEmpty) {
-                                        return existing.first;
-                                      } else {
-                                        return ComponentVehicleModel(
-                                          id: c['id'],
-                                          description: c['name'],
-                                        );
-                                      }
+                                      // Buscamos en state.items (donde vive la data cargada de la API)
+                                      final index = state.items.indexWhere((i) => i.id == c['id']);
+                                      return index != -1 
+                                          ? state.items[index] 
+                                          : ComponentVehicleModel(id: c['id'], description: c['name']);
                                     }).toList();
+                                
                                 return VehicleInspectionSection(
                                   title: section['name'],
                                   items: sectionItems,
                                 );
                               }).toList(),
+                              
                               const VehicleServiceRequired(),
-
-                              // CAMPO DE NOTAS AGREGADO AQUÍ
                               const SizedBox(height: 24),
+                              
                               TextField(
                                 controller: _notesController,
                                 maxLines: 4,
                                 decoration: InputDecoration(
                                   labelText: "NOTAS:",
                                   alignLabelWithHint: true,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                   filled: true,
                                   fillColor: Colors.white,
                                 ),
-                                onChanged: (value) =>
-                                    notifier.setGeneralNotes(value),
+                                onChanged: (value) => notifier.setGeneralNotes(value),
                               ),
                             ],
                           ),
@@ -201,15 +216,14 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                   // En tu método build(), donde defines los botones:
-Expanded(
-  child: _actionBtn(
-    "FINALIZAR",
-    const Color(0xFFC62828),
-    Icons.check_circle,
-    _showStatusDialog, // <--- Cambio aquí: Llama al diálogo
-  ),
-),
+                      Expanded(
+                        child: _actionBtn(
+                          "FINALIZAR",
+                          const Color(0xFFC62828),
+                          Icons.check_circle,
+                          _showStatusDialog,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 50),

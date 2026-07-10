@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:crv_reprosisa/core/utils/loading_overlay.dart';
-import 'package:crv_reprosisa/features/assets/presentation/pages/pdf_viewer_page.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/domain/entities/banda_template.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,8 +7,8 @@ import 'package:printing/printing.dart';
 import '../../../bandas_transportadoras/domain/entities/roller.dart';
 import 'package:pdf/pdf.dart';
 import '../../../../core/utils/imege_downloader.dart';
-import 'package:http/http.dart' as http; // Asegúrate de tener esta dependencia
 import '../models/inspector_row_ui.dart';
+
 import '../provider/inspection_providers.dart';
 import 'package:crv_reprosisa/core/config/dio_client.dart';
 import 'package:crv_reprosisa/core/utils/pdf_report_manager.dart';
@@ -210,21 +209,29 @@ Future<void> _viewReport(InspectionRowUI item) async {
     }
   }
 
+Future<void> _editReport(InspectionRowUI item) async {
+    // Cambiamos isReadOnly a false porque es edición
+    _navigateToForm(item, isReadOnly: false);
+  }
+
+// En TableInspector.dart -> _navigateToForm
   void _navigateToForm(InspectionRowUI item, {required bool isReadOnly}) {
     Widget page;
     final String type = item.reportType.toUpperCase();
+    
     if (type.contains('PRESS')) {
-      page = PrensaInspectionPage(isReadOnly: isReadOnly);
+      page = PrensaInspectionPage(isReadOnly: isReadOnly, itemToEdit: item);
     } else if (type.contains('VEHICLE')) {
-      page = VehicleInspectionPage(isReadOnly: isReadOnly);
+      // ESTO ES LO QUE YA TIENES Y ESTÁ BIEN.
+      page = VehicleInspectionPage(
+        isReadOnly: isReadOnly, 
+        itemToEdit: item,
+      );
     } else {
-      page = BandaInspectionPage(isReadOnly: isReadOnly);
+      page = BandaInspectionPage(isReadOnly: isReadOnly, itemToEdit: item);
     }
+    
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-  }
-
-  Future<void> _editReport(InspectionRowUI item) async {
-    _navigateToForm(item, isReadOnly: false);
   }
 
   @override
