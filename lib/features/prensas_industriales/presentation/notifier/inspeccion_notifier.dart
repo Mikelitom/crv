@@ -1,9 +1,20 @@
+import 'package:collection/collection.dart'; // NECESARIO para firstWhereOrNull
+import 'package:crv_reprosisa/core/config/dio_client.dart';
+import 'package:crv_reprosisa/core/utils/imege_downloader.dart';
+import 'package:crv_reprosisa/features/assets/presentation/providers/press_report_detail_provider.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/data/models/component_model.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/data/models/press_model.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/domain/entities/component_item.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../provider/inspeccion_state.dart';
 import '../provider/inspeccion_providers.dart';
 import '../../domain/entities/loan_area.dart';
 
 class InspeccionNotifier extends Notifier<InspeccionState> {
+  String? _editingVersionId;
+  bool get isEditing => _editingVersionId != null;
+
   @override
   InspeccionState build() {
     Future.microtask(() => loadLoanAreas());
@@ -11,13 +22,147 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
   }
 
   void reset() {
+    _editingVersionId = null; // Limpiamos la variable al hacer reset
     state = InspeccionState(
-      inspectionDate: DateTime.now(), 
-      loanAreas: state.loanAreas
+      inspectionDate: DateTime.now(),
+      loanAreas: state.loanAreas,
     );
   }
+
   void updateState(String status) {
     state = state.copyWith(state: status);
+  }
+
+  Future<void> loadReportDetail(String versionId) async {
+    reset();
+    _editingVersionId = versionId;
+    state = state.copyWith(isLoading: true, editingVersionId: versionId);
+
+    // 1. Aseguramos que el template esté cargado antes de hacer el match
+    if (state.templateItems.isEmpty) {
+      final repo = ref.read(inspeccionRepositoryProvider);
+      final result = await repo.getInspectionTemplate();
+      result.fold(
+        (f) => null,
+        (items) => state = state.copyWith(templateItems: items),
+      );
+    }
+
+    // 2. Traer el detalle del reporte
+    await ref.read(pressReportDetailProvider.notifier).fetchDetail(versionId);
+    final detailState = ref.read(pressReportDetailProvider);
+
+    if (detailState.data != null) {
+      final data = detailState.data!;
+      final List<PrensaComponentItem> updatedItems = [];
+
+      if (data.press != null) {
+        state = state.copyWith(selectedPress: PressModel.fromJson(data.press));
+      }
+
+      // 3. Match de componentes
+      for (var item in state.templateItems.cast<PrensaComponentItem>()) {
+        final answer = data.answers.firstWhereOrNull(
+          (a) =>
+              a.componentName.toString().trim().toLowerCase() ==
+              item.name.toString().trim().toLowerCase(),
+        );
+
+        if (answer != null) {
+          // Descarga de imágenes si existen
+          List<EvidenceFile> evidences = [];
+          if (answer.evidencePaths != null) {
+            for (var path in answer.evidencePaths) {
+              final bytes = await ImageDownloader.download(
+                ref.read(dioProvider),
+                path,
+              );
+              if (bytes != null) {
+                evidences.add(
+                  EvidenceFile(
+                    bytes: bytes,
+                    type: 'image/jpeg',
+                    mimeType: 'image/jpeg',
+                    path: path,
+                  ),
+                );
+              }
+            }
+          }
+
+          // Rellenamos los datos del componente con el copyWith
+          updatedItems.add(
+            item.copyWith(
+              status: answer.status.toUpperCase(),
+              observation: answer.observation ?? "",
+              quantity: answer.quantity,
+              evidenceBefore: evidences,
+            ),
+          );
+        } else {
+          updatedItems.add(item);
+        }
+      }
+
+      // 4. Actualizar estado final
+      state = state.copyWith(
+        isLoading: false,
+        templateItems: updatedItems,
+        area: data.report['area'] ?? "",
+        solicitantsName: data.responsibleName ?? "",
+        observations: data.report['observation'] ?? "",
+        state: data.report['state'] ?? "IN_PROGRESS",
+      );
+    } else {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<String?> finalizarInspeccion() async {
+    if (state.selectedPress == null) return null;
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final List<Map<String, dynamic>> answers = [];
+      for (var item in state.templateItems.cast<PrensaComponentItem>().where(
+        (i) => i.status.isNotEmpty,
+      )) {
+        answers.add(item.toAnswerJson([]));
+      }
+
+      final reportRequest = {
+        "press_id": state.selectedPress!.id,
+        "inspection_date": DateTime.now().toIso8601String(),
+        "area": state.area,
+        "state": state.state,
+        "folio": "F-${DateTime.now().millisecondsSinceEpoch}",
+        "answers": answers,
+      };
+
+      if (isEditing) {
+        final updateUseCase = ref.read(updatePressReportProvider);
+        final result = await updateUseCase.call(
+          _editingVersionId!,
+          reportRequest,
+        );
+        return result.fold((f) => null, (id) {
+          reset();
+          return id;
+        });
+      } else {
+        final createUseCase = ref.read(createPressReportProvider);
+        final result = await createUseCase.call(reportRequest);
+        return result.fold((f) => null, (id) {
+          reset();
+          return id;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error: $e");
+      return null;
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   Future<void> onSerieSelected(String serie) async {
@@ -27,50 +172,52 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
     final getPressUseCase = ref.read(getPressBySerieProvider);
     final result = await getPressUseCase(serie);
 
-    await result.fold(
-      (f) async => state = state.copyWith(isLoading: false), 
-      (press) async {
-        state = state.copyWith(selectedPress: press);
+    await result.fold((f) async => state = state.copyWith(isLoading: false), (
+      press,
+    ) async {
+      state = state.copyWith(selectedPress: press);
 
-        // 2. LLAMADA AL USE CASE PARA OBTENER EL ÚLTIMO ESTADO (AHORA DEVUELVE MAP)
-        final getStatusUseCase = ref.read(getLatestLoanStatusUseCaseProvider);
-        final statusResult = await getStatusUseCase(press.id);
+      // 2. LLAMADA AL USE CASE PARA OBTENER EL ÚLTIMO ESTADO (AHORA DEVUELVE MAP)
+      final getStatusUseCase = ref.read(getLatestLoanStatusUseCaseProvider);
+      final statusResult = await getStatusUseCase(press.id);
 
-        statusResult.fold(
-          (f) => state = state.copyWith(status: 'UNKNOWN', isLoading: false),
-          (loanData) {
-            // Extraemos el status para el badge visual
-            final String currentStatus = loanData['status'] ?? 'AVAILABLE';
-            
-            // Lógica de autocompletado de área si la prensa está prestada (LOANED)
-            LoanArea? autoSelectedArea;
-            if (currentStatus == 'LOANED') {
-              final String? areaId = loanData['area_id'];
-              try {
-                // Buscamos en la lista de áreas cargadas la que coincida con el ID
-                autoSelectedArea = state.loanAreas.firstWhere((a) => a.id == areaId);
-              } catch (_) {
-                autoSelectedArea = null;
-              }
+      statusResult.fold(
+        (f) => state = state.copyWith(status: 'UNKNOWN', isLoading: false),
+        (loanData) {
+          // Extraemos el status para el badge visual
+          final String currentStatus = loanData['status'] ?? 'AVAILABLE';
+
+          // Lógica de autocompletado de área si la prensa está prestada (LOANED)
+          LoanArea? autoSelectedArea;
+          if (currentStatus == 'LOANED') {
+            final String? areaId = loanData['area_id'];
+            try {
+              // Buscamos en la lista de áreas cargadas la que coincida con el ID
+              autoSelectedArea = state.loanAreas.firstWhere(
+                (a) => a.id == areaId,
+              );
+            } catch (_) {
+              autoSelectedArea = null;
             }
+          }
 
-            state = state.copyWith(
-              status: currentStatus,
-              selectedLoanArea: autoSelectedArea, // Se asigna automáticamente si se encontró
-              isLoading: false,
-            );
-          },
-        );
-      }
-    );
+          state = state.copyWith(
+            status: currentStatus,
+            selectedLoanArea:
+                autoSelectedArea, // Se asigna automáticamente si se encontró
+            isLoading: false,
+          );
+        },
+      );
+    });
   }
 
   void updateSolicitantsName(String name) =>
       state = state.copyWith(solicitantsName: name);
-      
+
   void updateObservations(String obs) =>
       state = state.copyWith(observations: obs);
-      
+
   void updateArea(String area) => state = state.copyWith(area: area);
 
   void onSerieChanged(String serie) {

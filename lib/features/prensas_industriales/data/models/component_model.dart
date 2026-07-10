@@ -1,4 +1,4 @@
-import '../../domain/entities/component_item.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/domain/entities/component_item.dart';
 
 class PrensaComponentItem extends ComponentItem {
   PrensaComponentItem({
@@ -8,6 +8,7 @@ class PrensaComponentItem extends ComponentItem {
     super.quantity,
     super.status,
     super.observation,
+    // Aseguramos que el constructor acepte estos parámetros nombrados
     super.evidenceBefore,
     super.evidenceAfter,
   });
@@ -17,9 +18,29 @@ class PrensaComponentItem extends ComponentItem {
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       measureUnit: json['measure_unit'] ?? 'PZA',
-      quantity: 0,
-      status: '', 
-      observation: '',
+      quantity: json['quantity'] ?? 0,
+      status: json['status'] ?? '', 
+      observation: json['observation'] ?? '',
+    );
+  }
+
+  @override
+  PrensaComponentItem copyWith({
+    int? quantity,
+    String? status,
+    String? observation,
+    List<EvidenceFile>? evidenceBefore, // Añadido aquí
+    List<EvidenceFile>? evidenceAfter,  // Añadido aquí
+  }) {
+    return PrensaComponentItem(
+      id: this.id,
+      name: this.name,
+      measureUnit: this.measureUnit,
+      quantity: quantity ?? this.quantity,
+      status: status ?? this.status,
+      observation: observation ?? this.observation,
+      evidenceBefore: evidenceBefore ?? this.evidenceBefore,
+      evidenceAfter: evidenceAfter ?? this.evidenceAfter,
     );
   }
 
@@ -27,9 +48,9 @@ class PrensaComponentItem extends ComponentItem {
     return {
       "component_id": id,
       "quantity": quantity ?? 0,
-      "status": status, // "good", "bad", "not_applicable"
+      "status": status, 
       "observation": observation,
-      "evidences": uploadedEvidences, // Aquí pasamos los DTOs ya subidos
+      "evidences": uploadedEvidences, 
     };
   }
 }

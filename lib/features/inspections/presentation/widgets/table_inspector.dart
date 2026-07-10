@@ -8,7 +8,6 @@ import '../../../bandas_transportadoras/domain/entities/roller.dart';
 import 'package:pdf/pdf.dart';
 import '../../../../core/utils/imege_downloader.dart';
 import '../models/inspector_row_ui.dart';
-
 import '../provider/inspection_providers.dart';
 import 'package:crv_reprosisa/core/config/dio_client.dart';
 import 'package:crv_reprosisa/core/utils/pdf_report_manager.dart';
@@ -214,7 +213,6 @@ Future<void> _editReport(InspectionRowUI item) async {
     _navigateToForm(item, isReadOnly: false);
   }
 
-// En TableInspector.dart -> _navigateToForm
   void _navigateToForm(InspectionRowUI item, {required bool isReadOnly}) {
     Widget page;
     final String type = item.reportType.toUpperCase();

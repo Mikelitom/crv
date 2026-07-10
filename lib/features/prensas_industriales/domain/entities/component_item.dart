@@ -2,10 +2,16 @@ import 'dart:typed_data';
 
 class EvidenceFile {
   final Uint8List bytes;
-  final String type; // 'image' o 'video'
+  final String type;
   final String mimeType;
+  final String? path; // Agregamos path para la edición
 
-  EvidenceFile({required this.bytes, required this.type, required this.mimeType});
+  EvidenceFile({
+    required this.bytes, 
+    required this.type, 
+    required this.mimeType,
+    this.path,
+  });
 }
 
 class ComponentItem {

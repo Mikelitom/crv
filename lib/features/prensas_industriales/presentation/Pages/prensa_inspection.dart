@@ -44,19 +44,20 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
     "b1c263cd-5882-4153-b48a-04859e79f2ed",
     "7c0bcebc-ce53-4a1e-8cf1-1b83e6782f53",
   };
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.listenManual(inspeccionProvider, (previous, next) {
-        if (previous?.selectedPress?.id != next.selectedPress?.id) {
-          _fetchTemplate();
-        }
-      });
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (widget.itemToEdit != null) {
+      // 1. Cargar el detalle (esto ya rellena el estado del notifier)
+      ref.read(inspeccionProvider.notifier).loadReportDetail(widget.itemToEdit!.versionId);
+    } else {
+      // 2. Solo si es nuevo, cargar el template vacío
+      ref.read(inspeccionProvider.notifier).reset();
       _fetchTemplate();
-    });
-  }
+    }
+  });
+}
 
   Future<void> _fetchTemplate() async {
     setState(() => isLoading = true);
@@ -224,7 +225,7 @@ Future<void> _showStatusDialog() async {
     await _guardarInspeccion();
   }
 }
-  Future<void> _guardarInspeccion() async {
+Future<void> _guardarInspeccion() async {
     final state = ref.read(inspeccionProvider);
     final notifier = ref.read(inspeccionProvider.notifier);
     final evidenceService = ref.read(evidenceServiceProvider);
@@ -263,6 +264,17 @@ Future<void> _showStatusDialog() async {
         ];
 
         for (var evFile in allEvidenceFiles) {
+          // Si la imagen ya tiene un path (viene del servidor), no la subimos de nuevo
+          if (evFile.path != null && evFile.path!.isNotEmpty) {
+            evidenceList.add({
+              "file_path": evFile.path!,
+              "file_type": evFile.type,
+              "mime_type": evFile.mimeType,
+              "file_size": "0",
+            });
+            continue;
+          }
+
           final tempDir = await getTemporaryDirectory();
           final file = File(
             '${tempDir.path}/img_${DateTime.now().microsecondsSinceEpoch}.jpg',
@@ -315,34 +327,44 @@ Future<void> _showStatusDialog() async {
             : null
       };
 
-      final result = await ref
-          .read(createPressReportProvider)
-          .call(reportRequest);
+      // LÓGICA DE EDICIÓN O CREACIÓN
+      if (notifier.isEditing) {
+        debugPrint("Actualizando reporte: ${state.editingVersionId}");
+        final updateUseCase = ref.read(updatePressReportProvider);
+        final result = await updateUseCase.call(state.editingVersionId!, reportRequest);
 
-      result.fold(
-        (f) => _showSnack("Error: ${f.message}", Colors.red),
-        (r) {
-          String successMessage = "¡Inspección guardada con éxito!";
+        result.fold(
+          (f) => _showSnack("Error al actualizar: ${f.message}", Colors.red),
+          (r) {
+            _showSnack("¡Inspección actualizada con éxito!", Colors.green);
+            notifier.reset();
+            Navigator.pop(context);
+          },
+        );
+      } else {
+        debugPrint("Creando reporte nuevo");
+        final createUseCase = ref.read(createPressReportProvider);
+        final result = await createUseCase.call(reportRequest);
 
-          if (currentStatus == 'LOANED') {
-            successMessage = "¡Devolución exitosa!";
-          } else if (currentStatus == 'AVAILABLE' && hasLoanData) {
-            successMessage = "¡Préstamo exitoso!";
-          }
-
-          _showSnack(successMessage, Colors.green);
-
-          notifier.reset();
-          Navigator.pop(context);
-        },
-      );
+        result.fold(
+          (f) => _showSnack("Error: ${f.message}", Colors.red),
+          (r) {
+            String successMessage = "¡Inspección guardada con éxito!";
+            if (currentStatus == 'LOANED') successMessage = "¡Devolución exitosa!";
+            else if (currentStatus == 'AVAILABLE' && hasLoanData) successMessage = "¡Préstamo exitoso!";
+            
+            _showSnack(successMessage, Colors.green);
+            notifier.reset();
+            Navigator.pop(context);
+          },
+        );
+      }
     } catch (e) {
       _showSnack("Error inesperado al guardar", Colors.red);
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
-
   void _showSnack(String m, Color c) =>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -351,12 +373,18 @@ Future<void> _showStatusDialog() async {
           behavior: SnackBarBehavior.floating,
         ),
       );
-
-  @override
+@override
   Widget build(BuildContext context) {
+    // 1. Escuchamos al provider para obtener el estado real
+    final state = ref.watch(inspeccionProvider);
+    
+    // 2. Usamos los items que vienen del estado del notifier
+    final itemsToShow = state.templateItems;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: isLoading
+      // 3. Usamos state.isLoading del Notifier para controlar el loader
+      body: state.isLoading
           ? const Center(
               child: CircularProgressIndicator(
                 color: Color(0xFFC62828),
@@ -367,7 +395,9 @@ Future<void> _showStatusDialog() async {
               child: Column(
                 children: [
                   CustomHeader(
-                    title: "Inspección de Prensas",
+                    title: widget.itemToEdit != null 
+                        ? "Editar Inspección de Prensa" 
+                        : "Inspección de Prensas",
                     actionIcon: Icons.arrow_back_ios_new_rounded,
                     onActionTap: () => Navigator.pop(context),
                   ),
@@ -395,8 +425,9 @@ Future<void> _showStatusDialog() async {
                             children: [
                               const InformationGeneralEquipo(),
                               const SizedBox(height: 32),
+                              // 4. PASAMOS LA LISTA DEL ESTADO AQUÍ
                               PrensaInspectionTable(
-                                items: templateItems,
+                                items: itemsToShow, 
                               ),
                               const SizedBox(height: 32),
                               const LoanAndInspectorSection(),
@@ -415,14 +446,14 @@ Future<void> _showStatusDialog() async {
                         ),
                       ),
                       const SizedBox(width: 16),
-                    Expanded(
-  child: _actionBtn(
-    "FINALIZAR",
-    const Color(0xFFC62828),
-    Icons.check_circle,
-    _showStatusDialog, // <--- LLAMA AL DIÁLOGO, NO A _finalizar DIRECTO
-  ),
-),
+                      Expanded(
+                        child: _actionBtn(
+                          "FINALIZAR",
+                          const Color(0xFFC62828),
+                          Icons.check_circle,
+                          _showStatusDialog,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 60),
@@ -431,7 +462,6 @@ Future<void> _showStatusDialog() async {
             ),
     );
   }
-
   Widget _actionBtn(
     String l,
     Color c,
