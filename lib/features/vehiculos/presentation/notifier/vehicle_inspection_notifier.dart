@@ -5,6 +5,7 @@ import 'package:crv_reprosisa/core/utils/imege_downloader.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_report_detail.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/provider/inspection_providers.dart'
     hide getVehicleReportDetailUseCaseProvider;
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import '../provider/vehicle_inspection_provider.dart';
@@ -13,7 +14,6 @@ import '../../data/models/component_vehicle_model.dart';
 import '../../../../features/evidence/presentation/providers/evidence_service_provider.dart';
 
 class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
-  String? _editingVersionId;
   @override
   VehicleInspectionState build() {
     Future.microtask(() {
@@ -24,19 +24,26 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
   }
 
   void updateReportState(String newState) {
-    state = state.copyWith(state: newState);
+    state = state.copyWith(reportState: newState);
   }
 
   // ... dentro de VehicleInspectionNotifier
   Future<void> loadReportDetail(String versionId) async {
     // LIMPIEZA: Aseguramos estado limpio antes de cargar
     reset();
+    
+    state = state.copyWith(
+      editingVersionId: versionId,
+      isLoading: true,
+    );
 
-    _editingVersionId = versionId;
-    await loadTemplate();
-    if (state.activeVehicles.isEmpty) await loadVehicles();
+    if (state.templateSections.isEmpty) {
+      await loadTemplate();
+    }
 
-    state = state.copyWith(isLoading: true);
+    if (state.activeVehicles.isEmpty) {
+      await loadVehicles();
+    }
 
     final useCase = ref.read(getVehicleReportDetailUseCaseProvider);
     final result = await useCase.call(versionId);
@@ -95,10 +102,22 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
         }
       }
 
+      final vehicle = state.activeVehicles.firstWhereOrNull(
+        (v) => v.id == data.vehicle.vehicleId,
+      );
+
+      final report = data.report;
+
       state = state.copyWith(
+        editingVersionId: report["report_id"],
         isLoading: false,
+        selectedVehicle: vehicle,
+        mileage: (report["mileage"] ?? "").toString(),
+        requiresService: report["requires_service"] ?? false,
+        reportState: report["state"] ?? "IN_PROGRESS",
+        generalNotes: report["general_notes"] ?? "",
+        serviceObservations: report["observation"] ?? "",
         items: updatedItems,
-        // ... resto de campos (mileage, etc)
       );
     });
   }
@@ -215,7 +234,7 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
 
       final reportRequest = {
         "vehicle_id": state.selectedVehicle!.id,
-        "state": state.state,
+        "state": state.reportState,
         "inspection_date": DateTime.now().toIso8601String(),
         "location": "Hermosillo",
         "mileage": int.tryParse(state.mileage) ?? 0,
@@ -226,22 +245,42 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
         "answers": answers,
       };
 
-      if (_editingVersionId != null) {
-        // --- CASO 1: EDICIÓN (PUT) ---
+      debugPrint("editingReportId = ${state.editingVersionId}");
+
+      if (state.isEditing) {
+        debugPrint("UPDATE");
+
         final updateUseCase = ref.read(updateVehicleReportUseCaseProvider);
+
         final result = await updateUseCase.call(
-          _editingVersionId!,
+          state.editingVersionId!,
           reportRequest,
         );
-        return result.fold((f) => null, (id) => id);
-      } else {
-        // --- CASO 2: CREACIÓN NORMAL (POST) ---
-        final createUseCase = ref.read(createVehicleReportUseCaseProvider);
-        final result = await createUseCase.call(reportRequest);
-        return result.fold((f) => null, (id) => id);
+
+        final id = result.fold((f) => null, (id) => id);
+        
+        if (id != null) {
+          reset();
+        }
+        
+        return id;
       }
+
+      debugPrint("CREATE");
+
+      final createUseCase = ref.read(createVehicleReportUseCaseProvider);
+
+      final result = await createUseCase.call(reportRequest);
+
+      final id = result.fold((f) => null, (id) => id);
+      
+      if (id != null) {
+        reset();
+      }
+      
+      return id;
     } catch (e) {
-      print("Error al finalizar: $e");
+      debugPrint("Error al finalizar: $e");
       return null;
     } finally {
       state = state.copyWith(isLoading: false);
@@ -249,7 +288,6 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
   }
 
   void reset() {
-    _editingVersionId = null; // Limpiar ID al resetear
     state = VehicleInspectionState(
       inspectionDate: DateTime.now(),
       activeVehicles: state.activeVehicles,

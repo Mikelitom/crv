@@ -62,7 +62,7 @@ final vehicleSyncServiceProvider = Provider<VehicleSyncService>((ref) {
 
 // Notifier
 final vehicleInspectionProvider =
-    NotifierProvider<VehicleInspectionNotifier, VehicleInspectionState>(() {
+    NotifierProvider.autoDispose<VehicleInspectionNotifier, VehicleInspectionState>(() {
       return VehicleInspectionNotifier();
     });
 
