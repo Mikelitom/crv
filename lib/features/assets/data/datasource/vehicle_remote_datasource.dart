@@ -6,8 +6,10 @@ import '../models/vehicle_report_detail_model.dart';
 abstract class VehicleRemoteDatasource {
   Future<VehicleModel> createVehicle(CreateVehicleParams params);
   Future<VehicleModel> updateVehicle(String id, CreateVehicleParams params);
+  Future<void> updateVehicleImage({required String vehicleId, required String imagePath});
   Future<List<VehicleModel>> getAllVehicle();
   Future<void> activateVehicle(String id);
   Future<void> deactivateVehicle(String id);
   Future<List<VehicleHistoryModel>> getVehicleHistory(String vehicleId);
-  Future<VehicleReportDetailModel> getVehicleReportDetail(String versionId);  }
+  Future<VehicleReportDetailModel> getVehicleReportDetail(String versionId);
+}

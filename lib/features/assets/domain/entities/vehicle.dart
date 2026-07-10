@@ -16,7 +16,9 @@ class Vehicle {
   final String? phone;
   final DateTime? serviceDate;
   final DateTime? checkoutDate;
-
+  final String? imageUrl;
+  final String? imagePath;
+  
   Vehicle({
     required this.vehicleId,
     required this.plate,
@@ -35,5 +37,7 @@ class Vehicle {
     this.phone,
     this.serviceDate,
     this.checkoutDate,
+    this.imagePath,
+    this.imageUrl
   });
 }

@@ -966,24 +966,67 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "${v.brand} ${v.model} - ${v.plate}",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                "Km: ${v.mileage} | Última: 26/06/2026",
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
+  
+          // IMAGEN DEL VEHICULO
+          Container(
+            width: 150,
+            height: 80,
+            margin: const EdgeInsets.only(right: 20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.grey.shade100,
+            ),
+            child: v.imageUrl != null && v.imageUrl!.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      v.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) {
+                        return const Icon(
+                          Icons.directions_car,
+                          size: 40,
+                          color: Colors.grey,
+                        );
+                      },
+                    ),
+                  )
+                : const Icon(
+                    Icons.directions_car,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
           ),
+  
+  
+          // INFORMACION
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${v.brand} ${v.model} - ${v.plate}",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+  
+                const SizedBox(height: 5),
+  
+                Text(
+                  "Km: ${v.mileage} | Última: 26/06/2026",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+  
+  
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC62828),
@@ -995,16 +1038,18 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
             onPressed: () {
               showDialog(
                 context: context,
-                builder: (_) => CreateOrderDialog(vehicleId: v.vehicleId),
+                builder: (_) => CreateOrderDialog(
+                  vehicleId: v.vehicleId,
+                ),
               ).then((_) {
                 ref
                     .read(serviceListNotifierProvider.notifier)
                     .loadServices(v.vehicleId);
-
+  
                 ref
                     .read(pendingComponentNotifierProvider.notifier)
                     .loadPendingComponents(v.vehicleId);
-
+  
                 ref
                     .read(vehicleHistoryProvider.notifier)
                     .loadHistory(v.vehicleId);

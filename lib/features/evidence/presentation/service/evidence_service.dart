@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:crv_reprosisa/core/constants/storage_buckets.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:crv_reprosisa/features/evidence/domain/entities/upload_file_entity.dart';
 import 'package:crv_reprosisa/features/evidence/domain/usecases/upload_file_use_case.dart';
@@ -23,6 +24,7 @@ class EvidenceService {
       final size = await file.length();
 
       final entity = UploadFileEntity(
+        bucket: StorageBuckets.evidences,
         path: basePath,
         fileName: const Uuid().v4(),
         mimeType: mimeType,

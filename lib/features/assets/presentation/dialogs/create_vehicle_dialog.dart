@@ -84,6 +84,7 @@ class _CreateVehicleDialogState extends ConsumerState<CreateVehicleDialog> {
           unit: int.tryParse(unitController.text.trim()) ?? 0,
           year: int.tryParse(yearController.text.trim()) ?? 0,
           plate: licensePlateController.text.trim(),
+          image: _imageFile,
         );
         await ref.read(createVehicleProvider.notifier).create(vehicle);
       },

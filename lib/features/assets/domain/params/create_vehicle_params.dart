@@ -1,3 +1,5 @@
+import 'dart:io';
+
 class CreateVehicleParams {
   final String typeId;
   final String brand;
@@ -5,6 +7,7 @@ class CreateVehicleParams {
   final int unit;
   final int year;
   final String plate;
+  final File? image;
 
   CreateVehicleParams({
     required this.typeId,
@@ -13,5 +16,6 @@ class CreateVehicleParams {
     required this.unit,
     required this.year,
     required this.plate,
+    this.image,
   });
 }

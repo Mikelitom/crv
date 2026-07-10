@@ -56,23 +56,32 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
   }
 
   @override
+  Future<void> updateVehicleImage({
+    required String vehicleId,
+    required String imagePath,
+  }) async {
+    print("UPDATE IMAGE VEHICLE ID: '$vehicleId'");
+    print("UPDATE IMAGE PATH: '$imagePath'");
+
+    await dio.patch('/vehicles/$vehicleId', data: {'image_path': imagePath});
+  }
+
+  @override
   Future<List<VehicleModel>> getAllVehicle() async {
     final response = await dio.get("/asset/vehicles");
-  
+
     print('RESPUESTA RECIBIDA');
-  
+
     final List<dynamic> rawList = response.data;
-  
+
     return rawList.map((json) {
       try {
         print('ANTES FROMJSON');
-  
-        final model = VehicleModel.fromJson(
-          json as Map<String, dynamic>,
-        );
-  
+
+        final model = VehicleModel.fromJson(json as Map<String, dynamic>);
+
         print('DESPUES FROMJSON');
-  
+
         return model;
       } catch (e, stack) {
         print('ERROR FROMJSON: $e');
@@ -86,27 +95,32 @@ class VehicleRemoteDatasourceImpl implements VehicleRemoteDatasource {
   Future<void> activateVehicle(String id) async {
     await dio.patch("/vehicles/restore/$id");
   }
+
   @override
   Future<List<VehicleHistoryModel>> getVehicleHistory(String vehicleId) async {
-    final response = await dio.get("/asset/vehicle-history", queryParameters: {
-      "vehicle_id": vehicleId,
-    });
-    
+    final response = await dio.get(
+      "/asset/vehicle-history",
+      queryParameters: {"vehicle_id": vehicleId},
+    );
+
     final List<dynamic> rawList = response.data;
-    
+
     return rawList.map((json) {
       return VehicleHistoryModel.fromJson(json as Map<String, dynamic>);
     }).toList();
   }
- @override
-Future<VehicleReportDetailModel> getVehicleReportDetail(String versionId) async {
-  try {
-    final response = await dio.get('/asset/vehicle/$versionId');
-    return VehicleReportDetailModel.fromJson(response.data);
-  } catch (e) {
-    throw Exception("Error al obtener detalles por versión: $e");
+
+  @override
+  Future<VehicleReportDetailModel> getVehicleReportDetail(
+    String versionId,
+  ) async {
+    try {
+      final response = await dio.get('/asset/vehicle/$versionId');
+      return VehicleReportDetailModel.fromJson(response.data);
+    } catch (e) {
+      throw Exception("Error al obtener detalles por versión: $e");
+    }
   }
-}
 
   @override
   Future<void> deactivateVehicle(String id) async {

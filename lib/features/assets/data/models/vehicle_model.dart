@@ -19,11 +19,13 @@ class VehicleModel extends Vehicle {
     super.phone,
     super.serviceDate,
     super.checkoutDate,
+    super.imagePath,
+    super.imageUrl,
   });
 
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
     return VehicleModel(
-      vehicleId: _asString(json['vehicle_id']),
+      vehicleId: _asString(json['id'] ?? json['vehicle_id']),
       plate: _asString(json['plate']),
       brand: _asString(json['brand']),
       model: _asString(json['model']),
@@ -39,17 +41,17 @@ class VehicleModel extends Vehicle {
       serviceReason: json['service_reason'] != null
           ? _asString(json['service_reason'])
           : null,
-      phone: json['phone'] != null
-          ? _asString(json['phone'])
-          : null,
-  
+      phone: json['phone'] != null ? _asString(json['phone']) : null,
+
       serviceDate: json['service_date'] != null
           ? DateTime.parse(json['service_date'])
           : null,
-  
+
       checkoutDate: json['checkout_date'] != null
           ? DateTime.parse(json['checkout_date'])
           : null,
+      imageUrl: json['image_url'],
+      imagePath: json['image_path'],
     );
   }
 

@@ -21,7 +21,7 @@ class SupabaseStorageDatasource {
 
     try {
       await client.storage
-          .from("evidencias")
+          .from(file.bucket)
           .upload(
             fullPath,
             localFile,

@@ -17,6 +17,7 @@ class StorageRepositoryImpl extends StorageRepository {
     try {
       final result = await remote.uploadFile(
         UploadFileEntity(
+          bucket: file.bucket,
           path: file.path,
           fileName: file.fileName,
           mimeType: file.mimeType,

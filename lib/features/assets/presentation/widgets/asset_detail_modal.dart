@@ -24,6 +24,7 @@ class AssetDetailModal extends ConsumerWidget {
     if (item is Map) return item[key];
     try {
       if (key == 'vehicleId') return (item.vehicleId ?? '');
+      if (key == 'imageUrl') return (item.imageUrl ?? null);
       if (key == 'id') return (item.id ?? '');
       if (key == 'plate') return (item.plate ?? '-');
       if (key == 'serie') return (item.serie ?? '-');
@@ -163,24 +164,25 @@ class AssetDetailModal extends ConsumerWidget {
                               ? _val('vehicleId')
                               : _val('id');
 
-                              if (type == "cliente") {
-                                print("type: " + type);
-                                if (id != '-' && id.isNotEmpty) {
-                                  // Cargar datos y navegar a página de historial
-                                  await ref
-                                      .read(clientHistoryProvider.notifier)
-                                      .loadHistory(id);
+                          if (type == "cliente") {
+                            print("type: " + type);
+                            if (id != '-' && id.isNotEmpty) {
+                              // Cargar datos y navegar a página de historial
+                              await ref
+                                  .read(clientHistoryProvider.notifier)
+                                  .loadHistory(id);
 
-                                  if (context.mounted) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => ClientHistoryPage(clientId: id),
-                                      ),
-                                    );
-                                  }
-                                }
-                              } else if (type != "vehiculo") {
+                              if (context.mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        ClientHistoryPage(clientId: id),
+                                  ),
+                                );
+                              }
+                            }
+                          } else if (type != "vehiculo") {
                             print("type: " + type);
                             if (id != '-' && id.isNotEmpty) {
                               // Cargar datos y navegar a página de historial
@@ -192,8 +194,10 @@ class AssetDetailModal extends ConsumerWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-PressHistoryPage(pressId: id, title: title),
+                                    builder: (_) => PressHistoryPage(
+                                      pressId: id,
+                                      title: title,
+                                    ),
                                   ),
                                 );
                               }
@@ -299,6 +303,8 @@ PressHistoryPage(pressId: id, title: title),
   Widget _buildVehicleLayout(String state) {
     return Column(
       children: [
+        _buildVehicleImage(),
+  
         _buildFieldRow([
           _buildTile("SALIDA", _formatDate(_val('checkoutDate'))),
           _buildTile("RESPONSABLE", _val('responsible')),
@@ -311,7 +317,8 @@ PressHistoryPage(pressId: id, title: title),
       ],
     );
   }
-Widget _buildClientLayout() {
+
+  Widget _buildClientLayout() {
     final List<dynamic> mines = (_val('mines') as List<dynamic>?) ?? [];
 
     return Column(
@@ -347,9 +354,9 @@ Widget _buildClientLayout() {
               "No hay minas registradas",
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey, 
-                fontSize: 13, 
-                fontWeight: FontWeight.w600
+                color: Colors.grey,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -478,6 +485,52 @@ Widget _buildClientLayout() {
           .toList(),
     ),
   );
+
+  Widget _buildVehicleImage() {
+    final imageUrl = _val('imageUrl');
+  
+    return Container(
+      height: 180,
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.grey.shade100,
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: imageUrl != null && imageUrl.toString().isNotEmpty
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+  
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Icon(
+                      Icons.broken_image_outlined,
+                      size: 50,
+                      color: Colors.grey,
+                    ),
+                  );
+                },
+              ),
+            )
+          : const Center(
+              child: Icon(
+                Icons.directions_car_outlined,
+                size: 60,
+                color: Colors.grey,
+              ),
+            ),
+    );
+  }
 
   Widget _buildTile(String label, dynamic value) => Container(
     padding: const EdgeInsets.all(12),
