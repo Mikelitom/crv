@@ -89,10 +89,17 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final storedTokens = await tokenRepository.get();
 
+      print("==== TOKENS ====");
+      print(storedTokens?.accessToken);
+      print(storedTokens?.refreshToken);
+
       if (storedTokens == null) {
         return Left(ServerFailure('No refresh token stored'));
       }
 
+      print("Refreshing with:");
+      print(storedTokens.refreshToken);
+      
       final newTokens = await remote.refresh(storedTokens.refreshToken);
 
       await tokenRepository.save(newTokens);

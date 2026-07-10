@@ -70,9 +70,12 @@ class AuthInterceptor extends Interceptor {
   
         return handler.resolve(response);
   
-      } catch (e) {
+      } catch (e, st) {
+        print("REFRESH ERROR: $e");
+        print(st);
+      
         await ref.read(tokenRepositoryProvider).clear();
-  
+      
         return handler.reject(err);
       }
     }
