@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
@@ -18,7 +19,13 @@ import '../../../dashboard/presentation/widgets/header.dart';
 
 class PrensaInspectionPage extends ConsumerStatefulWidget {
   final bool isReadOnly;
-  const PrensaInspectionPage({super.key, this.isReadOnly = false});
+  final InspectionRowUI? itemToEdit; // <-- Cambiado a opcional
+
+  const PrensaInspectionPage({
+    super.key, 
+    this.isReadOnly = false, 
+    this.itemToEdit, // <-- Constructor corregido
+  });
 
   @override
   ConsumerState<PrensaInspectionPage> createState() =>

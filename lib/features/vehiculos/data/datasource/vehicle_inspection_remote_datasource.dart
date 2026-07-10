@@ -4,6 +4,10 @@ import 'package:crv_reprosisa/features/vehiculos/data/models/inspection_vehicle_
 abstract class VehicleInspectionRemoteDataSource {
   Future<List<VehicleModel>> getActiveVehicles();
   Future<Map<String, dynamic>> getVehicleTemplate();
+  Future<String> updateVehicleReport(
+    String reportId,
+    Map<String, dynamic> data,
+  );
   Future<String> saveVehicleReport(Map<String, dynamic> reportData);
 }
 
@@ -38,6 +42,23 @@ class VehicleInspectionRemoteDataSourceImpl
       return {};
     } catch (e) {
       rethrow;
+    }
+  }
+
+  @override
+  Future<String> updateVehicleReport(
+    String reportId,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await dio.put(
+      '/full-vehicle-reports/$reportId', // Tu endpoint de PUT
+      data: data,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return "Reporte actualizado con éxito"; // O el ID que retorne la API
+    } else {
+      throw Exception("Error al actualizar reporte");
     }
   }
 

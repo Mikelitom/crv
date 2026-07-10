@@ -1,3 +1,5 @@
+import 'package:crv_reprosisa/features/vehiculos/presentation/provider/vehicle_inspection_provider.dart';
+import 'package:crv_reprosisa/features/vehiculos/domain/usecases/update_vehicle_report_use_case.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/config/dio_client.dart';
 import '../../data/repositories/inspection_repository_impl.dart';
@@ -25,10 +27,15 @@ final getVehicleHistoryUseCaseProvider = Provider((ref) =>
 final getMyInspectionsUseCaseProvider = Provider((ref) => 
   GetMyInspectionsUseCase(ref.watch(inspectionRepositoryProvider)));
 
-// 🔥 NUEVO: Registro del proveedor para el UseCase de detalle del reporte
 final getVehicleReportDetailUseCaseProvider = Provider((ref) => 
   GetVehicleReportDetailUseCase(ref.watch(inspectionRepositoryProvider)));
 
 final inspectionProvider = NotifierProvider<InspectionNotifier, InspectionState>(() {
   return InspectionNotifier();
+});// En inspeccion_providers.dart
+final updateVehicleReportUseCaseProvider = Provider((ref) {
+  // Obtenemos el repositorio general
+  final repo = ref.read(vehicleRepositoryProvider);
+  
+  return UpdateVehicleReportUseCase(repo);
 });

@@ -46,7 +46,7 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
   }
 
   void _navigateToForm(int index) {
-    final pages = [const PrensaInspectionPage(), const VehicleInspectionPage(), const BandaInspectionPage()];
+    final pages = [const PrensaInspectionPage(),  VehicleInspectionPage(), const BandaInspectionPage()];
     Navigator.push(context, MaterialPageRoute(builder: (_) => pages[index]));
   }
 

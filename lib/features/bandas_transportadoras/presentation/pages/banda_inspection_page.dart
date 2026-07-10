@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
@@ -17,12 +18,17 @@ import '../../../../features/evidence/presentation/providers/evidence_service_pr
 
 class BandaInspectionPage extends ConsumerStatefulWidget {
   final bool isReadOnly;
-  const BandaInspectionPage({super.key, this.isReadOnly = false});
+  final InspectionRowUI? itemToEdit; // <-- Parámetro opcional para editar
+
+  const BandaInspectionPage({
+    super.key, 
+    this.isReadOnly = false, 
+    this.itemToEdit, // <-- Sin "required" para que funcione con inspecciones nuevas
+  });
 
   @override
   ConsumerState<BandaInspectionPage> createState() => _BandaInspectionPageState();
 }
-
 class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
   int _currentSectionIndex = 0;
   final bool _mostrarRodilleria = true;

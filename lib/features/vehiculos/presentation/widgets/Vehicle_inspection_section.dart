@@ -304,8 +304,11 @@ class _VehicleInspectionSectionState extends ConsumerState<VehicleInspectionSect
     ],
   );
 
-  Widget _mediaBox(List<EvidenceFile> files, VoidCallback onAdd, VoidCallback onDelete, double size) {
-    bool hasData = files.isNotEmpty;
+ Widget _mediaBox(List<EvidenceFile> files, VoidCallback onAdd, VoidCallback onDelete, double size) {
+    // Si la lista tiene elementos pero los bytes están vacíos, estamos en proceso de carga o hay error
+    bool hasData = files.isNotEmpty && files.first.bytes.isNotEmpty;
+    bool isLoading = files.isNotEmpty && files.first.bytes.isEmpty;
+
     return GestureDetector(
       onTap: hasData ? () => _showFullImage(files.first.bytes) : onAdd,
       child: Container(
@@ -314,15 +317,25 @@ class _VehicleInspectionSectionState extends ConsumerState<VehicleInspectionSect
           color: _kBgSoft, borderRadius: BorderRadius.circular(10), 
           border: Border.all(color: hasData ? _kRedAccent : _kBorder, width: 1.5)
         ),
-        child: hasData
-            ? Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.memory(files.first.bytes, fit: BoxFit.cover, width: size, height: size)),
-                  Positioned(top: -6, right: -6, child: GestureDetector(onTap: onDelete, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle), child: const Icon(Icons.close, size: 10, color: Colors.white)))),
-                ],
-              )
-            : Center(child: Icon(Icons.camera_alt_outlined, color: Colors.grey.shade400, size: 18)),
+        child: isLoading 
+            ? const Center(child: CircularProgressIndicator(strokeWidth: 2)) // INDICADOR DE CARGA
+            : hasData
+                ? Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8), 
+                        child: Image.memory(
+                          files.first.bytes, 
+                          fit: BoxFit.cover, 
+                          width: size, height: size,
+                          errorBuilder: (context, error, stack) => const Icon(Icons.broken_image, size: 20),
+                        )
+                      ),
+                      Positioned(top: -6, right: -6, child: GestureDetector(onTap: onDelete, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle), child: const Icon(Icons.close, size: 10, color: Colors.white)))),
+                    ],
+                  )
+                : Center(child: Icon(Icons.camera_alt_outlined, color: Colors.grey.shade400, size: 18)),
       ),
     );
   }

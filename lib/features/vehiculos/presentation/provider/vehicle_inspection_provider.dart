@@ -74,3 +74,4 @@ final allPlatesProvider = FutureProvider<List<String>>((ref) async {
     (vehicles) => vehicles.map((v) => v.plate).toList(),
   );
 });
+

@@ -1,4 +1,10 @@
 import 'dart:io';
+import 'package:collection/collection.dart'; // NECESARIO para firstWhereOrNull
+import 'package:crv_reprosisa/core/config/dio_client.dart';
+import 'package:crv_reprosisa/core/utils/imege_downloader.dart';
+import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_report_detail.dart';
+import 'package:crv_reprosisa/features/inspections/presentation/provider/inspection_providers.dart'
+    hide getVehicleReportDetailUseCaseProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import '../provider/vehicle_inspection_provider.dart';
@@ -7,6 +13,7 @@ import '../../data/models/component_vehicle_model.dart';
 import '../../../../features/evidence/presentation/providers/evidence_service_provider.dart';
 
 class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
+  String? _editingVersionId;
   @override
   VehicleInspectionState build() {
     Future.microtask(() {
@@ -15,9 +22,87 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
     });
     return VehicleInspectionState(inspectionDate: DateTime.now());
   }
-void updateReportState(String newState) {
+
+  void updateReportState(String newState) {
     state = state.copyWith(state: newState);
   }
+
+  // ... dentro de VehicleInspectionNotifier
+  Future<void> loadReportDetail(String versionId) async {
+    // LIMPIEZA: Aseguramos estado limpio antes de cargar
+    reset();
+
+    _editingVersionId = versionId;
+    await loadTemplate();
+    if (state.activeVehicles.isEmpty) await loadVehicles();
+
+    state = state.copyWith(isLoading: true);
+
+    final useCase = ref.read(getVehicleReportDetailUseCaseProvider);
+    final result = await useCase.call(versionId);
+
+    result.fold((failure) => state = state.copyWith(isLoading: false), (
+      data,
+    ) async {
+      // Hacemos async para descargar imágenes
+      final List<ComponentVehicleModel> updatedItems = [];
+
+      for (var item in state.items) {
+        final answer = data.answers.firstWhereOrNull(
+          (a) =>
+              a.componentName.toString().trim().toLowerCase() ==
+              item.description.trim().toLowerCase(),
+        );
+
+        if (answer != null) {
+          final option = state.templateOptions.firstWhere(
+            (o) =>
+                o['name'].toString().trim().toLowerCase() ==
+                answer.optionName.toString().trim().toLowerCase(),
+            orElse: () => {'id': null},
+          );
+
+          // DESCARGA DE IMÁGENES
+          List<EvidenceFile> evidences = [];
+          if (answer.evidencePaths != null) {
+            for (var path in answer.evidencePaths!) {
+              // Asumimos que tienes una utilidad de descarga
+              final bytes = await ImageDownloader.download(
+                ref.read(dioProvider),
+                path,
+              );
+              if (bytes != null) {
+                evidences.add(
+                  EvidenceFile(
+                    bytes: bytes,
+                    type: 'image/jpeg',
+                    mimeType: 'image/jpeg',
+                  ),
+                );
+              }
+            }
+          }
+
+          updatedItems.add(
+            item.copyWith(
+              selectedOptionId: option['id']?.toString(),
+              observations: answer.observation?.toString() ?? "",
+              evidenceBefore: evidences,
+            ),
+          );
+        } else {
+          updatedItems.add(item);
+        }
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        items: updatedItems,
+        // ... resto de campos (mileage, etc)
+      );
+    });
+  }
+
   Future<void> loadVehicles() async {
     final useCase = ref.read(getActiveVehiclesUseCaseProvider);
     final result = await useCase();
@@ -38,7 +123,7 @@ void updateReportState(String newState) {
   void setScanning(bool value) => state = state.copyWith(isScanning: value);
   void updateServiceObservations(String v) =>
       state = state.copyWith(serviceObservations: v);
-void setGeneralNotes(String v) => state = state.copyWith(generalNotes: v);
+  void setGeneralNotes(String v) => state = state.copyWith(generalNotes: v);
   // --- AUTOCOMPLETADO AL SELECCIONAR PLACA ---
   void onPlateSelected(String plate) {
     try {
@@ -83,27 +168,46 @@ void setGeneralNotes(String v) => state = state.copyWith(generalNotes: v);
 
     try {
       for (var item in state.items.where((i) => i.selectedOptionId != null)) {
-        final List<Map<String, String>> uploadedEvidences = [];
-        
+        final List<Map<String, dynamic>> uploadedEvidences = [];
         final allEvidences = [...item.evidenceBefore, ...item.evidenceAfter];
 
         for (var ev in allEvidences) {
-          final tempDir = await getTemporaryDirectory();
-          final file = File('${tempDir.path}/v_${DateTime.now().microsecondsSinceEpoch}.jpg');
-          await file.writeAsBytes(ev.bytes);
+          // CASO A: Imagen ya existente (la reutilizamos enviando su path)
+          if (ev.path != null && ev.path!.isNotEmpty) {
+            uploadedEvidences.add({
+              "file_path": ev.path!,
+              "file_type": ev.type,
+              "mime_type": ev.mimeType,
+              "file_size": "0",
+            });
+          }
+          // CASO B: Imagen nueva (la subimos al servidor)
+          else if (ev.bytes.isNotEmpty) {
+            final tempDir = await getTemporaryDirectory();
+            final file = File(
+              '${tempDir.path}/v_${DateTime.now().microsecondsSinceEpoch}.jpg',
+            );
+            await file.writeAsBytes(ev.bytes);
 
-          final uploadResult = await evidenceService.uploadEvidence(file: file, basePath: 'inspecciones/vehiculos');
-          uploadResult.fold((f) => null, (dto) => uploadedEvidences.add({
-            "file_path": dto.filePath,
-            "file_type": dto.fileType,
-            "mime_type": dto.mimeType,
-            "file_size": dto.fileSize.toString(),
-          }));
+            final uploadResult = await evidenceService.uploadEvidence(
+              file: file,
+              basePath: 'inspecciones/vehiculos',
+            );
+            uploadResult.fold(
+              (f) => null,
+              (dto) => uploadedEvidences.add({
+                "file_path": dto.filePath,
+                "file_type": dto.fileType,
+                "mime_type": dto.mimeType,
+                "file_size": dto.fileSize.toString(),
+              }),
+            );
+          }
         }
 
         answers.add({
           "component_id": item.id,
-          "option_id": item.selectedOptionId, // Según tu cURL
+          "option_id": item.selectedOptionId,
           "observation": item.observations,
           "evidences": uploadedEvidences,
         });
@@ -111,7 +215,7 @@ void setGeneralNotes(String v) => state = state.copyWith(generalNotes: v);
 
       final reportRequest = {
         "vehicle_id": state.selectedVehicle!.id,
-        "state": state.state, 
+        "state": state.state,
         "inspection_date": DateTime.now().toIso8601String(),
         "location": "Hermosillo",
         "mileage": int.tryParse(state.mileage) ?? 0,
@@ -122,13 +226,30 @@ void setGeneralNotes(String v) => state = state.copyWith(generalNotes: v);
         "answers": answers,
       };
 
-      final result = await ref.read(createVehicleReportUseCaseProvider).call(reportRequest);
-      return result.fold((f) => null, (id) => id);
-    } catch (e) { return null; }
-    finally { state = state.copyWith(isLoading: false); }
+      if (_editingVersionId != null) {
+        // --- CASO 1: EDICIÓN (PUT) ---
+        final updateUseCase = ref.read(updateVehicleReportUseCaseProvider);
+        final result = await updateUseCase.call(
+          _editingVersionId!,
+          reportRequest,
+        );
+        return result.fold((f) => null, (id) => id);
+      } else {
+        // --- CASO 2: CREACIÓN NORMAL (POST) ---
+        final createUseCase = ref.read(createVehicleReportUseCaseProvider);
+        final result = await createUseCase.call(reportRequest);
+        return result.fold((f) => null, (id) => id);
+      }
+    } catch (e) {
+      print("Error al finalizar: $e");
+      return null;
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   void reset() {
+    _editingVersionId = null; // Limpiar ID al resetear
     state = VehicleInspectionState(
       inspectionDate: DateTime.now(),
       activeVehicles: state.activeVehicles,
