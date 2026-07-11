@@ -75,6 +75,7 @@ class InspeccionRepositoryImpl implements InspeccionRepository {
 @override
   Future<Either<Failure, String>> updatePressReport(String reportId, Map<String, dynamic> data) async {
     try {
+      // Asegúrate que tu dataSource.updatePressReport use un .put('/api/v1/full-press-reports/$reportId')
       final result = await dataSource.updatePressReport(reportId, data);
       return Right(result);
     } catch (e) {

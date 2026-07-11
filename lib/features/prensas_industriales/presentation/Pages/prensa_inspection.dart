@@ -47,52 +47,53 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
 @override
 void initState() {
   super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    final notifier = ref.read(inspeccionProvider.notifier);
     if (widget.itemToEdit != null) {
-      // 1. Cargar el detalle (esto ya rellena el estado del notifier)
-      ref.read(inspeccionProvider.notifier).loadReportDetail(widget.itemToEdit!.versionId);
+      await notifier.loadReportDetail(widget.itemToEdit!.versionId);
     } else {
-      // 2. Solo si es nuevo, cargar el template vacío
-      ref.read(inspeccionProvider.notifier).reset();
-      _fetchTemplate();
+      notifier.reset();
+      await _fetchTemplate(); // Este método ahora actualizará el notifier
     }
   });
 }
+Future<void> _fetchTemplate() async {
+  setState(() => isLoading = true);
 
-  Future<void> _fetchTemplate() async {
-    setState(() => isLoading = true);
+  final state = ref.read(inspeccionProvider);
+  final repo = ref.read(inspeccionRepositoryProvider);
 
-    final state = ref.read(inspeccionProvider);
-    final repo = ref.read(inspeccionRepositoryProvider);
+  final result = await repo.getInspectionTemplate();
 
-    final result = await repo.getInspectionTemplate();
+  final String tipoPrensa = state.selectedPress?.type?.toLowerCase() ?? "";
 
-    final String tipoPrensa =
-        state.selectedPress?.type?.toLowerCase() ?? "";
+  result.fold(
+    (failure) => setState(() => isLoading = false),
+    (components) {
+      List<ComponentItem> itemsFiltrados = components;
 
-    result.fold(
-      (failure) => setState(() => isLoading = false),
-      (components) {
-        List<ComponentItem> itemsFiltrados = components;
+      final bool esNeumaticaOMovil =
+          tipoPrensa.contains("neumática") ||
+          tipoPrensa.contains("movil") ||
+          tipoPrensa.contains("móvil");
 
-        final bool esNeumaticaOMovil =
-            tipoPrensa.contains("neumática") ||
-            tipoPrensa.contains("movil") ||
-            tipoPrensa.contains("móvil");
+      if (esNeumaticaOMovil) {
+        itemsFiltrados = components
+            .where((c) => !excludedComponentIds.contains(c.id))
+            .toList();
+      }
 
-        if (esNeumaticaOMovil) {
-          itemsFiltrados = components
-              .where((c) => !excludedComponentIds.contains(c.id))
-              .toList();
-        }
+      // 1. Sincronizamos con el Notifier para que el estado global sea correcto
+      ref.read(inspeccionProvider.notifier).updateTemplateItems(itemsFiltrados);
 
-        setState(() {
-          templateItems = itemsFiltrados;
-          isLoading = false;
-        });
-      },
-    );
-  }
+      // 2. Actualizamos la UI local
+      setState(() {
+        templateItems = itemsFiltrados;
+        isLoading = false;
+      });
+    },
+  );
+}
 
   void _showPdfPreview(BuildContext context) {
     final state = ref.read(inspeccionProvider);
@@ -228,139 +229,28 @@ Future<void> _showStatusDialog() async {
 Future<void> _guardarInspeccion() async {
     final state = ref.read(inspeccionProvider);
     final notifier = ref.read(inspeccionProvider.notifier);
-    final evidenceService = ref.read(evidenceServiceProvider);
 
+    // 1. Validaciones previas
     if (state.selectedPress == null) {
       _showSnack("Selecciona una prensa primero", Colors.orange);
       return;
     }
 
-    final bool hasLoanData =
-        state.selectedLoanArea != null || state.solicitantsName.isNotEmpty;
-
-    final String currentStatus = state.status.toUpperCase();
-
-    if (currentStatus == 'LOANED' && !hasLoanData) {
-      _showSnack(
-        "La prensa está prestada. Debe llenar los campos de devolución para continuar.",
-        Colors.red,
-      );
-      return;
-    }
-
-    final answeredItems =
-        templateItems.where((item) => item.status.isNotEmpty).toList();
-
     setState(() => isLoading = true);
 
     try {
-      final List<Map<String, dynamic>> answers = [];
+      // 2. Delegamos TODO al Notifier (el cual ya contiene la lógica de limpieza y construcción)
+      final String? resultId = await notifier.finalizarInspeccion();
 
-      for (var item in answeredItems) {
-        final List<Map<String, String>> evidenceList = [];
-        final allEvidenceFiles = [
-          ...item.evidenceBefore,
-          ...item.evidenceAfter,
-        ];
-
-        for (var evFile in allEvidenceFiles) {
-          // Si la imagen ya tiene un path (viene del servidor), no la subimos de nuevo
-          if (evFile.path != null && evFile.path!.isNotEmpty) {
-            evidenceList.add({
-              "file_path": evFile.path!,
-              "file_type": evFile.type,
-              "mime_type": evFile.mimeType,
-              "file_size": "0",
-            });
-            continue;
-          }
-
-          final tempDir = await getTemporaryDirectory();
-          final file = File(
-            '${tempDir.path}/img_${DateTime.now().microsecondsSinceEpoch}.jpg',
-          );
-
-          await file.writeAsBytes(evFile.bytes);
-
-          final uploadResult = await evidenceService.uploadEvidence(
-            file: file,
-            basePath: 'inspecciones/prensas',
-          );
-
-          uploadResult.fold(
-            (failure) => print("Error al subir imagen: ${failure.message}"),
-            (evidenceDto) {
-              evidenceList.add({
-                "file_path": evidenceDto.filePath,
-                "file_type": evidenceDto.fileType,
-                "mime_type": evidenceDto.mimeType,
-                "file_size": evidenceDto.fileSize.toString(),
-              });
-            },
-          );
-        }
-
-        answers.add({
-          "component_id": item.id,
-          "quantity": item.quantity ?? 0,
-          "status": item.status.toUpperCase(),
-          "observation":
-              item.observation.isEmpty ? null : item.observation,
-          "evidences": evidenceList,
-        });
-      }
-
-      final reportRequest = {
-        "press_id": state.selectedPress!.id,
-        "inspection_date": DateTime.now().toIso8601String(),
-        "area": state.area.isEmpty ? "General" : state.area,
-        "state": state.state, 
-        "folio": "F-${DateTime.now().millisecondsSinceEpoch}",
-        "answers": answers,
-        "loan": hasLoanData
-            ? {
-                "area_id": state.selectedLoanArea?.id,
-                "loan_date": DateTime.now().toIso8601String(),
-                "solicitants_name": state.solicitantsName,
-                "observations": state.observations,
-              }
-            : null
-      };
-
-      // LÓGICA DE EDICIÓN O CREACIÓN
-      if (notifier.isEditing) {
-        debugPrint("Actualizando reporte: ${state.editingVersionId}");
-        final updateUseCase = ref.read(updatePressReportProvider);
-        final result = await updateUseCase.call(state.editingVersionId!, reportRequest);
-
-        result.fold(
-          (f) => _showSnack("Error al actualizar: ${f.message}", Colors.red),
-          (r) {
-            _showSnack("¡Inspección actualizada con éxito!", Colors.green);
-            notifier.reset();
-            Navigator.pop(context);
-          },
-        );
+      if (resultId != null) {
+        _showSnack(notifier.isEditing ? "¡Inspección actualizada!" : "¡Guardada con éxito!", Colors.green);
+        notifier.reset();
+        Navigator.pop(context);
       } else {
-        debugPrint("Creando reporte nuevo");
-        final createUseCase = ref.read(createPressReportProvider);
-        final result = await createUseCase.call(reportRequest);
-
-        result.fold(
-          (f) => _showSnack("Error: ${f.message}", Colors.red),
-          (r) {
-            String successMessage = "¡Inspección guardada con éxito!";
-            if (currentStatus == 'LOANED') successMessage = "¡Devolución exitosa!";
-            else if (currentStatus == 'AVAILABLE' && hasLoanData) successMessage = "¡Préstamo exitoso!";
-            
-            _showSnack(successMessage, Colors.green);
-            notifier.reset();
-            Navigator.pop(context);
-          },
-        );
+        _showSnack("Error al guardar en el servidor", Colors.red);
       }
     } catch (e) {
-      _showSnack("Error inesperado al guardar", Colors.red);
+      _showSnack("Error inesperado: $e", Colors.red);
     } finally {
       if (mounted) setState(() => isLoading = false);
     }

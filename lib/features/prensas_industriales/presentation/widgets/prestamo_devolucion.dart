@@ -126,7 +126,7 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                 _buildFieldLabel("NOMBRE DE QUIEN RECIBE"),
                 TextField(
                   // Agregamos un controlador o valor inicial si necesitas que también se autocomplete
-                  controller: TextEditingController(text: state.solicitantsName)..selection = TextSelection.collapsed(offset: state.solicitantsName.length),
+                  controller: TextEditingController(text: state.solicitantsName)..selection = TextSelection.collapsed(offset: (state.solicitantsName ?? "").length),
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   decoration: _inputStyle(hint: "Nombre completo del responsable"),
                   onChanged: (value) => notifier.updateSolicitantsName(value),
@@ -135,7 +135,7 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                 const SizedBox(height: 20),
                 _buildFieldLabel("OBSERVACIONES DEL MOVIMIENTO"),
                 TextField(
-                  controller: TextEditingController(text: state.observations)..selection = TextSelection.collapsed(offset: state.observations.length),
+                  controller: TextEditingController(text: state.observations)..selection = TextSelection.collapsed(offset: (state.observations ?? "").length),
                   maxLines: 2,
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   decoration: _inputStyle(hint: "Notas adicionales..."),
