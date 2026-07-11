@@ -60,7 +60,7 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -136,6 +136,7 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
                     ? _buildDashboard(
                       state.vehicles,
                       dashboardState.vehicleMovements,
+                      dashboardState.isLoading
                     )
                     : ServiceDetailView(
                         key: ValueKey(selectedVehicle!.vehicleId),
@@ -232,6 +233,7 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
   Widget _buildDashboard(
     List<Vehicle> vehicles,
     List<AssetLastMovement> movements,
+    bool isLoading
   ) {
     final occupiedCount = vehicles
         .where((v) => v.operationState.toUpperCase() == 'OCCUPIED')
@@ -284,6 +286,8 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
               RecentMovementsTable(
                 movements: movements,
                 searchQuery: searchQuery,
+                isLoading: isLoading,
+                identifierTitle: "PLACA",
               ),
             ],
           ),

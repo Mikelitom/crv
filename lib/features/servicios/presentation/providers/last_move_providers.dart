@@ -26,6 +26,6 @@ final getLastMovementsUseCaseProvider = Provider(
 );
 
 final dashboardNotifierProvider =
-    NotifierProvider<DashboardNotifier, DashboardState>(
+    NotifierProvider.autoDispose<DashboardNotifier, DashboardState>(
   DashboardNotifier.new,
 );

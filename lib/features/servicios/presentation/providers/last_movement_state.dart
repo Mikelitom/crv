@@ -5,7 +5,7 @@ class DashboardState {
   final String searchQuery;
 
   final List<AssetLastMovement> vehicleMovements;
-  final List<AssetLastMovement> pressMovements;
+  final List<AssetLastMovement> pressMovements;   
 
   const DashboardState({
     this.isLoading = false,

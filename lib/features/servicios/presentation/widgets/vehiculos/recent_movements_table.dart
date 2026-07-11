@@ -5,11 +5,15 @@ import 'package:intl/intl.dart';
 class RecentMovementsTable extends StatelessWidget {
   final List<AssetLastMovement> movements;
   final String searchQuery; // Pasamos el buscador para filtrar aquí
+  final bool isLoading;
+  final String identifierTitle;
 
   const RecentMovementsTable({
     super.key,
     required this.movements,
     this.searchQuery = "",
+    this.isLoading = false,
+    this.identifierTitle = "IDENTIFICADOR"
   });
 
   @override
@@ -46,9 +50,27 @@ class RecentMovementsTable extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              isMobile
-                  ? _buildMobileList(filtered)
-                  : _buildDesktopTable(filtered),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: isLoading
+                    ? const SizedBox(
+                        height: 250,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    : filtered.isEmpty
+                    ? const SizedBox(
+                        height: 250,
+                        child: Center(
+                          child: Text(
+                            "No hay movimientos recientes",
+                            style: TextStyle(color: Colors.grey, fontSize: 15),
+                          ),
+                        ),
+                      )
+                    : isMobile
+                    ? _buildMobileList(filtered)
+                    : _buildDesktopTable(filtered),
+              ),
             ],
           ),
         );
@@ -69,34 +91,35 @@ class RecentMovementsTable extends StatelessWidget {
       },
       children: [
         TableRow(
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-          ),
-          children: [
-            "IDENTIFICADOR",
-            "ACTIVO",
-            "ESTADO",
-            "FECHA",
-            "USUARIO",
-            "MOVIMIENTO",
-          ]
-              .map(
-                (h) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    h,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                      fontSize: 12,
+          decoration: BoxDecoration(color: Colors.grey.shade100),
+          children:
+              [
+                    identifierTitle,
+                    "ACTIVO",
+                    "ESTADO",
+                    "FECHA",
+                    "USUARIO",
+                    "MOVIMIENTO",
+                  ]
+                  .map(
+                    (h) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        h,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              )
-              .toList(),
+                  )
+                  .toList(),
         ),
-        ...filtered.take(10).map(
+        ...filtered
+            .take(10)
+            .map(
               (m) => TableRow(
                 children: [
                   _tableCell(
@@ -112,17 +135,11 @@ class RecentMovementsTable extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          DateFormat(
-                            'dd/MM/yyyy',
-                          ).format(m.eventDate),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          DateFormat('dd/MM/yyyy').format(m.eventDate),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         Text(
-                          DateFormat(
-                            'hh:mm a',
-                          ).format(m.eventDate),
+                          DateFormat('hh:mm a').format(m.eventDate),
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 12,
@@ -149,7 +166,7 @@ class RecentMovementsTable extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(height: 20),
       itemBuilder: (_, i) {
         final m = filtered[i];
-  
+
         return Card(
           elevation: 0,
           color: Colors.grey.shade50,
@@ -169,10 +186,7 @@ class RecentMovementsTable extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  m.assetType,
-                  style: const TextStyle(color: Colors.grey),
-                ),
+                Text(m.assetType, style: const TextStyle(color: Colors.grey)),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -189,10 +203,7 @@ class RecentMovementsTable extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   DateFormat('dd/MM/yyyy • hh:mm a').format(m.eventDate),
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
             ),
@@ -210,6 +221,8 @@ class RecentMovementsTable extends StatelessWidget {
         return 'Ocupado';
       case 'WORKSHOP':
         return 'En taller';
+      case 'IN_PROGRESS':
+        return 'En proceso';
       default:
         return state;
     }
@@ -230,12 +243,9 @@ class RecentMovementsTable extends StatelessWidget {
 
   Widget _buildStateBadge(String state) {
     final color = _stateColor(state);
-  
+
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(30),
@@ -253,31 +263,27 @@ class RecentMovementsTable extends StatelessWidget {
   }
 
   Widget _buildMovementBadge(String movement) {
-  
     IconData icon;
     Color color;
-  
+
     switch (movement) {
       case 'Servicio':
         icon = Icons.build;
         color = Colors.orange;
         break;
-  
+
       case 'Informe':
         icon = Icons.description;
         color = Colors.blue;
         break;
-  
+
       default:
         icon = Icons.swap_horiz;
         color = Colors.green;
     }
-  
+
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(30),
@@ -304,11 +310,7 @@ class RecentMovementsTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade200,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
       child: child,
     );
