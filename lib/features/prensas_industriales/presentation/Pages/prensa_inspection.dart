@@ -44,54 +44,56 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
     "b1c263cd-5882-4153-b48a-04859e79f2ed",
     "7c0bcebc-ce53-4a1e-8cf1-1b83e6782f53",
   };
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    final notifier = ref.read(inspeccionProvider.notifier);
+    if (widget.itemToEdit != null) {
+      await notifier.loadReportDetail(widget.itemToEdit!.versionId);
+    } else {
+      notifier.reset();
+      await _fetchTemplate(); // Este método ahora actualizará el notifier
+    }
+  });
+}
+Future<void> _fetchTemplate() async {
+  setState(() => isLoading = true);
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.listenManual(inspeccionProvider, (previous, next) {
-        if (previous?.selectedPress?.id != next.selectedPress?.id) {
-          _fetchTemplate();
-        }
+  final state = ref.read(inspeccionProvider);
+  final repo = ref.read(inspeccionRepositoryProvider);
+
+  final result = await repo.getInspectionTemplate();
+
+  final String tipoPrensa = state.selectedPress?.type?.toLowerCase() ?? "";
+
+  result.fold(
+    (failure) => setState(() => isLoading = false),
+    (components) {
+      List<ComponentItem> itemsFiltrados = components;
+
+      final bool esNeumaticaOMovil =
+          tipoPrensa.contains("neumática") ||
+          tipoPrensa.contains("movil") ||
+          tipoPrensa.contains("móvil");
+
+      if (esNeumaticaOMovil) {
+        itemsFiltrados = components
+            .where((c) => !excludedComponentIds.contains(c.id))
+            .toList();
+      }
+
+      // 1. Sincronizamos con el Notifier para que el estado global sea correcto
+      ref.read(inspeccionProvider.notifier).updateTemplateItems(itemsFiltrados);
+
+      // 2. Actualizamos la UI local
+      setState(() {
+        templateItems = itemsFiltrados;
+        isLoading = false;
       });
-      _fetchTemplate();
-    });
-  }
-
-  Future<void> _fetchTemplate() async {
-    setState(() => isLoading = true);
-
-    final state = ref.read(inspeccionProvider);
-    final repo = ref.read(inspeccionRepositoryProvider);
-
-    final result = await repo.getInspectionTemplate();
-
-    final String tipoPrensa =
-        state.selectedPress?.type?.toLowerCase() ?? "";
-
-    result.fold(
-      (failure) => setState(() => isLoading = false),
-      (components) {
-        List<ComponentItem> itemsFiltrados = components;
-
-        final bool esNeumaticaOMovil =
-            tipoPrensa.contains("neumática") ||
-            tipoPrensa.contains("movil") ||
-            tipoPrensa.contains("móvil");
-
-        if (esNeumaticaOMovil) {
-          itemsFiltrados = components
-              .where((c) => !excludedComponentIds.contains(c.id))
-              .toList();
-        }
-
-        setState(() {
-          templateItems = itemsFiltrados;
-          isLoading = false;
-        });
-      },
-    );
-  }
+    },
+  );
+}
 
   void _showPdfPreview(BuildContext context) {
     final state = ref.read(inspeccionProvider);
@@ -224,125 +226,35 @@ Future<void> _showStatusDialog() async {
     await _guardarInspeccion();
   }
 }
-  Future<void> _guardarInspeccion() async {
+Future<void> _guardarInspeccion() async {
     final state = ref.read(inspeccionProvider);
     final notifier = ref.read(inspeccionProvider.notifier);
-    final evidenceService = ref.read(evidenceServiceProvider);
 
+    // 1. Validaciones previas
     if (state.selectedPress == null) {
       _showSnack("Selecciona una prensa primero", Colors.orange);
       return;
     }
 
-    final bool hasLoanData =
-        state.selectedLoanArea != null || state.solicitantsName.isNotEmpty;
-
-    final String currentStatus = state.status.toUpperCase();
-
-    if (currentStatus == 'LOANED' && !hasLoanData) {
-      _showSnack(
-        "La prensa está prestada. Debe llenar los campos de devolución para continuar.",
-        Colors.red,
-      );
-      return;
-    }
-
-    final answeredItems =
-        templateItems.where((item) => item.status.isNotEmpty).toList();
-
     setState(() => isLoading = true);
 
     try {
-      final List<Map<String, dynamic>> answers = [];
+      // 2. Delegamos TODO al Notifier (el cual ya contiene la lógica de limpieza y construcción)
+      final String? resultId = await notifier.finalizarInspeccion();
 
-      for (var item in answeredItems) {
-        final List<Map<String, String>> evidenceList = [];
-        final allEvidenceFiles = [
-          ...item.evidenceBefore,
-          ...item.evidenceAfter,
-        ];
-
-        for (var evFile in allEvidenceFiles) {
-          final tempDir = await getTemporaryDirectory();
-          final file = File(
-            '${tempDir.path}/img_${DateTime.now().microsecondsSinceEpoch}.jpg',
-          );
-
-          await file.writeAsBytes(evFile.bytes);
-
-          final uploadResult = await evidenceService.uploadEvidence(
-            file: file,
-            basePath: 'inspecciones/prensas',
-          );
-
-          uploadResult.fold(
-            (failure) => print("Error al subir imagen: ${failure.message}"),
-            (evidenceDto) {
-              evidenceList.add({
-                "file_path": evidenceDto.filePath,
-                "file_type": evidenceDto.fileType,
-                "mime_type": evidenceDto.mimeType,
-                "file_size": evidenceDto.fileSize.toString(),
-              });
-            },
-          );
-        }
-
-        answers.add({
-          "component_id": item.id,
-          "quantity": item.quantity ?? 0,
-          "status": item.status.toUpperCase(),
-          "observation":
-              item.observation.isEmpty ? null : item.observation,
-          "evidences": evidenceList,
-        });
+      if (resultId != null) {
+        _showSnack(notifier.isEditing ? "¡Inspección actualizada!" : "¡Guardada con éxito!", Colors.green);
+        notifier.reset();
+        Navigator.pop(context);
+      } else {
+        _showSnack("Error al guardar en el servidor", Colors.red);
       }
-
-      final reportRequest = {
-        "press_id": state.selectedPress!.id,
-        "inspection_date": DateTime.now().toIso8601String(),
-        "area": state.area.isEmpty ? "General" : state.area,
-        "state": state.state, 
-        "folio": "F-${DateTime.now().millisecondsSinceEpoch}",
-        "answers": answers,
-        "loan": hasLoanData
-            ? {
-                "area_id": state.selectedLoanArea?.id,
-                "loan_date": DateTime.now().toIso8601String(),
-                "solicitants_name": state.solicitantsName,
-                "observations": state.observations,
-              }
-            : null
-      };
-
-      final result = await ref
-          .read(createPressReportProvider)
-          .call(reportRequest);
-
-      result.fold(
-        (f) => _showSnack("Error: ${f.message}", Colors.red),
-        (r) {
-          String successMessage = "¡Inspección guardada con éxito!";
-
-          if (currentStatus == 'LOANED') {
-            successMessage = "¡Devolución exitosa!";
-          } else if (currentStatus == 'AVAILABLE' && hasLoanData) {
-            successMessage = "¡Préstamo exitoso!";
-          }
-
-          _showSnack(successMessage, Colors.green);
-
-          notifier.reset();
-          Navigator.pop(context);
-        },
-      );
     } catch (e) {
-      _showSnack("Error inesperado al guardar", Colors.red);
+      _showSnack("Error inesperado: $e", Colors.red);
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
-
   void _showSnack(String m, Color c) =>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -351,12 +263,18 @@ Future<void> _showStatusDialog() async {
           behavior: SnackBarBehavior.floating,
         ),
       );
-
-  @override
+@override
   Widget build(BuildContext context) {
+    // 1. Escuchamos al provider para obtener el estado real
+    final state = ref.watch(inspeccionProvider);
+    
+    // 2. Usamos los items que vienen del estado del notifier
+    final itemsToShow = state.templateItems;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: isLoading
+      // 3. Usamos state.isLoading del Notifier para controlar el loader
+      body: state.isLoading
           ? const Center(
               child: CircularProgressIndicator(
                 color: Color(0xFFC62828),
@@ -367,7 +285,9 @@ Future<void> _showStatusDialog() async {
               child: Column(
                 children: [
                   CustomHeader(
-                    title: "Inspección de Prensas",
+                    title: widget.itemToEdit != null 
+                        ? "Editar Inspección de Prensa" 
+                        : "Inspección de Prensas",
                     actionIcon: Icons.arrow_back_ios_new_rounded,
                     onActionTap: () => Navigator.pop(context),
                   ),
@@ -395,8 +315,9 @@ Future<void> _showStatusDialog() async {
                             children: [
                               const InformationGeneralEquipo(),
                               const SizedBox(height: 32),
+                              // 4. PASAMOS LA LISTA DEL ESTADO AQUÍ
                               PrensaInspectionTable(
-                                items: templateItems,
+                                items: itemsToShow, 
                               ),
                               const SizedBox(height: 32),
                               const LoanAndInspectorSection(),
@@ -415,14 +336,14 @@ Future<void> _showStatusDialog() async {
                         ),
                       ),
                       const SizedBox(width: 16),
-                    Expanded(
-  child: _actionBtn(
-    "FINALIZAR",
-    const Color(0xFFC62828),
-    Icons.check_circle,
-    _showStatusDialog, // <--- LLAMA AL DIÁLOGO, NO A _finalizar DIRECTO
-  ),
-),
+                      Expanded(
+                        child: _actionBtn(
+                          "FINALIZAR",
+                          const Color(0xFFC62828),
+                          Icons.check_circle,
+                          _showStatusDialog,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 60),
@@ -431,7 +352,6 @@ Future<void> _showStatusDialog() async {
             ),
     );
   }
-
   Widget _actionBtn(
     String l,
     Color c,

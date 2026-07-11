@@ -1,6 +1,7 @@
 import 'package:crv_reprosisa/core/database/database_provider.dart';
 import 'package:crv_reprosisa/core/sync/sync_providers.dart';
 import 'package:crv_reprosisa/features/prensas_industriales/data/datasource/press_inspection_local_datasource.dart';
+import 'package:crv_reprosisa/features/prensas_industriales/domain/usecases/update_press_report_use_case.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/adapters.dart';
 import '../../../../core/config/dio_client.dart';
@@ -84,3 +85,7 @@ final inspeccionProvider =
     NotifierProvider<InspeccionNotifier, InspeccionState>(() {
       return InspeccionNotifier();
     });
+final updatePressReportProvider = Provider((ref) {
+  final repo = ref.watch(inspeccionRepositoryProvider);
+  return UpdatePressReportUseCase(repo); // Asegúrate de tener este UseCase creado
+});

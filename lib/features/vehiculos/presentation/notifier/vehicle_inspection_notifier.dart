@@ -26,12 +26,8 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
   void updateReportState(String newState) {
     state = state.copyWith(reportState: newState);
   }
-
-  // ... dentro de VehicleInspectionNotifier
   Future<void> loadReportDetail(String versionId) async {
-    // LIMPIEZA: Aseguramos estado limpio antes de cargar
     reset();
-    
     state = state.copyWith(
       editingVersionId: versionId,
       isLoading: true,

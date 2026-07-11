@@ -4,6 +4,7 @@ import '../models/press_model.dart';
 abstract class InspeccionRemoteDataSource {
   Future<PressModel?> getPressBySerie(String serie);
   Future<String> savePressReport(Map<String, dynamic> reportData);
+  Future<String> updatePressReport(String reportId, Map<String, dynamic> data); // <--- AGREGADO
   Future<List<String>> getAllSeries();
   Future<List<dynamic>> getInspectionTemplate();
   Future<List<dynamic>> getAllLoanAreas();
@@ -66,7 +67,19 @@ class InspeccionRemoteDataSourceImpl implements InspeccionRemoteDataSource {
       rethrow;
     }
   }
+@override
+Future<String> updatePressReport(String reportId, Map<String, dynamic> data) async {
+  final response = await dio.put(
+    '/full-press-reports/$reportId', 
+    data: data,
+  );
 
+  if (response.statusCode == 200 || response.statusCode == 204) {
+    return "Reporte actualizado con éxito";
+  } else {
+    throw Exception("Error al actualizar reporte");
+  }
+}
   @override
   Future<PressModel?> getPressBySerie(String serie) async {
     try {
