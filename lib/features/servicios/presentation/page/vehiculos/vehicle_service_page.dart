@@ -1,3 +1,5 @@
+import 'package:crv_reprosisa/features/servicios/domain/entities/asset_last_movement.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/providers/last_move_providers.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/recent_movements_table.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/asset_distribution_chart.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/mainting_pending.dart';
@@ -101,6 +103,7 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(vehicleListProvider);
+    final dashboardState = ref.watch(dashboardNotifierProvider);
     final filtered = state.vehicles
         .where((v) => v.plate.toLowerCase().contains(searchQuery.toLowerCase()))
         .toList();
@@ -130,7 +133,10 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
                 top: 16,
                 bottom: 16,
                 child: selectedVehicle == null
-                    ? _buildDashboard(state.vehicles)
+                    ? _buildDashboard(
+                      state.vehicles,
+                      dashboardState.vehicleMovements,
+                    )
                     : ServiceDetailView(
                         key: ValueKey(selectedVehicle!.vehicleId),
                         vehicle: selectedVehicle!,
@@ -223,7 +229,10 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
     );
   }
 
-  Widget _buildDashboard(List<Vehicle> vehicles) {
+  Widget _buildDashboard(
+    List<Vehicle> vehicles,
+    List<AssetLastMovement> movements,
+  ) {
     final occupiedCount = vehicles
         .where((v) => v.operationState.toUpperCase() == 'OCCUPIED')
         .length;
@@ -272,7 +281,10 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
                 ],
               ),
               const SizedBox(height: 16),
-              RecentMovementsTable(vehicles: vehicles),
+              RecentMovementsTable(
+                movements: movements,
+                searchQuery: searchQuery,
+              ),
             ],
           ),
         );
