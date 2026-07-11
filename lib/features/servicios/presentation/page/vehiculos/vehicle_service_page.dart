@@ -194,28 +194,27 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
                             indent: 20,
                             endIndent: 20,
                           ),
-                          itemBuilder: (_, i) => ListTile(
-                            leading: _buildVehicleAvatar(filtered[i]),
-                            title: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildPlateBadge(filtered[i].plate),
-                                Text(
-                                  "${filtered[i].brand} ${filtered[i].model}",
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
+                          // ... dentro de tu ListView.separated
+                          itemBuilder: (_, i) => Material(
+                            color: Colors.white, // Define el color de fondo aquí
+                            child: ListTile(
+                              leading: _buildVehicleAvatar(filtered[i]),
+                              title: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildPlateBadge(filtered[i].plate),
+                                  Text(
+                                    "${filtered[i].brand} ${filtered[i].model}",
+                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
+                              trailing: _buildStatusBadge(filtered[i].operationState),
+                              onTap: () => setState(() {
+                                selectedVehicle = filtered[i];
+                                if (!isWide) showList = false;
+                              }),
                             ),
-                            trailing: _buildStatusBadge(
-                              filtered[i].operationState,
-                            ),
-                            onTap: () => setState(() {
-                              selectedVehicle = filtered[i];
-                              if (!isWide) showList = false;
-                            }),
                           ),
                         ),
                       ),

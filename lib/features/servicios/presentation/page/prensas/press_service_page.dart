@@ -208,17 +208,21 @@ class _PressServicePageState extends ConsumerState<PressServicePage> {
   }
 
   Widget _buildPressTile(Press p, bool isWide) {
-    return ListTile(
-      leading: const CircleAvatar(
-        backgroundColor: Color(0xFFF4F7FA),
-        child: Icon(Icons.precision_manufacturing, color: Color(0xFFC62828)),
+    return Material(
+      // El Material provee el "lienzo" necesario para el efecto visual
+      color: Colors.white, 
+      child: ListTile(
+        leading: const CircleAvatar(
+          backgroundColor: Color(0xFFF4F7FA),
+          child: Icon(Icons.precision_manufacturing, color: Color(0xFFC62828)),
+        ),
+        title: Text(p.serie, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(p.model),
+        onTap: () => setState(() {
+          selectedPress = p;
+          if (!isWide) showList = false;
+        }),
       ),
-      title: Text(p.serie, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(p.model),
-      onTap: () => setState(() {
-        selectedPress = p;
-        if (!isWide) showList = false;
-      }),
     );
   }
 }
