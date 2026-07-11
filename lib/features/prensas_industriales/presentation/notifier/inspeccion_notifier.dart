@@ -16,9 +16,8 @@ import '../provider/inspeccion_providers.dart';
 import '../../domain/entities/loan_area.dart';
 
 class InspeccionNotifier extends Notifier<InspeccionState> {
-  String? _editingVersionId;
-  bool get isEditing => _editingVersionId != null;
-
+  String? _editingReportId;
+  bool get isEditing => _editingReportId != null;
   @override
   InspeccionState build() {
     Future.microtask(() => loadLoanAreas());
@@ -31,10 +30,11 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
 
   void updateTemplateItems(List<ComponentItem> items) =>
       state = state.copyWith(templateItems: items);
+
   Future<void> loadReportDetail(String versionId) async {
     // 1. Reset seguro que mantiene templates si existen
     final currentTemplates = state.templateItems;
-    _editingVersionId = versionId;
+
     state = state.copyWith(isLoading: true, editingVersionId: versionId);
 
     try {
@@ -53,6 +53,9 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
 
       if (detailState.data != null) {
         final data = detailState.data!;
+
+        _editingReportId = data.report["report_id"];
+        
         final List<PrensaComponentItem> updatedItems = [];
 
         for (var item in state.templateItems.cast<PrensaComponentItem>()) {
@@ -194,7 +197,7 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
       final useCase = isEditing
           ? ref
                 .read(updatePressReportProvider)
-                .call(_editingVersionId!, reportRequest)
+                .call(_editingReportId!, reportRequest)
           : ref.read(createPressReportProvider).call(reportRequest);
       return (await useCase).fold(
         (f) {
@@ -306,7 +309,7 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
 
   void reset() {
     final templates = state.templateItems;
-    _editingVersionId = null;
+    _editingReportId = null;
     state = InspeccionState(
       inspectionDate: DateTime.now(),
       loanAreas: state.loanAreas,
