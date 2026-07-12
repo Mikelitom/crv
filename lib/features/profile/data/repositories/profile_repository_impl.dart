@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/profile/data/datasources/profile_local_datasource.dart';
 import 'package:dartz/dartz.dart';
 import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
@@ -7,22 +8,48 @@ import '../datasources/profile_remote_datasource.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
   final ProfileRemoteDataSource remote;
-  ProfileRepositoryImpl(this.remote);
+  final ProfileLocalDatasource local;
+
+  ProfileRepositoryImpl(this.remote, this.local);
 
   @override
   Future<Either<Failure, User>> getMe() async {
     try {
       final user = await remote.getMe();
+
+      await local.saveUser(user);
+
       return Right(user);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
+    } on DioException catch (e) {
+        // Solo si fue un problema de conexión
+        if (e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout) {
+          final cachedUser = await local.getUser();
+    
+          if (cachedUser != null) {
+            return Right(cachedUser);
+          }
+        }
+    
+        return Left(ServerFailure(e.toString()));
+      } catch (e) {
+        return Left(ServerFailure(e.toString()));
+      }
   }
 
   @override
-  Future<Either<Failure, User>> updateProfile({String? name, String? phone, String? email}) async {
+  Future<Either<Failure, User>> updateProfile({
+    String? name,
+    String? phone,
+    String? email,
+  }) async {
     try {
-      final user = await remote.updateProfile(name: name, email: email, phone: phone);
+      final user = await remote.updateProfile(
+        name: name,
+        email: email,
+        phone: phone,
+      );
       return Right(user);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -33,13 +60,13 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<Either<Failure, Unit>> changePassword({
     required String currentPassword,
     required String newPassword,
-    required bool logoutOthers
+    required bool logoutOthers,
   }) async {
     try {
       await remote.changePassword(
         currentPassword: currentPassword,
         newPassword: newPassword,
-        logoutOthers: logoutOthers
+        logoutOthers: logoutOthers,
       );
       return const Right(unit);
     } on DioException catch (e) {

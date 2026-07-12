@@ -1,8 +1,8 @@
 import 'package:crv_reprosisa/features/auth/data/models/user_model.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/rendering.dart';
 import './user_management_remote_datasource.dart';
-import 'package:crv_reprosisa/core/utils/scope_mapper.dart'; 
 
 class UserManagementRemoteDatasourceImpl implements UserManagementRemoteDatasource {
   final Dio dio;
@@ -37,7 +37,7 @@ class UserManagementRemoteDatasourceImpl implements UserManagementRemoteDatasour
       if (mappedValue != "Desconocido") {
         updateData['scope'] = mappedValue;
       } else {
-        print(" Advertencia: No se pudo mapear el valor '$scope'");
+        debugPrint(" Advertencia: No se pudo mapear el valor '$scope'");
       }
     }
 
@@ -49,15 +49,12 @@ class UserManagementRemoteDatasourceImpl implements UserManagementRemoteDatasour
     final String cleanId = userId.trim().replaceAll('/', '');
     final String cleanPath = "/auth/users/$cleanId";
 
-    print("🚀 Enviando PATCH a: $cleanPath");
-    print("📦 Body: $updateData");
-
     try {
       final response = await dio.patch(cleanPath, data: updateData);
       return UserModel.fromJson(response.data);
     } on DioException catch (e) {
       // Log detallado para ver por qué falla el servidor
-      print(" Error en Servidor: ${e.response?.statusCode} - ${e.response?.data}");
+      debugPrint(" Error en Servidor: ${e.response?.statusCode} - ${e.response?.data}");
       rethrow;
     }
   }

@@ -24,6 +24,7 @@ Future<void> main() async {
   await Hive.openBox('press_cache');
   await Hive.openBox('conveyor_cache');
   await Hive.openBox('session');
+  await Hive.openBox('user_profile');
 
   runApp(const ProviderScope(child: AppBootstrap()));
 }

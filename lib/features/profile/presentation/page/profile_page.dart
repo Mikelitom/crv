@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import 'package:crv_reprosisa/features/profile/presentation/provider/profile_notifier.dart';
-import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart'; // 👈 Importante
 
 import '../widgets/history_status_panel.dart';
 import '../widgets/profile_security_card.dart';
@@ -222,7 +221,7 @@ return Scaffold(
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 35,
             offset: const Offset(0, 15),
           ),

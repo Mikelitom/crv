@@ -32,7 +32,6 @@ import 'package:crv_reprosisa/features/servicios/domain/repositories/press_item_
 
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/press_item_notifier.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/press_item_state.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 // --- PROVIDERS PARA PRESS (PRENSA) ---
 
