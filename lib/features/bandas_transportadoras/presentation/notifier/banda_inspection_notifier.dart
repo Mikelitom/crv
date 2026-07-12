@@ -119,12 +119,10 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      // 1. Extraer los objetos raíz según el nuevo JSON
       final Map<String, dynamic> report = reportData['report'] ?? {};
       final Map<String, dynamic> conveyorInfo = reportData['conveyor'] ?? {};
       final List<dynamic> answers = reportData['answers'] ?? [];
 
-      // Autocompletado de Mina/Cliente (usando el nombre que viene en el JSON)
       final String mineName = conveyorInfo['mine']?.toString() ?? "";
       final foundMine = state.allMines.firstWhereOrNull(
         (m) => m.name.toLowerCase() == mineName.toLowerCase(),
@@ -138,7 +136,6 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
         state.sections.map((section) async {
           final updatedComponents = await Future.wait(
             section.components.map((comp) async {
-              // 🔥 CLAVE: Buscar todas las respuestas asociadas a este accesorio (puede haber varias opciones marcadas)
               final componentAnswers = answers
                   .where(
                     (a) =>
@@ -147,25 +144,56 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
                   .toList();
 
               if (componentAnswers.isNotEmpty) {
-                // Extraer todos los IDs de opciones y custom_options
                 List<String> selectedIds = [];
                 String obs = "";
                 String dim = "";
                 String com = "";
+                List<EvidenceFile> evidenceBefore = [];
 
                 for (var ans in componentAnswers) {
-                  // Opción fija
                   if (ans['option'] != null) {
                     selectedIds.add(ans['option']['id'].toString());
                   }
-                  // Opción personalizada
                   if (ans['custom_option'] != null) {
                     selectedIds.add(ans['custom_option'].toString());
                   }
-                  // Tomar valores de los campos (si existen)
                   obs = ans['recommended_action']?.toString() ?? obs;
                   dim = ans['dimentions']?.toString() ?? dim;
                   com = ans['comment']?.toString() ?? com;
+
+                  // 🔥 CORRECCIÓN: Priorizar signed_url para evitar error 404
+                  if (ans['evidences'] is List) {
+                    for (var ev in (ans['evidences'] as List)) {
+                      // Intentamos descargar primero usando signed_url, si no existe, usamos file_path
+                      final String? urlToDownload =
+                          ev['signed_url'] ?? ev['file_path'];
+
+                      if (urlToDownload != null) {
+                        try {
+                          final bytes = await ImageDownloader.download(
+                            ref.read(dioProvider),
+                            urlToDownload,
+                          );
+                          if (bytes != null) {
+                            evidenceBefore.add(
+                              EvidenceFile(
+                                bytes: bytes,
+                                type: ev['file_type'] ?? 'image/jpeg',
+                                mimeType: ev['mime_type'] ?? 'image/jpeg',
+                                path:
+                                    ev['file_path'], // Mantenemos el path original para referencia
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          debugPrint(
+                            "Error al descargar imagen $urlToDownload: $e",
+                          );
+                          // Continuamos aunque una imagen falle
+                        }
+                      }
+                    }
+                  }
                 }
 
                 return comp.copyWith(
@@ -173,6 +201,7 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
                   observation: obs,
                   dimentions: dim,
                   comment: com,
+                  evidenceBefore: evidenceBefore,
                 );
               }
               return comp;
@@ -182,7 +211,7 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
         }),
       );
 
-      // 3. Mapeo de rodillos (está correcto en tu estructura original)
+      // 3. Mapeo de rodillos
       List<Roller> loadedRollers = [];
       final List<dynamic> rollersData = reportData['rollers'] ?? [];
       loadedRollers = rollersData
@@ -203,9 +232,12 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
           )
           .toList();
 
+      _editingReportId = report['report_id'];
+
       // 4. Actualizar estado
       state = state.copyWith(
         isLoading: false,
+        editingReportId: _editingReportId,
         sections: updatedSections,
         rollers: loadedRollers,
         selectedMine: foundMine,

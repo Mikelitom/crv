@@ -62,6 +62,6 @@ final clientSyncServiceProvider = Provider<ClientSyncService>((ref) {
   return ClientSyncService(
     local: ref.read(clientLocalDataSourceProvider),
     remote: ref.read(bandaDataSourceProvider),
-    rateLimiter: ref.read(globalRateLimiterProvider)
+    rateLimiter: ref.read(globalRateLimiterProvider),
   );
 });
