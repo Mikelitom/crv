@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:crv_reprosisa/features/servicios/domain/entities/press_item_entity.dart';
 
 class PressItemModel extends PressItemEntity {

@@ -157,7 +157,7 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                       ),
                     ],
@@ -189,7 +189,7 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
                         child: ListView.separated(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           itemCount: filtered.length,
-                          separatorBuilder: (_, __) => const Divider(
+                          separatorBuilder: (_, _) => const Divider(
                             height: 1,
                             indent: 20,
                             endIndent: 20,
@@ -298,12 +298,9 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
   Widget _buildAnimatedCard(Widget child, double width) {
     return StatefulBuilder(
       builder: (context, setSt) {
-        bool hovered = false;
         return MouseRegion(
-          onEnter: (_) => setSt(() => hovered = true),
-          onExit: (_) => setSt(() => hovered = false),
           child: AnimatedScale(
-            scale: hovered ? 1.02 : 1.0,
+            scale: 1.0,
             duration: const Duration(milliseconds: 200),
             child: SizedBox(
               width: width > 360 ? width : 360,

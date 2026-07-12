@@ -4,7 +4,6 @@ import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 import 'package:crv_reprosisa/features/servicios/domain/entities/asset_last_movement.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/last_move_providers.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/press/press_usage_provider.dart';
-import 'package:crv_reprosisa/features/servicios/presentation/widgets/press/last_movements.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/press/pending_maintenance.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/press/press_distribution_chart.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/press/press_usage_trend_chart.dart';
@@ -169,7 +168,7 @@ class _PressServicePageState extends ConsumerState<PressServicePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
         ],
       ),
       child: Column(
@@ -196,7 +195,7 @@ class _PressServicePageState extends ConsumerState<PressServicePage> {
                 ? const Center(child: CircularProgressIndicator())
                 : ListView.separated(
                     itemCount: filteredPress.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, _) =>
                         const Divider(height: 1, indent: 20, endIndent: 20),
                     itemBuilder: (_, i) =>
                         _buildPressTile(filteredPress[i], isWide),

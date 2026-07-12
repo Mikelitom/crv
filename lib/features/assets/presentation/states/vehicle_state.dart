@@ -24,6 +24,4 @@ class VehicleState {
       message: clearMessage ? null : (message ?? this.message),
     );
   }
-
-  static Object? fromJson(json) {}
 }

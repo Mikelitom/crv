@@ -5,7 +5,7 @@ import 'profile_providers.dart';
 class ProfileNotifier extends Notifier<ProfileState> {
   @override
   ProfileState build() {
-    ref.keepAlive(); // 👈 🔥 clave
+    ref.keepAlive();
 
     Future.microtask(() => getUserProfile());
     return ProfileState.initial();

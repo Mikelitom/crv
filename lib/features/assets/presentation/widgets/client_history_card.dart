@@ -24,8 +24,8 @@ class ClientHistoryCard extends StatefulWidget {
 class _ClientHistoryCardState extends State<ClientHistoryCard> {
   late ClientHistory selected;
 
-  bool _isDownloading = false;
-  bool _isPrinting = false;
+  final bool _isDownloading = false;
+  final bool _isPrinting = false;
 
   static const Color primaryRed = Color(0xFFC62828);
   static const Color backgroundGrey = Color(0xFFF8F9FA);
@@ -61,22 +61,22 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
     }
   }
 
-  Future<void> _handleViewPdf(String versionId) async {
-    LoadingOverlay.show(context, "Generando vista previa...");
+  // Future<void> _handleViewPdf(String versionId) async {
+  //   LoadingOverlay.show(context, "Generando vista previa...");
 
-    try {
-      // Es vital que el await sea directo aquí
-      await widget.onPdfView(versionId);
-    } catch (e) {
-      debugPrint("Error al ver PDF: $e");
-      // Opcional: mostrar un SnackBar de error aquí
-    } finally {
-      // Esto asegura que siempre se oculte, incluso si hay error
-      if (mounted) {
-        LoadingOverlay.hide(context);
-      }
-    }
-  }
+  //   try {
+  //     // Es vital que el await sea directo aquí
+  //     await widget.onPdfView(versionId);
+  //   } catch (e) {
+  //     debugPrint("Error al ver PDF: $e");
+  //     // Opcional: mostrar un SnackBar de error aquí
+  //   } finally {
+  //     // Esto asegura que siempre se oculte, incluso si hay error
+  //     if (mounted) {
+  //       LoadingOverlay.hide(context);
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +89,7 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
         border: Border.all(color: Colors.grey.shade300, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -111,7 +111,7 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: primaryRed.withOpacity(0.08),
+                  color: primaryRed.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -409,9 +409,9 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: c.withOpacity(0.08),
+        color: c.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: c.withOpacity(0.25), width: 1.2),
+        border: Border.all(color: c.withValues(alpha: 0.25), width: 1.2),
       ),
       child: Text(
         txt,
@@ -429,9 +429,9 @@ class _ClientHistoryCardState extends State<ClientHistoryCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Text(
         text,
