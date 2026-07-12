@@ -66,7 +66,7 @@ Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
     // Opcional: mostrar un SnackBar aquí informando que no se pudo acceder
   }
 }
- @override
+@override
   Widget build(BuildContext context) {
     bool isDesktop = MediaQuery.of(context).size.width > 800;
 
@@ -79,8 +79,7 @@ Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
       child: Column(
         children: [
           _buildInstitutionalHeader(),
-          // Solo mostramos el encabezado de columnas en Desktop
-          if (isDesktop) _buildTableHead(), 
+          if (isDesktop) _buildTableHead(),
           ...widget.items.map((item) => isDesktop ? _buildDesktopRow(item) : _buildMobileList(item)),
         ],
       ),
@@ -272,20 +271,15 @@ Widget _buildDesktopRow(BandaComponent item) {
     );
   }
 
-  // Nuevo método para el input de comentarios
-  Widget _buildCommentInput(BandaComponent item) => TextFormField(
-    key: ValueKey('comment_${item.id}'),
-initialValue: item.comment ?? '',
+Widget _buildCommentInput(BandaComponent item) => TextFormField(
+    // 🔥 La Key incluye el valor, forzando redibujado al cambiar el state
+    key: ValueKey('comment_${item.id}_${item.comment}'),
+    initialValue: item.comment,
     maxLines: 2,
     style: const TextStyle(fontSize: 11),
-    onChanged: (v) => ref
-        .read(bandaInspectionProvider.notifier)
-        .updateComponentComment(widget.sectionId, item.id, v),
-    decoration: const InputDecoration(
-      hintText: "...",
-      border: InputBorder.none,
-      contentPadding: EdgeInsets.all(8),
-    ),
+    onChanged: (v) => ref.read(bandaInspectionProvider.notifier)
+                       .updateComponentComment(widget.sectionId, item.id, v),
+    decoration: const InputDecoration(hintText: "...", border: InputBorder.none, contentPadding: EdgeInsets.all(8)),
   );
 
   void _showAddOptionDialog(BandaComponent item) {

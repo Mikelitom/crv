@@ -2,6 +2,7 @@ import 'package:crv_reprosisa/core/database/database_provider.dart';
 import 'package:crv_reprosisa/core/sync/sync_providers.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/data/datasource/client_local_datasource.dart';
 import 'package:crv_reprosisa/features/bandas_transportadoras/data/services/client_sync_service.dart';
+import 'package:crv_reprosisa/features/bandas_transportadoras/domain/usecases/update_banda_report_use_case.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../data/datasource/banda_remote_datasource.dart';
@@ -53,11 +54,14 @@ final bandaInspectionProvider =
     NotifierProvider<BandaInspectionNotifier, BandaInspectionState>(() {
       return BandaInspectionNotifier();
     });
-
+final updateBandaReportUseCaseProvider = Provider((ref) {
+  final repo = ref.watch(bandaRepositoryProvider);
+  return UpdateBandaReportUseCase(repo);
+});
 final clientSyncServiceProvider = Provider<ClientSyncService>((ref) {
   return ClientSyncService(
     local: ref.read(clientLocalDataSourceProvider),
     remote: ref.read(bandaDataSourceProvider),
-    rateLimiter: ref.read(globalRateLimiterProvider)
+    rateLimiter: ref.read(globalRateLimiterProvider),
   );
 });

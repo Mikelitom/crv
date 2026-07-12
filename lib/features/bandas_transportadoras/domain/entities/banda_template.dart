@@ -18,7 +18,11 @@ class BandaSection {
   final String name;
   final List<BandaComponent> components;
 
-  BandaSection({required this.id, required this.name, required this.components});
+  BandaSection({
+    required this.id,
+    required this.name,
+    required this.components,
+  });
 
   BandaSection copyWith({
     String? id,
@@ -44,11 +48,11 @@ class BandaComponent {
   final String name;
   final String? description;
   final List<BandaOption> options;
-  final List<String> customOptions;  
-  final List<String> selectedOptionIds; 
+  final List<String> customOptions;
+  final List<String> selectedOptionIds;
   final String dimentions;
   final String observation;
-  final String comment; 
+  final String comment;
   final List<EvidenceFile> evidenceBefore;
   final List<EvidenceFile> evidenceAfter;
 
@@ -61,18 +65,23 @@ class BandaComponent {
     this.selectedOptionIds = const [],
     required this.dimentions, // Eliminé el = '', ahora es obligatorio pasarlo
     this.observation = '',
-    this.comment = '', 
+    this.comment = '',
     List<EvidenceFile>? evidenceBefore,
     List<EvidenceFile>? evidenceAfter,
   }) : evidenceBefore = evidenceBefore ?? [],
        evidenceAfter = evidenceAfter ?? [];
 
   BandaComponent copyWith({
-    String? id, String? name, String? description,
-    List<BandaOption>? options, List<String>? customOptions, 
-    List<String>? selectedOptionIds, String? dimentions,
-String? comment, 
-    String? observation, List<EvidenceFile>? evidenceBefore,
+    String? id,
+    String? name,
+    String? description,
+    List<BandaOption>? options,
+    List<String>? customOptions,
+    List<String>? selectedOptionIds,
+    String? dimentions,
+    String? comment,
+    String? observation,
+    List<EvidenceFile>? evidenceBefore,
     List<EvidenceFile>? evidenceAfter,
   }) {
     return BandaComponent(
@@ -97,7 +106,7 @@ String? comment,
     final customLabels = selectedOptionIds
         .where((val) => !options.any((o) => o.id == val))
         .toList();
-        
+
     return {
       'accesory_id': id,
       'name': name,
@@ -118,16 +127,32 @@ class BandaOption {
 
   BandaOption({required this.id, required this.label, required this.value});
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'label': label,
-    'value': value,
-  };
+  Map<String, dynamic> toJson() => {'id': id, 'label': label, 'value': value};
 }
 
 class EvidenceFile {
   final Uint8List bytes;
   final String type;
   final String mimeType;
-  EvidenceFile({required this.bytes, required this.type, required this.mimeType});
+  final String? path;
+
+  EvidenceFile({
+    required this.bytes,
+    required this.type,
+    required this.mimeType,
+    this.path,
+  });
+
+  factory EvidenceFile.fromApi({
+    required Uint8List bytes,
+    required String path,
+    String type = 'image/jpeg',
+  }) {
+    return EvidenceFile(
+      bytes: bytes,
+      type: type,
+      mimeType: 'image/jpeg',
+      path: path,
+    );
+  }
 }

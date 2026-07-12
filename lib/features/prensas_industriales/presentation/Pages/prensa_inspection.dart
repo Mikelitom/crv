@@ -153,7 +153,6 @@ Future<void> _showStatusDialog() async {
   final String? result = await showDialog<String>(
     context: context,
     builder: (context) => AlertDialog(
-      // Responsividad: Máximo 90% del ancho de pantalla
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * 0.9,
       ),
@@ -176,34 +175,25 @@ Future<void> _showStatusDialog() async {
       content: Text(
         estaCompleto 
             ? "¿Deseas finalizar y enviar el reporte como COMPLETADO?" 
-            : "Faltan ${componentesFaltantes.length} componentes por inspeccionar. Se guardará como EN PROCESO.",
+            : "Faltan ${componentesFaltantes.length} componentes por inspeccionar. El reporte se guardará automáticamente como EN PROCESO.",
         style: const TextStyle(fontSize: 14, color: Colors.black87),
       ),
-      // Usamos Wrap para que los botones no causen overflow en móviles
       actions: [
         Wrap(
           spacing: 8.0, 
           runSpacing: 8.0,
           alignment: WrapAlignment.end,
           children: [
-            // CANCELAR
+            // BOTÓN CANCELAR: Siempre visible
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
               child: const Text("CANCELAR", style: TextStyle(fontWeight: FontWeight.bold)),
             ),
             
-            // EN PROCESO
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context, "IN_PROGRESS"),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.grey),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text("EN PROCESO"),
-            ),
-            
-            // COMPLETAR
+            // BOTÓN GUARDAR (Dinámico)
+            // Si está completo: Muestra "COMPLETAR"
+            // Si NO está completo: Muestra "GUARDAR EN PROCESO"
             if (estaCompleto)
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, "COMPLETED"),
@@ -213,6 +203,16 @@ Future<void> _showStatusDialog() async {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 child: const Text("COMPLETAR"),
+              )
+            else
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, "IN_PROGRESS"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange.shade800,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text("GUARDAR EN PROCESO"),
               ),
           ],
         ),

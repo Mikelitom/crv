@@ -4,6 +4,8 @@ import '../../domain/entities/roller.dart';
 
 class BandaInspectionState {
   final bool isLoading;
+  final String? editingReportId; 
+  final String? editingVersionId;
   final List<Client> clients;
   final List<Mine> allMines;
   final List<Mine> filteredMines;
@@ -12,7 +14,7 @@ class BandaInspectionState {
 
   final bool isRodilleriaActive; 
   final String reportStatus;    
-  final String rollerNotes; // Campo incluido
+  final String rollerNotes;
 
   final Client? selectedClient;
   final Mine? selectedMine;
@@ -29,8 +31,10 @@ class BandaInspectionState {
   final String presentTo;
   final String generalComments;
 
-  BandaInspectionState({
+  const BandaInspectionState({
     this.isLoading = false,
+    this.editingReportId,    
+    this.editingVersionId,   
     this.clients = const [],
     this.allMines = const [],
     this.filteredMines = const [],
@@ -38,7 +42,7 @@ class BandaInspectionState {
     this.rollers = const [],
     this.isRodilleriaActive = false,
     this.reportStatus = 'IN_PROGRESS',
-    this.rollerNotes = '', // Inicializado
+    this.rollerNotes = '',
     this.selectedClient,
     this.selectedMine,
     required this.inspectionDate,
@@ -54,14 +58,11 @@ class BandaInspectionState {
     this.generalComments = '',
   });
 
+  bool get isEditing => editingReportId != null;
+
   factory BandaInspectionState.initial() {
     return BandaInspectionState(
-      isLoading: false,
-      clients: const [],
-      allMines: const [],
-      filteredMines: const [],
-      sections: const [],
-      // Se añade observation: '' al inicializar los 8 rodillos
+      inspectionDate: DateTime.now(),
       rollers: List.generate(8, (index) => Roller(
         tableNumber: index + 1,
         baseNumber: 0,
@@ -74,38 +75,27 @@ class BandaInspectionState {
         isSelfAligning: false,
         observation: '', 
       )),
-      isRodilleriaActive: false,
-      reportStatus: 'IN_PROGRESS',
-      rollerNotes: '', // Inicializado
-      selectedClient: null,
-      selectedMine: null,
-      inspectionDate: DateTime.now(),
-      elaboro: '',
-      area: '',
-      seccion: '', 
-      conveyor: '',
-      conveyorResponsible: '',
-      recommendedBelt: '',
-      material: '',
-      granulometry: '',
-      presentTo: '',
-      generalComments: '',
     );
   }
 
   BandaInspectionState copyWith({
     bool? isLoading,
+    String? editingReportId,
+    bool clearEditingReport = false,
+    String? editingVersionId,
+    bool clearEditingVersion = false,
     List<Client>? clients,
     List<Mine>? allMines,
     List<Mine>? filteredMines,
     List<BandaSection>? sections,
     List<Roller>? rollers,
     bool? isRodilleriaActive,
-    String? rollerNotes, // Agregado al copyWith
+    String? rollerNotes,
     String? reportStatus,
     Client? selectedClient,
-    bool clearMine = false,
+    bool clearClient = false,
     Mine? selectedMine,
+    bool clearMine = false,
     DateTime? inspectionDate,
     String? elaboro,
     String? area,
@@ -120,6 +110,8 @@ class BandaInspectionState {
   }) {
     return BandaInspectionState(
       isLoading: isLoading ?? this.isLoading,
+      editingReportId: clearEditingReport ? null : (editingReportId ?? this.editingReportId),
+      editingVersionId: clearEditingVersion ? null : (editingVersionId ?? this.editingVersionId),
       clients: clients ?? this.clients,
       allMines: allMines ?? this.allMines,
       filteredMines: filteredMines ?? this.filteredMines,
@@ -127,8 +119,8 @@ class BandaInspectionState {
       rollers: rollers ?? this.rollers,
       isRodilleriaActive: isRodilleriaActive ?? this.isRodilleriaActive,
       reportStatus: reportStatus ?? this.reportStatus,
-      rollerNotes: rollerNotes ?? this.rollerNotes, // Asignación en copyWith
-      selectedClient: selectedClient ?? this.selectedClient,
+      rollerNotes: rollerNotes ?? this.rollerNotes,
+      selectedClient: clearClient ? null : (selectedClient ?? this.selectedClient),
       selectedMine: clearMine ? null : (selectedMine ?? this.selectedMine),
       inspectionDate: inspectionDate ?? this.inspectionDate,
       elaboro: elaboro ?? this.elaboro,
