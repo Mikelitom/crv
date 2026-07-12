@@ -1,4 +1,5 @@
 class Roller {
+  final String? id;
   final int tableNumber;
   final int baseNumber;
   final bool isLeft;
@@ -8,9 +9,10 @@ class Roller {
   final bool isReturn;
   final bool isTriple;
   final bool isSelfAligning;
-  final String observation; 
+  final String observation;
 
   Roller({
+    this.id,
     required this.tableNumber,
     required this.baseNumber,
     required this.isLeft,

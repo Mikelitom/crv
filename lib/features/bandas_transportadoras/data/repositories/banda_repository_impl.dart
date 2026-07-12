@@ -12,6 +12,31 @@ class BandaRepositoryImpl implements BandaRepository {
   final ClientLocalDataSource local;
 
   BandaRepositoryImpl(this.dataSource, this.local);
+@override
+  Future<Either<Failure, String>> updateBandaReport(String reportId, Map<String, dynamic> reportData) async {
+    try {
+      final id = await dataSource.updateBandaReport(reportId, reportData);
+      return Right(id);
+    } catch (e) {
+      return _handleReportError(e, reportData);
+    }
+  }Future<Either<Failure, String>> _handleReportError(dynamic e, Map<String, dynamic> reportData) async {
+    if (e is DioException) {
+      if (isNetworkError(e)) {
+        await local.saveOfflineReport(reportData);
+        return const Left(ServerFailure("Sin conexión. Reporte guardado localmente."));
+      }
+      return Left(ServerFailure(e.response?.data["detail"]?.toString() ?? "Error del servidor"));
+    }
+    return Left(ServerFailure(e.toString()));
+  }
+
+  bool isNetworkError(DioException e) {
+    return e.type == DioExceptionType.connectionError ||
+        e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout;
+  }
 
   @override
   Future<Either<Failure, List<BandaSection>>> getBandaTemplate() async {

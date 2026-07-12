@@ -3,6 +3,7 @@ import '../../domain/entities/loan_area.dart';
 import '../../domain/entities/component_item.dart';
 
 class InspeccionState {
+  
   final String? editingVersionId;
   final Press? selectedPress;
   final DateTime inspectionDate;

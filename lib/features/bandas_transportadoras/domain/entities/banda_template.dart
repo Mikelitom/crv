@@ -115,6 +115,7 @@ class BandaOption {
   final String id;
   final String label;
   final String value;
+  
 
   BandaOption({required this.id, required this.label, required this.value});
 
@@ -129,5 +130,12 @@ class EvidenceFile {
   final Uint8List bytes;
   final String type;
   final String mimeType;
-  EvidenceFile({required this.bytes, required this.type, required this.mimeType});
+  final String? path; // <--- AGREGA ESTO
+
+  EvidenceFile({
+    required this.bytes, 
+    required this.type, 
+    required this.mimeType,
+    this.path, // <--- ACTUALIZA CONSTRUCTOR
+  });
 }

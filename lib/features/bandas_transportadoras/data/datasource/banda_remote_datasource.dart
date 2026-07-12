@@ -7,6 +7,7 @@ abstract class BandaRemoteDataSource {
   Future<List<ClientModel>> getActiveClients();
   Future<List<MineModel>> getActiveMines();
   Future<String> saveBandaReport(Map<String, dynamic> reportData);
+  Future<String> updateBandaReport(String reportId, Map<String, dynamic> reportData);
 }
 
 class BandaRemoteDataSourceImpl implements BandaRemoteDataSource {
@@ -18,6 +19,11 @@ class BandaRemoteDataSourceImpl implements BandaRemoteDataSource {
     final response = await dio.get('/template/conveyor'); // Ajustar ruta según tu API
     final List data = response.data['sections'];
     return data.map((e) => BandaSectionModel.fromJson(e)).toList();
+  }
+  @override
+  Future<String> updateBandaReport(String reportId, Map<String, dynamic> reportData) async {
+    final response = await dio.put('/full-conveyor-reports/$reportId', data: reportData);
+    return response.data['id'].toString();
   }
 
   @override

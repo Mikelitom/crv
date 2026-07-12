@@ -1,6 +1,10 @@
+import 'package:crv_reprosisa/core/config/dio_client.dart';
+import 'package:crv_reprosisa/core/utils/imege_downloader.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dartz/dartz.dart';
 import '../provider/banda_inspection_providers.dart';
+import 'package:collection/collection.dart';
 import '../provider/banda_inspection_state.dart';
 import '../../domain/entities/client_mine.dart';
 import '../../domain/entities/banda_template.dart';
@@ -9,12 +13,18 @@ import '../../domain/entities/roller.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_notifier_provider.dart';
 
 class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
+  String? _editingReportId;
+  bool get isEditing => _editingReportId != null;
+  String? get editingReportId => _editingReportId;
+
+  void setEditingReportId(String id) => _editingReportId = id;
   @override
   BandaInspectionState build() => BandaInspectionState.initial();
 
   void reset() {
     final authState = ref.read(authNotifierProvider);
     final userName = authState.user?.name ?? "Usuario";
+    _editingReportId = null;
 
     state = BandaInspectionState.initial().copyWith(
       elaboro: userName,
@@ -28,17 +38,20 @@ class BandaInspectionNotifier extends Notifier<BandaInspectionState> {
       rollers: active ? [] : [],
     );
   }
-void removeRoller(int index) {
-  final currentRollers = List<Roller>.from(state.rollers);
-  if (index >= 0 && index < currentRollers.length) {
-    currentRollers.removeAt(index);
-    state = state.copyWith(rollers: currentRollers);
+
+  void removeRoller(int index) {
+    final currentRollers = List<Roller>.from(state.rollers);
+    if (index >= 0 && index < currentRollers.length) {
+      currentRollers.removeAt(index);
+      state = state.copyWith(rollers: currentRollers);
+    }
   }
-}
-  // Agrega esto a tu 
-void addRoller() {
+
+  // Agrega esto a tu
+  void addRoller() {
     final newRoller = Roller(
-      tableNumber: state.rollers.length + 1, // Sugerencia: autoincrementar número
+      tableNumber:
+          state.rollers.length + 1, // Sugerencia: autoincrementar número
       baseNumber: 0,
       isLeft: false,
       isCenter: false,
@@ -102,66 +115,114 @@ void addRoller() {
     }
   }
 
-  void loadExistingReport(Map<String, dynamic> reportData) {
-    state = state.copyWith(
-      conveyor: reportData['conveyor'] ?? "",
-      area: reportData['area'] ?? "",
-      conveyorResponsible: reportData['conveyor_responsible'] ?? "",
-      recommendedBelt: reportData['recommended_belt'] ?? "",
-      material: reportData['material'] ?? "",
-      granulometry: reportData['granulometry'] ?? "",
-      presentTo: reportData['present_to'] ?? "",
-      reportStatus: reportData['status'] ?? 'IN_PROGRESS',
-      isRodilleriaActive: reportData['rollers'] != null,
-    );
+  Future<void> loadExistingReport(Map<String, dynamic> reportData) async {
+    state = state.copyWith(isLoading: true);
 
-    final List<dynamic> answers = reportData['answers'] ?? [];
-    final updatedSections = state.sections.map((section) {
-      final updatedComponents = section.components.map((comp) {
-        final answer = answers.firstWhere(
-          (a) => a['accesory_id'] == comp.id,
-          orElse: () => null,
-        );
-        if (answer != null) {
-          final rawOptions = answer['option_id'];
-          return comp.copyWith(
-            selectedOptionIds: rawOptions is List
-                ? List<String>.from(rawOptions)
-                : [rawOptions.toString()],
-            observation: answer['recommended_action'] ?? "",
-            dimentions: answer['dimentions']?.toString() ?? "",
+    try {
+      // 1. Extraer los objetos raíz según el nuevo JSON
+      final Map<String, dynamic> report = reportData['report'] ?? {};
+      final Map<String, dynamic> conveyorInfo = reportData['conveyor'] ?? {};
+      final List<dynamic> answers = reportData['answers'] ?? [];
+
+      // Autocompletado de Mina/Cliente (usando el nombre que viene en el JSON)
+      final String mineName = conveyorInfo['mine']?.toString() ?? "";
+      final foundMine = state.allMines.firstWhereOrNull(
+        (m) => m.name.toLowerCase() == mineName.toLowerCase(),
+      );
+      final foundClient = foundMine != null
+          ? state.clients.firstWhereOrNull((c) => c.id == foundMine.clientId)
+          : null;
+
+      // 2. Mapeo de Secciones
+      final updatedSections = await Future.wait(
+        state.sections.map((section) async {
+          final updatedComponents = await Future.wait(
+            section.components.map((comp) async {
+              // 🔥 CLAVE: Buscar todas las respuestas asociadas a este accesorio (puede haber varias opciones marcadas)
+              final componentAnswers = answers
+                  .where(
+                    (a) =>
+                        a['accesory']?['id']?.toString() == comp.id.toString(),
+                  )
+                  .toList();
+
+              if (componentAnswers.isNotEmpty) {
+                // Extraer todos los IDs de opciones y custom_options
+                List<String> selectedIds = [];
+                String obs = "";
+                String dim = "";
+                String com = "";
+
+                for (var ans in componentAnswers) {
+                  // Opción fija
+                  if (ans['option'] != null) {
+                    selectedIds.add(ans['option']['id'].toString());
+                  }
+                  // Opción personalizada
+                  if (ans['custom_option'] != null) {
+                    selectedIds.add(ans['custom_option'].toString());
+                  }
+                  // Tomar valores de los campos (si existen)
+                  obs = ans['recommended_action']?.toString() ?? obs;
+                  dim = ans['dimentions']?.toString() ?? dim;
+                  com = ans['comment']?.toString() ?? com;
+                }
+
+                return comp.copyWith(
+                  selectedOptionIds: selectedIds,
+                  observation: obs,
+                  dimentions: dim,
+                  comment: com,
+                );
+              }
+              return comp;
+            }),
           );
-        }
-        return comp;
-      }).toList();
-      return section.copyWith(components: updatedComponents);
-    }).toList();
+          return section.copyWith(components: updatedComponents);
+        }),
+      );
 
-    List<Roller> loadedRollers = state.rollers;
-    if (reportData['rollers_data'] != null) {
-      final Map<String, dynamic> rollersWrapper = reportData['rollers_data'];
-      final List<dynamic> rollersData = rollersWrapper['rollers'] ?? [];
-
+      // 3. Mapeo de rodillos (está correcto en tu estructura original)
+      List<Roller> loadedRollers = [];
+      final List<dynamic> rollersData = reportData['rollers'] ?? [];
       loadedRollers = rollersData
           .map(
             (r) => Roller(
+              id: r['id'],
               tableNumber: r['table_number'] ?? 0,
               baseNumber: r['base_number'] ?? 0,
-              isLeft:
-                  r['is_left'] ?? false, // Toma el valor booleano directamente
+              isLeft: r['is_left'] ?? false,
               isCenter: r['is_center'] ?? false,
               isRight: r['is_right'] ?? false,
               isImpact: r['is_impact'] ?? false,
               isReturn: r['is_return'] ?? false,
               isTriple: r['is_triple'] ?? false,
               isSelfAligning: r['is_self_aligning'] ?? false,
-              observation: r['observation'] ?? '',
+              observation: r['observation']?.toString() ?? '',
             ),
           )
           .toList();
-    }
 
-    state = state.copyWith(sections: updatedSections, rollers: loadedRollers);
+      // 4. Actualizar estado
+      state = state.copyWith(
+        isLoading: false,
+        sections: updatedSections,
+        rollers: loadedRollers,
+        selectedMine: foundMine,
+        selectedClient: foundClient,
+        conveyor: conveyorInfo['name']?.toString() ?? "",
+        area: conveyorInfo['area']?.toString() ?? "",
+        conveyorResponsible: report['conveyor_responsible']?.toString() ?? "",
+        recommendedBelt: report['recommended_belt']?.toString() ?? "",
+        material: report['material']?.toString() ?? "",
+        granulometry: report['granulometry']?.toString() ?? "",
+        presentTo: report['present_to']?.toString() ?? "",
+        rollerNotes: report['roller_notes']?.toString() ?? "",
+      );
+    } catch (e) {
+      debugPrint("Error crítico al cargar reporte: $e");
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   void updateRoller(

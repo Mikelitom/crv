@@ -7,5 +7,6 @@ abstract class BandaRepository {
   Future<Either<Failure, List<BandaSection>>> getBandaTemplate();
   Future<Either<Failure, List<Client>>> getActiveClients();
   Future<Either<Failure, List<Mine>>> getActiveMines();
+  Future<Either<Failure, String>> updateBandaReport(String reportId, Map<String, dynamic> reportData);
   Future<Either<Failure, String>> createBandaReport(Map<String, dynamic> reportData);
 }

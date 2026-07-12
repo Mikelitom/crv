@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:crv_reprosisa/features/assets/presentation/providers/client_actions_providers.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,14 +38,26 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
   // 🔹 Llave global para identificar el inicio de la tabla/sección
   final GlobalKey _sectionKey = GlobalKey();
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(bandaInspectionProvider.notifier).initialLoad();
-    });
-  }
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    if (!mounted) return;
 
+    final notifier = ref.read(bandaInspectionProvider.notifier);
+    await notifier.initialLoad();
+    if (!mounted) return;
+    if (widget.itemToEdit != null) {
+      notifier.setEditingReportId(widget.itemToEdit!.id);
+      
+      await ref.read(conveyorReportDetailProvider.notifier).fetchDetail(widget.itemToEdit!.versionId);
+      final data = ref.read(conveyorReportDetailProvider).data;
+      if (data != null && mounted) {
+        notifier.loadExistingReport(data.toMap());
+      }
+    }
+  });
+}
   // 🔹 Función para desplazar la vista exactamente al inicio de la sección
   void _scrollToSectionStart() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -83,7 +96,7 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
   final evidenceService = ref.read(evidenceServiceProvider);
   final notifier = ref.read(bandaInspectionProvider.notifier);
 
-  // 1. VALIDACIÓN PREVENTIVA DE CAMPOS (Evita el error string_too_short)
+  // 1. VALIDACIÓN PREVENTIVA
   if (state.selectedClient == null || state.selectedMine == null) {
     _showSnack("Selecciona cliente y mina antes de continuar", Colors.orange);
     return;
@@ -104,19 +117,13 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
   try {
     final List<Map<String, dynamic>> answers = [];
 
+    // ... (Tu lógica de procesamiento de componentes y evidencias se mantiene IGUAL) ...
     for (var section in state.sections) {
       for (var component in section.components) { 
         final validOptionIds = component.options.map((o) => o.id).toSet();
-        
-        final fixedIds = component.selectedOptionIds
-            .where((val) => validOptionIds.contains(val))
-            .toList();
-            
-        final customLabels = component.selectedOptionIds
-            .where((val) => !validOptionIds.contains(val))
-            .toList();
+        final fixedIds = component.selectedOptionIds.where((val) => validOptionIds.contains(val)).toList();
+        final customLabels = component.selectedOptionIds.where((val) => !validOptionIds.contains(val)).toList();
 
-        // Se agregó la validación para incluir el componente si tiene comment
         if (fixedIds.isEmpty && customLabels.isEmpty && component.observation.isEmpty && component.comment.isEmpty) continue;
 
         final List<Map<String, String>> evidenceList = [];
@@ -127,11 +134,7 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
           final file = File('${tempDir.path}/banda_${DateTime.now().microsecondsSinceEpoch}.jpg');
           await file.writeAsBytes(evFile.bytes);
 
-          final uploadResult = await evidenceService.uploadEvidence(
-            file: file,
-            basePath: 'inspecciones/bandas',
-          );
-
+          final uploadResult = await evidenceService.uploadEvidence(file: file, basePath: 'inspecciones/bandas');
           uploadResult.fold(
             (l) => debugPrint("Error subida: ${l.message}"),
             (dto) => evidenceList.add({
@@ -149,41 +152,26 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
           "custom_options": customLabels,
           "recommended_action": component.observation,
           "dimentions": component.dimentions, 
-          "comment": component.comment, // Campo agregado
+          "comment": component.comment,
           "evidences": evidenceList,
         });
       }
     }      
 
     final List<Map<String, dynamic>> filteredRollers = state.rollers
-        .where((r) => 
-            (r.tableNumber > 0 || r.baseNumber > 0 || 
-             r.isLeft || r.isCenter || r.isRight || 
-             r.isImpact || r.isReturn || r.observation.isNotEmpty)
-        )
+        .where((r) => (r.tableNumber > 0 || r.baseNumber > 0 || r.isLeft || r.isCenter || r.isRight || r.isImpact || r.isReturn || r.observation.isNotEmpty))
         .map((r) => {
-            "table_number": r.tableNumber, 
-            "base_number": r.baseNumber, 
-            "is_left": r.isLeft ? 1 : 0,
-            "is_center": r.isCenter ? 1 : 0,
-            "is_right": r.isRight ? 1 : 0,
-            "is_impact": r.isImpact ? 1 : 0,
-            "is_return": r.isReturn ? 1 : 0,
-            "is_triple": r.isTriple ? 1 : 0,
-            "is_self_aligning": r.isSelfAligning ? 1 : 0,
+            "table_number": r.tableNumber, "base_number": r.baseNumber, "is_left": r.isLeft ? 1 : 0,
+            "is_center": r.isCenter ? 1 : 0, "is_right": r.isRight ? 1 : 0, "is_impact": r.isImpact ? 1 : 0,
+            "is_return": r.isReturn ? 1 : 0, "is_triple": r.isTriple ? 1 : 0, "is_self_aligning": r.isSelfAligning ? 1 : 0,
             "observation": r.observation
-        })
-        .toList();
+        }).toList();
 
     final rollersData = (state.isRodilleriaActive && filteredRollers.isNotEmpty) 
-        ? {
-            "roller_notes": state.rollerNotes,
-            "rollers": filteredRollers
-          } 
-        : null;
+        ? { "roller_notes": state.rollerNotes, "rollers": filteredRollers } : null;
       
     if (esFinalizar && answers.isEmpty && filteredRollers.isEmpty) {
-      _showSnack("El reporte está vacío. Agrega datos antes de finalizar.", Colors.orange);
+      _showSnack("El reporte está vacío.", Colors.orange);
       setState(() => _isSaving = false);
       return;
     }
@@ -192,35 +180,29 @@ Future<void> _guardarReporte({required bool esFinalizar}) async {
     final folio = "P${_getInitials(state.selectedMine?.name ?? "")}${now.day.toString().padLeft(2, '0')}${now.month.toString().padLeft(2, '0')}${now.year.toString().substring(2)}${state.area.isNotEmpty ? state.area[0].toUpperCase() : "X"}${state.conveyor.isNotEmpty ? state.conveyor : "000"}";
 
     final reportRequest = {
-      "conveyor": state.conveyor,
-      "area": state.area,
-      "mine_id": state.selectedMine?.id ?? "",
-      "inspection_date": state.inspectionDate.toIso8601String(),
-      "section": state.seccion,
-      "recommended_belt": state.recommendedBelt,
-      "material": state.material,
-      "granulometry": state.granulometry,
-      "present_to": state.presentTo,
+      "conveyor": state.conveyor, "area": state.area, "mine_id": state.selectedMine?.id ?? "",
+      "inspection_date": state.inspectionDate.toIso8601String(), "section": state.seccion,
+      "recommended_belt": state.recommendedBelt, "material": state.material,
+      "granulometry": state.granulometry, "present_to": state.presentTo,
       "state": esFinalizar ? "COMPLETED" : "IN_PROGRESS", 
       "conveyor_responsible": state.conveyorResponsible,
-      "folio": folio,
-      "answers": answers,
-      "rollers_data": rollersData,
+      "folio": folio, "answers": answers, "rollers_data": rollersData,
     };
 
-    final result = await ref.read(createBandaReportUseCaseProvider).call(reportRequest);
+    // 🔥 CAMBIO AQUÍ: Lógica de Edición vs Creación
+    final result = notifier.isEditing
+        ? await ref.read(updateBandaReportUseCaseProvider).call(state.editingReportId!, reportRequest)
+        : await ref.read(createBandaReportUseCaseProvider).call(reportRequest);
     
     result.fold(
       (failure) {
-        // Mejor manejo de error para mostrar al usuario
         String msg = failure.message.contains("string_too_short") 
-            ? "Campos incompletos: Asegúrate de llenar Área, Transportador, Material y Granulometría con al menos 2 letras." 
-            : "Error: ${failure.message}";
+            ? "Campos incompletos." : "Error: ${failure.message}";
         _showSnack(msg, Colors.red);
       },
       (id) {
-        _showSnack("¡Reporte guardado con éxito!", Colors.green);
-        ref.read(bandaInspectionProvider.notifier).initialLoad();
+        _showSnack(notifier.isEditing ? "¡Reporte actualizado!" : "¡Guardado con éxito!", Colors.green);
+        notifier.initialLoad();
         Navigator.pop(context);
       }
     );
@@ -319,75 +301,74 @@ Future<void> _showPreview(BuildContext context) async {
     }
   }
 @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(bandaInspectionProvider);
-    final bool isMobile = MediaQuery.of(context).size.width < 600;
+Widget build(BuildContext context) {
+  final state = ref.watch(bandaInspectionProvider);
+  final bool isMobile = MediaQuery.of(context).size.width < 600;
+  List<String> pasos = state.sections.map((s) => s.name).toList();
+  if (state.isRodilleriaActive) pasos.add("RODILLERÍA");
+  if (_currentSectionIndex >= pasos.length) {
+    _currentSectionIndex = pasos.isNotEmpty ? pasos.length - 1 : 0;
+  }
 
-    // 1. Calculamos los pasos dinámicamente
-    List<String> pasos = state.sections.map((s) => s.name).toList();
-    if (state.isRodilleriaActive) pasos.add("RODILLERÍA");
-
-    // 2. Seguridad: Si eliminamos la rodillería y el índice actual era el de rodillería,
-    // ajustamos el índice a la última sección disponible.
-    if (_currentSectionIndex >= pasos.length) {
-      _currentSectionIndex = pasos.isNotEmpty ? pasos.length - 1 : 0;
-    }
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(isMobile ? 16 : 24),
-        child: Column(
-          children: [
-            CustomHeader(
-              title: "Inspección de Bandas",
-              actionIcon: Icons.arrow_back_ios_new_rounded,
-              onActionTap: () => Navigator.pop(context),
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8F9FA),
+    body: SingleChildScrollView(
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      child: Column(
+        children: [
+          CustomHeader(
+            title: state.isEditing ? "Editar Inspección de Banda" : "Inspección de Bandas",
+            actionIcon: Icons.arrow_back_ios_new_rounded,
+            onActionTap: () => Navigator.pop(context),
+          ),
+          const SizedBox(height: 24),
+          CaptureMethodSelector(onManualFill: () {}, onScan: () {}),
+          const SizedBox(height: 24),
+          
+          // 🔥 CAMBIO: Eliminamos ValueKey del padre. 
+          // La reactividad debe manejarse dentro de CustomerSection usando ref.watch
+          const CustomerSection(), 
+          const SizedBox(height: 24),
+          const GeneralBandaInfo(),
+          
+          const SizedBox(height: 32),
+          _buildStepper(pasos),
+          const SizedBox(height: 24),
+          
+          // Contenido activo
+          if (state.sections.isNotEmpty || state.isRodilleriaActive)
+            Container(
+              key: _sectionKey,
+              child: _buildActiveContent(state),
             ),
-            const SizedBox(height: 24),
-            CaptureMethodSelector(onManualFill: () {}, onScan: () {}),
-            const SizedBox(height: 24),
-            const CustomerSection(),
-            const SizedBox(height: 24),
-            const GeneralBandaInfo(),
-            const SizedBox(height: 32),
-            _buildStepper(pasos),
-            const SizedBox(height: 24),
-            
-            // Contenido activo
-            if (state.sections.isNotEmpty || state.isRodilleriaActive)
-              Container(
-                key: _sectionKey,
-                child: _buildActiveContent(state),
-              ),
 
-            // Botón para agregar rodillería solo si no está activa y estamos al final
-            if (!state.isRodilleriaActive && _currentSectionIndex == state.sections.length - 1)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      ref.read(bandaInspectionProvider.notifier).toggleRodilleria(true);
-                      setState(() => _currentSectionIndex = state.sections.length);
-                    },
-                    icon: const Icon(Icons.add_circle_outline),
-                    label: const Text("AGREGAR RODILLERÍA"),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    ),
+          // Botón para agregar rodillería
+          if (!state.isRodilleriaActive && _currentSectionIndex == state.sections.length - 1)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    ref.read(bandaInspectionProvider.notifier).toggleRodilleria(true);
+                    setState(() => _currentSectionIndex = state.sections.length);
+                  },
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: const Text("AGREGAR RODILLERÍA"),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   ),
                 ),
               ),
+            ),
 
-            const SizedBox(height: 32),
-            _buildFooter(pasos.length, isMobile),
-            const SizedBox(height: 50),
-          ],
-        ),
+          const SizedBox(height: 32),
+          _buildFooter(pasos.length, isMobile),
+          const SizedBox(height: 50),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 Widget _buildActiveContent(BandaInspectionState state) {
   // 1. Caso: Rodillería Activa y estamos en su pestaña
   if (state.isRodilleriaActive && _currentSectionIndex == state.sections.length) {
