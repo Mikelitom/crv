@@ -25,10 +25,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   @override
   void initState() {
-    Future.microtask(() {
-      ref.read(profileProvider.notifier).getUserProfile();
-    });
-
     super.initState();
     _nameController = TextEditingController();
     _emailController = TextEditingController();
@@ -58,8 +54,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       }
 
       if (next.status == ProfileStatus.error && next.error != null) {
-        final errorMessage = next.error.toString(); 
-        
+        final errorMessage = next.error.toString();
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -68,18 +64,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         );
       }
     });
-return Scaffold(
+    return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         // Eliminamos el 'actions' que contenía el IconButton con el icono de logout
         title: const Text(
-          "Mi Perfil", 
-          style: TextStyle(
-            color: Colors.black, 
-            fontWeight: FontWeight.bold
-          )
+          "Mi Perfil",
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
       body: _buildBody(profileState),
@@ -89,7 +82,9 @@ return Scaffold(
   Widget _buildBody(ProfileState state) {
     // 1. Manejo de carga
     if (state.status == ProfileStatus.loading && state.user == null) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)));
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFFC62828)),
+      );
     }
 
     // 2. Manejo de error
@@ -99,15 +94,19 @@ return Scaffold(
           children: [
             const Icon(Icons.error_outline, size: 60, color: Colors.red),
             Text("Error: ${state.error}"),
-            TextButton(onPressed: () => ref.read(profileProvider.notifier).getUserProfile(), child: const Text("Reintentar")),
+            TextButton(
+              onPressed: () =>
+                  ref.read(profileProvider.notifier).getUserProfile(),
+              child: const Text("Reintentar"),
+            ),
           ],
         ),
       );
     }
 
     // 3. CAMBIO AQUÍ: Obtenemos el usuario de forma segura
-    final user = state.user; 
-    
+    final user = state.user;
+
     // Si después de todas las validaciones sigue siendo null, no dibujamos la pantalla
     if (user == null) {
       return const Center(child: CircularProgressIndicator());
@@ -121,12 +120,18 @@ return Scaffold(
         bool isDesktop = constraints.maxWidth > 1100;
         return SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 40 : 20, vertical: 20),
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 40 : 20,
+              vertical: 20,
+            ),
             child: Column(
               children: [
                 if (isNotVerified) _buildVerificationBanner(),
                 if (state.status == ProfileStatus.loading)
-                  const LinearProgressIndicator(color: Color(0xFFC62828), minHeight: 2),
+                  const LinearProgressIndicator(
+                    color: Color(0xFFC62828),
+                    minHeight: 2,
+                  ),
                 const SizedBox(height: 10),
                 if (isDesktop)
                   _buildDesktopLayout(context, user)
@@ -153,11 +158,19 @@ return Scaffold(
       ),
       child: Column(
         children: [
-          const Icon(Icons.pending_actions_rounded, color: Colors.orange, size: 40),
+          const Icon(
+            Icons.pending_actions_rounded,
+            color: Colors.orange,
+            size: 40,
+          ),
           const SizedBox(height: 12),
           const Text(
             "SOLICITUD EN PROCESO",
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 16),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.orange,
+              fontSize: 16,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -168,10 +181,17 @@ return Scaffold(
           const SizedBox(height: 16),
           // Botón para que el usuario actualice sin salir
           TextButton.icon(
-            onPressed: () => ref.read(profileProvider.notifier).getUserProfile(),
+            onPressed: () =>
+                ref.read(profileProvider.notifier).getUserProfile(),
             icon: const Icon(Icons.refresh_rounded, color: Colors.orange),
-            label: const Text("ACTUALIZAR ESTADO", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
-          )
+            label: const Text(
+              "ACTUALIZAR ESTADO",
+              style: TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -262,11 +282,13 @@ return Scaffold(
             baseColor: const Color(0xFFC62828),
             hoverColor: const Color.fromARGB(255, 169, 18, 18),
             onTap: () {
-              ref.read(profileProvider.notifier).updateInfo(
-                _nameController.text, 
-                _emailController.text, 
-                _phoneController.text
-              );
+              ref
+                  .read(profileProvider.notifier)
+                  .updateInfo(
+                    _nameController.text,
+                    _emailController.text,
+                    _phoneController.text,
+                  );
             },
           ),
         ],
