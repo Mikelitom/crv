@@ -1,6 +1,6 @@
 class InspectionRowUI {
-  final String id;           // report_id
-  final String versionId;    // 🔥 NUEVO: ID para llamar al detalle de versión
+  final String id;           
+  final String versionId;    
   final String reportType;
   final String title;
   final String description;
@@ -9,10 +9,11 @@ class InspectionRowUI {
   final int versionNumber;
   final String userName;
   final String date;
+  final List<InspectionRowUI>? allVersions; 
 
   InspectionRowUI({
     required this.id,
-    required this.versionId, // 🔥 Actualizado
+    required this.versionId, 
     required this.reportType,
     required this.title,
     required this.description,
@@ -21,7 +22,22 @@ class InspectionRowUI {
     required this.versionNumber,
     required this.userName,
     required this.date,
-  });
+    this.allVersions,
+  });InspectionRowUI copyWith({List<InspectionRowUI>? allVersions}) {
+    return InspectionRowUI(
+      id: id,
+      versionId: versionId,
+      reportType: reportType,
+      title: title,
+      description: description,
+      folio: folio,
+      state: state,
+      versionNumber: versionNumber,
+      userName: userName,
+      date: date,
+      allVersions: allVersions ?? this.allVersions,
+    );
+  }
 
   String get translatedReportType {
     switch (reportType.toUpperCase()) {
@@ -43,7 +59,6 @@ class InspectionRowUI {
   factory InspectionRowUI.fromJson(Map<String, dynamic> json) {
     final String titleText = json['title'] ?? '';
     
-    // Lógica de versión (la que ya tenías)
     int extractedVersion = 0;
     final match = RegExp(r'v(\d+)$', caseSensitive: false).firstMatch(titleText);
     if (match != null) {

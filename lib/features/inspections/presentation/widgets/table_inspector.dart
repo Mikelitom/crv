@@ -157,57 +157,83 @@ Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
     return null;
   }
 }
-Future<void> _viewReport(InspectionRowUI item) async {
-    LoadingOverlay.show(context, "Cargando datos del reporte...");
-    
-    final pdfBytes = await _buildPdfBytes(item);
-        if (mounted) LoadingOverlay.hide(context);
-    
+// --- MÉTODO CENTRALIZADO ---
+  Future<void> _handleReportAction(InspectionRowUI item, {required bool isPrint}) async {
+    // 1. Buscamos todas las versiones que tengan el mismo ID (report_id)
+    // Esto agrupa automáticamente todas las versiones del reporte seleccionado
+    final List<InspectionRowUI> versiones = widget.items
+        .where((i) => i.id == item.id)
+        .toList()
+      ..sort((a, b) => b.versionNumber.compareTo(a.versionNumber)); // Ordenar de mayor a menor
+
+    InspectionRowUI itemFinal = item;
+
+    // 2. Si hay más de una versión, mostramos el selector
+    if (versiones.length > 1) {
+      final selected = await showModalBottomSheet<InspectionRowUI>(
+        context: context,
+        builder: (context) => ListView.builder(
+          shrinkWrap: true,
+          itemCount: versiones.length,
+          itemBuilder: (context, index) {
+            final v = versiones[index];
+            return ListTile(
+              title: Text("Versión ${v.versionNumber}"),
+              subtitle: Text(v.versionId == item.versionId ? "Versión actual seleccionada" : ""),
+              onTap: () => Navigator.pop(context, v),
+            );
+          },
+        ),
+      );
+      
+      if (selected == null) return; // Usuario canceló
+      itemFinal = selected;
+    }
+    LoadingOverlay.show(context, isPrint ? "Generando..." : "Cargando...");
+    final pdfBytes = await _buildPdfBytes(itemFinal);
+    if (mounted) LoadingOverlay.hide(context);
+
     if (pdfBytes == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Error al cargar detalle o generar PDF")),
-        );
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error al cargar reporte")));
       return;
     }
-    
-    if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: const Text("Vista Previa"),
-            backgroundColor: primaryRed,
-          ),
-          body: PdfPreview(
-            build: (format) => pdfBytes,
-            initialPageFormat: PdfPageFormat.letter,
-          ),
-        ),
-      ),
-    );
-  }
 
-  Future<void> _printReport(InspectionRowUI item) async {
-    // Paso 1: Mensaje de carga para generación
-    LoadingOverlay.show(context, "Generando PDF para impresión...");
-    
-    final pdfBytes = await _buildPdfBytes(item);
-    
-    // Paso 2: Ocultar
-    if (mounted) LoadingOverlay.hide(context);
-    
-    if (pdfBytes != null) {
-      // Paso 3: Opcional, un mensaje rápido antes de imprimir
-      await Printing.sharePdf(
-        bytes: pdfBytes,
-        filename: 'Reporte_${item.folio}.pdf',
-      );
+    if (isPrint) {
+      await Printing.sharePdf(bytes: pdfBytes, filename: 'Reporte_${itemFinal.folio}_v${itemFinal.versionNumber}.pdf');
+    } else {
+      if (!mounted) return;
+      Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text("Vista Previa"), backgroundColor: primaryRed),
+        body: PdfPreview(build: (_) => pdfBytes),
+      )));
     }
   }
-
+List<InspectionRowUI> agruparReportes(List<InspectionRowUI> listaCruda) {
+  final Map<String, List<InspectionRowUI>> mapa = {};
+  for (var item in listaCruda) {
+    if (!mapa.containsKey(item.id)) mapa[item.id] = [];
+    mapa[item.id]!.add(item);
+  }
+  
+  return mapa.values.map((versiones) {
+    versiones.sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
+    final base = versiones.first;
+    return base; 
+  }).toList();
+}List<InspectionRowUI> get _filteredItems {
+  final Map<String, InspectionRowUI> uniqueMap = {};
+  for (var item in widget.items) {
+    // Si el ID no existe o la versión es mayor, actualizamos el mapa
+    if (!uniqueMap.containsKey(item.id) || 
+        item.versionNumber > (uniqueMap[item.id]?.versionNumber ?? 0)) {
+      uniqueMap[item.id] = item;
+    }
+  }
+  return uniqueMap.values.toList();
+}
+  // --- MÉTODOS QUE AHORA DISPARAN LA ACCIÓN CENTRALIZADA ---
+  Future<void> _viewReport(InspectionRowUI item) => _handleReportAction(item, isPrint: false);
+  Future<void> _printReport(InspectionRowUI item) => _handleReportAction(item, isPrint: true);
 Future<void> _editReport(InspectionRowUI item) async {
     // Cambiamos isReadOnly a false porque es edición
     _navigateToForm(item, isReadOnly: false);
@@ -268,8 +294,6 @@ Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
         o.label.trim().toLowerCase() == labelSeleccionado.toLowerCase()
     );
 
-    // --- CAMBIO: CONVERSIÓN DE EVIDENCIAS ---
-    // Filtramos los elementos que tengan bytes descargados (previamente poblados en _buildPdfBytes)
     final List<EvidenceFile> evidenciasConvertidas = (a.evidences as List<dynamic>?)
         ?.where((e) => e.bytes != null)
         .map((e) => EvidenceFile(
@@ -307,7 +331,7 @@ Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
     components: e.value,
   )).toList();
 }
-  Widget _buildDesktopTable(double maxWidth) {
+Widget _buildDesktopTable(double maxWidth) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -327,101 +351,88 @@ Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
               headingRowColor: WidgetStateProperty.all(headerColor),
               showCheckboxColumn: false,
               columns: const [
-                DataColumn(
-                  label: _HeaderLabel(
-                    text: 'REPORTE',
-                    color: Color(0xFF4B5563),
-                  ),
-                ),
-                DataColumn(
-                  label: _HeaderLabel(text: 'ESTADO', color: Color(0xFF4B5563)),
-                ),
-                DataColumn(
-                  label: _HeaderLabel(text: 'FECHA', color: Color(0xFF4B5563)),
-                ),
-                DataColumn(
-                  label: _HeaderLabel(
-                    text: 'ACCIONES',
-                    color: Color(0xFF4B5563),
-                  ),
-                ),
+                DataColumn(label: _HeaderLabel(text: 'REPORTE', color: Color(0xFF4B5563))),
+                DataColumn(label: _HeaderLabel(text: 'ESTADO', color: Color(0xFF4B5563))),
+                DataColumn(label: _HeaderLabel(text: 'FECHA', color: Color(0xFF4B5563))),
+                DataColumn(label: _HeaderLabel(text: 'ACCIONES', color: Color(0xFF4B5563))),
               ],
-              rows: widget.items
-                  .map(
-                    (item) => DataRow(
-                      cells: [
-                        DataCell(
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.title,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                  color: Color(0xFF111827),
-                                ),
-                              ),
-                              Text(
-                                item.description,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        DataCell(
-                          _StatusBadge(
-                            state: item.state,
-                            label: item.translatedState,
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            item.date,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Row(
-                            children: [
-                              _ActionIconBtn(
-                                icon: Icons.visibility_outlined,
-                                color: const Color(0xFF6366F1),
-                                onTap: () => _viewReport(item),
-                              ),
-                              const SizedBox(width: 8),
-                              _ActionIconBtn(
-                                icon: Icons.edit_outlined,
-                                color: const Color(0xFF4B5563),
-                                onTap: () => _editReport(item),
-                              ),
-                              const SizedBox(width: 8),
-                              _ActionIconBtn(
-                                icon: Icons.print_outlined,
-                                color: primaryRed,
-                                onTap: () => _printReport(item),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+              rows: _filteredItems.map((item) {
+                // Buscamos todas las versiones de este reporte
+                final versiones = widget.items.where((i) => i.id == item.id).toList()
+                  ..sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
+
+                return DataRow(
+                  cells: [
+DataCell(
+  PopupMenuButton<InspectionRowUI>(
+    onSelected: (selectedItem) => _viewReport(selectedItem),
+    offset: const Offset(0, 40),
+    tooltip: "Cambiar versión",
+    // Estilo del menú flotante más limpio
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    itemBuilder: (context) => versiones.map((v) => PopupMenuItem(
+      value: v,
+      height: 40,
+      child: Row(
+        children: [
+          Icon(v.versionId == item.versionId ? Icons.radio_button_checked : Icons.radio_button_unchecked, 
+               size: 16, color: primaryRed),
+          const SizedBox(width: 8),
+          Text("Versión ${v.versionNumber}", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    )).toList(),
+    // Diseño del título en la tabla
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              item.title, 
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF111827)),
+            ),
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                Text(
+                  "Versión ${item.versionNumber} • ${item.folio}", 
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.unfold_more, size: 12, color: primaryRed.withOpacity(0.7)),
+              ],
+            ),
+          ],
+        ),
+      ],
+    ),
+  ),
+),
+                    DataCell(_StatusBadge(state: item.state, label: item.translatedState)),
+                    DataCell(Text(item.date, style: const TextStyle(fontSize: 12, color: Colors.black54))),
+                    DataCell(
+                      Row(
+                        children: [
+                          _ActionIconBtn(icon: Icons.visibility_outlined, color: const Color(0xFF6366F1), onTap: () => _viewReport(item)),
+                          const SizedBox(width: 8),
+                          _ActionIconBtn(icon: Icons.edit_outlined, color: const Color(0xFF4B5563), onTap: () => _editReport(item)),
+                          const SizedBox(width: 8),
+                          _ActionIconBtn(icon: Icons.print_outlined, color: primaryRed, onTap: () => _printReport(item)),
+                        ],
+                      ),
                     ),
-                  )
-                  .toList(),
+                  ],
+                );
+              }).toList(),
             ),
           ),
         ),
       ),
     );
   }
-
   Widget _buildMobileList() {
     return ListView.separated(
       shrinkWrap: true,
