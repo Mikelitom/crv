@@ -694,144 +694,278 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     BuildContext context,
     WidgetRef ref,
   ) {
-    final activeOrders = services.where((s) => s.isActive).toList();
-    final completeState = ref.watch(completeVehicleServiceNotifierProvider);
-
-    if (activeOrders.isEmpty) {
+    final pendingOrders = services.where(
+      (s) => s.isActive && s.status == "PENDING",
+    ).toList();
+    
+    final inProgressOrders = services.where(
+      (s) => s.isActive && s.status == "IN_PROGRESS",
+    ).toList();
+    
+    final completedOrders = services.where(
+      (s) => s.isActive && s.status == "COMPLETED",
+    ).toList();
+    
+    if (pendingOrders.isEmpty && completedOrders.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16),
         child: Text(
-          "No hay órdenes abiertas",
+          "No hay órdenes de servicio",
           style: TextStyle(color: Colors.grey),
         ),
       );
     }
 
     // CORRECCIÓN: Quitamos shrinkWrap y physics para que el scroll nativo tome el control
-    return ListView.separated(
-      padding: EdgeInsets.zero, // Ajuste estético
-      itemCount: activeOrders.length,
-      separatorBuilder: (_, __) => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8.0),
-        child: Divider(thickness: 1),
+    return ListView(
+      children: [
+    
+        if (pendingOrders.isNotEmpty) ...[
+          _buildSectionTitle("ÓRDENES PENDIENTES", Colors.red),
+          ...pendingOrders.map(
+            (o) => _buildServiceOrderItem(o, context, ref),
+          ),
+        ],
+    
+        if (inProgressOrders.isNotEmpty) ...[
+          _buildSectionTitle("ÓRDENES EN PROGRESO", Colors.orange),
+          ...inProgressOrders.map(
+            (o) => _buildServiceOrderItem(o, context, ref),
+          ),
+        ],
+    
+        if (completedOrders.isNotEmpty) ...[
+          _buildSectionTitle("ÓRDENES COMPLETADAS", Colors.green),
+          ...completedOrders.map(
+            (o) => _buildServiceOrderItem(o, context, ref),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(
+    String title,
+    Color color,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: 12,
+        horizontal: 4,
       ),
-      itemBuilder: (context, index) {
-        final order = activeOrders[index];
+      child: Row(
+        children: [
+          Container(
+            width: 5,
+            height: 20,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-        final String displayId = order.id.length >= 8
-            ? order.id.substring(0, 8).toUpperCase()
-            : order.id.toUpperCase();
+  Widget _buildServiceOrderItem(
+    ServiceOrderModel order,
+    BuildContext context,
+    WidgetRef ref, 
+  ) {
 
-        final String displayReportId = order.reportId.length >= 6
-            ? order.reportId.substring(0, 6)
-            : (order.reportId);
+    final status = order.status;
+    
+    final isPending = status == "PENDING";
+    final isInProgress = status == "IN_PROGRESS";
+    final isCompleted = status == "COMPLETED";
+    
+    final completeState = ref.watch(
+      completeVehicleServiceNotifierProvider,
+    );
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final buttonText = isPending
+        ? "INICIAR ORDEN"
+        : isInProgress
+            ? "COMPLETAR ORDEN"
+            : "COMPLETADA";
+    
+    final buttonColor = isPending
+        ? Colors.blue
+        : isInProgress
+            ? Colors.orange
+            : Colors.green;
+  
+    final String displayId = order.id.length >= 8
+        ? order.id.substring(0, 8).toUpperCase()
+        : order.id.toUpperCase();
+  
+    final String displayReportId =
+        order.reportId.isNotEmpty
+            ? (order.reportId.length >= 6
+                ? order.reportId.substring(0, 6)
+                : order.reportId)
+            : "N/A";
+  
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            Text(
+              displayId,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: isCompleted
+                    ? Colors.green
+                    : isInProgress
+                        ? Colors.orange
+                        : Colors.blue,
+              ),
+            ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  displayId,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Color(0xFFC62828),
+                IconButton(
+                  icon: const Icon(Icons.add_box, color: Colors.green),
+                  tooltip: "Agregar componentes",
+                  onPressed: isCompleted
+                      ? null
+                      : () => _showAddItemsDialog(
+                            context,
+                            ref,
+                            order.id,
+                          ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.list_alt, color: Colors.blue),
+                  tooltip: "Ver componentes adjuntos",
+                  onPressed: () => _showServiceItemsDialog(
+                    context,
+                    ref,
+                    order.id,
                   ),
                 ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.add_box, color: Colors.green),
-                      tooltip: "Agregar componentes",
-                      onPressed: () =>
-                          _showAddItemsDialog(context, ref, order.id),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.list_alt, color: Colors.blue),
-                      tooltip: "Ver componentes adjuntos",
-                      onPressed: () =>
-                          _showServiceItemsDialog(context, ref, order.id),
-                    ),
-                  ],
-                ),
               ],
             ),
-            const SizedBox(height: 8),
+          ],
+        ),
+  
+        const SizedBox(height: 8),
+  
+        Text(
+          order.description,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+  
+        const SizedBox(height: 4),
+  
+        Text(
+          "Obs: ${order.observation}",
+          style: const TextStyle(
+            fontSize: 11,
+            color: Colors.grey,
+          ),
+        ),
+  
+        const SizedBox(height: 12),
+  
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
             Text(
-              order.description,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              "Reporte: $displayReportId",
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.blueGrey,
+              ),
             ),
-            const SizedBox(height: 4),
             Text(
-              "Obs: ${order.observation}",
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
+              "Apertura: ${order.date.day}/${order.date.month}/${order.date.year}",
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.grey,
+              ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Reporte: $displayReportId...",
-                  style: const TextStyle(fontSize: 10, color: Colors.blueGrey),
-                ),
-                Text(
-                  "Apertura: ${order.date.day}/${order.date.month}",
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: completeState.loading
+          ],
+        ),
+  
+        const SizedBox(height: 12),
+  
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: isCompleted
+                ? null
+                : completeState.loading
                     ? null
                     : () async {
-                        await ref
-                            .read(
-                              completeVehicleServiceNotifierProvider.notifier,
-                            )
-                            .completeService(order.id);
+                        if (isPending) {
+                          // TODO: llamar startService(order.id);
+                        } else if (isInProgress) {
+                          await ref
+                              .read(
+                                completeVehicleServiceNotifierProvider.notifier,
+                              )
+                              .completeService(order.id);
+                        }
+        
                         ref
                             .read(serviceListNotifierProvider.notifier)
                             .loadServices(widget.vehicle.vehicleId);
+        
                         ref
                             .read(pendingComponentNotifierProvider.notifier)
                             .loadPendingComponents(widget.vehicle.vehicleId);
+        
                         ref
                             .read(vehicleHistoryProvider.notifier)
                             .loadHistory(widget.vehicle.vehicleId);
+        
                         ref
                             .read(incidenceNotifierProvider.notifier)
                             .loadIncidences(widget.vehicle.vehicleId);
                       },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC62828),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: completeState.loading
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text("COMPLETAR ORDEN"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: buttonColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
-          ],
-        );
-      },
+            child: completeState.loading && !isCompleted
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(buttonText),
+          ),
+        ),
+  
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Divider(thickness: 1),
+        ),
+      ],
     );
   }
-
   // Método para mostrar los ítems ya adjuntos - DISEÑO Y LÓGICA CORREGIDOS
   void _showServiceItemsDialog(
     BuildContext context,
