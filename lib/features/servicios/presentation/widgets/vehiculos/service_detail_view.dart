@@ -1,13 +1,10 @@
-import 'dart:typed_data';
-
 import 'package:crv_reprosisa/features/servicios/data/models/v_service_order_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/service_item_model.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/pending_component_provider_v.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/utils/pdf_report_processor.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/create_order_dialog.dart';
-import 'package:http/http.dart' as http;
 
 import 'package:crv_reprosisa/core/config/dio_client.dart';
-import 'package:crv_reprosisa/features/assets/domain/entities/vehicle_report_detail_entity.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_history_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_report_detail.dart';
 import 'package:crv_reprosisa/features/servicios/domain/entities/v_service_order.dart';
@@ -33,18 +30,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(serviceListNotifierProvider.notifier)
-          .loadServices(widget.vehicle.vehicleId);
-      ref
-          .read(vehicleHistoryProvider.notifier)
-          .loadHistory(widget.vehicle.vehicleId);
-      ref
-          .read(pendingComponentNotifierProvider.notifier)
-          .loadPendingComponents(widget.vehicle.vehicleId);
-      ref
-          .read(incidenceNotifierProvider.notifier)
-          .loadIncidences(widget.vehicle.vehicleId);
+      _refreshAllData();
     });
   }
 
@@ -198,7 +184,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       height: 150, // Altura fija para que aparezca el scroll si hay muchos
       child: ListView.separated(
         itemCount: items.length,
-        separatorBuilder: (_, __) => const Divider(height: 16),
+        separatorBuilder: (_, _) => const Divider(height: 16),
         itemBuilder: (context, index) => Row(
           children: [
             const Icon(Icons.folder_outlined, color: Colors.blueGrey),
@@ -242,7 +228,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -278,86 +264,28 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     );
   }
 
-  Future<Uint8List?> _generatePdfBytes(String versionId) async {
-    try {
-      final result = await ref
-          .read(getVehicleReportDetailUseCaseProvider)
-          .call(versionId);
+  // Dentro de _ServiceDetailViewState
+  Future<void> _viewPdfPreview(String versionId) async {
+    // Mostramos un indicador de carga si lo deseas (opcional)
+    final pdfBytes = await PdfReportProcessor.generatePdfFromVersionId(
+      ref,
+      versionId,
+    );
 
-      Uint8List? generatedBytes;
+    if (!mounted) return;
 
-      await result.fold((l) async => generatedBytes = null, (data) async {
-        for (var ans in data.answers) {
-          if (ans.evidencePaths.isNotEmpty) {
-            ans.evidenceBytes = await _downloadImage(ans.evidencePaths[0]);
-          }
-        }
-        final pdfData = _mapEntityToPdfMap(data);
-        // Se espera a que el generador asíncrono devuelva el resultado
-        generatedBytes = await VehiculoPdfGenerator.generateEsqueleto(pdfData);
-      });
-      return generatedBytes;
-    } catch (e) {
-      debugPrint("Error al procesar PDF de vehículo: $e");
-      return null;
-    }
-  }
-
-  Map<String, dynamic> _mapEntityToPdfMap(VehicleReportDetailEntity data) {
-    Map<String, List<Map<String, dynamic>>> grouped = {};
-
-    for (var ans in data.answers) {
-      String code = ans.optionName.toLowerCase();
-      String status = "UNKNOWN";
-      if (code.contains("buen"))
-        status = "GOOD";
-      else if (code.contains("mal"))
-        status = "BAD";
-      else if (code.contains("repos"))
-        status = "REPOSITION";
-      else if (code.contains("repa"))
-        status = "REPARATION";
-
-      grouped.putIfAbsent(ans.sectionName, () => []).add({
-        "name": ans.componentName,
-        "status": status,
-        "observation": ans.observation,
-        "foto_antes_bytes": ans.evidenceBytes,
-        "foto_despues_bytes": null,
-      });
-    }
-
-    return {
-      "unidad": "${data.vehicle.brand} ${data.vehicle.model}",
-      "fecha": data.report['inspection_date']?.toString().split('T')[0] ?? "",
-      "placas": data.vehicle.plate,
-      "kilometraje": data.report['mileage'] ?? 0,
-      "requiere_servicio": data.report['requires_service'] ?? false,
-      "notas": data.report['general_notes'] ?? "",
-      "secciones": grouped.entries
-          .map((e) => {"name": e.key, "items": e.value})
-          .toList(),
-    };
-  }
-
-  Future<void> _viewPdfPreview(item) async {
-    final pdfBytes = await _generatePdfBytes(item);
     if (pdfBytes == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Error al cargar detalle")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No se pudo generar la vista previa")),
+      );
       return;
     }
 
-    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => Scaffold(
-          appBar: AppBar(
-            title: const Text("Vista Previa PDF"),
-            backgroundColor: Color(0xFFC62828),
-          ),
+          appBar: AppBar(title: const Text("Vista Previa PDF")),
           body: PdfPreview(build: (format) => pdfBytes),
         ),
       ),
@@ -372,7 +300,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -416,9 +344,9 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 3),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 3),
         ],
       ),
       child: Column(
@@ -477,7 +405,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       padding:
           EdgeInsets.zero, // Ajuste estético para que no haya padding extra
       itemCount: state.data.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final item = state.data[index];
         final color = _getColorForStatus(item.status);
@@ -511,7 +439,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -571,7 +499,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                     child: ListView.separated(
                       shrinkWrap: true,
                       itemCount: pendingState.data.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, i) {
                         final item = pendingState.data[i];
                         final isSelected = selectedIds.contains(item.id);
@@ -589,7 +517,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? const Color(0xFFC62828).withOpacity(0.05)
+                                  ? const Color(0xFFC62828).withValues(alpha: 0.05)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
@@ -661,16 +589,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                                       serviceId,
                                       selectedIds.toList(),
                                     );
-                                ref
-                                    .read(
-                                      pendingComponentNotifierProvider.notifier,
-                                    )
-                                    .loadPendingComponents(
-                                      widget.vehicle.vehicleId,
-                                    );
-                                ref
-                                    .read(serviceListNotifierProvider.notifier)
-                                    .loadServices(widget.vehicle.vehicleId);
+                                _refreshAllData();
                                 if (context.mounted) Navigator.pop(context);
                               },
                         child: const Text(
@@ -694,18 +613,18 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     BuildContext context,
     WidgetRef ref,
   ) {
-    final pendingOrders = services.where(
-      (s) => s.isActive && s.status == "PENDING",
-    ).toList();
-    
-    final inProgressOrders = services.where(
-      (s) => s.isActive && s.status == "IN_PROGRESS",
-    ).toList();
-    
-    final completedOrders = services.where(
-      (s) => s.isActive && s.status == "COMPLETED",
-    ).toList();
-    
+    final pendingOrders = services
+        .where((s) => s.isActive && s.status == "PENDING")
+        .toList();
+
+    final inProgressOrders = services
+        .where((s) => s.isActive && s.status == "IN_PROGRESS")
+        .toList();
+
+    final completedOrders = services
+        .where((s) => s.isActive && s.status == "COMPLETED")
+        .toList();
+
     if (pendingOrders.isEmpty && completedOrders.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16),
@@ -719,21 +638,18 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     // CORRECCIÓN: Quitamos shrinkWrap y physics para que el scroll nativo tome el control
     return ListView(
       children: [
-    
         if (pendingOrders.isNotEmpty) ...[
           _buildSectionTitle("ÓRDENES PENDIENTES", Colors.red),
-          ...pendingOrders.map(
-            (o) => _buildServiceOrderItem(o, context, ref),
-          ),
+          ...pendingOrders.map((o) => _buildServiceOrderItem(o, context, ref)),
         ],
-    
+
         if (inProgressOrders.isNotEmpty) ...[
           _buildSectionTitle("ÓRDENES EN PROGRESO", Colors.orange),
           ...inProgressOrders.map(
             (o) => _buildServiceOrderItem(o, context, ref),
           ),
         ],
-    
+
         if (completedOrders.isNotEmpty) ...[
           _buildSectionTitle("ÓRDENES COMPLETADAS", Colors.green),
           ...completedOrders.map(
@@ -744,15 +660,9 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     );
   }
 
-  Widget _buildSectionTitle(
-    String title,
-    Color color,
-  ) {
+  Widget _buildSectionTitle(String title, Color color) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 12,
-        horizontal: 4,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
       child: Row(
         children: [
           Container(
@@ -780,42 +690,38 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
   Widget _buildServiceOrderItem(
     ServiceOrderModel order,
     BuildContext context,
-    WidgetRef ref, 
+    WidgetRef ref,
   ) {
-
     final status = order.status;
-    
+
     final isPending = status == "PENDING";
     final isInProgress = status == "IN_PROGRESS";
     final isCompleted = status == "COMPLETED";
-    
-    final completeState = ref.watch(
-      completeVehicleServiceNotifierProvider,
-    );
+
+    final completeState = ref.watch(completeVehicleServiceNotifierProvider);
 
     final buttonText = isPending
         ? "INICIAR ORDEN"
         : isInProgress
-            ? "COMPLETAR ORDEN"
-            : "COMPLETADA";
-    
+        ? "COMPLETAR ORDEN"
+        : "COMPLETADA";
+
     final buttonColor = isPending
         ? Colors.blue
         : isInProgress
-            ? Colors.orange
-            : Colors.green;
-  
+        ? Colors.orange
+        : Colors.green;
+
     final String displayId = order.id.length >= 8
         ? order.id.substring(0, 8).toUpperCase()
         : order.id.toUpperCase();
-  
-    final String displayReportId =
-        order.reportId.isNotEmpty
-            ? (order.reportId.length >= 6
-                ? order.reportId.substring(0, 6)
-                : order.reportId)
-            : "N/A";
-  
+
+    final String displayReportId = order.reportId.isNotEmpty
+        ? (order.reportId.length >= 6
+              ? order.reportId.substring(0, 6)
+              : order.reportId)
+        : "N/A";
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -830,8 +736,8 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                 color: isCompleted
                     ? Colors.green
                     : isInProgress
-                        ? Colors.orange
-                        : Colors.blue,
+                    ? Colors.orange
+                    : Colors.blue,
               ),
             ),
             Row(
@@ -841,104 +747,69 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                   tooltip: "Agregar componentes",
                   onPressed: isCompleted
                       ? null
-                      : () => _showAddItemsDialog(
-                            context,
-                            ref,
-                            order.id,
-                          ),
+                      : () => _showAddItemsDialog(context, ref, order.id),
                 ),
                 IconButton(
                   icon: const Icon(Icons.list_alt, color: Colors.blue),
                   tooltip: "Ver componentes adjuntos",
-                  onPressed: () => _showServiceItemsDialog(
-                    context,
-                    ref,
-                    order.id,
-                  ),
+                  onPressed: () =>
+                      _showServiceItemsDialog(context, ref, order.id),
                 ),
               ],
             ),
           ],
         ),
-  
+
         const SizedBox(height: 8),
-  
+
         Text(
           order.description,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
-  
+
         const SizedBox(height: 4),
-  
+
         Text(
           "Obs: ${order.observation}",
-          style: const TextStyle(
-            fontSize: 11,
-            color: Colors.grey,
-          ),
+          style: const TextStyle(fontSize: 11, color: Colors.grey),
         ),
-  
+
         const SizedBox(height: 12),
-  
+
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               "Reporte: $displayReportId",
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.blueGrey,
-              ),
+              style: const TextStyle(fontSize: 10, color: Colors.blueGrey),
             ),
             Text(
               "Apertura: ${order.date.day}/${order.date.month}/${order.date.year}",
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.grey,
-              ),
+              style: const TextStyle(fontSize: 10, color: Colors.grey),
             ),
           ],
         ),
-  
+
         const SizedBox(height: 12),
-  
+
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: isCompleted
                 ? null
                 : completeState.loading
-                    ? null
-                    : () async {
-                        if (isPending) {
-                          // TODO: llamar startService(order.id);
-                        } else if (isInProgress) {
-                          await ref
-                              .read(
-                                completeVehicleServiceNotifierProvider.notifier,
-                              )
-                              .completeService(order.id);
-                        }
-        
-                        ref
-                            .read(serviceListNotifierProvider.notifier)
-                            .loadServices(widget.vehicle.vehicleId);
-        
-                        ref
-                            .read(pendingComponentNotifierProvider.notifier)
-                            .loadPendingComponents(widget.vehicle.vehicleId);
-        
-                        ref
-                            .read(vehicleHistoryProvider.notifier)
-                            .loadHistory(widget.vehicle.vehicleId);
-        
-                        ref
-                            .read(incidenceNotifierProvider.notifier)
-                            .loadIncidences(widget.vehicle.vehicleId);
-                      },
+                ? null
+                : () async {
+                    if (isPending) {
+                      // TODO: llamar startService(order.id);
+                    } else if (isInProgress) {
+                      await ref
+                          .read(completeVehicleServiceNotifierProvider.notifier)
+                          .completeService(order.id);
+                    }
+
+                    _refreshAllData();
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: buttonColor,
               foregroundColor: Colors.white,
@@ -958,7 +829,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                 : Text(buttonText),
           ),
         ),
-  
+
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 8),
           child: Divider(thickness: 1),
@@ -966,6 +837,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       ],
     );
   }
+
   // Método para mostrar los ítems ya adjuntos - DISEÑO Y LÓGICA CORREGIDOS
   void _showServiceItemsDialog(
     BuildContext context,
@@ -1053,7 +925,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: historyState.history.length,
-      separatorBuilder: (_, __) => const Divider(height: 16),
+      separatorBuilder: (_, _) => const Divider(height: 16),
       itemBuilder: (context, index) {
         final h = historyState.history[index];
         return ListTile(
@@ -1086,22 +958,12 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     );
   }
 
-  Future<Uint8List?> _downloadImage(String url) async {
-    try {
-      final response = await http.get(Uri.parse(url));
-      return response.statusCode == 200 ? response.bodyBytes : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
   // 2. Método _buildHeader actualizado
   Widget _buildHeader(Vehicle v) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Row(
         children: [
-  
           // IMAGEN DEL VEHICULO
           Container(
             width: 150,
@@ -1117,7 +979,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                     child: Image.network(
                       v.imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) {
+                      errorBuilder: (_, _, _) {
                         return const Icon(
                           Icons.directions_car,
                           size: 40,
@@ -1132,8 +994,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                     color: Colors.grey,
                   ),
           ),
-  
-  
+
           // INFORMACION
           Expanded(
             child: Column(
@@ -1146,21 +1007,17 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-  
+
                 const SizedBox(height: 5),
-  
+
                 Text(
                   "Km: ${v.mileage} | Última: 26/06/2026",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
           ),
-  
-  
+
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC62828),
@@ -1172,21 +1029,9 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
             onPressed: () {
               showDialog(
                 context: context,
-                builder: (_) => CreateOrderDialog(
-                  vehicleId: v.vehicleId,
-                ),
+                builder: (_) => CreateOrderDialog(vehicleId: v.vehicleId),
               ).then((_) {
-                ref
-                    .read(serviceListNotifierProvider.notifier)
-                    .loadServices(v.vehicleId);
-  
-                ref
-                    .read(pendingComponentNotifierProvider.notifier)
-                    .loadPendingComponents(v.vehicleId);
-  
-                ref
-                    .read(vehicleHistoryProvider.notifier)
-                    .loadHistory(v.vehicleId);
+                _refreshAllData();
               });
             },
             icon: const Icon(Icons.add, size: 16),
@@ -1267,7 +1112,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
               LinearProgressIndicator(
                 value: progress,
                 color: Colors.purple,
-                backgroundColor: Colors.purple.withOpacity(0.1),
+                backgroundColor: Colors.purple.withValues(alpha: 0.1),
               ),
             ],
           ),
@@ -1287,5 +1132,16 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       default:
         return Colors.grey;
     }
+  }
+
+  // En tu _ServiceDetailViewState
+  void _refreshAllData() {
+    final vehicleId = widget.vehicle.vehicleId;
+    ref.read(serviceListNotifierProvider.notifier).loadServices(vehicleId);
+    ref.read(vehicleHistoryProvider.notifier).loadHistory(vehicleId);
+    ref
+        .read(pendingComponentNotifierProvider.notifier)
+        .loadPendingComponents(vehicleId);
+    ref.read(incidenceNotifierProvider.notifier).loadIncidences(vehicleId);
   }
 }

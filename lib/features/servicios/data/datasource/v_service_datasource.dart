@@ -12,6 +12,7 @@ abstract class ServiceDataSource {
   Future<void> createService(CreateServiceOrderModel model);
   Future<List<IncidenceModel>> getIncidenceSummary(String vehicleId);
   Future<List<ServiceOrderModel>> getPendingServicesByVehicle(String vehicleId);
+  Future<void> startService(String serviceId);
   Future<bool> completeService(String serviceId);
 }
 
@@ -112,5 +113,10 @@ class ServiceDataSourceImpl implements ServiceDataSource {
     } else {
       throw Exception('Error al completar el servicio: ${response.statusCode}');
     }
+  }
+
+  @override
+  Future<void> startService(String serviceId) async {
+    final response = await dio.post('/vehicle/service/$serviceId/start');
   }
 }
