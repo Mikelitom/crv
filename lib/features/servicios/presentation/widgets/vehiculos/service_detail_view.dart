@@ -1,5 +1,6 @@
 import 'package:crv_reprosisa/features/servicios/data/models/v_service_order_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/service_item_model.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/dialogs/vehicle/complete_service_dialog.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/dialogs/vehicle/start_service_dialog.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/pending_component_provider_v.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/utils/pdf_report_processor.dart';
@@ -808,12 +809,17 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                     if (isPending) {
                       await _showStartServiceDialog(context, order);
                     } else if (isInProgress) {
-                      await ref
-                          .read(completeVehicleServiceNotifierProvider.notifier)
-                          .completeService(order.id);
+                      await showDialog(
+                        context: context,
+                        builder: (_) => CompleteServiceDialog(
+                          order: order,
+                          vehicleId: order.vehicleId,
+                          onCompleted: () async {
+                            _refreshAllData();
+                          },
+                        ),
+                      );
                     }
-
-                    _refreshAllData();
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: buttonColor,
