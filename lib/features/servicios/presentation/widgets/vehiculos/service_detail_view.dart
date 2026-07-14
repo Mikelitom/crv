@@ -808,9 +808,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                     if (isPending) {
                       await _showStartServiceDialog(context, order);
                     } else if (isInProgress) {
-                      await ref
-                          .read(completeVehicleServiceNotifierProvider.notifier)
-                          .completeService(order.id);
+                      await _showCompleteServiceDialog(context, order);
                     }
 
                     _refreshAllData();
@@ -923,10 +921,8 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => StartServiceDialog(
-        order: order,
-        vehicleId: widget.vehicle.vehicleId,
-      ),
+      builder: (_) =>
+          StartServiceDialog(order: order, vehicleId: widget.vehicle.vehicleId),
     );
   }
 
