@@ -929,10 +929,8 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => StartServiceDialog(
-        order: order,
-        vehicleId: widget.vehicle.vehicleId,
-      ),
+      builder: (_) =>
+          StartServiceDialog(order: order, vehicleId: widget.vehicle.vehicleId),
     );
   }
 
