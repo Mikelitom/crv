@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/evidence/presentation/dto/evidence_dto.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/service_providers.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/vehicle_complete_service_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ class CompleteVehicleServiceNotifier extends Notifier<CompleteServiceState>{
   
     Future<void> completeService(
       String serviceId,
+      List<EvidenceDto> evidences,
     ) async {
       state = state.copyWith(
         loading: true,

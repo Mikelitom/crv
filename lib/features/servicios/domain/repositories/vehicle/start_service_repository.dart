@@ -2,5 +2,5 @@ import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:dartz/dartz.dart';
 
 abstract class StartServiceRepository {
-  Future<Either<Failure, void>> startService(String serviceId);
+  Future<Either<Failure, Unit>> startService({required String serviceId, required String location, required int mileage});
 }

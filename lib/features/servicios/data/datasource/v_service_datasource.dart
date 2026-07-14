@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/evidence/presentation/dto/evidence_dto.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/v_service_order_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/attach_item_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/create_service_order_model.dart';
@@ -12,8 +13,12 @@ abstract class ServiceDataSource {
   Future<void> createService(CreateServiceOrderModel model);
   Future<List<IncidenceModel>> getIncidenceSummary(String vehicleId);
   Future<List<ServiceOrderModel>> getPendingServicesByVehicle(String vehicleId);
-  Future<void> startService(String serviceId);
-  Future<bool> completeService(String serviceId);
+  Future<void> startService({
+    required String serviceId,
+    required String location,
+    required int mileage,
+  });
+  Future<bool> completeService(String serviceId, List<EvidenceDto> evidences);
 }
 
 class ServiceDataSourceImpl implements ServiceDataSource {
@@ -105,7 +110,7 @@ class ServiceDataSourceImpl implements ServiceDataSource {
   }
 
   @override
-  Future<bool> completeService(String serviceId) async {
+  Future<bool> completeService(String serviceId, List<EvidenceDto> evidences) async {
     final response = await dio.patch('/vehicle/service/$serviceId/complete');
 
     if (response.statusCode == 200) {
@@ -116,7 +121,19 @@ class ServiceDataSourceImpl implements ServiceDataSource {
   }
 
   @override
-  Future<void> startService(String serviceId) async {
-    final response = await dio.post('/vehicle/service/$serviceId/start');
+  Future<void> startService({
+    required String serviceId,
+    required String location,
+    required int mileage,
+  }) async {
+    final response = await dio.post(
+      '/vehicle/service/$serviceId/start',
+      queryParameters: {"location": location, "mileage": mileage},
+    );
+    if (response.statusCode == 200) {
+      return;
+    } else {
+      throw Exception('Error al iniciar el servicio');
+    }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:crv_reprosisa/features/servicios/data/models/v_service_order_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/service_item_model.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/dialogs/vehicle/start_service_dialog.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/pending_component_provider_v.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/utils/pdf_report_processor.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/create_order_dialog.dart';
@@ -517,7 +518,9 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? const Color(0xFFC62828).withValues(alpha: 0.05)
+                                  ? const Color(
+                                      0xFFC62828,
+                                    ).withValues(alpha: 0.05)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
@@ -625,7 +628,9 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
         .where((s) => s.isActive && s.status == "COMPLETED")
         .toList();
 
-    if (pendingOrders.isEmpty && completedOrders.isEmpty) {
+    if (pendingOrders.isEmpty &&
+        inProgressOrders.isEmpty &&
+        completedOrders.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16),
         child: Text(
@@ -801,7 +806,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                 ? null
                 : () async {
                     if (isPending) {
-                      // TODO: llamar startService(order.id);
+                      await _showStartServiceDialog(context, order);
                     } else if (isInProgress) {
                       await ref
                           .read(completeVehicleServiceNotifierProvider.notifier)
@@ -907,6 +912,20 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _showStartServiceDialog(
+    BuildContext context,
+    ServiceOrderModel order,
+  ) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => StartServiceDialog(
+        order: order,
+        vehicleId: widget.vehicle.vehicleId,
       ),
     );
   }
