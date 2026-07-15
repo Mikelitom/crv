@@ -171,7 +171,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       ),
       const SizedBox(height: 16),
       _buildSectionContainer(
-        "ORDEN ABIERTA",
+        "ORDENES DE SERVICIO",
         _buildOrdenServicioCard(state.services, context, ref),
         height: 300,
       ),

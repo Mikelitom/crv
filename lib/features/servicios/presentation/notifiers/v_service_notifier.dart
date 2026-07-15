@@ -15,15 +15,30 @@ class ServiceListNotifier extends Notifier<ServiceListState> {
     state = state.copyWith(status: Status.loading, error: null);
     final useCase = ref.read(getServicesUseCaseProvider);
     final result = await useCase.call(vehicleId);
-    state = result.fold(
-      (failure) => state.copyWith(
-        status: Status.error, 
-        error: failure.message
-      ),
-      (services) => state.copyWith(
-        status: Status.success, 
-        services: services.cast<ServiceOrderModel>() 
-      ),
+    result.fold(
+      (failure) =>
+          state = state.copyWith(status: Status.error, error: failure.message),
+      (services) {
+        for (final service in services) {
+          print(
+            'Servicio ${service.id}: ${service.evidences.length} evidencias',
+          );
+
+          for (final evidence in service.evidences) {
+            print(evidence.signedUrl);
+          }
+        }
+
+        print('Cantidad de servicios: ${services.length}');
+        print('Tipo: ${services.runtimeType}');
+
+        state = state.copyWith(
+          status: Status.success,
+          services: services.cast<ServiceOrderModel>(),
+        );
+
+        print(state.services.length);
+      },
     );
   }
 }

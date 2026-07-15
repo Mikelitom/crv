@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/servicios/domain/entities/evidence.dart';
 import 'package:flutter/material.dart';
 import 'package:crv_reprosisa/features/servicios/domain/entities/v_service_order.dart';
 
@@ -17,6 +18,7 @@ class ServiceOrderModel extends ServiceOrder {
     required super.isActive,
     required this.createdAt,
     required this.updatedAt,
+    required super.evidences
   });
 
   factory ServiceOrderModel.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,9 @@ class ServiceOrderModel extends ServiceOrder {
       isActive: json['is_active'] ?? false,
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+      evidences: (json['evidences'] as List<dynamic>? ?? [])
+        .map((e) => Evidence.fromJson(e))
+        .toList(),
     );
   }
 
