@@ -4,7 +4,6 @@ import 'package:crv_reprosisa/core/utils/imege_downloader.dart';
 import 'package:crv_reprosisa/core/utils/pdf_report_manager.dart';
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-03-VEHICLE.dart';
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-08-PRESS.dart';
-import 'banda_pdf_generator.dart';
 
 class PdfReportCoordinator {
   static Future<Uint8List?> generate(Dio dio, dynamic model, String tipo) async {

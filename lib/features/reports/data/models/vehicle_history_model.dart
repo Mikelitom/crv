@@ -10,6 +10,7 @@ class VehicleHistoryModel extends VehicleReportEntity {
 
   VehicleHistoryModel({
     required super.reportId,
+    required super.versionId,
     required super.plate,
     required super.folio,
     required super.state,
@@ -24,6 +25,7 @@ class VehicleHistoryModel extends VehicleReportEntity {
   factory VehicleHistoryModel.fromJson(Map<String, dynamic> json) {
     return VehicleHistoryModel(
       reportId: json['report_id'] ?? '',
+      versionId: json['version_id'] ?? '',
       plate: json['plate'] ?? '',
       folio: json['folio'] ?? '',
       state: json['state'] ?? 'PENDING',

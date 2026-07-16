@@ -34,13 +34,13 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
   void filterReports() {
     final tipos = ["BANDA", "VEHICULO", "PRENSA"];
     final tipoBuscado = tipos[state.activeTabIndex];
-    
+
     // Acceso seguro a la propiedad 'tipo' del reporte
     final filtered = state.allReports.where((r) {
       final dynamic report = r;
       return report.tipo.toString().toUpperCase() == tipoBuscado;
     }).toList();
-    
+
     state = state.copyWith(filteredReports: filtered);
   }
 
@@ -52,10 +52,11 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
       final combined = [
         ...data['vehicles'] ?? [],
         ...data['conveyors'] ?? [],
-        ...data['presses'] ?? []
+        ...data['presses'] ?? [],
       ];
+      print(combined);
       state = state.copyWith(isLoading: false, allReports: combined);
-      filterReports(); 
+      filterReports();
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
@@ -83,12 +84,14 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
 
       // 2. Validación de datos obtenidos
       if (detail == null) {
-        throw Exception("No se pudo obtener el detalle del reporte para el ID: $id");
+        throw Exception(
+          "No se pudo obtener el detalle del reporte para el ID: $id",
+        );
       }
 
       // 3. Delegación al Coordinador de PDF
       final bytes = await PdfReportCoordinator.generate(dio, detail, tipo);
-      
+
       state = state.copyWith(isLoading: false);
       return bytes;
     } catch (e) {
