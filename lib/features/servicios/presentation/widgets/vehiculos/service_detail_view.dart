@@ -1,10 +1,12 @@
 import 'package:crv_reprosisa/features/servicios/data/models/v_service_order_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/service_item_model.dart';
+import 'package:crv_reprosisa/features/servicios/domain/entities/evidence.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/dialogs/vehicle/complete_service_dialog.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/dialogs/vehicle/start_service_dialog.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/pending_component_provider_v.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/utils/pdf_report_processor.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/vehiculos/create_order_dialog.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:crv_reprosisa/core/config/dio_client.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_history_provider.dart';
@@ -99,7 +101,16 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     });
 
     final state = ref.watch(serviceListNotifierProvider);
+
+    print("==============");
+    print("Status: ${state.status}");
+    print("Servicios UI: ${state.services.length}");
+
     final v = widget.vehicle;
+
+    for (final s in state.services) {
+      print(s.description);
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
@@ -156,7 +167,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       const SizedBox(height: 16),
       _buildSectionContainer(
         "GESTIÓN DE EVIDENCIAS",
-        _buildEvidenciasList(),
+        _buildEvidenciasList(ref.watch(serviceListNotifierProvider).services),
         height: 200,
       ),
     ],
@@ -178,42 +189,124 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     ],
   );
 
-  Widget _buildEvidenciasList() {
-    // Aquí puedes mapear tus datos reales
-    final items = List.generate(5, (index) => "Inspeccion INS-102-$index");
+  Widget _buildEvidenciasList(List<ServiceOrderModel> services) {
+    final servicesWithEvidence = services
+        .where((service) => service.evidences.isNotEmpty)
+        .toList();
+
+    if (servicesWithEvidence.isEmpty) {
+      return const Center(
+        child: Text(
+          "No hay evidencias asociadas",
+          style: TextStyle(color: Colors.grey, fontSize: 12),
+        ),
+      );
+    }
 
     return SizedBox(
-      height: 150, // Altura fija para que aparezca el scroll si hay muchos
+      height: 150,
       child: ListView.separated(
-        itemCount: items.length,
+        itemCount: servicesWithEvidence.length,
         separatorBuilder: (_, _) => const Divider(height: 16),
-        itemBuilder: (context, index) => Row(
-          children: [
-            const Icon(Icons.folder_outlined, color: Colors.blueGrey),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    items[index],
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
+        itemBuilder: (context, index) {
+          final service = servicesWithEvidence[index];
+
+          return InkWell(
+            onTap: () {
+              _showServiceEvidenceDialog(context, service);
+            },
+            child: Row(
+              children: [
+                const Icon(Icons.folder_outlined, color: Colors.blueGrey),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        service.description,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+
+                      Text(
+                        "${service.createdAt.day}/${service.createdAt.month}/${service.createdAt.year} - ${service.evidences.length} archivos",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
                   ),
-                  const Text(
-                    "2026-07-02 - 2 archivos",
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-                ],
-              ),
+                ),
+
+                const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+              ],
             ),
-            const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
-          ],
-        ),
+          );
+        },
       ),
     );
+  }
+
+  void _showServiceEvidenceDialog(
+    BuildContext context,
+    ServiceOrderModel service,
+  ) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: Text(service.description),
+          content: SizedBox(
+            width: 400,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: service.evidences.length,
+              itemBuilder: (_, index) {
+                final evidence = service.evidences[index];
+
+                return ListTile(
+                  leading: Icon(
+                    evidence.mimeType.contains("pdf")
+                        ? Icons.picture_as_pdf
+                        : Icons.image,
+                  ),
+                  title: Text(
+                    evidence.fileName,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(evidence.mimeType),
+                  onTap: () {
+                    _openEvidence(evidence);
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openEvidence(Evidence evidence) async {
+    final url = evidence.signedUrl;
+
+    if (url == null || url.isEmpty) {
+      return;
+    }
+
+    final uri = Uri.parse(url);
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Widget _buildSectionContainer(
@@ -617,16 +710,14 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     BuildContext context,
     WidgetRef ref,
   ) {
-    final pendingOrders = services
-        .where((s) => s.isActive && s.status == "PENDING")
-        .toList();
+    final pendingOrders = services.where((s) => s.status == "PENDING").toList();
 
     final inProgressOrders = services
-        .where((s) => s.isActive && s.status == "IN_PROGRESS")
+        .where((s) => s.status == "IN_PROGRESS")
         .toList();
 
     final completedOrders = services
-        .where((s) => s.isActive && s.status == "COMPLETED")
+        .where((s) => s.status == "COMPLETED")
         .toList();
 
     if (pendingOrders.isEmpty &&
@@ -1034,7 +1125,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                 const SizedBox(height: 5),
 
                 Text(
-                  "Km: ${v.mileage} | Última: 26/06/2026",
+                  "Km: ${v.mileage}",
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
