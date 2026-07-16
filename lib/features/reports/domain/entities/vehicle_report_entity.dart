@@ -1,5 +1,6 @@
 class VehicleReportEntity {
   final String reportId;
+  final String versionId;
   final String plate;
   final String folio;
   final String state;
@@ -9,6 +10,7 @@ class VehicleReportEntity {
 
   VehicleReportEntity({
     required this.reportId,
+    required this.versionId,
     required this.plate,
     required this.folio,
     required this.state,
