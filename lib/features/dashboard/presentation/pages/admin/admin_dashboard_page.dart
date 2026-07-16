@@ -20,7 +20,7 @@ import '../../widgets/sidebar/sidebar_admin.dart';
 import '../../widgets/header.dart';
 import '../../widgets/notification_panel.dart';
 import '../../widgets/stats_card_dash_e.dart';
-import '../../../../reports/Pages/reports_page.dart';
+import '../../../../reports/presentation/Pages/reports_page.dart';
 
 class AdminDashboardPage extends ConsumerStatefulWidget {
   const AdminDashboardPage({super.key});

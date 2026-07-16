@@ -5,7 +5,7 @@ import 'package:crv_reprosisa/features/dashboard/presentation/layout/responsive_
 import 'package:crv_reprosisa/features/dashboard/presentation/widgets/sidebar/sidebar_technician.dart';
 import 'package:crv_reprosisa/features/profile/presentation/page/profile_page.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/pages/inspections_page.dart';
-import 'package:crv_reprosisa/features/reports/Pages/reports_page.dart';
+import 'package:crv_reprosisa/features/reports/presentation/Pages/reports_page.dart';
 
 class TechnicianDashboardPage extends ConsumerStatefulWidget {
   const TechnicianDashboardPage({super.key});
