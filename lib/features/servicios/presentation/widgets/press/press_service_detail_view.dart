@@ -1,20 +1,14 @@
-import 'dart:typed_data';
-
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-08-PRESS.dart';
+import 'package:crv_reprosisa/core/utils/press_pdf_processor.dart';
 import 'package:crv_reprosisa/features/assets/presentation/pages/pdf_viewer_page.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/press/press_create_order_dialog.dart';
-import 'package:dio/dio.dart' as dio_package;
 
-import 'package:crv_reprosisa/core/config/dio_client.dart';
 import 'package:crv_reprosisa/features/assets/domain/entities/press.dart';
-import 'package:crv_reprosisa/features/assets/domain/entities/press_history.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_history_provider.dart';
-import 'package:crv_reprosisa/features/assets/presentation/providers/press_report_detail_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/service_press_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
 class PressServiceDetailView extends ConsumerStatefulWidget {
@@ -487,7 +481,7 @@ class _PressServiceDetailViewState
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: historyState.history.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final h = historyState.history[index];
         return ListTile(
@@ -507,7 +501,7 @@ class _PressServiceDetailViewState
                 tooltip: "Ver",
                 icon: const Icon(Icons.visibility, size: 18),
                 onPressed: () async {
-                  final data = await _getReportData(h);
+                  final data = await PressPdfProcessor.generatePdfFromVersionId(ref, h.versionId);
                   if (data != null && mounted) {
                     Navigator.push(
                       context,
@@ -522,7 +516,7 @@ class _PressServiceDetailViewState
                 tooltip: "PDF",
                 icon: const Icon(Icons.picture_as_pdf, size: 18),
                 onPressed: () async {
-                  final data = await _getReportData(h);
+                  final data = await PressPdfProcessor.generatePdfFromVersionId(ref, h.versionId);
                   if (data != null) {
                     final pdfBytes = await PrensaPdfGenerator.generateEsqueleto(
                       data,
@@ -682,7 +676,7 @@ class _PressServiceDetailViewState
                       child: ListView.separated(
                         shrinkWrap: true,
                         itemCount: pendingState.data.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, i) {
                           final item = pendingState.data[i];
                           final isSelected = selectedIds.contains(item.id);
@@ -835,7 +829,7 @@ class _PressServiceDetailViewState
                         : ListView.separated(
                             shrinkWrap: true,
                             itemCount: state.items.length,
-                            separatorBuilder: (_, __) => const Divider(),
+                            separatorBuilder: (_, _) => const Divider(),
                             itemBuilder: (context, index) {
                               final item = state.items[index];
 
@@ -936,98 +930,5 @@ class _PressServiceDetailViewState
         );
       },
     );
-  }
-
-  Future<Map<String, dynamic>?> _getReportData(PressHistory item) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-
-    await ref
-        .read(pressReportDetailProvider.notifier)
-        .fetchDetail(item.versionId);
-    final state = ref.read(pressReportDetailProvider);
-
-    if (state.data == null) {
-      if (mounted) Navigator.pop(context);
-      return null;
-    }
-
-    List<Map<String, dynamic>> itemsOrdenados = [];
-    List<dynamic> respuestasPendientes = List.from(state.data!.answers);
-
-    for (var nombre in ordenOficial) {
-      var index = respuestasPendientes.indexWhere(
-        (a) =>
-            a.componentName.toUpperCase().trim() == nombre.toUpperCase().trim(),
-      );
-      if (index != -1) {
-        itemsOrdenados.add(
-          await _mapAnswerToMap(respuestasPendientes.removeAt(index)),
-        );
-      }
-    }
-
-    for (var answer in respuestasPendientes) {
-      itemsOrdenados.add(await _mapAnswerToMap(answer));
-    }
-
-    if (mounted) Navigator.pop(context);
-
-    return {
-      'fecha': DateFormat('yyyy-MM-dd').format(item.inspectionDate),
-      'tipo': state.data!.press['type'] ?? 'N/A',
-      'modelo': state.data!.press['model'] ?? 'N/A',
-      'volts': state.data!.press['voltz'] ?? 'N/A',
-      'serie': state.data!.press['serie'] ?? 'N/A',
-      'folio': state.data!.report['folio'] ?? 'N/A',
-      'area': (state.data!.report['area'] ?? 'N/A').toString(),
-      'area_solicita': state.data!.report['loan_area'] ?? '',
-      'nombre_recibe': state.data!.report['loan_received_by'] ?? '',
-      'observaciones_footer': state.data!.report['general_notes'] ?? '',
-      'items': itemsOrdenados,
-    };
-  }
-
-  Future<Uint8List?> _downloadImageBytes(String url) async {
-    try {
-      final dio = ref.read(dioProvider);
-      final response = await dio.get(
-        url,
-        options: dio_package.Options(
-          responseType: dio_package.ResponseType.bytes,
-        ),
-      );
-      return response.statusCode == 200
-          ? Uint8List.fromList(response.data)
-          : null;
-    } catch (e) {
-      debugPrint("Error descargando imagen: $e");
-      return null;
-    }
-  }
-
-  Future<Map<String, dynamic>> _mapAnswerToMap(dynamic answer) async {
-    Uint8List? bytesAntes;
-    Uint8List? bytesDespues;
-    if (answer.evidencePaths.length >= 1)
-      bytesAntes = await _downloadImageBytes(answer.evidencePaths[0]);
-    if (answer.evidencePaths.length >= 2)
-      bytesDespues = await _downloadImageBytes(answer.evidencePaths[1]);
-
-    return {
-      'name': answer.componentName,
-      'status': answer.status,
-      'observation':
-          (answer.observation == "Notaas" || answer.observation.isEmpty)
-          ? ''
-          : answer.observation,
-      'measureUnit': answer.measureUnit,
-      'quantity': answer.quantity,
-      'foto_antes_bytes': bytesAntes,
-      'foto_despues_bytes': bytesDespues,
-    };
   }
 }
