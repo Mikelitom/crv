@@ -1,4 +1,5 @@
 // lib/features/servicios/presentation/notifiers/press_service_order_notifier.dart
+import 'package:crv_reprosisa/features/servicios/data/models/press/press_service_order_model.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/press/press_service_order_state.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/service_press_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +16,7 @@ class PressServiceOrderNotifier extends Notifier<PressServiceOrderState> {
     
     state = result.fold(
       (l) => state.copyWith(status: Status.error, error: l.message),
-      (r) => state.copyWith(status: Status.success, orders: r),
+      (r) => state.copyWith(status: Status.success, orders: r.cast<PressServiceOrderModel>()),
     );
   }
 }

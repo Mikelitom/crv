@@ -1,6 +1,9 @@
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-08-PRESS.dart';
 import 'package:crv_reprosisa/core/utils/press_pdf_processor.dart';
 import 'package:crv_reprosisa/features/assets/presentation/pages/pdf_viewer_page.dart';
+import 'package:crv_reprosisa/features/servicios/data/models/press/press_service_order_model.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/dialogs/press/complete_service_dialog.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/dialogs/press/start_service_dialog.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/widgets/press/press_create_order_dialog.dart';
 
 import 'package:crv_reprosisa/features/assets/domain/entities/press.dart';
@@ -53,17 +56,21 @@ class _PressServiceDetailViewState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(pressItemNotifierProvider.notifier)
-          .loadPendingItems(widget.press.id);
-      ref
-          .read(pressIncidenceNotifierProvider.notifier)
-          .loadIncidences(widget.press.id);
-      ref
-          .read(pressServiceOrderNotifierProvider.notifier)
-          .loadOrders(widget.press.id);
-      ref.read(pressHistoryProvider.notifier).loadHistory(widget.press.id);
+      _refreshAllData();
     });
+  }
+
+  void _refreshAllData() {
+    ref
+        .read(pressItemNotifierProvider.notifier)
+        .loadPendingItems(widget.press.id);
+    ref
+        .read(pressIncidenceNotifierProvider.notifier)
+        .loadIncidences(widget.press.id);
+    ref
+        .read(pressServiceOrderNotifierProvider.notifier)
+        .loadOrders(widget.press.id);
+    ref.read(pressHistoryProvider.notifier).loadHistory(widget.press.id);
   }
 
   @override
@@ -501,7 +508,10 @@ class _PressServiceDetailViewState
                 tooltip: "Ver",
                 icon: const Icon(Icons.visibility, size: 18),
                 onPressed: () async {
-                  final data = await PressPdfProcessor.generatePdfFromVersionId(ref, h.versionId);
+                  final data = await PressPdfProcessor.generatePdfFromVersionId(
+                    ref,
+                    h.versionId,
+                  );
                   if (data != null && mounted) {
                     Navigator.push(
                       context,
@@ -516,7 +526,10 @@ class _PressServiceDetailViewState
                 tooltip: "PDF",
                 icon: const Icon(Icons.picture_as_pdf, size: 18),
                 onPressed: () async {
-                  final data = await PressPdfProcessor.generatePdfFromVersionId(ref, h.versionId);
+                  final data = await PressPdfProcessor.generatePdfFromVersionId(
+                    ref,
+                    h.versionId,
+                  );
                   if (data != null) {
                     final pdfBytes = await PrensaPdfGenerator.generateEsqueleto(
                       data,
@@ -541,94 +554,241 @@ class _PressServiceDetailViewState
     if (state.status == Status.loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.orders.isEmpty) {
+
+    final pendingOrders = state.orders
+        .where((o) => o.status == "PENDING")
+        .toList();
+
+    final inProgressOrders = state.orders
+        .where((o) => o.status == "IN_PROGRESS")
+        .toList();
+
+    final completedOrders = state.orders
+        .where((o) => o.status == "COMPLETED")
+        .toList();
+
+    if (pendingOrders.isEmpty &&
+        inProgressOrders.isEmpty &&
+        completedOrders.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16),
-        child: Text("No hay órdenes abiertas"),
+        child: Text("No hay órdenes de servicio"),
       );
     }
-    return ListView.separated(
+
+    return ListView(
       padding: EdgeInsets.zero,
-      itemCount: state.orders.length,
-      separatorBuilder: (_, _) => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8.0),
-        child: Divider(thickness: 1),
-      ),
-      itemBuilder: (context, index) {
-        final order = state.orders[index];
+      children: [
+        if (pendingOrders.isNotEmpty) ...[
+          _buildSectionTitle("ÓRDENES PENDIENTES", Colors.blue),
+          ...pendingOrders.map((o) => _buildServiceOrderItem(o, context, ref)),
+        ],
 
-        // Formateo del ID
-        final String displayId = order.id.length >= 8
-            ? order.id.substring(0, 8).toUpperCase()
-            : order.id.toUpperCase();
+        if (inProgressOrders.isNotEmpty) ...[
+          _buildSectionTitle("ÓRDENES EN PROGRESO", Colors.orange),
+          ...inProgressOrders.map(
+            (o) => _buildServiceOrderItem(o, context, ref),
+          ),
+        ],
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  displayId,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Color(0xFFC62828),
-                  ),
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.add_box, color: Colors.green),
-                      tooltip: "Agregar componentes",
-                      onPressed: () =>
-                          _showAddPressItemsDialog(context, ref, order.id),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.list_alt, color: Colors.blue),
-                      tooltip: "Ver componentes adjuntos",
-                      onPressed: () =>
-                          _showPressServiceItemsDialog(context, ref, order.id),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              order.description,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Fecha: ${order.formattedDate}",
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Aquí puedes llamar a tu lógica de completar orden
-                  // ref.read(completePressServiceNotifierProvider.notifier).completeService(order.id);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC62828),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text("COMPLETAR ORDEN"),
-              ),
-            ),
-          ],
-        );
-      },
+        if (completedOrders.isNotEmpty) ...[
+          _buildSectionTitle("ÓRDENES COMPLETADAS", Colors.green),
+          ...completedOrders.map(
+            (o) => _buildServiceOrderItem(o, context, ref),
+          ),
+        ],
+      ],
     );
   }
 
-  void _showAddPressItemsDialog(
+  Widget _buildSectionTitle(String title, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 5,
+            height: 20,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildServiceOrderItem(
+    PressServiceOrderModel order,
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+    final isPending = order.status == "PENDING";
+    final isInProgress = order.status == "IN_PROGRESS";
+    final isCompleted = order.status == "COMPLETED";
+
+    final completeState = ref.watch(completeServiceNotifierProvider);
+
+    final String displayId = order.id.length >= 8
+        ? order.id.substring(0, 8).toUpperCase()
+        : order.id.toUpperCase();
+
+    final buttonText = isPending
+        ? "INICIAR ORDEN"
+        : isInProgress
+        ? "COMPLETAR ORDEN"
+        : "COMPLETADA";
+
+    final buttonColor = isPending
+        ? Colors.blue
+        : isInProgress
+        ? Colors.orange
+        : Colors.green;
+
+    final displayReportId = order.reportId.length >= 6
+        ? order.reportId.substring(0, 6)
+        : order.reportId;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              displayId,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: isCompleted
+                    ? Colors.green
+                    : isInProgress
+                    ? Colors.orange
+                    : Colors.blue,
+              ),
+            ),
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.add_box, color: Colors.green),
+                  tooltip: "Agregar componentes",
+                  onPressed: isCompleted
+                      ? null
+                      : () => _showAddItemsDialog(context, ref, order.id),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.list_alt, color: Colors.blue),
+                  tooltip: "Ver componentes adjuntos",
+                  onPressed: () =>
+                      _showServiceItemsDialog(context, ref, order.id),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+
+        Text(
+          order.description,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+
+        const SizedBox(height: 4),
+
+        Text(
+          "Obs: ${order.observation}",
+          style: const TextStyle(fontSize: 11, color: Colors.grey),
+        ),
+
+        const SizedBox(height: 12),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Reporte: $displayReportId",
+              style: const TextStyle(fontSize: 10, color: Colors.blueGrey),
+            ),
+            Text(
+              "Apertura: ${order.date.day}/${order.date.month}/${order.date.year}",
+              style: const TextStyle(fontSize: 10, color: Colors.grey),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: isCompleted
+                ? null
+                : completeState.loading
+                ? null
+                : () async {
+                  if (isPending) {
+                    await showDialog(
+                      context: context,
+                      builder: (_) => StartPressServiceDialog(
+                        order: order,
+                        onStarted: () async {
+                          _refreshAllData();
+                        },
+                      ),
+                    );
+                  } else if (isInProgress) {
+                      await showDialog(
+                        context: context,
+                        builder: (_) => CompleteServiceDialog(
+                          order: order,
+                          pressId: order.pressId,
+                          onCompleted: () async {
+                            _refreshAllData();
+                          },
+                        ),
+                      );
+                    }
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: buttonColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: completeState.loading && !isCompleted
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(buttonText),
+          ),
+        ),
+
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Divider(thickness: 1),
+        ),
+      ],
+    );
+  }
+
+  void _showAddItemsDialog(
     BuildContext context,
     WidgetRef ref,
     String serviceId,
@@ -785,7 +945,7 @@ class _PressServiceDetailViewState
   }
 
   // 2. DIÁLOGO PARA VER COMPONENTES ADJUNTOS
-  void _showPressServiceItemsDialog(
+  void _showServiceItemsDialog(
     BuildContext context,
     WidgetRef ref,
     String serviceId,

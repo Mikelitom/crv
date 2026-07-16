@@ -1,11 +1,11 @@
 // lib/features/servicios/presentation/providers/press_service_order_state.dart
 import 'package:crv_reprosisa/features/assets/presentation/states/status.dart';
-import 'package:crv_reprosisa/features/servicios/domain/entities/press_service_order_entity.dart';
+import 'package:crv_reprosisa/features/servicios/data/models/press/press_service_order_model.dart';
 
 
 class PressServiceOrderState {
   final Status status;
-  final List<PressServiceOrderEntity> orders;
+  final List<PressServiceOrderModel> orders;
   final String? error;
 
   const PressServiceOrderState({
@@ -14,7 +14,7 @@ class PressServiceOrderState {
     this.error,
   });
 
-  PressServiceOrderState copyWith({Status? status, List<PressServiceOrderEntity>? orders, String? error}) {
+  PressServiceOrderState copyWith({Status? status, List<PressServiceOrderModel>? orders, String? error}) {
     return PressServiceOrderState(
       status: status ?? this.status,
       orders: orders ?? this.orders,

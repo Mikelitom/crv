@@ -6,6 +6,7 @@ class PressServiceOrderModel extends PressServiceOrderEntity {
   const PressServiceOrderModel({
     required super.id,
     required super.pressId,
+    required super.reportId,
     required super.description,
     required super.observation,
     required super.status,
@@ -17,6 +18,7 @@ class PressServiceOrderModel extends PressServiceOrderEntity {
     return PressServiceOrderModel(
       id: json['id'] ?? '',
       pressId: json['press_id'] ?? '',
+      reportId: json['report_id'] ?? '',
       description: json['description'] ?? 'Sin descripción',
       observation: json['observation'] ?? '',
       status: json['status'] ?? 'PENDING',

@@ -5,6 +5,7 @@ import 'package:crv_reprosisa/features/servicios/data/models/press/press_inciden
 import 'package:crv_reprosisa/features/servicios/data/models/press/press_item_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/press/press_service_item_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/press/press_service_order_model.dart';
+import 'package:crv_reprosisa/features/servicios/domain/entities/service_evidence.dart';
 import 'package:dio/dio.dart';
 
 abstract class PressServiceDataSource {
@@ -16,6 +17,14 @@ abstract class PressServiceDataSource {
   Future<List<PressServiceItemModel>> getServiceItems(String serviceId);
   Future<List<dynamic>> getPendingMaintenanceGlobal();
   Future<List<dynamic>> getLoansMultiFilter();
+  Future<void> startService({
+    required String serviceId,
+    required String observation,
+  });
+  Future<bool> completeService(
+    String serviceId,
+    List<ServiceEvidence> evidences,
+  );
 }
 
 class PressServiceDataSourceImpl implements PressServiceDataSource {
@@ -131,6 +140,42 @@ class PressServiceDataSourceImpl implements PressServiceDataSource {
       return response.data as List<dynamic>;
     } else {
       throw Exception('Error al obtener préstamos: ${response.statusCode}');
+    }
+  }
+
+  @override
+  Future<void> startService({
+    required String serviceId,
+    required String observation,
+  }) async {
+    final response = await dio.post(
+      '/press/service/$serviceId/start',
+      queryParameters: {"observation": observation},
+    );
+
+    if (response.statusCode == 200) {
+      return;
+    } else {
+      throw Exception('Error al iniciar servicio');
+    }
+  }
+
+  @override
+  Future<bool> completeService(
+    String serviceId,
+    List<ServiceEvidence> evidences,
+  ) async {
+    final response = await dio.patch(
+      '/press/service/$serviceId/complete',
+      data: {
+        "evidences": evidences.map((evidence) => evidence.toJson()).toList(),
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Error al completar el servicio: ${response.statusCode}');
     }
   }
 }
