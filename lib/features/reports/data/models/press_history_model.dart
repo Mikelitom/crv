@@ -4,7 +4,9 @@ class PressHistoryModel extends PressReportEntity {
   final String pressId;
   final String model;
   final String type;
-  final String area; // <--- 1. Agrega el campo aquí
+  final String area;
+  // 1. Declaramos versionId como campo final real, no como un getter que devuelve null
+  final String versionId; 
 
   String get tipo => "PRENSA";
 
@@ -19,7 +21,9 @@ class PressHistoryModel extends PressReportEntity {
     required this.pressId,
     required this.model,
     required this.type,
-    required this.area, // <--- 2. Agrega al constructor
+    required this.area,
+    // 2. Agregamos al constructor
+    required this.versionId, 
   }) : super(
           reportId: reportId,
           folio: folio,
@@ -41,6 +45,8 @@ class PressHistoryModel extends PressReportEntity {
         pressId: json['press_id'] ?? '',
         model: json['model'] ?? '',
         type: json['type'] ?? '',
-        area: json['area'] ?? 'N/A', // <--- 3. Agrega al fromJson
+        area: json['area'] ?? 'N/A',
+        // 3. Asignamos el valor real desde el JSON
+        versionId: json['version_id'] ?? '', 
       );
 }

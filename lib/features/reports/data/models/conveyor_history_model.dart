@@ -4,16 +4,24 @@ class ConveyorHistoryModel extends ConveyorReportEntity {
   final String clientId;
   final String mineName;
   final String areaName;
+  // 1. Añadimos el campo necesario para los procesadores PDF
+  final String versionId; 
 
-  // Getter para el filtrado
   String get tipo => "BANDA";
 
   ConveyorHistoryModel({
-    required super.reportId, required super.folio, required super.state,
-    required super.conveyorName, required super.clientCompany,
-    required super.inspectorName, required super.versionNumber,
+    required super.reportId, 
+    required super.folio, 
+    required super.state,
+    required super.conveyorName, 
+    required super.clientCompany,
+    required super.inspectorName, 
+    required super.versionNumber,
     required super.inspectionDate,
-    required this.clientId, required this.mineName, required this.areaName,
+    required this.clientId, 
+    required this.mineName, 
+    required this.areaName,
+    required this.versionId, // 2. Agregado al constructor
   });
 
   factory ConveyorHistoryModel.fromJson(Map<String, dynamic> json) => ConveyorHistoryModel(
@@ -28,5 +36,7 @@ class ConveyorHistoryModel extends ConveyorReportEntity {
     clientId: json['client_id'] ?? '',
     mineName: json['mine_name'] ?? '',
     areaName: json['area_name'] ?? '',
+    // 3. Asignación desde el JSON
+    versionId: json['version_id'] ?? '', 
   );
 }
