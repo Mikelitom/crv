@@ -332,105 +332,93 @@ Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
   )).toList();
 }
 Widget _buildDesktopTable(double maxWidth) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: maxWidth),
-            child: DataTable(
-              headingRowHeight: 52,
-              dataRowMaxHeight: 85,
-              horizontalMargin: 20,
-              columnSpacing: 20,
-              headingRowColor: WidgetStateProperty.all(headerColor),
-              showCheckboxColumn: false,
-              columns: const [
-                DataColumn(label: _HeaderLabel(text: 'REPORTE', color: Color(0xFF4B5563))),
-                DataColumn(label: _HeaderLabel(text: 'ESTADO', color: Color(0xFF4B5563))),
-                DataColumn(label: _HeaderLabel(text: 'FECHA', color: Color(0xFF4B5563))),
-                DataColumn(label: _HeaderLabel(text: 'ACCIONES', color: Color(0xFF4B5563))),
-              ],
-              rows: _filteredItems.map((item) {
-                // Buscamos todas las versiones de este reporte
-                final versiones = widget.items.where((i) => i.id == item.id).toList()
-                  ..sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      itemCount: _filteredItems.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final item = _filteredItems[index];
+        // Lógica de versiones que ya tenías
+        final versiones = widget.items.where((i) => i.id == item.id).toList()
+          ..sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
 
-                return DataRow(
-                  cells: [
-DataCell(
-  PopupMenuButton<InspectionRowUI>(
-    onSelected: (selectedItem) => _viewReport(selectedItem),
-    offset: const Offset(0, 40),
-    tooltip: "Cambiar versión",
-    // Estilo del menú flotante más limpio
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    itemBuilder: (context) => versiones.map((v) => PopupMenuItem(
-      value: v,
-      height: 40,
-      child: Row(
-        children: [
-          Icon(v.versionId == item.versionId ? Icons.radio_button_checked : Icons.radio_button_unchecked, 
-               size: 16, color: primaryRed),
-          const SizedBox(width: 8),
-          Text("Versión ${v.versionNumber}", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    )).toList(),
-    // Diseño del título en la tabla
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              item.title, 
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF111827)),
-            ),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Text(
-                  "Versión ${item.versionNumber} • ${item.folio}", 
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(width: 4),
-                Icon(Icons.unfold_more, size: 12, color: primaryRed.withOpacity(0.7)),
-              ],
-            ),
-          ],
-        ),
-      ],
-    ),
-  ),
-),
-                    DataCell(_StatusBadge(state: item.state, label: item.translatedState)),
-                    DataCell(Text(item.date, style: const TextStyle(fontSize: 12, color: Colors.black54))),
-                    DataCell(
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor.withOpacity(0.5)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              )
+            ],
+          ),
+          child: Row(
+            children: [
+              // 1. REPORTE Y SELECTOR DE VERSION (PopupMenu)
+              Expanded(
+                flex: 3,
+                child: PopupMenuButton<InspectionRowUI>(
+                  onSelected: (selectedItem) => _viewReport(selectedItem),
+                  offset: const Offset(0, 40),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  itemBuilder: (context) => versiones.map((v) => PopupMenuItem(
+                    value: v,
+                    child: Row(
+                      children: [
+                        Icon(v.versionId == item.versionId ? Icons.radio_button_checked : Icons.radio_button_unchecked, 
+                             size: 16, color: primaryRed),
+                        const SizedBox(width: 10),
+                        Text("Versión ${v.versionNumber}", style: const TextStyle(fontSize: 13)),
+                      ],
+                    ),
+                  )).toList(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF111827))),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
-                          _ActionIconBtn(icon: Icons.visibility_outlined, color: const Color(0xFF6366F1), onTap: () => _viewReport(item)),
-                          const SizedBox(width: 8),
-                          _ActionIconBtn(icon: Icons.edit_outlined, color: const Color(0xFF4B5563), onTap: () => _editReport(item)),
-                          const SizedBox(width: 8),
-                          _ActionIconBtn(icon: Icons.print_outlined, color: primaryRed, onTap: () => _printReport(item)),
+                          Text("v${item.versionNumber} • ${item.folio}", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                          const SizedBox(width: 4),
+                          Icon(Icons.unfold_more, size: 12, color: primaryRed.withOpacity(0.7)),
                         ],
                       ),
-                    ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // 2. ESTADO
+              Expanded(flex: 1, child: Align(alignment: Alignment.centerLeft, child: _StatusBadge(state: item.state, label: item.translatedState))),
+              
+              // 3. FECHA
+              Expanded(flex: 1, child: Text(item.date, style: TextStyle(color: Colors.grey.shade600, fontSize: 13))),
+              
+              // 4. ACCIONES
+              Expanded(
+                flex: 1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    _ActionIconBtn(icon: Icons.visibility_outlined, color: const Color(0xFF6366F1), onTap: () => _viewReport(item)),
+                    const SizedBox(width: 8),
+                    _ActionIconBtn(icon: Icons.edit_outlined, color: const Color(0xFF4B5563), onTap: () => _editReport(item)),
+                    const SizedBox(width: 8),
+                    _ActionIconBtn(icon: Icons.print_outlined, color: primaryRed, onTap: () => _printReport(item)),
                   ],
-                );
-              }).toList(),
-            ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
   Widget _buildMobileList() {

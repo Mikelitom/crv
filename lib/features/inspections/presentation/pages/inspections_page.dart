@@ -50,7 +50,7 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
     Navigator.push(context, MaterialPageRoute(builder: (_) => pages[index]));
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     ref.listen(inspectionProvider.select((state) => state.errorMessage), (prev, next) {
       if (next != null) {
@@ -83,16 +83,37 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
       ),
     );
   }
-
-  Widget _buildQuickActionGrid() {
+Widget _buildAnimatedActionItem(BoxConstraints constraints, String title, String desc, IconData icon, int index) {
+    return StatefulBuilder(builder: (context, setInnerState) {
+      bool isHovered = false;
+      return MouseRegion(
+        onEnter: (_) => setInnerState(() => isHovered = true),
+        onExit: (_) => setInnerState(() => isHovered = false),
+        child: AnimatedScale(
+          scale: isHovered ? 1.02 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          child: SizedBox(
+            width: constraints.maxWidth > 700 ? (constraints.maxWidth / 3) - 11 : constraints.maxWidth,
+            child: QuickActionCard(
+              title: title,
+              description: desc,
+              icon: icon,
+              onTap: () => _navigateToForm(index),
+            ),
+          ),
+        ),
+      );
+    });
+  }
+Widget _buildQuickActionGrid() {
     return LayoutBuilder(builder: (context, constraints) {
       return Wrap(
         spacing: 16,
         runSpacing: 16,
         children: [
-          _buildActionItem(constraints, "Prensas", "Checklists", Icons.build, 0),
-          _buildActionItem(constraints, "Vehículos", "Flota", Icons.local_shipping, 1),
-          _buildActionItem(constraints, "Bandas", "Transporte", Icons.settings, 2),
+          _buildAnimatedActionItem(constraints, "Prensas", "Checklists", Icons.build, 0),
+          _buildAnimatedActionItem(constraints, "Vehículos", "Flota", Icons.local_shipping, 1),
+          _buildAnimatedActionItem(constraints, "Bandas", "Transporte", Icons.settings, 2),
         ],
       );
     });
@@ -109,8 +130,7 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
       ),
     );
   }
-
-  Widget _buildInventoryStyleTableSection(inspectionState) {
+Widget _buildInventoryStyleTableSection(inspectionState) {
     final items = inspectionState.filteredInspections ?? [];
     final filtered = items.where((item) {
       final type = item.reportType.toUpperCase();
@@ -121,16 +141,19 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
 
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 25)]),
+      decoration: BoxDecoration(
+        color: Colors.white, 
+        borderRadius: BorderRadius.circular(24), 
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 20, offset: const Offset(0, 5))
+        ]
+      ),
       child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(24),
-            child: Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 16,
-              runSpacing: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Mis inspecciones', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
                 SizedBox(
@@ -143,7 +166,6 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
                       filled: true,
                       fillColor: const Color(0xFFF3F4F6),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
                   ),
                 ),
@@ -154,8 +176,10 @@ class _InspectionPageState extends ConsumerState<InspectionPage> with SingleTick
             controller: _tabController,
             indicatorColor: primaryRed,
             labelColor: primaryRed,
+            unselectedLabelColor: Colors.grey,
             tabs: const [Tab(text: 'PRENSAS'), Tab(text: 'VEHÍCULOS'), Tab(text: 'BANDAS')],
           ),
+          const SizedBox(height: 10),
           (inspectionState.isLoading) 
             ? const SizedBox(height: 250, child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))))
             : TableInspector(items: filtered),
