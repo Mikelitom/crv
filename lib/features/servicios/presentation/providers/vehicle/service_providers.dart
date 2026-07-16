@@ -6,24 +6,29 @@ import 'package:crv_reprosisa/features/servicios/data/repository/create_service_
 import 'package:crv_reprosisa/features/servicios/data/repository/service_items_repository_impl.dart';
 import 'package:crv_reprosisa/features/servicios/data/repository/service_items_repository_impl_g.dart';
 import 'package:crv_reprosisa/features/servicios/data/repository/v_service_repository_impl.dart';
+import 'package:crv_reprosisa/features/servicios/data/repository/vehicle/start_service_repository_impl.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/attach_item_repository.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/complete_vehicle_service_repository.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/create_service_repository.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/incidence_repository_g.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/service_item_repository.dart';
 import 'package:crv_reprosisa/features/servicios/domain/repositories/v_service_repository.dart';
+import 'package:crv_reprosisa/features/servicios/domain/repositories/vehicle/start_service_repository.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/attach_item_usecase.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/complete_vehicle_service_usecase.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/create_service_usecase.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/get_service_items_usecase.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/get_service_items_usecase_g.dart';
 import 'package:crv_reprosisa/features/servicios/domain/usecases/get_services_by_vehicle.dart';
+import 'package:crv_reprosisa/features/servicios/domain/usecases/vehicle/start_service_usecase.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/attach_items_notifier.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/complete_vehicle_service_notifier.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/incidence_notifier_g.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/service_items_notifier.dart'
     show ServiceItemsNotifier;
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/v_service_notifier.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/notifiers/vehicle/start_service_notifier.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/notifiers/vehicle/start_service_state.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/attach_item_state.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/incidence_state_g.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/service_items_state.dart';
@@ -132,4 +137,18 @@ final completeVehicleServiceUseCaseProvider =
 final completeVehicleServiceNotifierProvider =
     NotifierProvider<CompleteVehicleServiceNotifier, CompleteServiceState>(() {
       return CompleteVehicleServiceNotifier();
+    });
+
+// Start service
+final startServiceRepositoryProvider = Provider<StartServiceRepository>((ref) {
+  return StartServiceRepositoryImpl(ref.watch(serviceRemoteDataSourceProvider));
+});
+
+final startServiceUseCaseProvider = Provider<StartServiceUsecase>((ref) {
+  return StartServiceUsecase(ref.watch(startServiceRepositoryProvider));
+});
+
+final startServiceNotifierProvider =
+    NotifierProvider<StartServiceNotifier, StartVehicleServiceState>(() {
+      return StartServiceNotifier();
     });

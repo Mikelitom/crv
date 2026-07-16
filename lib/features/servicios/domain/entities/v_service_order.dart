@@ -1,3 +1,5 @@
+import 'package:crv_reprosisa/features/servicios/domain/entities/evidence.dart';
+
 class ServiceOrder {
   final String id;
   final String vehicleId;
@@ -7,6 +9,7 @@ class ServiceOrder {
   final DateTime date;
   final String status;
   final bool isActive;
+  final List<Evidence> evidences;
 
   ServiceOrder({
     required this.id,
@@ -17,5 +20,6 @@ class ServiceOrder {
     required this.date,
     required this.status,
     required this.isActive,
+    required this.evidences
   });
 }

@@ -3,6 +3,7 @@ import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/attach_it
 import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/create_service_order_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/incidence_model.dart';
 import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/service_item_model.dart';
+import 'package:crv_reprosisa/features/servicios/domain/entities/service_evidence.dart';
 import 'package:dio/dio.dart';
 
 abstract class ServiceDataSource {
@@ -12,7 +13,12 @@ abstract class ServiceDataSource {
   Future<void> createService(CreateServiceOrderModel model);
   Future<List<IncidenceModel>> getIncidenceSummary(String vehicleId);
   Future<List<ServiceOrderModel>> getPendingServicesByVehicle(String vehicleId);
-  Future<bool> completeService(String serviceId);
+  Future<void> startService({
+    required String serviceId,
+    required String location,
+    required int mileage,
+  });
+  Future<bool> completeService(String serviceId, List<ServiceEvidence> evidences);
 }
 
 class ServiceDataSourceImpl implements ServiceDataSource {
@@ -104,13 +110,42 @@ class ServiceDataSourceImpl implements ServiceDataSource {
   }
 
   @override
-  Future<bool> completeService(String serviceId) async {
-    final response = await dio.patch('/vehicle/service/$serviceId/complete');
-
+  Future<bool> completeService(
+    String serviceId,
+    List<ServiceEvidence> evidences,
+  ) async {
+    final response = await dio.patch(
+      '/vehicle/service/$serviceId/complete',
+      data: {
+        "evidences": evidences
+            .map((evidence) => evidence.toJson())
+            .toList(),
+      },
+    );
+  
     if (response.statusCode == 200) {
       return true;
     } else {
-      throw Exception('Error al completar el servicio: ${response.statusCode}');
+      throw Exception(
+        'Error al completar el servicio: ${response.statusCode}',
+      );
+    }
+  }
+
+  @override
+  Future<void> startService({
+    required String serviceId,
+    required String location,
+    required int mileage,
+  }) async {
+    final response = await dio.post(
+      '/vehicle/service/$serviceId/start',
+      queryParameters: {"location": location, "mileage": mileage},
+    );
+    if (response.statusCode == 200) {
+      return;
+    } else {
+      throw Exception('Error al iniciar el servicio');
     }
   }
 }
