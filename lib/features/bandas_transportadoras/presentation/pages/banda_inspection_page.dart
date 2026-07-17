@@ -34,7 +34,7 @@ class BandaInspectionPage extends ConsumerStatefulWidget {
 
 class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
   int _currentSectionIndex = 0;
-  final bool _mostrarRodilleria = true;
+  // final bool _mostrarRodilleria = true;
   bool _isSaving = false;
 
   // 🔹 Llave global para identificar el inicio de la tabla/sección
@@ -250,7 +250,7 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
         "material": state.material,
         "granulometry": state.granulometry,
         "present_to": state.presentTo,
-        "state": esFinalizar ? "COMPLETED" : "IN_PROGRESS",
+        "state": esFinalizar ? "IN_REVISION" : "IN_PROGRESS",
         "conveyor_responsible": state.conveyorResponsible,
         "folio": folio,
         "answers": answers,
@@ -633,7 +633,7 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
 
   Future<void> _confirmarGuardado() async {
     // Ajuste de lógica si es necesario
-    const bool estaCompleto = true;
+    // const bool estaCompleto = true;
 
     await showDialog(
       context: context,

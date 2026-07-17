@@ -52,6 +52,8 @@ class InspectionRowUI {
     switch (state.toUpperCase()) {
       case 'IN_PROGRESS': return 'EN PROGRESO';
       case 'COMPLETED': return 'COMPLETADO';
+      case 'IN_REVISION': return 'EN REVISION';
+      case 'RETURNED': return 'DEVUELTO';
       default: return state;
     }
   }

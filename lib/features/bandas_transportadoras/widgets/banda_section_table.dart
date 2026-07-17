@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -31,42 +30,52 @@ class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
   final Color _kSurface = const Color(0xFFF1F5F9); // Fondo más profesional
   final Color _kText = const Color.fromARGB(255, 29, 29, 29);
 
-Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
-  final ImageSource? source = await showModalBottomSheet<ImageSource>(
-    context: context,
-    builder: (context) => SafeArea(
-      child: Wrap(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.camera_alt),
-            title: const Text('Cámara'),
-            onTap: () => Navigator.pop(context, ImageSource.camera),
-          ),
-          ListTile(
-            leading: const Icon(Icons.photo_library),
-            title: const Text('Galería'),
-            onTap: () => Navigator.pop(context, ImageSource.gallery),
-          ),
-        ],
+  Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Cámara'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galería'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
 
-  if (source == null) return; // Si el usuario cancela, no hacemos nada
+    if (source == null) return; // Si el usuario cancela, no hacemos nada
 
-  try {
-    final XFile? photo = await _picker.pickImage(source: source, imageQuality: 50);
-    if (photo != null) {
-      final bytes = await photo.readAsBytes();
-      final evidence = EvidenceFile(bytes: bytes, type: 'image', mimeType: 'image/jpeg');
-      ref.read(bandaInspectionProvider.notifier).addEvidence(widget.sectionId, item.id, evidence, isBefore);
+    try {
+      final XFile? photo = await _picker.pickImage(
+        source: source,
+        imageQuality: 50,
+      );
+      if (photo != null) {
+        final bytes = await photo.readAsBytes();
+        final evidence = EvidenceFile(
+          bytes: bytes,
+          type: 'image',
+          mimeType: 'image/jpeg',
+        );
+        ref
+            .read(bandaInspectionProvider.notifier)
+            .addEvidence(widget.sectionId, item.id, evidence, isBefore);
+      }
+    } catch (e) {
+      debugPrint("Error al abrir cámara/galería: $e");
+      // Opcional: mostrar un SnackBar aquí informando que no se pudo acceder
     }
-  } catch (e) {
-    debugPrint("Error al abrir cámara/galería: $e");
-    // Opcional: mostrar un SnackBar aquí informando que no se pudo acceder
   }
-}
-@override
+
+  @override
   Widget build(BuildContext context) {
     bool isDesktop = MediaQuery.of(context).size.width > 800;
 
@@ -80,7 +89,10 @@ Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
         children: [
           _buildInstitutionalHeader(),
           if (isDesktop) _buildTableHead(),
-          ...widget.items.map((item) => isDesktop ? _buildDesktopRow(item) : _buildMobileList(item)),
+          ...widget.items.map(
+            (item) =>
+                isDesktop ? _buildDesktopRow(item) : _buildMobileList(item),
+          ),
         ],
       ),
     );
@@ -206,7 +218,15 @@ Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
               ),
             ),
           ),
-          Expanded(flex: 2, child: Center(child: Text("Comentarios", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10)))),
+          Expanded(
+            flex: 2,
+            child: Center(
+              child: Text(
+                "Comentarios",
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10),
+              ),
+            ),
+          ),
           Expanded(
             flex: 3,
             child: Center(
@@ -221,7 +241,7 @@ Future<void> _handleImageSelection(BandaComponent item, bool isBefore) async {
     );
   }
 
-Widget _buildDesktopRow(BandaComponent item) {
+  Widget _buildDesktopRow(BandaComponent item) {
     return Container(
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: _kBorder.withOpacity(0.5))),
@@ -236,7 +256,10 @@ Widget _buildDesktopRow(BandaComponent item) {
               child: _cell(
                 Text(
                   item.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
                 ),
               ),
             ),
@@ -253,7 +276,9 @@ Widget _buildDesktopRow(BandaComponent item) {
               flex: 2,
               child: Container(
                 decoration: BoxDecoration(
-                  border: Border(left: BorderSide(color: _kBorder.withOpacity(0.5))),
+                  border: Border(
+                    left: BorderSide(color: _kBorder.withOpacity(0.5)),
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -271,61 +296,108 @@ Widget _buildDesktopRow(BandaComponent item) {
     );
   }
 
-Widget _buildCommentInput(BandaComponent item) => TextFormField(
+  Widget _buildCommentInput(BandaComponent item) => TextFormField(
     // 🔥 La Key incluye el valor, forzando redibujado al cambiar el state
     key: ValueKey('comment_${item.id}_${item.comment}'),
     initialValue: item.comment,
     maxLines: 2,
     style: const TextStyle(fontSize: 11),
-    onChanged: (v) => ref.read(bandaInspectionProvider.notifier)
-                       .updateComponentComment(widget.sectionId, item.id, v),
-    decoration: const InputDecoration(hintText: "...", border: InputBorder.none, contentPadding: EdgeInsets.all(8)),
+    onChanged: (v) => ref
+        .read(bandaInspectionProvider.notifier)
+        .updateComponentComment(widget.sectionId, item.id, v),
+    decoration: const InputDecoration(
+      hintText: "...",
+      border: InputBorder.none,
+      contentPadding: EdgeInsets.all(8),
+    ),
   );
 
   void _showAddOptionDialog(BandaComponent item) {
     final controller = TextEditingController();
     showDialog(
-      context: context, 
+      context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Nueva opción"), 
-        content: TextField(controller: controller), 
+        title: const Text("Nueva opción"),
+        content: TextField(controller: controller),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar"),
+          ),
           ElevatedButton(
-            onPressed: () { 
-              if(controller.text.isNotEmpty) {
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
                 final label = controller.text;
-                ref.read(bandaInspectionProvider.notifier).addCustomOption(widget.sectionId, item.id, label);
-                ref.read(bandaInspectionProvider.notifier).toggleComponentOption(widget.sectionId, item.id, label);
-              } 
-              Navigator.pop(context); 
-            }, 
-            child: const Text("Guardar")
-          )
-        ]
-      )
+                ref
+                    .read(bandaInspectionProvider.notifier)
+                    .addCustomOption(widget.sectionId, item.id, label);
+                ref
+                    .read(bandaInspectionProvider.notifier)
+                    .toggleComponentOption(widget.sectionId, item.id, label);
+              }
+              Navigator.pop(context);
+            },
+            child: const Text("Guardar"),
+          ),
+        ],
+      ),
     );
   }
-Future<void> _showImageSourceOptions(BandaComponent item, bool isBefore) async {
-  showModalBottomSheet(
-    context: context,
-    builder: (ctx) => SafeArea(
-      child: Wrap(children: [
-        ListTile(leading: const Icon(Icons.camera_alt), title: const Text("Tomar foto"), onTap: () { Navigator.pop(ctx); _pick(item, isBefore, ImageSource.camera); }),
-        ListTile(leading: const Icon(Icons.photo_library), title: const Text("Seleccionar de galería"), onTap: () { Navigator.pop(ctx); _pick(item, isBefore, ImageSource.gallery); }),
-      ]),
-    ),
-  );
-}
 
-Future<void> _pick(BandaComponent item, bool isBefore, ImageSource source) async {
-  final XFile? photo = await _picker.pickImage(source: source, imageQuality: 50);
-  if (photo != null) {
-    final bytes = await photo.readAsBytes();
-    ref.read(bandaInspectionProvider.notifier).addEvidence(widget.sectionId, item.id, EvidenceFile(bytes: bytes, type: 'image', mimeType: 'image/jpeg'), isBefore);
-  }
-}
-Widget _buildMobileList(BandaComponent item) {
+  // Future<void> _showImageSourceOptions(
+  //   BandaComponent item,
+  //   bool isBefore,
+  // ) async {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     builder: (ctx) => SafeArea(
+  //       child: Wrap(
+  //         children: [
+  //           ListTile(
+  //             leading: const Icon(Icons.camera_alt),
+  //             title: const Text("Tomar foto"),
+  //             onTap: () {
+  //               Navigator.pop(ctx);
+  //               _pick(item, isBefore, ImageSource.camera);
+  //             },
+  //           ),
+  //           ListTile(
+  //             leading: const Icon(Icons.photo_library),
+  //             title: const Text("Seleccionar de galería"),
+  //             onTap: () {
+  //               Navigator.pop(ctx);
+  //               _pick(item, isBefore, ImageSource.gallery);
+  //             },
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  // Future<void> _pick(
+  //   BandaComponent item,
+  //   bool isBefore,
+  //   ImageSource source,
+  // ) async {
+  //   final XFile? photo = await _picker.pickImage(
+  //     source: source,
+  //     imageQuality: 50,
+  //   );
+  //   if (photo != null) {
+  //     final bytes = await photo.readAsBytes();
+  //     ref
+  //         .read(bandaInspectionProvider.notifier)
+  //         .addEvidence(
+  //           widget.sectionId,
+  //           item.id,
+  //           EvidenceFile(bytes: bytes, type: 'image', mimeType: 'image/jpeg'),
+  //           isBefore,
+  //         );
+  //   }
+  // }
+
+  Widget _buildMobileList(BandaComponent item) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -336,18 +408,18 @@ Widget _buildMobileList(BandaComponent item) {
         children: [
           // Nombre del componente en negro
           Text(
-            item.name, 
+            item.name,
             style: TextStyle(
-              fontWeight: FontWeight.w900, 
-              fontSize: 14, 
-              color: _kText // _kText es negro profesional
-            )
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+              color: _kText, // _kText es negro profesional
+            ),
           ),
           const SizedBox(height: 10),
-          
+
           _buildCheckboxes(item),
           const SizedBox(height: 10),
-          
+
           Row(
             children: [
               Expanded(
@@ -355,17 +427,20 @@ Widget _buildMobileList(BandaComponent item) {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildInputMobile("Comentario", _buildCommentInput(item)),
+                child: _buildInputMobile(
+                  "Comentario",
+                  _buildCommentInput(item),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          
+
           _buildInputMobile("Acciones y Recomendaciones", _buildObsInput(item)),
           const SizedBox(height: 10),
-          
+
           Row(
-            mainAxisAlignment: MainAxisAlignment.center, 
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildEvidenceList(item, true),
               const SizedBox(width: 30),
@@ -382,11 +457,11 @@ Widget _buildMobileList(BandaComponent item) {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
-        label.toUpperCase(), 
+        label.toUpperCase(),
         style: const TextStyle(
-          fontSize: 9, 
-          fontWeight: FontWeight.bold, 
-          color: Colors.black // Título negro
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          color: Colors.black, // Título negro
         ),
       ),
       Container(
@@ -394,92 +469,179 @@ Widget _buildMobileList(BandaComponent item) {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: _kSurface, // Tu fondo gris suave
-          borderRadius: BorderRadius.circular(8)
+          borderRadius: BorderRadius.circular(8),
         ),
         child: input,
       ),
     ],
   );
 
-Widget _buildCheckboxes(BandaComponent item) {
-  return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    // 1. Catálogo Fijo
-    ...item.options.map((opt) {
-      final isSelected = item.selectedOptionIds.contains(opt.id);
-      return InkWell(
-        onTap: () => ref.read(bandaInspectionProvider.notifier).toggleComponentOption(widget.sectionId, item.id, opt.id),
-        child: Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [
-          Icon(isSelected ? Icons.check_circle : Icons.radio_button_unchecked, size: 16, color: isSelected ? _kRed : Colors.grey),
-          const SizedBox(width: 8),
-          Text(opt.label, style: TextStyle(fontSize: 11, color: isSelected ? _kRed : Colors.black87)),
-        ])),
-      );
-    }),
-    
-    // 2. Custom Options (Diseño Rojo Especial)
-    ...item.customOptions.map((label) {
-      final isSelected = item.selectedOptionIds.contains(label);
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(children: [
-          Expanded(
-            child: InkWell(
-              onTap: () => ref.read(bandaInspectionProvider.notifier).toggleComponentOption(widget.sectionId, item.id, label),
-              child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? _kRed : Colors.grey.shade600)),
+  Widget _buildCheckboxes(BandaComponent item) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Catálogo Fijo
+        ...item.options.map((opt) {
+          final isSelected = item.selectedOptionIds.contains(opt.id);
+          return InkWell(
+            onTap: () => ref
+                .read(bandaInspectionProvider.notifier)
+                .toggleComponentOption(widget.sectionId, item.id, opt.id),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    isSelected
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    size: 16,
+                    color: isSelected ? _kRed : Colors.grey,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    opt.label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isSelected ? _kRed : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 12, color: Colors.red),
-            onPressed: () => ref.read(bandaInspectionProvider.notifier).removeCustomOption(widget.sectionId, item.id, label),
-            constraints: const BoxConstraints(),
-            padding: EdgeInsets.zero,
-          )
-        ]),
-      );
-    }),
-    
-    TextButton.icon(icon: const Icon(Icons.add, size: 14), label: const Text("Otra"), onPressed: () => _showAddOptionDialog(item)),
-  ]);
-}
+          );
+        }),
 
-Widget _buildEvidenceColumn(BandaComponent item) => Column(
-  mainAxisAlignment: MainAxisAlignment.center,
-  children: [
-    _buildEvidenceList(item, true),
-    const Divider(height: 1),
-    _buildEvidenceList(item, false),
-  ],
-);
-Widget _buildEvidenceList(BandaComponent item, bool isBefore) {
-    final files = isBefore ? item.evidenceBefore : item.evidenceAfter;
-    return Column(children: [
-        Text(isBefore ? "A" : "D", style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey)),
-        Wrap(spacing: 4, runSpacing: 4, children: [
-          ...files.asMap().entries.map((e) => _buildMini(e.value, item, isBefore, e.key)),
-          GestureDetector(onTap: () => _handleImageSelection(item, isBefore), child: Container(width: 30, height: 30, decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(4)), child: const Icon(Icons.add_a_photo, size: 14, color: Colors.grey)))
-        ])
-    ]);
+        // 2. Custom Options (Diseño Rojo Especial)
+        ...item.customOptions.map((label) {
+          final isSelected = item.selectedOptionIds.contains(label);
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => ref
+                        .read(bandaInspectionProvider.notifier)
+                        .toggleComponentOption(
+                          widget.sectionId,
+                          item.id,
+                          label,
+                        ),
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? _kRed : Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 12, color: Colors.red),
+                  onPressed: () => ref
+                      .read(bandaInspectionProvider.notifier)
+                      .removeCustomOption(widget.sectionId, item.id, label),
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                ),
+              ],
+            ),
+          );
+        }),
+
+        TextButton.icon(
+          icon: const Icon(Icons.add, size: 14),
+          label: const Text("Otra"),
+          onPressed: () => _showAddOptionDialog(item),
+        ),
+      ],
+    );
   }
 
-Widget _buildMini(EvidenceFile f, BandaComponent item, bool isBefore, int idx) {
+  // Widget _buildEvidenceColumn(BandaComponent item) => Column(
+  //   mainAxisAlignment: MainAxisAlignment.center,
+  //   children: [
+  //     _buildEvidenceList(item, true),
+  //     const Divider(height: 1),
+  //     _buildEvidenceList(item, false),
+  //   ],
+  // );
+  
+  Widget _buildEvidenceList(BandaComponent item, bool isBefore) {
+    final files = isBefore ? item.evidenceBefore : item.evidenceAfter;
+    return Column(
+      children: [
+        Text(
+          isBefore ? "A" : "D",
+          style: const TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey,
+          ),
+        ),
+        Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          children: [
+            ...files.asMap().entries.map(
+              (e) => _buildMini(e.value, item, isBefore, e.key),
+            ),
+            GestureDetector(
+              onTap: () => _handleImageSelection(item, isBefore),
+              child: Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Icon(
+                  Icons.add_a_photo,
+                  size: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMini(
+    EvidenceFile f,
+    BandaComponent item,
+    bool isBefore,
+    int idx,
+  ) {
     return GestureDetector(
       onTap: () => _viewImage(f.bytes), // 1. Un toque abre la imagen en grande
       child: Stack(
-        clipBehavior: Clip.none, // IMPORTANTE: Permite que la X se vea fuera del borde
+        clipBehavior:
+            Clip.none, // IMPORTANTE: Permite que la X se vea fuera del borde
         children: [
           // La miniatura de la foto
           Container(
-            width: 30, height: 30,
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(4),
-              image: DecorationImage(image: MemoryImage(f.bytes), fit: BoxFit.cover),
+              image: DecorationImage(
+                image: MemoryImage(f.bytes),
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           // 2. El botón de borrar es un componente independiente
           Positioned(
-            right: -4, top: -4,
+            right: -4,
+            top: -4,
             child: GestureDetector(
-              onTap: () => ref.read(bandaInspectionProvider.notifier).removeEvidence(widget.sectionId, item.id, isBefore, idx),
+              onTap: () => ref
+                  .read(bandaInspectionProvider.notifier)
+                  .removeEvidence(widget.sectionId, item.id, isBefore, idx),
               child: const CircleAvatar(
                 radius: 8,
                 backgroundColor: Colors.red,
