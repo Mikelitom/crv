@@ -254,54 +254,89 @@ class _CompleteServiceDialogState extends ConsumerState<CompleteServiceDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text("Completar servicio"),
-      content: SizedBox(
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Container(
         width: 500,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildEvidenceList(),
-  
-              const SizedBox(height: 16),
-  
-              ElevatedButton.icon(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Completar servicio",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            _buildEvidenceList(),
+            const SizedBox(height: 20),
+            Center(
+              child: OutlinedButton.icon(
                 onPressed: _uploading ? null : _pickFiles,
-                icon: const Icon(Icons.attach_file),
-                label: const Text("Agregar evidencias"),
+                icon: const Icon(Icons.attach_file, color: Color(0xFFC62828)),
+                label: const Text(
+                  "Agregar evidencias",
+                  style: TextStyle(
+                    color: Color(0xFFC62828),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFC62828)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 28),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: _uploading ? null : () => Navigator.pop(context),
+                  child: const Text(
+                    "Cancelar",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: _uploading ? null : _completeService,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFC62828),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: _uploading
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.check),
+                  label: Text(_uploading ? "Completando..." : "Completar"),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
-  
-      actions: [
-        TextButton(
-          onPressed: _uploading
-              ? null
-              : () => Navigator.pop(context),
-          child: const Text("Cancelar"),
-        ),
-  
-        FilledButton.icon(
-          onPressed: _uploading ? null : _completeService,
-          icon: _uploading
-              ? const SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
-                )
-              : const Icon(Icons.check),
-          label: Text(
-            _uploading
-                ? "Completando..."
-                : "Completar",
-          ),
-        ),
-      ],
     );
   }
 }
