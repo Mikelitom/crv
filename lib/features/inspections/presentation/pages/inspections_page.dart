@@ -171,27 +171,7 @@ class _InspectionPageState extends ConsumerState<InspectionPage>
     );
   }
 
-  // Widget _buildActionItem(
-  //   BoxConstraints constraints,
-  //   String title,
-  //   String desc,
-  //   IconData icon,
-  //   int index,
-  // ) {
-  //   return SizedBox(
-  //     width: constraints.maxWidth > 700
-  //         ? (constraints.maxWidth / 3) - 11
-  //         : constraints.maxWidth,
-  //     child: QuickActionCard(
-  //       title: title,
-  //       description: desc,
-  //       icon: icon,
-  //       onTap: () => _navigateToForm(index),
-  //     ),
-  //   );
-  // }
-
-  Widget _buildInventoryStyleTableSection(inspectionState) {
+Widget _buildInventoryStyleTableSection(inspectionState) {
     final items = inspectionState.filteredInspections ?? [];
     final filtered = items.where((item) {
       final type = item.reportType.toUpperCase();
@@ -217,28 +197,26 @@ class _InspectionPageState extends ConsumerState<InspectionPage>
         children: [
           Padding(
             padding: const EdgeInsets.all(24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column( // Cambiado a Column para apilar elementos
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Mis inspecciones',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                 ),
-                SizedBox(
-                  width: 320,
-                  child: TextField(
-                    onChanged: (val) => ref
-                        .read(inspectionProvider.notifier)
-                        .filterInspections(val),
-                    decoration: InputDecoration(
-                      hintText: "Buscar registros...",
-                      prefixIcon: Icon(Icons.search, color: primaryRed),
-                      filled: true,
-                      fillColor: const Color(0xFFF3F4F6),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
+                const SizedBox(height: 16), // Espacio entre título y buscador
+                TextField(
+                  onChanged: (val) => ref
+                      .read(inspectionProvider.notifier)
+                      .filterInspections(val),
+                  decoration: InputDecoration(
+                    hintText: "Buscar registros...",
+                    prefixIcon: Icon(Icons.search, color: primaryRed),
+                    filled: true,
+                    fillColor: const Color(0xFFF3F4F6),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),

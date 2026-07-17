@@ -19,7 +19,10 @@ class ReportRepositoryImpl implements ReportRepository {
   Future<List<ConveyorReportEntity>> getAllConveyorReports() async {
     return await remoteDatasource.getConveyorHistory();
   }
-
+@override
+  Future<void> sendConveyorReviewNote(String versionId, String notes) async {
+    return await remoteDatasource.sendConveyorReviewNote(versionId, notes);
+  }
   @override
   Future<List<PressReportEntity>> getAllPressReports() async {
     return await remoteDatasource.getPressHistory();

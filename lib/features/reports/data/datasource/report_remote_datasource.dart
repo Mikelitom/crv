@@ -6,4 +6,5 @@ abstract class ReportRemoteDatasource {
   Future<List<VehicleHistoryModel>> getVehicleHistory();
   Future<List<ConveyorHistoryModel>> getConveyorHistory();
   Future<List<PressHistoryModel>> getPressHistory(); // <-- SIN parámetros
+  Future<void> sendConveyorReviewNote(String versionId, String notes);
 }

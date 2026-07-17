@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:crv_reprosisa/features/assets/domain/usecases/get_press_report_detail.dart';
+import 'package:crv_reprosisa/features/reports/domain/usecase/send_conveyor_note_usecase.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/get_all_reports_usecae.dart';
 import 'package:crv_reprosisa/features/reports/presentation/provider/reports_state.dart';
@@ -14,6 +14,7 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
   final GetVehicleReportDetail getVehicleDetail;
   final GetPressReportDetailUseCase getPressDetail;
   final GetConveyorReportDetailUseCase getConveyorDetail;
+  final SendConveyorNoteUseCase sendConveyorNoteUseCase; // <-- AGREGAR
   final Dio dio;
 
   ReportsNotifier({
@@ -21,6 +22,7 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     required this.getVehicleDetail,
     required this.getPressDetail,
     required this.getConveyorDetail,
+    required this.sendConveyorNoteUseCase,
     required this.dio,
   }) : super(const ReportsState());
 
@@ -42,6 +44,17 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     }).toList();
 
     state = state.copyWith(filteredReports: filtered);
+  }
+
+  Future<void> sendNote(String versionId, String notes) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      await sendConveyorNoteUseCase.call(versionId, notes);
+      // Aquí podrías recargar los reportes si es necesario
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
   }
 
   /// Carga inicial de todos los reportes

@@ -23,21 +23,21 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
-  dio.interceptors.add(
-    InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final tokenRepository = ref.read(tokenRepositoryProvider);
+  // dio.interceptors.add(
+  //   InterceptorsWrapper(
+  //     onRequest: (options, handler) async {
+  //       final tokenRepository = ref.read(tokenRepositoryProvider);
 
-        final tokens = await tokenRepository.get();
+  //       final tokens = await tokenRepository.get();
 
-        if (tokens != null) {
-          options.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
-        }
+  //       if (tokens != null) {
+  //         options.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
+  //       }
 
-        handler.next(options);
-      },
-    ),
-  );
+  //       handler.next(options);
+  //     },
+  //   ),
+  // );
 
   dio.interceptors.add(
     AuthInterceptor(ref: ref, dio: dio, refreshDio: refreshDio),

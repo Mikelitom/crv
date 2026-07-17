@@ -6,4 +6,5 @@ abstract class ReportRepository {
   Future<List<VehicleReportEntity>> getAllVehicleReports();
   Future<List<ConveyorReportEntity>> getAllConveyorReports();
   Future<List<PressReportEntity>> getAllPressReports();
+  Future<void> sendConveyorReviewNote(String versionId, String notes);
 }

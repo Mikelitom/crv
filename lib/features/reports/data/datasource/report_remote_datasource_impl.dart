@@ -18,6 +18,18 @@ class ReportRemoteDatasourceImpl implements ReportRemoteDatasource {
   }
 
   @override
+  Future<void> sendConveyorReviewNote(String versionId, String notes) async {
+    final response = await dio.post(
+      '/review-notes/conveyor/report/$versionId',
+      data: {'notes': notes},
+    );
+
+    if (response.statusCode == 201) {
+      return;
+    } 
+  }
+
+  @override
   Future<List<ConveyorHistoryModel>> getConveyorHistory() async {
     final response = await dio.get('/asset/client-history');
     final List<dynamic> data = response.data;
