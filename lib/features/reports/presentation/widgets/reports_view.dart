@@ -30,18 +30,27 @@ class ReportsView extends ConsumerWidget {
           children: [
             const Padding(
               padding: EdgeInsets.all(24),
-              child: CustomHeader(title: "Historial de Reportes", actionIcon: Icons.description_rounded),
+              child: CustomHeader(
+                title: "Historial de Reportes", 
+                actionIcon: Icons.description_rounded
+              ),
             ),
             
+            // Pestañas con estilo profesional e iconos
             TabBar(
               onTap: (index) => ref.read(reportsNotifierProvider.notifier).changeTab(index),
               labelColor: const Color(0xFFC62828),
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: const Color(0xFFC62828),
+              unselectedLabelColor: Colors.grey.shade600,
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicator: const UnderlineTabIndicator(
+                borderSide: BorderSide(color: Color(0xFFC62828), width: 3),
+                insets: EdgeInsets.symmetric(horizontal: 16),
+              ),
+              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               tabs: const [
-                Tab(text: "Bandas"),
-                Tab(text: "Vehículos"),
-                Tab(text: "Prensas"),
+                Tab(child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.layers_outlined, size: 18), SizedBox(width: 8), Text("Bandas")])),
+                Tab(child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.directions_car_outlined, size: 18), SizedBox(width: 8), Text("Vehículos")])),
+                Tab(child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.factory_outlined, size: 18), SizedBox(width: 8), Text("Prensas")])),
               ],
             ),
 
@@ -51,9 +60,9 @@ class ReportsView extends ConsumerWidget {
                 : TabBarView(
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
-                      _buildTableForType(state.filteredReports, 0), // Bandas
-                      _buildTableForType(state.filteredReports, 1), // Vehículos
-                      _buildTableForType(state.filteredReports, 2), // Prensas
+                      _buildTableForType(state.filteredReports, 0),
+                      _buildTableForType(state.filteredReports, 1),
+                      _buildTableForType(state.filteredReports, 2),
                     ],
                   ),
             ),
@@ -64,18 +73,26 @@ class ReportsView extends ConsumerWidget {
   }
 
   Widget _buildTableForType(List<dynamic> items, int typeIndex) {
+    // Lógica de cálculo de estados para los contadores
     final total = items.length;
-    final pending = items.where((r) => r.state == "PENDING").length;
-    final approved = items.where((r) => r.state == "APPROVED").length;
+    final pending = items.where((r) => (r.state ?? "").toUpperCase() == "PENDING").length;
+    final approved = items.where((r) => (r.state ?? "").toUpperCase() == "APPROVED").length;
+    final returned = items.where((r) => ["REJECTED", "RETURNED"].contains((r.state ?? "").toUpperCase())).length;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          ReportsSummaryGrid(total: total, pending: pending, approved: approved),
+          // Grid de contadores con animaciones (asumiendo que ya implementaste el widget anterior)
+          ReportsSummaryGrid(
+            total: total, 
+            pending: pending, 
+            approved: approved, 
+            returned: returned
+          ),
           const SizedBox(height: 32),
           
-          // Renderizado condicional según el índice de la pestaña
+          // Renderizado de la tabla correspondiente
           if (typeIndex == 0)
             ConveyorReportTable(reports: items, isAdmin: isAdmin)
           else if (typeIndex == 1)

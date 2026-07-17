@@ -1,64 +1,164 @@
 import 'package:flutter/material.dart';
 
 class ReportsSummaryGrid extends StatelessWidget {
-  final int total, pending, approved;
-  
+  final int total, pending, approved, returned;
+
   const ReportsSummaryGrid({
-    super.key, 
-    required this.total, 
-    required this.pending, 
-    required this.approved
+    super.key,
+    required this.total,
+    required this.pending,
+    required this.approved,
+    required this.returned,
   });
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final double cardWidth = (constraints.maxWidth - 32) / 3;
+      double spacing = 16;
+      int crossAxisCount = constraints.maxWidth > 1100 ? 4 : (constraints.maxWidth > 600 ? 2 : 1);
+      double cardWidth = (constraints.maxWidth - (spacing * (crossAxisCount - 1))) / crossAxisCount;
+
       return Wrap(
-        spacing: 16, runSpacing: 16,
+        spacing: spacing,
+        runSpacing: spacing,
         children: [
-          _StatCard(label: "Totales", value: "$total", icon: Icons.bar_chart, color: const Color(0xFFC62828), width: cardWidth, isRedTheme: true),
-          _StatCard(label: "Pendientes", value: "$pending", icon: Icons.pending_actions, color: Colors.orange, width: cardWidth),
-          _StatCard(label: "Aprobados", value: "$approved", icon: Icons.check_circle, color: Colors.green, width: cardWidth),
+          _StatCard(
+            label: "Total de Reportes",
+            value: "$total",
+            subtitle: "Todos los reportes",
+            icon: Icons.folder_open,
+            color: const Color(0xFFC62828), // Rojo Institucional
+            width: cardWidth,
+            isPrimary: true,
+          ),
+          _StatCard(
+            label: "Pendientes",
+            value: "$pending",
+            subtitle: "Requieren revisión",
+            icon: Icons.schedule,
+            color: Colors.orange,
+            width: cardWidth,
+          ),
+          _StatCard(
+            label: "Aprobados",
+            value: "$approved",
+            subtitle: "Reportes aprobados",
+            icon: Icons.check_circle_outline,
+            color: Colors.green,
+            width: cardWidth,
+          ),
+          _StatCard(
+            label: "Regresados",
+            value: "$returned",
+            subtitle: "Con observaciones",
+            icon: Icons.refresh,
+            color: Colors.purple,
+            width: cardWidth,
+          ),
         ],
       );
     });
   }
 }
 
-// _StatCard se queda aquí mismo para mantener el orden como en tus activos
-class _StatCard extends StatelessWidget {
-  final String label, value;
+class _StatCard extends StatefulWidget {
+  final String label, value, subtitle;
   final IconData icon;
   final Color color;
   final double width;
-  final bool isRedTheme;
+  final bool isPrimary;
 
-  const _StatCard({required this.label, required this.value, required this.icon, required this.color, required this.width, this.isRedTheme = false});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.width,
+    this.isPrimary = false,
+  });
+
+  @override
+  State<_StatCard> createState() => _StatCardState();
+}
+
+class _StatCardState extends State<_StatCard> {
+  bool isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isRedTheme ? const Color(0xFFC62828) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: TextStyle(color: isRedTheme ? Colors.white70 : Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
-              Icon(icon, color: isRedTheme ? Colors.white : color, size: 20),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: isRedTheme ? Colors.white : Colors.black87)),
-        ],
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+        width: widget.width,
+        padding: const EdgeInsets.all(24),
+        transform: Matrix4.translationValues(0, isHovered ? -8 : 0, 0),
+        decoration: BoxDecoration(
+          color: widget.isPrimary
+              ? widget.color
+              : (isHovered ? Colors.grey.shade50 : Colors.white),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: widget.isPrimary ? widget.color : widget.color.withValues(alpha: 0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isHovered ? 0.15 : 0.05),
+              blurRadius: isHovered ? 20 : 10,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: widget.isPrimary 
+                    ? Colors.white.withValues(alpha: 0.2) 
+                    : widget.color.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                widget.icon, 
+                color: widget.isPrimary ? Colors.white : widget.color, 
+                size: 24
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.label,
+                    style: TextStyle(
+                      color: widget.isPrimary ? Colors.white70 : Colors.grey.shade700,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  Text(
+                    widget.value,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 22,
+                      color: widget.isPrimary ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    widget.subtitle,
+                    style: TextStyle(
+                      color: widget.isPrimary ? Colors.white70 : Colors.grey.shade600,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
