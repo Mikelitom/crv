@@ -1,5 +1,4 @@
 import 'package:crv_reprosisa/core/network/interceptors/auth_interceptor.dart';
-import 'package:crv_reprosisa/features/auth/presentation/di/auth_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'environment.dart';
@@ -23,21 +22,21 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
-  dio.interceptors.add(
-    InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final tokenRepository = ref.read(tokenRepositoryProvider);
+  // dio.interceptors.add(
+  //   InterceptorsWrapper(
+  //     onRequest: (options, handler) async {
+  //       final tokenRepository = ref.read(tokenRepositoryProvider);
 
-        final tokens = await tokenRepository.get();
+  //       final tokens = await tokenRepository.get();
 
-        if (tokens != null) {
-          options.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
-        }
+  //       if (tokens != null) {
+  //         options.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
+  //       }
 
-        handler.next(options);
-      },
-    ),
-  );
+  //       handler.next(options);
+  //     },
+  //   ),
+  // );
 
   dio.interceptors.add(
     AuthInterceptor(ref: ref, dio: dio, refreshDio: refreshDio),

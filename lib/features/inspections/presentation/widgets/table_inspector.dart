@@ -426,6 +426,7 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
                 ),
               ],
               rows: _filteredItems.map((item) {
+                // Buscamos todas las versiones de este reporte
                 final versiones =
                     widget.items.where((i) => i.id == item.id).toList()..sort(
                       (a, b) => b.versionNumber.compareTo(a.versionNumber),
@@ -437,6 +438,8 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
                       PopupMenuButton<InspectionRowUI>(
                         onSelected: (selectedItem) => _viewReport(selectedItem),
                         offset: const Offset(0, 40),
+                        tooltip: "Cambiar versión",
+                        // Estilo del menú flotante más limpio
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -604,6 +607,7 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
               ],
             ),
             subtitle: Text("${item.date} • ${item.translatedState}"),
+            // Usamos un Row con MainAxisSize.min para los botones
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 import 'package:crv_reprosisa/features/assets/domain/usecases/get_press_report_detail.dart';
+import 'package:crv_reprosisa/features/reports/domain/usecase/accept_report_usecase.dart';
+import 'package:crv_reprosisa/features/reports/domain/usecase/send_conveyor_note_usecase.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/get_all_reports_usecae.dart';
@@ -13,6 +15,8 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
   final GetVehicleReportDetail getVehicleDetail;
   final GetPressReportDetailUseCase getPressDetail;
   final GetConveyorReportDetailUseCase getConveyorDetail;
+  final SendConveyorNoteUseCase sendConveyorNoteUseCase;
+  final AcceptConveyorReportUseCase acceptConveyorReportUseCase;
   final Dio dio;
 
   ReportsNotifier({
@@ -20,6 +24,8 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     required this.getVehicleDetail,
     required this.getPressDetail,
     required this.getConveyorDetail,
+    required this.sendConveyorNoteUseCase,
+    required this.acceptConveyorReportUseCase,
     required this.dio,
   }) : super(const ReportsState());
 
@@ -41,6 +47,36 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     }).toList();
 
     state = state.copyWith(filteredReports: filtered);
+  }
+
+  /// Acepta y marca el reporte como COMPLETED
+  Future<void> acceptReport(String reportId) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      // Llamada al caso de uso inyectado
+      await acceptConveyorReportUseCase.call(reportId);
+
+      // Recargamos la lista para reflejar el cambio de estado en la UI
+      await loadAllReports();
+
+      // La carga exitosa ya maneja el estado de isLoading en loadAllReports
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: "Error al aceptar reporte: ${e.toString()}",
+      );
+    }
+  }
+
+  Future<void> sendNote(String versionId, String notes) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      await sendConveyorNoteUseCase.call(versionId, notes);
+      // Aquí podrías recargar los reportes si es necesario
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
   }
 
   /// Carga inicial de todos los reportes

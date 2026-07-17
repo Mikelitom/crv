@@ -1,25 +1,20 @@
+import 'package:crv_reprosisa/core/config/dio_client.dart';
 import 'package:crv_reprosisa/features/reports/data/datasource/report_remote_datasource.dart';
 import 'package:crv_reprosisa/features/reports/data/datasource/report_remote_datasource_impl.dart';
 import 'package:crv_reprosisa/features/reports/data/repository/report_repository_impl.dart';
 import 'package:crv_reprosisa/features/reports/domain/repository/report_repository.dart';
+import 'package:crv_reprosisa/features/reports/domain/usecase/accept_report_usecase.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/get_all_reports_usecae.dart';
+import 'package:crv_reprosisa/features/reports/domain/usecase/send_conveyor_note_usecase.dart';
 import 'package:crv_reprosisa/features/reports/presentation/notifier/reports_notifier.dart';
 import 'package:crv_reprosisa/features/reports/presentation/provider/reports_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 
 // Importaciones necesarias para los nuevos casos de uso de detalle
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_usecase_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/press_usecase_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/client_usecase_provider.dart';
 import 'package:flutter_riverpod/legacy.dart';
-
-// 1. Provider del cliente Dio
-final dioProvider = Provider((ref) => Dio(BaseOptions(
-  baseUrl: "https://backend-crv-refactor.onrender.com/api/v1",
-  connectTimeout: const Duration(seconds: 10),
-  receiveTimeout: const Duration(seconds: 10),
-)));
 
 // 2. Provider del DataSource
 final reportRemoteDatasourceProvider = Provider<ReportRemoteDatasource>((ref) {
@@ -36,21 +31,37 @@ final getAllReportsUseCaseProvider = Provider((ref) {
   return GetAllReportsUseCase(ref.read(reportRepositoryProvider));
 });
 
-// 5. Provider del Notifier con inyección de casos de uso de detalle
-final reportsNotifierProvider = StateNotifierProvider<ReportsNotifier, ReportsState>((ref) {
-  final useCase = ref.read(getAllReportsUseCaseProvider);
-  
-  // Obtenemos los casos de uso de detalle desde sus respectivos proveedores
-  final getVehicleDetail = ref.read(getVehicleReportDetailUseCaseProvider);
-  final getPressDetail = ref.read(getPressReportDetailUseCaseProvider);
-  final getConveyorDetail = ref.read(getConveyorReportDetailUseCaseProvider);
-  final dio = ref.read(dioProvider);
-
-  return ReportsNotifier(
-    getAllReportsUseCase: useCase,
-    getVehicleDetail: getVehicleDetail,
-    getPressDetail: getPressDetail,
-    getConveyorDetail: getConveyorDetail,
-    dio: dio,
-  );
+// 4.1 Provider del UseCase de notas
+final sendConveyorNoteUseCaseProvider = Provider((ref) {
+  return SendConveyorNoteUseCase(ref.read(reportRepositoryProvider));
 });
+
+final acceptReportUseCaseProvider = Provider((ref) {
+  return AcceptConveyorReportUseCase(ref.read(reportRepositoryProvider));
+});
+
+// 5. Provider del Notifier con inyección de todos los casos de uso
+final reportsNotifierProvider =
+    StateNotifierProvider.autoDispose<ReportsNotifier, ReportsState>((ref) {
+      final getAllReports = ref.read(getAllReportsUseCaseProvider);
+      final sendNote = ref.read(sendConveyorNoteUseCaseProvider);
+
+      // Obtenemos los casos de uso de detalle desde sus respectivos proveedores
+      final getVehicleDetail = ref.read(getVehicleReportDetailUseCaseProvider);
+      final getPressDetail = ref.read(getPressReportDetailUseCaseProvider);
+      final getConveyorDetail = ref.read(
+        getConveyorReportDetailUseCaseProvider,
+      );
+      final getAcceptReport = ref.read(acceptReportUseCaseProvider);
+      final dio = ref.read(dioProvider);
+
+      return ReportsNotifier(
+        getAllReportsUseCase: getAllReports,
+        sendConveyorNoteUseCase: sendNote, // Inyectado correctamente
+        getVehicleDetail: getVehicleDetail,
+        getPressDetail: getPressDetail,
+        getConveyorDetail: getConveyorDetail,
+        acceptConveyorReportUseCase: getAcceptReport,
+        dio: dio,
+      );
+    });
