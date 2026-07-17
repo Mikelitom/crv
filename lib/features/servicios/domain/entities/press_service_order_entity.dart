@@ -2,6 +2,7 @@
 class PressServiceOrderEntity {
   final String id;
   final String pressId;
+  final String reportId;
   final String description;
   final String observation;
   final String status;
@@ -11,6 +12,7 @@ class PressServiceOrderEntity {
   const PressServiceOrderEntity({
     required this.id,
     required this.pressId,
+    required this.reportId,
     required this.description,
     required this.observation,
     required this.status,

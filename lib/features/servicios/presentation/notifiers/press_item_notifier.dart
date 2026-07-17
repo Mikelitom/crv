@@ -12,6 +12,17 @@ class PressItemNotifier extends Notifier<PressItemState> {
     
     // Asumiendo que el provider se llama getPendingPressItemsUseCaseProvider
     final result = await ref.read(getPendingPressItemsUseCaseProvider).call(pressId);
+
+    
+    result.fold(
+      (l) {
+        print("ERROR: ${l.message}");
+      },
+      (r) {
+        print("SUCCESS: ${r.length}");
+      },
+    );
+
     
     state = result.fold(
       (l) => state.copyWith(status: Status.error, error: l.message),
