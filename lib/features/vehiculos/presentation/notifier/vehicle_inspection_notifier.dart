@@ -26,12 +26,10 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
   void updateReportState(String newState) {
     state = state.copyWith(reportState: newState);
   }
+
   Future<void> loadReportDetail(String versionId) async {
     reset();
-    state = state.copyWith(
-      editingVersionId: versionId,
-      isLoading: true,
-    );
+    state = state.copyWith(editingVersionId: versionId, isLoading: true);
 
     if (state.templateSections.isEmpty) {
       await loadTemplate();
@@ -67,29 +65,27 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
 
           // DESCARGA DE IMÁGENES
           List<EvidenceFile> evidences = [];
-          if (answer.evidencePaths != null) {
-            for (var path in answer.evidencePaths!) {
-              // Asumimos que tienes una utilidad de descarga
-              final bytes = await ImageDownloader.download(
-                ref.read(dioProvider),
-                path,
+          for (var path in answer.evidencePaths) {
+            // Asumimos que tienes una utilidad de descarga
+            final bytes = await ImageDownloader.download(
+              ref.read(dioProvider),
+              path,
+            );
+            if (bytes != null) {
+              evidences.add(
+                EvidenceFile(
+                  bytes: bytes,
+                  type: 'image/jpeg',
+                  mimeType: 'image/jpeg',
+                ),
               );
-              if (bytes != null) {
-                evidences.add(
-                  EvidenceFile(
-                    bytes: bytes,
-                    type: 'image/jpeg',
-                    mimeType: 'image/jpeg',
-                  ),
-                );
-              }
             }
           }
 
           updatedItems.add(
             item.copyWith(
               selectedOptionId: option['id']?.toString(),
-              observations: answer.observation?.toString() ?? "",
+              observations: answer.observation.toString(),
               evidenceBefore: evidences,
             ),
           );
@@ -254,11 +250,11 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
         );
 
         final id = result.fold((f) => null, (id) => id);
-        
+
         if (id != null) {
           reset();
         }
-        
+
         return id;
       }
 
@@ -269,11 +265,11 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
       final result = await createUseCase.call(reportRequest);
 
       final id = result.fold((f) => null, (id) => id);
-      
+
       if (id != null) {
         reset();
       }
-      
+
       return id;
     } catch (e) {
       debugPrint("Error al finalizar: $e");

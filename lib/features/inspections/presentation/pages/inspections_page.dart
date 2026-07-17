@@ -113,10 +113,10 @@ class _InspectionPageState extends ConsumerState<InspectionPage>
   ) {
     return StatefulBuilder(
       builder: (context, setInnerState) {
-        bool isHovered = false;
+        // bool isHovered = false;
         return MouseRegion(
-          onEnter: (_) => setInnerState(() => isHovered = true),
-          onExit: (_) => setInnerState(() => isHovered = false),
+          // onEnter: (_) => setInnerState(() => isHovered = true),
+          // onExit: (_) => setInnerState(() => isHovered = false),
           child: AnimatedScale(
             scale: 1.0,
             duration: const Duration(milliseconds: 200),

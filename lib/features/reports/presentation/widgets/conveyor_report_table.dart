@@ -75,11 +75,11 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
                       ]),
                     )),
                     DataCell(Row(children: [
-                      CircleAvatar(backgroundColor: Colors.grey.shade200, radius: 16, child: Text(item?.inspectorName?[0] ?? '?', style: const TextStyle(fontSize: 12))),
+                      CircleAvatar(backgroundColor: Colors.grey.shade200, radius: 16, child: Text(item?.inspectorName[0] ?? '?', style: const TextStyle(fontSize: 12))),
                       const SizedBox(width: 12),
                       Text(item?.inspectorName ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.w500)),
                     ])),
-                    DataCell(Text(item?.inspectionDate?.toString().split(' ')[0] ?? 'N/A')),
+                    DataCell(Text(item?.inspectionDate.toString().split(' ')[0] ?? 'N/A')),
                     DataCell(statusChip(item?.state)),
                     DataCell(PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert, color: Colors.grey),

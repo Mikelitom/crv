@@ -58,7 +58,7 @@ class PressInspectionLocalDataSourceImpl
 
               isActive: Value(press.isActive),
 
-              operationState: Value(press.operationState ?? 'AVAILABLE'),
+              operationState: Value(press.operationState),
 
               currentLocation: Value(
                 press.currentLocation ?? 'TALLER CENTRAL REPROSISA',

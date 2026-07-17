@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import '../../../bandas_transportadoras/domain/entities/roller.dart';
-import 'package:pdf/pdf.dart';
 import '../../../../core/utils/imege_downloader.dart';
 import '../models/inspector_row_ui.dart';
 import '../provider/inspection_providers.dart';

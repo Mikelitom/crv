@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:crv_reprosisa/features/assets/domain/usecases/get_press_report_detail.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/get_all_reports_usecae.dart';
 import 'package:crv_reprosisa/features/reports/presentation/provider/reports_state.dart';
