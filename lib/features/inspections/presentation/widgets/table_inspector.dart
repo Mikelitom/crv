@@ -34,137 +34,151 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
   final Color headerColor = const Color(0xFFF9FAFB);
   final Color borderColor = const Color(0xFFE5E7EB);
 
-Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
-  try {
-    final type = item.reportType.toUpperCase();
-    final dio = ref.read(dioProvider);
+  Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
+    try {
+      final type = item.reportType.toUpperCase();
+      final dio = ref.read(dioProvider);
 
-    // 1. OBTENCIÓN DE DATOS
-    dynamic model;
-    if (type.contains('PRESS')) {
-      await ref.read(pressReportDetailProvider.notifier).fetchDetail(item.versionId);
-      model = ref.read(pressReportDetailProvider).data;
-    } else if (type.contains('VEHICLE')) {
-      model = await ref.read(inspectionProvider.notifier).getReportDetail(item.versionId);
-    } else if (type.contains('CONVEYOR')) {
-      await ref.read(conveyorReportDetailProvider.notifier).fetchDetail(item.versionId);
-      model = ref.read(conveyorReportDetailProvider).data;
-    }
-
-    if (model == null) return null;
-
-    // 2. GENERACIÓN SEGÚN TIPO
-    if (type.contains('PRESS')) {
-      // --- SOLUCIÓN: MAPA TEMPORAL DE IMÁGENES ---
-      final Map<int, Map<String, Uint8List>> cacheImagenes = {};
-
-      for (int i = 0; i < model.answers.length; i++) {
-        var answer = model.answers[i];
-        if (answer.evidencePaths != null && answer.evidencePaths is List) {
-          final paths = answer.evidencePaths as List;
-          final Map<String, Uint8List> fotos = {};
-          
-          for (int j = 0; j < paths.length; j++) {
-            final bytes = await ImageDownloader.download(dio, paths[j]);
-            if (bytes != null) {
-              if (j == 0) fotos['antes'] = bytes;
-              if (j == 1) fotos['despues'] = bytes;
-            }
-          }
-          cacheImagenes[i] = fotos; // Usamos el índice de la respuesta como llave
-        }
+      // 1. OBTENCIÓN DE DATOS
+      dynamic model;
+      if (type.contains('PRESS')) {
+        await ref
+            .read(pressReportDetailProvider.notifier)
+            .fetchDetail(item.versionId);
+        model = ref.read(pressReportDetailProvider).data;
+      } else if (type.contains('VEHICLE')) {
+        model = await ref
+            .read(inspectionProvider.notifier)
+            .getReportDetail(item.versionId);
+      } else if (type.contains('CONVEYOR')) {
+        await ref
+            .read(conveyorReportDetailProvider.notifier)
+            .fetchDetail(item.versionId);
+        model = ref.read(conveyorReportDetailProvider).data;
       }
 
-      return await PdfReportManager.generatePdf(
-        dio: dio,
-        detailModel: model,
-        mapper: (m) {
-          // A. Ejecuta el mapper original
-          final data = PrensaPdfGenerator.mapDetailModelToPdfData(m);
-          
-          // B. Inyecta los bytes descargados al mapa resultante
-          for (int i = 0; i < data['items'].length; i++) {
-            if (cacheImagenes.containsKey(i)) {
-              data['items'][i]['foto_antes_bytes'] = cacheImagenes[i]!['antes'];
-              data['items'][i]['foto_despues_bytes'] = cacheImagenes[i]!['despues'];
+      if (model == null) return null;
+
+      // 2. GENERACIÓN SEGÚN TIPO
+      if (type.contains('PRESS')) {
+        // --- SOLUCIÓN: MAPA TEMPORAL DE IMÁGENES ---
+        final Map<int, Map<String, Uint8List>> cacheImagenes = {};
+
+        for (int i = 0; i < model.answers.length; i++) {
+          var answer = model.answers[i];
+          if (answer.evidencePaths != null && answer.evidencePaths is List) {
+            final paths = answer.evidencePaths as List;
+            final Map<String, Uint8List> fotos = {};
+
+            for (int j = 0; j < paths.length; j++) {
+              final bytes = await ImageDownloader.download(dio, paths[j]);
+              if (bytes != null) {
+                if (j == 0) fotos['antes'] = bytes;
+                if (j == 1) fotos['despues'] = bytes;
+              }
             }
+            cacheImagenes[i] =
+                fotos; // Usamos el índice de la respuesta como llave
           }
-          return data;
-        },
-        generator: (data) => PrensaPdfGenerator.generateEsqueleto(data),
-      );
-    } 
-    
-    else if (type.contains('VEHICLE')) {
-      return await PdfReportManager.generatePdf(
-        dio: dio,
-        detailModel: model,
-        mapper: (m) => VehiculoPdfGenerator.mapDetailModelToPdfData(m),
-        generator: (data) => VehiculoPdfGenerator.generateEsqueleto(data),
-      );
-    } 
-    
-    else if (type.contains('CONVEYOR')) {
-      // --- DESCARGA DE IMÁGENES PARA CONVEYOR (Ya funciona) ---
-      for (var answer in model.answers) {
-        if (answer.evidences != null) {
-          for (var ev in answer.evidences) {
-            if (ev.bytes == null && ev.signedUrl != null) {
-              ev.bytes = await ImageDownloader.download(dio, ev.signedUrl);
+        }
+
+        return await PdfReportManager.generatePdf(
+          dio: dio,
+          detailModel: model,
+          mapper: (m) {
+            // A. Ejecuta el mapper original
+            final data = PrensaPdfGenerator.mapDetailModelToPdfData(m);
+
+            // B. Inyecta los bytes descargados al mapa resultante
+            for (int i = 0; i < data['items'].length; i++) {
+              if (cacheImagenes.containsKey(i)) {
+                data['items'][i]['foto_antes_bytes'] =
+                    cacheImagenes[i]!['antes'];
+                data['items'][i]['foto_despues_bytes'] =
+                    cacheImagenes[i]!['despues'];
+              }
+            }
+            return data;
+          },
+          generator: (data) => PrensaPdfGenerator.generateEsqueleto(data),
+        );
+      } else if (type.contains('VEHICLE')) {
+        return await PdfReportManager.generatePdf(
+          dio: dio,
+          detailModel: model,
+          mapper: (m) => VehiculoPdfGenerator.mapDetailModelToPdfData(m),
+          generator: (data) => VehiculoPdfGenerator.generateEsqueleto(data),
+        );
+      } else if (type.contains('CONVEYOR')) {
+        // --- DESCARGA DE IMÁGENES PARA CONVEYOR (Ya funciona) ---
+        for (var answer in model.answers) {
+          if (answer.evidences != null) {
+            for (var ev in answer.evidences) {
+              if (ev.bytes == null && ev.signedUrl != null) {
+                ev.bytes = await ImageDownloader.download(dio, ev.signedUrl);
+              }
             }
           }
         }
+
+        final Map<String, dynamic> datosNormalizados = {
+          'planta': model.conveyor['mine'] ?? "",
+          'area': model.conveyor['area'] ?? "",
+          'responsable': model.report['conveyor_responsible'] ?? "",
+          'seccion': model.report['section']?.toString() ?? "",
+          'transportador': model.conveyor['name'] ?? "",
+          'banda': model.report['recommended_belt'] ?? "",
+          'material':
+              "${model.report['material'] ?? ''} / ${model.report['granulometry'] ?? ''}",
+          'elaboro': model.inspector['name'] ?? "",
+          'presentar': model.report['present_to'] ?? "",
+          'comentarios': model.report['comentarios'] ?? "",
+        };
+
+        final sections = await _mapAnswersToSections(model.answers);
+        final List<Roller> rodillos =
+            (model.rollers as List<dynamic>?)
+                ?.map(
+                  (r) => Roller(
+                    tableNumber: r.tableNumber,
+                    baseNumber: r.baseNumber,
+                    isLeft: r.isLeft,
+                    isCenter: r.isCenter,
+                    isRight: r.isRight,
+                    isImpact: r.isImpact,
+                    isReturn: r.isReturn,
+                    isTriple: r.isTriple,
+                    isSelfAligning: r.isSelfAligning,
+                    observation: r.observation,
+                  ),
+                )
+                .toList() ??
+            [];
+
+        return await BandaPdfGenerator.generateReport(
+          datosNormalizados,
+          sections,
+          rodillos,
+        );
       }
-
-      final Map<String, dynamic> datosNormalizados = {
-        'planta': model.conveyor['mine'] ?? "",
-        'area': model.conveyor['area'] ?? "",
-        'responsable': model.report['conveyor_responsible'] ?? "",
-        'seccion': model.report['section']?.toString() ?? "",
-        'transportador': model.conveyor['name'] ?? "",
-        'banda': model.report['recommended_belt'] ?? "",
-        'material': "${model.report['material'] ?? ''} / ${model.report['granulometry'] ?? ''}",
-        'elaboro': model.inspector['name'] ?? "",
-        'presentar': model.report['present_to'] ?? "",
-        'comentarios': model.report['comentarios'] ?? "",
-      };
-
-      final sections = await _mapAnswersToSections(model.answers);
-      final List<Roller> rodillos = (model.rollers as List<dynamic>?)
-          ?.map((r) => Roller(
-                tableNumber: r.tableNumber,
-                baseNumber: r.baseNumber,
-                isLeft: r.isLeft,
-                isCenter: r.isCenter,
-                isRight: r.isRight,
-                isImpact: r.isImpact,
-                isReturn: r.isReturn,
-                isTriple: r.isTriple,
-                isSelfAligning: r.isSelfAligning,
-                observation: r.observation,
-              ))
-          .toList() ?? [];
-
-      return await BandaPdfGenerator.generateReport(
-        datosNormalizados,
-        sections,
-        rodillos, 
-      );
+      return null;
+    } catch (e) {
+      debugPrint("Error al procesar PDF de ${item.reportType}: $e");
+      return null;
     }
-    return null;
-  } catch (e) {
-    debugPrint("Error al procesar PDF de ${item.reportType}: $e");
-    return null;
   }
-}
-// --- MÉTODO CENTRALIZADO ---
-  Future<void> _handleReportAction(InspectionRowUI item, {required bool isPrint}) async {
+
+  // --- MÉTODO CENTRALIZADO ---
+  Future<void> _handleReportAction(
+    InspectionRowUI item, {
+    required bool isPrint,
+  }) async {
     // 1. Buscamos todas las versiones que tengan el mismo ID (report_id)
     // Esto agrupa automáticamente todas las versiones del reporte seleccionado
-    final List<InspectionRowUI> versiones = widget.items
-        .where((i) => i.id == item.id)
-        .toList()
-      ..sort((a, b) => b.versionNumber.compareTo(a.versionNumber)); // Ordenar de mayor a menor
+    final List<InspectionRowUI> versiones =
+        widget.items.where((i) => i.id == item.id).toList()..sort(
+          (a, b) => b.versionNumber.compareTo(a.versionNumber),
+        ); // Ordenar de mayor a menor
 
     InspectionRowUI itemFinal = item;
 
@@ -179,13 +193,17 @@ Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
             final v = versiones[index];
             return ListTile(
               title: Text("Versión ${v.versionNumber}"),
-              subtitle: Text(v.versionId == item.versionId ? "Versión actual seleccionada" : ""),
+              subtitle: Text(
+                v.versionId == item.versionId
+                    ? "Versión actual seleccionada"
+                    : "",
+              ),
               onTap: () => Navigator.pop(context, v),
             );
           },
         ),
       );
-      
+
       if (selected == null) return; // Usuario canceló
       itemFinal = selected;
     }
@@ -194,47 +212,67 @@ Future<Uint8List?> _buildPdfBytes(InspectionRowUI item) async {
     if (mounted) LoadingOverlay.hide(context);
 
     if (pdfBytes == null) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error al cargar reporte")));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error al cargar reporte")),
+        );
       return;
     }
 
     if (isPrint) {
-      await Printing.sharePdf(bytes: pdfBytes, filename: 'Reporte_${itemFinal.folio}_v${itemFinal.versionNumber}.pdf');
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: 'Reporte_${itemFinal.folio}_v${itemFinal.versionNumber}.pdf',
+      );
     } else {
       if (!mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(
-        appBar: AppBar(title: const Text("Vista Previa"), backgroundColor: primaryRed),
-        body: PdfPreview(build: (_) => pdfBytes),
-      )));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            appBar: AppBar(
+              title: const Text("Vista Previa"),
+              backgroundColor: primaryRed,
+            ),
+            body: PdfPreview(build: (_) => pdfBytes),
+          ),
+        ),
+      );
     }
   }
-List<InspectionRowUI> agruparReportes(List<InspectionRowUI> listaCruda) {
-  final Map<String, List<InspectionRowUI>> mapa = {};
-  for (var item in listaCruda) {
-    if (!mapa.containsKey(item.id)) mapa[item.id] = [];
-    mapa[item.id]!.add(item);
-  }
-  
-  return mapa.values.map((versiones) {
-    versiones.sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
-    final base = versiones.first;
-    return base; 
-  }).toList();
-}List<InspectionRowUI> get _filteredItems {
-  final Map<String, InspectionRowUI> uniqueMap = {};
-  for (var item in widget.items) {
-    // Si el ID no existe o la versión es mayor, actualizamos el mapa
-    if (!uniqueMap.containsKey(item.id) || 
-        item.versionNumber > (uniqueMap[item.id]?.versionNumber ?? 0)) {
-      uniqueMap[item.id] = item;
+
+  List<InspectionRowUI> agruparReportes(List<InspectionRowUI> listaCruda) {
+    final Map<String, List<InspectionRowUI>> mapa = {};
+    for (var item in listaCruda) {
+      if (!mapa.containsKey(item.id)) mapa[item.id] = [];
+      mapa[item.id]!.add(item);
     }
+
+    return mapa.values.map((versiones) {
+      versiones.sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
+      final base = versiones.first;
+      return base;
+    }).toList();
   }
-  return uniqueMap.values.toList();
-}
+
+  List<InspectionRowUI> get _filteredItems {
+    final Map<String, InspectionRowUI> uniqueMap = {};
+    for (var item in widget.items) {
+      // Si el ID no existe o la versión es mayor, actualizamos el mapa
+      if (!uniqueMap.containsKey(item.id) ||
+          item.versionNumber > (uniqueMap[item.id]?.versionNumber ?? 0)) {
+        uniqueMap[item.id] = item;
+      }
+    }
+    return uniqueMap.values.toList();
+  }
+
   // --- MÉTODOS QUE AHORA DISPARAN LA ACCIÓN CENTRALIZADA ---
-  Future<void> _viewReport(InspectionRowUI item) => _handleReportAction(item, isPrint: false);
-  Future<void> _printReport(InspectionRowUI item) => _handleReportAction(item, isPrint: true);
-Future<void> _editReport(InspectionRowUI item) async {
+  Future<void> _viewReport(InspectionRowUI item) =>
+      _handleReportAction(item, isPrint: false);
+  Future<void> _printReport(InspectionRowUI item) =>
+      _handleReportAction(item, isPrint: true);
+  Future<void> _editReport(InspectionRowUI item) async {
     // Cambiamos isReadOnly a false porque es edición
     _navigateToForm(item, isReadOnly: false);
   }
@@ -242,19 +280,16 @@ Future<void> _editReport(InspectionRowUI item) async {
   void _navigateToForm(InspectionRowUI item, {required bool isReadOnly}) {
     Widget page;
     final String type = item.reportType.toUpperCase();
-    
+
     if (type.contains('PRESS')) {
       page = PrensaInspectionPage(isReadOnly: isReadOnly, itemToEdit: item);
     } else if (type.contains('VEHICLE')) {
       // ESTO ES LO QUE YA TIENES Y ESTÁ BIEN.
-      page = VehicleInspectionPage(
-        isReadOnly: isReadOnly, 
-        itemToEdit: item,
-      );
+      page = VehicleInspectionPage(isReadOnly: isReadOnly, itemToEdit: item);
     } else {
       page = BandaInspectionPage(isReadOnly: isReadOnly, itemToEdit: item);
     }
-    
+
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
@@ -274,64 +309,85 @@ Future<void> _editReport(InspectionRowUI item) async {
     );
   }
 
-Future<List<BandaSection>> _mapAnswersToSections(List<dynamic> answers) async {
-  final Map<String, List<BandaComponent>> sectionsMap = {};
+  Future<List<BandaSection>> _mapAnswersToSections(
+    List<dynamic> answers,
+  ) async {
+    final Map<String, List<BandaComponent>> sectionsMap = {};
 
-  for (var a in answers) {
-    // 1. Acceso seguro a las propiedades del objeto 'a'
-    final String sectionName = (a.section?.name ?? "Sin Sección");
-    final String accessoryName = (a.accessory?.name ?? "Accesorio");
-    
-    if (!sectionsMap.containsKey(sectionName)) {
-      sectionsMap[sectionName] = [];
+    for (var a in answers) {
+      // 1. Acceso seguro a las propiedades del objeto 'a'
+      final String sectionName = (a.section?.name ?? "Sin Sección");
+      final String accessoryName = (a.accessory?.name ?? "Accesorio");
+
+      if (!sectionsMap.containsKey(sectionName)) {
+        sectionsMap[sectionName] = [];
+      }
+
+      final List<BandaOption> opcionesFijas =
+          BandaPdfGenerator.obtenerOpcionesFijasParaComponente(accessoryName);
+
+      final String labelSeleccionado = (a.option?.label ?? a.customOption ?? "")
+          .toString()
+          .trim();
+      final bool esCustom =
+          a.option == null ||
+          !opcionesFijas.any(
+            (o) =>
+                o.label.trim().toLowerCase() == labelSeleccionado.toLowerCase(),
+          );
+
+      final List<EvidenceFile> evidenciasConvertidas =
+          (a.evidences as List<dynamic>?)
+              ?.where((e) => e.bytes != null)
+              .map(
+                (e) => EvidenceFile(
+                  bytes: e
+                      .bytes!, // Usamos los bytes descargados por ImageDownloader
+                  type: e.fileType ?? 'image/png',
+                  mimeType: e.mimeType ?? 'image/png',
+                ),
+              )
+              .toList() ??
+          [];
+
+      // 2. Mapeo al BandaComponent con las evidencias integradas
+      sectionsMap[sectionName]!.add(
+        BandaComponent(
+          id: a.answerId?.toString() ?? "0",
+          name: accessoryName,
+          observation: (a.recommendedAction ?? "").trim(),
+          comment: (a.comment ?? "").trim(),
+          options: opcionesFijas,
+          selectedOptionIds: a.option != null
+              ? [
+                  a.option!.id.toString().trim().toLowerCase(),
+                  a.option!.label.toString().trim().toLowerCase(),
+                  a.option!.value.toString().trim().toLowerCase(),
+                ]
+              : [],
+
+          customOptions: (esCustom && labelSeleccionado.isNotEmpty)
+              ? [labelSeleccionado]
+              : [],
+          dimentions: a.dimentions?.toString() ?? '',
+          evidenceBefore: evidenciasConvertidas, // Aquí se asignan las fotos
+          evidenceAfter: [],
+        ),
+      );
     }
 
-    final List<BandaOption> opcionesFijas = 
-        BandaPdfGenerator.obtenerOpcionesFijasParaComponente(accessoryName);
-    
-    final String labelSeleccionado = (a.option?.label ?? a.customOption ?? "").toString().trim();
-    final bool esCustom = a.option == null || !opcionesFijas.any((o) => 
-        o.label.trim().toLowerCase() == labelSeleccionado.toLowerCase()
-    );
-
-    final List<EvidenceFile> evidenciasConvertidas = (a.evidences as List<dynamic>?)
-        ?.where((e) => e.bytes != null)
-        .map((e) => EvidenceFile(
-              bytes: e.bytes!, // Usamos los bytes descargados por ImageDownloader
-              type: e.fileType ?? 'image/png',
-              mimeType: e.mimeType ?? 'image/png',
-            ))
-        .toList() ?? [];
-
-    // 2. Mapeo al BandaComponent con las evidencias integradas
-    sectionsMap[sectionName]!.add(BandaComponent(
-      id: a.answerId?.toString() ?? "0",
-      name: accessoryName,
-      observation: (a.recommendedAction ?? "").trim(),
-      comment: (a.comment ?? "").trim(),
-      options: opcionesFijas, 
-      selectedOptionIds: a.option != null 
-          ? [
-              a.option!.id.toString().trim().toLowerCase(),
-              a.option!.label.toString().trim().toLowerCase(),
-              a.option!.value.toString().trim().toLowerCase()
-            ]
-          : [], 
-      
-      customOptions: (esCustom && labelSeleccionado.isNotEmpty) ? [labelSeleccionado] : [], 
-      dimentions: a.dimentions?.toString() ?? '', 
-      evidenceBefore: evidenciasConvertidas, // Aquí se asignan las fotos
-      evidenceAfter: [],
-    ));
+    return sectionsMap.entries
+        .map(
+          (e) => BandaSection(
+            id: e.key.hashCode.toString(),
+            name: e.key,
+            components: e.value,
+          ),
+        )
+        .toList();
   }
 
-  return sectionsMap.entries.map((e) => BandaSection(
-    id: e.key.hashCode.toString(),
-    name: e.key,
-    components: e.value,
-  )).toList();
-}
-Widget _buildDesktopTable(double maxWidth) {
+  Widget _buildDesktopTable(double maxWidth) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -351,76 +407,131 @@ Widget _buildDesktopTable(double maxWidth) {
               headingRowColor: WidgetStateProperty.all(headerColor),
               showCheckboxColumn: false,
               columns: const [
-                DataColumn(label: _HeaderLabel(text: 'REPORTE', color: Color(0xFF4B5563))),
-                DataColumn(label: _HeaderLabel(text: 'ESTADO', color: Color(0xFF4B5563))),
-                DataColumn(label: _HeaderLabel(text: 'FECHA', color: Color(0xFF4B5563))),
-                DataColumn(label: _HeaderLabel(text: 'ACCIONES', color: Color(0xFF4B5563))),
+                DataColumn(
+                  label: _HeaderLabel(
+                    text: 'REPORTE',
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+                DataColumn(
+                  label: _HeaderLabel(text: 'ESTADO', color: Color(0xFF4B5563)),
+                ),
+                DataColumn(
+                  label: _HeaderLabel(text: 'FECHA', color: Color(0xFF4B5563)),
+                ),
+                DataColumn(
+                  label: _HeaderLabel(
+                    text: 'ACCIONES',
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
               ],
               rows: _filteredItems.map((item) {
-                // Buscamos todas las versiones de este reporte
-                final versiones = widget.items.where((i) => i.id == item.id).toList()
-                  ..sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
+                final versiones =
+                    widget.items.where((i) => i.id == item.id).toList()..sort(
+                      (a, b) => b.versionNumber.compareTo(a.versionNumber),
+                    );
 
                 return DataRow(
                   cells: [
-DataCell(
-  PopupMenuButton<InspectionRowUI>(
-    onSelected: (selectedItem) => _viewReport(selectedItem),
-    offset: const Offset(0, 40),
-    tooltip: "Cambiar versión",
-    // Estilo del menú flotante más limpio
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    itemBuilder: (context) => versiones.map((v) => PopupMenuItem(
-      value: v,
-      height: 40,
-      child: Row(
-        children: [
-          Icon(v.versionId == item.versionId ? Icons.radio_button_checked : Icons.radio_button_unchecked, 
-               size: 16, color: primaryRed),
-          const SizedBox(width: 8),
-          Text("Versión ${v.versionNumber}", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    )).toList(),
-    // Diseño del título en la tabla
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              item.title, 
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF111827)),
-            ),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Text(
-                  "Versión ${item.versionNumber} • ${item.folio}", 
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(width: 4),
-                Icon(Icons.unfold_more, size: 12, color: primaryRed.withOpacity(0.7)),
-              ],
-            ),
-          ],
-        ),
-      ],
-    ),
-  ),
-),
-                    DataCell(_StatusBadge(state: item.state, label: item.translatedState)),
-                    DataCell(Text(item.date, style: const TextStyle(fontSize: 12, color: Colors.black54))),
+                    DataCell(
+                      PopupMenuButton<InspectionRowUI>(
+                        onSelected: (selectedItem) => _viewReport(selectedItem),
+                        offset: const Offset(0, 40),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        itemBuilder: (context) => versiones
+                            .map(
+                              (v) => PopupMenuItem(
+                                value: v,
+                                child: Text("Versión ${v.versionNumber}"),
+                              ),
+                            )
+                            .toList(),
+                        child: Row(
+                          children: [
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      item.title,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13.5,
+                                      ),
+                                    ),
+                                    // --- INDICADOR DE NOTAS ---
+                                    if (item.reviewNotes != null &&
+                                        item.reviewNotes!.isNotEmpty) ...[
+                                      const SizedBox(width: 6),
+                                      InkWell(
+                                        onTap: () =>
+                                            _showReviewDialog(context, item),
+                                        child: Icon(
+                                          item.reviewAnswer != null
+                                              ? Icons.check_circle
+                                              : Icons.info,
+                                          color: item.reviewAnswer != null
+                                              ? Colors.green
+                                              : Colors.orange,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                Text(
+                                  "Versión ${item.versionNumber} • ${item.folio}",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    DataCell(
+                      _StatusBadge(
+                        state: item.state,
+                        label: item.translatedState,
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        item.date,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
                     DataCell(
                       Row(
                         children: [
-                          _ActionIconBtn(icon: Icons.visibility_outlined, color: const Color(0xFF6366F1), onTap: () => _viewReport(item)),
+                          _ActionIconBtn(
+                            icon: Icons.visibility_outlined,
+                            color: const Color(0xFF6366F1),
+                            onTap: () => _viewReport(item),
+                          ),
                           const SizedBox(width: 8),
-                          _ActionIconBtn(icon: Icons.edit_outlined, color: const Color(0xFF4B5563), onTap: () => _editReport(item)),
+                          _ActionIconBtn(
+                            icon: Icons.edit_outlined,
+                            color: const Color(0xFF4B5563),
+                            onTap: () => _editReport(item),
+                          ),
                           const SizedBox(width: 8),
-                          _ActionIconBtn(icon: Icons.print_outlined, color: primaryRed, onTap: () => _printReport(item)),
+                          _ActionIconBtn(
+                            icon: Icons.print_outlined,
+                            color: primaryRed,
+                            onTap: () => _printReport(item),
+                          ),
                         ],
                       ),
                     ),
@@ -433,6 +544,7 @@ DataCell(
       ),
     );
   }
+
   Widget _buildMobileList() {
     return ListView.separated(
       shrinkWrap: true,
@@ -442,16 +554,55 @@ DataCell(
       itemBuilder: (context, index) {
         var item = widget.items[index];
         return Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: borderColor),
-          ),
           child: ListTile(
             leading: Icon(Icons.assignment_outlined, color: primaryRed),
-            title: Text(
-              item.title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            title: Row(
+              children: [
+                Text(
+                  item.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                // --- INDICADOR DE NOTAS NOTORIO ---
+                if (item.reviewNotes != null && item.reviewNotes!.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => _showReviewDialog(context, item),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: item.reviewAnswer != null 
+                            ? Colors.green.shade100 
+                            : Colors.orange.shade100, // Color de fondo llamativo
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                            color: item.reviewAnswer != null 
+                                ? Colors.green.shade700 
+                                : Colors.orange.shade700, 
+                            width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            item.reviewAnswer != null ? Icons.check_circle : Icons.warning_amber_rounded,
+                            color: item.reviewAnswer != null ? Colors.green.shade800 : Colors.orange.shade900,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            item.reviewAnswer != null ? "CONTESTADO" : "PENDIENTE",
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              color: item.reviewAnswer != null ? Colors.green.shade900 : Colors.orange.shade900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ]
+              ],
             ),
             subtitle: Text("${item.date} • ${item.translatedState}"),
             trailing: Row(
@@ -500,6 +651,29 @@ class _StatusBadge extends StatelessWidget {
     );
   }
 }
+
+void _showReviewDialog(BuildContext context, InspectionRowUI item) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Detalles de Revisión"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Nota del Revisor:", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(item.reviewNotes ?? "Sin notas"),
+            const SizedBox(height: 15),
+            const Text("Respuesta del Técnico:", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(item.reviewAnswer ?? "Aún sin respuesta"),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cerrar")),
+        ],
+      ),
+    );
+  }
 
 class _HeaderLabel extends StatelessWidget {
   final String text;
