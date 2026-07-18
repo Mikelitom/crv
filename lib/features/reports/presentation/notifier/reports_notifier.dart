@@ -90,7 +90,7 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
         ...data['presses'] ?? [],
       ];
       print(combined);
-      state = state.copyWith(isLoading: false, allReports: combined);
+      state = state.copyWith(isLoading: false, allReports: combined,);
       filterReports();
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());

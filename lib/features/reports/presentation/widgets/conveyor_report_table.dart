@@ -167,7 +167,13 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
             ),
             subtitle: Text("Folio: ${item.folio} • ${item.state}"),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showManagementDialog(context, ref, item),
+            onTap: () {
+              if (isAdmin) {
+                _showManagementDialog(context, ref, item);
+              } else {
+                _handleView(context, ref, item);
+              }
+            },
           ),
         );
       },
@@ -310,22 +316,26 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
           title: Text("Ver PDF"),
         ),
       ),
-      const PopupMenuItem(
-        value: 'manage',
-        child: ListTile(
-          dense: true,
-          leading: Icon(Icons.comment, color: Colors.grey),
-          title: Text("Evaluar / Notas"),
+    
+      if (isAdmin)
+        const PopupMenuItem(
+          value: 'manage',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.comment, color: Colors.grey),
+            title: Text("Evaluar / Notas"),
+          ),
         ),
-      ),
-      const PopupMenuItem(
-        value: 'accept',
-        child: ListTile(
-          dense: true,
-          leading: Icon(Icons.check_circle, color: Colors.green),
-          title: Text("Aceptar Reporte"),
+    
+      if (isAdmin)
+        const PopupMenuItem(
+          value: 'accept',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.check_circle, color: Colors.green),
+            title: Text("Aceptar Reporte"),
+          ),
         ),
-      ),
     ],
   );
 

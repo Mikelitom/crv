@@ -37,12 +37,13 @@ class _TechnicianDashboardPageState
 
     final pages = [
       const Center(child: Text("Dashboard")), // Índice 0
+      
+      const ReportsPage(), // Índice 2
       const InspectionPage(
         stats: [], 
         actions: [],
         // SE ELIMINÓ: inspections: [], ya que el constructor actualizado no lo requiere
       ), // Índice 1
-      const ReportsPage(), // Índice 2
       const ProfilePage(), // Índice 3
     ];
 
@@ -58,10 +59,7 @@ class _TechnicianDashboardPageState
           }
         },
       ),
-      content: Padding(
-        padding: const EdgeInsets.all(24),
-        child: pages[activeIndex],
-      ),
+      content: pages[activeIndex],
     );
   }
 }
