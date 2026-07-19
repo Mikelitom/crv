@@ -60,6 +60,7 @@ class MyApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
+      title: 'CRV Reprosisa',
       debugShowCheckedModeBanner: false,
       routerConfig: router,
     );

@@ -42,7 +42,7 @@ class InspectionState {
       stats: stats ?? this.stats,
       errorMessage: errorMessage,
       selectedInspection: selectedInspection ?? this.selectedInspection,
-      vehicleHistory: vehicleHistory ?? this.vehicleHistory ?? const [],
+      vehicleHistory: vehicleHistory ?? this.vehicleHistory,
     );
   }
 }

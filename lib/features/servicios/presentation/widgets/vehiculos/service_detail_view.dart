@@ -432,21 +432,17 @@ Widget _buildSummarySection(List<ServiceOrder> services) {
 // 2. Modificación de _counterCard con interactividad (Hover)
 Widget _counterCard(String value, String label, Color color, IconData icon) {
   return StatefulBuilder(builder: (context, setSt) {
-    bool isHovered = false;
-
     return MouseRegion(
-      onEnter: (_) => setSt(() => isHovered = true),
-      onExit: (_) => setSt(() => isHovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isHovered ? color.withValues(alpha: 0.1) : Colors.white, // Cambia color al pasar mouse
+          color: Colors.white, // Cambia color al pasar mouse
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isHovered ? 0.08 : 0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
             )
           ],
@@ -467,10 +463,10 @@ Widget _counterCard(String value, String label, Color color, IconData icon) {
               duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isHovered ? color : color.withValues(alpha: 0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: isHovered ? Colors.white : color, size: 24),
+              child: Icon(icon, color: color, size: 24),
             ),
           ],
         ),
@@ -516,17 +512,14 @@ Widget _buildComponentesList() {
       final color = _getColorForStatus(item.status);
 
       return StatefulBuilder(builder: (context, setSt) {
-        bool isHovered = false;
         return MouseRegion(
-          onEnter: (_) => setSt(() => isHovered = true),
-          onExit: (_) => setSt(() => isHovered = false),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isHovered ? color.withValues(alpha: 0.05) : Colors.white,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isHovered ? color.withValues(alpha: 0.3) : Colors.grey.shade100),
+              border: Border.all(color: Colors.grey.shade100),
             ),
             child: Row(
               children: [
@@ -857,10 +850,7 @@ Widget _buildServiceOrderItem(
   final String displayReportId = order.reportId.isNotEmpty ? (order.reportId.length >= 6 ? order.reportId.substring(0, 6) : order.reportId) : "N/A";
 
   return StatefulBuilder(builder: (context, setSt) {
-    bool isHovered = false;
     return MouseRegion(
-      onEnter: (_) => setSt(() => isHovered = true),
-      onExit: (_) => setSt(() => isHovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         margin: const EdgeInsets.only(bottom: 8),
@@ -868,10 +858,8 @@ Widget _buildServiceOrderItem(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isHovered ? statusColor.withValues(alpha: 0.5) : Colors.grey.shade200),
-          boxShadow: isHovered
-              ? [BoxShadow(color: statusColor.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2))]
-              : [],
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

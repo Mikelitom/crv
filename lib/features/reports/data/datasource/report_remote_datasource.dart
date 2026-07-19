@@ -7,4 +7,5 @@ abstract class ReportRemoteDatasource {
   Future<List<ConveyorHistoryModel>> getConveyorHistory();
   Future<List<PressHistoryModel>> getPressHistory(); // <-- SIN parámetros
   Future<void> sendConveyorReviewNote(String versionId, String notes);
+  Future<void> acceptReport(String reportId);
 }

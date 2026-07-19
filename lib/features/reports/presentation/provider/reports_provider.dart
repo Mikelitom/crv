@@ -3,6 +3,7 @@ import 'package:crv_reprosisa/features/reports/data/datasource/report_remote_dat
 import 'package:crv_reprosisa/features/reports/data/datasource/report_remote_datasource_impl.dart';
 import 'package:crv_reprosisa/features/reports/data/repository/report_repository_impl.dart';
 import 'package:crv_reprosisa/features/reports/domain/repository/report_repository.dart';
+import 'package:crv_reprosisa/features/reports/domain/usecase/accept_report_usecase.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/get_all_reports_usecae.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/send_conveyor_note_usecase.dart';
 import 'package:crv_reprosisa/features/reports/presentation/notifier/reports_notifier.dart';
@@ -35,23 +36,32 @@ final sendConveyorNoteUseCaseProvider = Provider((ref) {
   return SendConveyorNoteUseCase(ref.read(reportRepositoryProvider));
 });
 
-// 5. Provider del Notifier con inyección de todos los casos de uso
-final reportsNotifierProvider = StateNotifierProvider<ReportsNotifier, ReportsState>((ref) {
-  final getAllReports = ref.read(getAllReportsUseCaseProvider);
-  final sendNote = ref.read(sendConveyorNoteUseCaseProvider);
-  
-  // Obtenemos los casos de uso de detalle desde sus respectivos proveedores
-  final getVehicleDetail = ref.read(getVehicleReportDetailUseCaseProvider);
-  final getPressDetail = ref.read(getPressReportDetailUseCaseProvider);
-  final getConveyorDetail = ref.read(getConveyorReportDetailUseCaseProvider);
-  final dio = ref.read(dioProvider);
-
-  return ReportsNotifier(
-    getAllReportsUseCase: getAllReports,
-    sendConveyorNoteUseCase: sendNote, // Inyectado correctamente
-    getVehicleDetail: getVehicleDetail,
-    getPressDetail: getPressDetail,
-    getConveyorDetail: getConveyorDetail,
-    dio: dio,
-  );
+final acceptReportUseCaseProvider = Provider((ref) {
+  return AcceptConveyorReportUseCase(ref.read(reportRepositoryProvider));
 });
+
+// 5. Provider del Notifier con inyección de todos los casos de uso
+final reportsNotifierProvider =
+    StateNotifierProvider.autoDispose<ReportsNotifier, ReportsState>((ref) {
+      final getAllReports = ref.read(getAllReportsUseCaseProvider);
+      final sendNote = ref.read(sendConveyorNoteUseCaseProvider);
+
+      // Obtenemos los casos de uso de detalle desde sus respectivos proveedores
+      final getVehicleDetail = ref.read(getVehicleReportDetailUseCaseProvider);
+      final getPressDetail = ref.read(getPressReportDetailUseCaseProvider);
+      final getConveyorDetail = ref.read(
+        getConveyorReportDetailUseCaseProvider,
+      );
+      final getAcceptReport = ref.read(acceptReportUseCaseProvider);
+      final dio = ref.read(dioProvider);
+
+      return ReportsNotifier(
+        getAllReportsUseCase: getAllReports,
+        sendConveyorNoteUseCase: sendNote, // Inyectado correctamente
+        getVehicleDetail: getVehicleDetail,
+        getPressDetail: getPressDetail,
+        getConveyorDetail: getConveyorDetail,
+        acceptConveyorReportUseCase: getAcceptReport,
+        dio: dio,
+      );
+    });

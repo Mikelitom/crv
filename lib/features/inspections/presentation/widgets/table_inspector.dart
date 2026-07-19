@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import '../../../bandas_transportadoras/domain/entities/roller.dart';
-import 'package:pdf/pdf.dart';
 import '../../../../core/utils/imege_downloader.dart';
 import '../models/inspector_row_ui.dart';
 import '../provider/inspection_providers.dart';
@@ -448,63 +447,51 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
                             .map(
                               (v) => PopupMenuItem(
                                 value: v,
-                                height: 40,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      v.versionId == item.versionId
-                                          ? Icons.radio_button_checked
-                                          : Icons.radio_button_unchecked,
-                                      size: 16,
-                                      color: primaryRed,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Versión ${v.versionNumber}",
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                child: Text("Versión ${v.versionNumber}"),
                               ),
                             )
                             .toList(),
-                        // Diseño del título en la tabla
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  item.title,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13.5,
-                                    color: Color(0xFF111827),
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
                                 Row(
                                   children: [
                                     Text(
-                                      "Versión ${item.versionNumber} • ${item.folio}",
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey.shade600,
-                                        fontWeight: FontWeight.w500,
+                                      item.title,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13.5,
                                       ),
                                     ),
-                                    const SizedBox(width: 4),
-                                    Icon(
-                                      Icons.unfold_more,
-                                      size: 12,
-                                      color: primaryRed.withOpacity(0.7),
-                                    ),
+                                    // --- INDICADOR DE NOTAS ---
+                                    if (item.reviewNotes != null &&
+                                        item.reviewNotes!.isNotEmpty) ...[
+                                      const SizedBox(width: 6),
+                                      InkWell(
+                                        onTap: () =>
+                                            _showReviewDialog(context, item),
+                                        child: Icon(
+                                          item.reviewAnswer != null
+                                              ? Icons.check_circle
+                                              : Icons.info,
+                                          color: item.reviewAnswer != null
+                                              ? Colors.green
+                                              : Colors.orange,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ],
                                   ],
+                                ),
+                                Text(
+                                  "Versión ${item.versionNumber} • ${item.folio}",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade600,
+                                  ),
                                 ),
                               ],
                             ),
@@ -569,20 +556,55 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
       itemBuilder: (context, index) {
         var item = widget.items[index];
         return Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: borderColor),
-          ),
           child: ListTile(
             leading: Icon(Icons.assignment_outlined, color: primaryRed),
-            // --- CORRECCIÓN AQUÍ ---
-            title: Text(
-              item.title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-              overflow: TextOverflow
-                  .ellipsis, // Esto evita que el texto rompa el diseño
-              maxLines: 1,
+            title: Row(
+              children: [
+                Text(
+                  item.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                // --- INDICADOR DE NOTAS NOTORIO ---
+                if (item.reviewNotes != null && item.reviewNotes!.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => _showReviewDialog(context, item),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: item.reviewAnswer != null 
+                            ? Colors.green.shade100 
+                            : Colors.orange.shade100, // Color de fondo llamativo
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                            color: item.reviewAnswer != null 
+                                ? Colors.green.shade700 
+                                : Colors.orange.shade700, 
+                            width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            item.reviewAnswer != null ? Icons.check_circle : Icons.warning_amber_rounded,
+                            color: item.reviewAnswer != null ? Colors.green.shade800 : Colors.orange.shade900,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            item.reviewAnswer != null ? "CONTESTADO" : "PENDIENTE",
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              color: item.reviewAnswer != null ? Colors.green.shade900 : Colors.orange.shade900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ]
+              ],
             ),
             subtitle: Text("${item.date} • ${item.translatedState}"),
             // Usamos un Row con MainAxisSize.min para los botones
@@ -632,6 +654,29 @@ class _StatusBadge extends StatelessWidget {
     );
   }
 }
+
+void _showReviewDialog(BuildContext context, InspectionRowUI item) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Detalles de Revisión"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Nota del Revisor:", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(item.reviewNotes ?? "Sin notas"),
+            const SizedBox(height: 15),
+            const Text("Respuesta del Técnico:", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(item.reviewAnswer ?? "Aún sin respuesta"),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cerrar")),
+        ],
+      ),
+    );
+  }
 
 class _HeaderLabel extends StatelessWidget {
   final String text;

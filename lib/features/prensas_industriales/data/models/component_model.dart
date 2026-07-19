@@ -24,7 +24,6 @@ class PrensaComponentItem extends ComponentItem {
     );
   }
 
-  @override
   PrensaComponentItem copyWith({
     int? quantity,
     String? status,

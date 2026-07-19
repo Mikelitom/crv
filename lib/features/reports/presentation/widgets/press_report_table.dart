@@ -31,7 +31,7 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
             DataCell(Text(item?.serie ?? 'N/A')),
             DataCell(Text(item?.folio ?? 'N/A')),
             DataCell(statusChip(item?.state ?? 'PENDING')),
-            DataCell(Text(item?.inspectionDate?.toString().split(' ')[0] ?? 'N/A')),
+            DataCell(Text(item?.inspectionDate.toString().split(' ')[0] ?? 'N/A')),
             
             // Usamos el handler estandarizado para las acciones
             actionCell(

@@ -1,5 +1,4 @@
 import 'package:crv_reprosisa/core/network/interceptors/auth_interceptor.dart';
-import 'package:crv_reprosisa/features/auth/presentation/di/auth_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'environment.dart';

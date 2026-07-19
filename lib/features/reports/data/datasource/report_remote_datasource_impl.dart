@@ -26,7 +26,7 @@ class ReportRemoteDatasourceImpl implements ReportRemoteDatasource {
 
     if (response.statusCode == 201) {
       return;
-    } 
+    }
   }
 
   @override
@@ -41,5 +41,20 @@ class ReportRemoteDatasourceImpl implements ReportRemoteDatasource {
     final response = await dio.get('/asset/press-history');
     final List<dynamic> data = response.data;
     return data.map((json) => PressHistoryModel.fromJson(json)).toList();
+  }
+
+  @override
+  Future<void> acceptReport(String reportId) async {
+    try {
+      final response = await dio.patch(
+        '/full-conveyor-reports/$reportId/accept',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception("Error al aceptar el reporte: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? "Error de conexión");
+    }
   }
 }

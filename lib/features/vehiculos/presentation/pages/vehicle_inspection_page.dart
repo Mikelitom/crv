@@ -123,7 +123,7 @@ Future<void> _finalizar() async {
 
     // Sincroniza el controlador cuando los datos llegan de la API (modo edición)
     ref.listen(vehicleInspectionProvider.select((s) => s.generalNotes), (prev, next) {
-      if (next != null && _notesController.text != next) {
+      if (_notesController.text != next) {
         _notesController.text = next;
       }
     });

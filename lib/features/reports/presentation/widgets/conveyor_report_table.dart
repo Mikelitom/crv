@@ -13,33 +13,61 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
   final List<dynamic> reports;
   final bool isAdmin;
 
-  const ConveyorReportTable({super.key, required this.reports, required this.isAdmin});
+  const ConveyorReportTable({
+    super.key,
+    required this.reports,
+    required this.isAdmin,
+  });
 
-  Future<void> _sendReviewNote(BuildContext context, WidgetRef ref, String versionId, String notes) async {
+  Future<void> _sendReviewNote(
+    BuildContext context,
+    WidgetRef ref,
+    String versionId,
+    String notes,
+  ) async {
     if (notes.isEmpty) return;
     try {
       // Se envía el versionId completo para evitar el error 404
       await ref.read(sendConveyorNoteUseCaseProvider).call(versionId, notes);
+      await ref.read(reportsNotifierProvider.notifier).loadAllReports();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Nota enviada correctamente"), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Nota enviada correctamente"),
+            backgroundColor: Colors.green,
+          ),
+        );
         Navigator.pop(context);
       }
     } catch (e) {
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: kPrimaryRed));
+      if (context.mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: kPrimaryRed),
+        );
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return LayoutBuilder(builder: (context, constraints) {
-      if (constraints.maxWidth < 800) return _buildMobileView(context, ref);
-      return _buildDesktopView(context, ref, constraints);
-    });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 800) return _buildMobileView(context, ref);
+        return _buildDesktopView(context, ref, constraints);
+      },
+    );
   }
 
-  Widget _buildDesktopView(BuildContext context, WidgetRef ref, BoxConstraints constraints) {
+  Widget _buildDesktopView(
+    BuildContext context,
+    WidgetRef ref,
+    BoxConstraints constraints,
+  ) {
     return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
       child: DataTable(
         columnSpacing: 20,
         columns: const [
@@ -51,36 +79,65 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
         ],
         rows: reports.map((r) {
           final item = r as ConveyorHistoryModel;
-          return DataRow(cells: [
-            DataCell(
-              SizedBox(
-                width: 180, // Límite de ancho para evitar el overflow
-                child: Row(children: [
-                  const Icon(Icons.settings_input_component, color: kPrimaryRed, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      // Truncado visual: mostramos solo los primeros 8 caracteres
-                      Text("Banda v${item.versionId.substring(0, 8)}...", 
-                           style: const TextStyle(fontWeight: FontWeight.bold), 
-                           overflow: TextOverflow.ellipsis),
-                      Text("Folio: ${item.folio}", 
-                           style: const TextStyle(fontSize: 11, color: Colors.grey), 
-                           overflow: TextOverflow.ellipsis)
-                    ])
-                  )
-                ])
-              )
-            ),
-            DataCell(Row(children: [
-              const Icon(Icons.person_outline, size: 18, color: Colors.grey),
-              const SizedBox(width: 6),
-              Text(item.inspectorName ?? 'Sin asignar')
-            ])),
-            DataCell(Text(item.inspectionDate?.toString().split(' ')[0] ?? '')),
-            DataCell(_statusChip(item.state)),
-            DataCell(_actionMenu(context, ref, item)),
-          ]);
+          return DataRow(
+            cells: [
+              DataCell(
+                SizedBox(
+                  width: 180, // Límite de ancho para evitar el overflow
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.settings_input_component,
+                        color: kPrimaryRed,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Truncado visual: mostramos solo los primeros 8 caracteres
+                            Text(
+                              "Banda v${item.versionId.substring(0, 8)}...",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              "Folio: ${item.folio}",
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              DataCell(
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.person_outline,
+                      size: 18,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(item.inspectorName),
+                  ],
+                ),
+              ),
+              DataCell(Text(item.inspectionDate.toString().split(' ')[0])),
+              DataCell(_statusChip(item.state)),
+              DataCell(_actionMenu(context, ref, item)),
+            ],
+          );
         }).toList(),
       ),
     );
@@ -95,72 +152,138 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
         final item = reports[i] as ConveyorHistoryModel;
         return Card(
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade200)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(color: Colors.grey.shade200),
+          ),
           child: ListTile(
-            leading: const Icon(Icons.settings_input_component, color: kPrimaryRed),
-            title: Text("Banda v${item.versionId.substring(0, 8)}...", style: const TextStyle(fontWeight: FontWeight.bold)),
+            leading: const Icon(
+              Icons.settings_input_component,
+              color: kPrimaryRed,
+            ),
+            title: Text(
+              "Banda v${item.versionId.substring(0, 8)}...",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             subtitle: Text("Folio: ${item.folio} • ${item.state}"),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showManagementDialog(context, ref, item),
+            onTap: () {
+              if (isAdmin) {
+                _showManagementDialog(context, ref, item);
+              } else {
+                _handleView(context, ref, item);
+              }
+            },
           ),
         );
       },
     );
   }
 
-Widget _statusChip(String? state) {
-  // Definición de etiquetas según tu lógica original
-  final statusMap = {
-    'IN_PROGRESS': 'EN PROCESO',
-    'COMPLETED': 'COMPLETADO',
-    'IN_REVISION': 'PENDIENTE DE REVISION',
-    'RETURNED': 'DEVUELTO'
-  };
+  Future<void> _acceptReport(
+    BuildContext context,
+    WidgetRef ref,
+    String reportId,
+  ) async {
+    try {
+      // Asegúrate de usar el provider que inyecta tu servicio de aceptación
+      await ref.read(reportsNotifierProvider.notifier).acceptReport(reportId);
+      await ref.read(reportsNotifierProvider.notifier).loadAllReports();
 
-  final String key = (state ?? 'PENDING').toUpperCase();
-  final String label = statusMap[key] ?? 'PENDIENTE';
-
-  // Lógica de colores según el estado
-  Color color;
-  if (key == 'COMPLETED') {
-    color = Colors.green;
-  } else if (key == 'IN_REVISION' || key == 'RETURNED') {
-    color = Colors.orange;
-  } else {
-    color = Colors.grey;
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Reporte aceptado y completado"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context); // Cierra el diálogo si se llama desde ahí
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error al aceptar: $e"),
+            backgroundColor: kPrimaryRed,
+          ),
+        );
+      }
+    }
   }
 
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-    decoration: BoxDecoration(
-      color: color.withOpacity(0.1), // Fondo suave con opacidad
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: color.withOpacity(0.5)), // Borde acorde al color
-    ),
-    child: Text(
-      label,
-      style: TextStyle(
-        fontSize: 10,
-        fontWeight: FontWeight.bold,
-        color: color, // Texto del mismo color que el borde
+  Widget _statusChip(String? state) {
+    final statusMap = {
+      'IN_PROGRESS': 'EN PROCESO',
+      'COMPLETED': 'COMPLETADO',
+      'IN_REVISION': 'PENDIENTE DE REVISION',
+      'RETURNED': 'DEVUELTO',
+    };
+    final label = statusMap[(state ?? 'PENDING').toUpperCase()] ?? 'PENDIENTE';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
       ),
-    ),
-  );
-}
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
 
-  void _showManagementDialog(BuildContext context, WidgetRef ref, ConveyorHistoryModel item) {
+  void _showManagementDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ConveyorHistoryModel item,
+  ) {
     final noteController = TextEditingController();
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Gestionar Reporte", style: TextStyle(color: kPrimaryRed, fontWeight: FontWeight.bold)),
-        content: SizedBox(width: 400, child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: noteController, decoration: const InputDecoration(labelText: "Nueva observación", border: OutlineInputBorder(), prefixIcon: Icon(Icons.note_alt_outlined)), maxLines: 3),
-        ])),
+        title: const Text(
+          "Gestionar Reporte",
+          style: TextStyle(color: kPrimaryRed, fontWeight: FontWeight.bold),
+        ),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: noteController,
+                decoration: const InputDecoration(
+                  labelText: "Nueva observación",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.note_alt_outlined),
+                ),
+                maxLines: 3,
+              ),
+            ],
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cerrar")),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cerrar"),
+          ),
+          OutlinedButton.icon(
+            onPressed: () => _acceptReport(context, ref, item.reportId),
+            icon: const Icon(Icons.check_circle_outline, color: Colors.green),
+            label: const Text("Aceptar"),
+          ),
           FilledButton.icon(
-            onPressed: () => _sendReviewNote(context, ref, item.versionId, noteController.text),
+            onPressed: () => _sendReviewNote(
+              context,
+              ref,
+              item.versionId,
+              noteController.text,
+            ),
             style: FilledButton.styleFrom(backgroundColor: kPrimaryRed),
             icon: const Icon(Icons.send),
             label: const Text("Enviar"),
@@ -170,18 +293,72 @@ Widget _statusChip(String? state) {
     );
   }
 
-  Widget _actionMenu(BuildContext context, WidgetRef ref, ConveyorHistoryModel item) => PopupMenuButton<String>(
-    onSelected: (val) => val == 'view' ? _handleView(context, ref, item) : _showManagementDialog(context, ref, item),
+  Widget _actionMenu(
+    BuildContext context,
+    WidgetRef ref,
+    ConveyorHistoryModel item,
+  ) => PopupMenuButton<String>(
+    onSelected: (val) {
+      if (val == 'view') {
+        _handleView(context, ref, item);
+      } else if (val == 'manage') {
+        _showManagementDialog(context, ref, item);
+      } else if (val == 'accept') {
+        _acceptReport(context, ref, item.reportId);
+      }
+    },
     itemBuilder: (_) => [
-      const PopupMenuItem(value: 'view', child: ListTile(dense: true, leading: Icon(Icons.picture_as_pdf, color: kPrimaryRed), title: Text("Ver PDF"))),
-      const PopupMenuItem(value: 'manage', child: ListTile(dense: true, leading: Icon(Icons.comment, color: Colors.grey), title: Text("Evaluar / Notas"))),
+      const PopupMenuItem(
+        value: 'view',
+        child: ListTile(
+          dense: true,
+          leading: Icon(Icons.picture_as_pdf, color: kPrimaryRed),
+          title: Text("Ver PDF"),
+        ),
+      ),
+    
+      if (isAdmin)
+        const PopupMenuItem(
+          value: 'manage',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.comment, color: Colors.grey),
+            title: Text("Evaluar / Notas"),
+          ),
+        ),
+    
+      if (isAdmin)
+        const PopupMenuItem(
+          value: 'accept',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.check_circle, color: Colors.green),
+            title: Text("Aceptar Reporte"),
+          ),
+        ),
     ],
   );
 
-  Future<void> _handleView(BuildContext context, WidgetRef ref, ConveyorHistoryModel item) async {
+  Future<void> _handleView(
+    BuildContext context,
+    WidgetRef ref,
+    ConveyorHistoryModel item,
+  ) async {
     final pdfData = await ConveyorPdfProcessor.getPdfData(ref, item.versionId);
     if (pdfData != null && context.mounted) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => ClientPdfViewerPage(folio: item.folio, pdfGenerator: () => BandaPdfGenerator.generateReport(pdfData.datosNormalizados, pdfData.sections, pdfData.rodillos))));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ClientPdfViewerPage(
+            folio: item.folio,
+            pdfGenerator: () => BandaPdfGenerator.generateReport(
+              pdfData.datosNormalizados,
+              pdfData.sections,
+              pdfData.rodillos,
+            ),
+          ),
+        ),
+      );
     }
   }
 }

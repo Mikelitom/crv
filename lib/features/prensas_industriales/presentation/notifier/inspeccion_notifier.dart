@@ -55,7 +55,7 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
         final data = detailState.data!;
 
         _editingReportId = data.report["report_id"];
-        
+
         final List<PrensaComponentItem> updatedItems = [];
 
         for (var item in state.templateItems.cast<PrensaComponentItem>()) {
@@ -67,23 +67,24 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
 
           if (answer != null) {
             List<EvidenceFile> evidences = [];
-            if (answer.evidencePaths != null) {
-              for (var path in answer.evidencePaths) {
-                final bytes = await ImageDownloader.download(
-                  ref.read(dioProvider),
-                  path,
+
+            for (var path in answer.evidencePaths) {
+              final bytes = await ImageDownloader.download(
+                ref.read(dioProvider),
+                path,
+              );
+              if (bytes != null) {
+                evidences.add(
+                  EvidenceFile(
+                    bytes: bytes,
+                    type: 'image/jpeg',
+                    mimeType: 'image/jpeg',
+                    path: path,
+                  ),
                 );
-                if (bytes != null)
-                  evidences.add(
-                    EvidenceFile(
-                      bytes: bytes,
-                      type: 'image/jpeg',
-                      mimeType: 'image/jpeg',
-                      path: path,
-                    ),
-                  );
               }
             }
+
             updatedItems.add(
               item.copyWith(
                 status: answer.status.toUpperCase(),
@@ -102,7 +103,7 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
           selectedPress: PressModel.fromJson(data.press),
           templateItems: updatedItems,
           area: data.report['area'] ?? "",
-          solicitantsName: data.responsibleName ?? "",
+          solicitantsName: data.responsibleName,
           observations: data.report['observation'] ?? "",
           state: data.report['state'] ?? "IN_PROGRESS",
           selectedLoanArea: state.loanAreas.firstWhereOrNull(
@@ -145,26 +146,25 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
               "mime_type": ev.mimeType,
               "file_size": "0",
             });
-          } else if (ev.bytes != null) {
-            final tempDir = await getTemporaryDirectory();
-            final file = File(
-              '${tempDir.path}/p_${DateTime.now().microsecondsSinceEpoch}.jpg',
-            );
-            await file.writeAsBytes(ev.bytes!);
-            final uploadResult = await evidenceService.uploadEvidence(
-              file: file,
-              basePath: 'inspecciones/prensas',
-            );
-            uploadResult.fold(
-              (f) => null,
-              (dto) => uploadedEvidences.add({
-                "file_path": dto.filePath,
-                "file_type": dto.fileType,
-                "mime_type": dto.mimeType,
-                "file_size": "0",
-              }),
-            );
           }
+          final tempDir = await getTemporaryDirectory();
+          final file = File(
+            '${tempDir.path}/p_${DateTime.now().microsecondsSinceEpoch}.jpg',
+          );
+          await file.writeAsBytes(ev.bytes);
+          final uploadResult = await evidenceService.uploadEvidence(
+            file: file,
+            basePath: 'inspecciones/prensas',
+          );
+          uploadResult.fold(
+            (f) => null,
+            (dto) => uploadedEvidences.add({
+              "file_path": dto.filePath,
+              "file_type": dto.fileType,
+              "mime_type": dto.mimeType,
+              "file_size": "0",
+            }),
+          );
         }
         answers.add({
           "component_id": item.id,
