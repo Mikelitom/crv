@@ -108,15 +108,45 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
     );
   }
 
-  Widget _statusChip(String? state) {
-    final statusMap = {'IN_PROGRESS': 'EN PROCESO', 'COMPLETED': 'COMPLETADO', 'IN_REVISION': 'PENDIENTE DE REVISION', 'RETURNED': 'DEVUELTO'};
-    final label = statusMap[(state ?? 'PENDING').toUpperCase()] ?? 'PENDIENTE';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)),
-      child: Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black87)),
-    );
+Widget _statusChip(String? state) {
+  // Definición de etiquetas según tu lógica original
+  final statusMap = {
+    'IN_PROGRESS': 'EN PROCESO',
+    'COMPLETED': 'COMPLETADO',
+    'IN_REVISION': 'PENDIENTE DE REVISION',
+    'RETURNED': 'DEVUELTO'
+  };
+
+  final String key = (state ?? 'PENDING').toUpperCase();
+  final String label = statusMap[key] ?? 'PENDIENTE';
+
+  // Lógica de colores según el estado
+  Color color;
+  if (key == 'COMPLETED') {
+    color = Colors.green;
+  } else if (key == 'IN_REVISION' || key == 'RETURNED') {
+    color = Colors.orange;
+  } else {
+    color = Colors.grey;
   }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.1), // Fondo suave con opacidad
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: color.withOpacity(0.5)), // Borde acorde al color
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.bold,
+        color: color, // Texto del mismo color que el borde
+      ),
+    ),
+  );
+}
 
   void _showManagementDialog(BuildContext context, WidgetRef ref, ConveyorHistoryModel item) {
     final noteController = TextEditingController();

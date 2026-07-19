@@ -229,11 +229,12 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
     );
   }
 
-  Widget _buildDashboard(
+Widget _buildDashboard(
     List<Vehicle> vehicles,
     List<AssetLastMovement> movements,
     bool isLoading
   ) {
+    // Calculamos las métricas basándonos en el estado de operación
     final occupiedCount = vehicles
         .where((v) => v.operationState.toUpperCase() == 'OCCUPIED')
         .length;
@@ -243,6 +244,11 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
     final workshopCount = vehicles
         .where((v) => v.operationState.toUpperCase() == 'WORKSHOP')
         .length;
+    
+    // Asumimos que los pendientes de mantenimiento son los que están en taller
+    final pendingCount = workshopCount;
+    // Puedes ajustar 'progressCount' si tienes una lógica distinta para órdenes en proceso
+    final progressCount = 0; 
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -275,8 +281,16 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
                     cardWidth,
                   ),
                   _buildAnimatedCard(const UsageTrendChart(), cardWidth),
+                  // Mantenimiento actualizado con los parámetros requeridos
                   _buildAnimatedCard(
-                    const MaintenancePendingCard(pendingCount: 0),
+                    MaintenancePendingCard(
+                      pendingCount: pendingCount,
+                      progressCount: progressCount,
+                      lastOrderNumber: "N/A", // O asigna el valor dinámico correspondiente
+                      onNavigate: () {
+                        // Agrega tu lógica de navegación aquí
+                      },
+                    ),
                     cardWidth,
                   ),
                 ],

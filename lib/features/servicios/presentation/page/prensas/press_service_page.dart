@@ -102,62 +102,85 @@ class _PressServicePageState extends ConsumerState<PressServicePage> {
     );
   }
 
-  Widget _buildDashboard(
+Widget _buildDashboard(
     AsyncValue usageData,
     List<Press> filteredPress,
     List<AssetLastMovement> movements,
     bool isLoading,
-  ) {    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Dashboard de Prensas",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 24),
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double maxWidth = constraints.maxWidth;
+        // Calculamos cuántas columnas caben igual que en vehículos
+        int crossAxisCount = maxWidth > 1200 ? 3 : (maxWidth > 700 ? 2 : 1);
+        double cardWidth = (maxWidth - 32 - (16 * (crossAxisCount - 1))) / crossAxisCount;
 
-          // Row Responsivo (Wrap)
-          Wrap(
-            spacing: 24,
-            runSpacing: 24,
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(width: 380, child: const PressDistributionChart()),
-              SizedBox(
-                width: 380,
-                child: usageData.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (err, _) => Text("Error: $err"),
-                  data: (data) => PressUsageTrendChart(data: data),
-                ),
+              const Text(
+                "Dashboard de Prensas",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              SizedBox(
-                width: 380,
-                child: PendingMaintenanceWidget(
-                  onNavigateToPress: (pressId) {
-                    final state = ref.read(pressListProvider);
-                    final press = state.press.firstWhere(
-                      (p) => p.id == pressId,
-                    );
-                    setState(() => selectedPress = press);
-                  },
-                ),
+              const SizedBox(height: 24),
+
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  _buildAnimatedCard(const PressDistributionChart(), cardWidth),
+                  _buildAnimatedCard(
+                    usageData.when(
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (err, _) => Text("Error: $err"),
+                      data: (data) => PressUsageTrendChart(data: data),
+                    ),
+                    cardWidth,
+                  ),
+                  _buildAnimatedCard(
+                    PendingMaintenanceWidget(
+                      onNavigateToPress: (pressId) {
+                        final state = ref.read(pressListProvider);
+                        final press = state.press.firstWhere((p) => p.id == pressId);
+                        setState(() => selectedPress = press);
+                      },
+                    ),
+                    cardWidth,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              RecentMovementsTable(
+                movements: movements,
+                searchQuery: searchQuery,
+                isLoading: isLoading,
+                identifierTitle: "SERIE",
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          RecentMovementsTable(
-            movements: movements,
-            searchQuery: searchQuery,
-            isLoading: isLoading,
-            identifierTitle: "SERIE",
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
-
+  Widget _buildAnimatedCard(Widget child, double width) {
+    return StatefulBuilder(
+      builder: (context, setSt) {
+        return MouseRegion(
+          child: AnimatedScale(
+            scale: 1.0,
+            duration: const Duration(milliseconds: 200),
+            child: SizedBox(
+              width: width > 360 ? width : 360, // Mínimo de 360px para no romper el diseño
+              height: 380,
+              child: child,
+            ),
+          ),
+        );
+      },
+    );
+  }
   Widget _buildSidePanel(
     List<Press> filteredPress,
     Status status,
