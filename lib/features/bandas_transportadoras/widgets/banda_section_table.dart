@@ -296,9 +296,8 @@ class _BandaSectionTableState extends ConsumerState<BandaSectionTable> {
     );
   }
 
-  Widget _buildCommentInput(BandaComponent item) => TextFormField(
-    // 🔥 La Key incluye el valor, forzando redibujado al cambiar el state
-    key: ValueKey('comment_${item.id}_${item.comment}'),
+Widget _buildCommentInput(BandaComponent item) => TextFormField(
+    key: ValueKey('comment_${item.id}'), 
     initialValue: item.comment,
     maxLines: 2,
     style: const TextStyle(fontSize: 11),
