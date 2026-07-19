@@ -18,6 +18,25 @@ class _CreateOrderDialogState extends ConsumerState<CreateOrderDialog> {
   final _obsController = TextEditingController();
   final Set<String> _selectedItems = {};
 
+  final Color _red = const Color(0xFFC62828);
+
+  // Decoración para campos de texto con fondo blanco y estilo institucional
+  InputDecoration _inputDecor(String label) => InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.grey),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _red, width: 2),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final pendingState = ref.watch(pendingComponentNotifierProvider);
@@ -35,21 +54,26 @@ class _CreateOrderDialogState extends ConsumerState<CreateOrderDialog> {
         Navigator.pop(context); // Esto cierra el diálogo y dispara el .then() de ServiceDetailView
       } else if (next.status == Status.error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: ${next.error}"), backgroundColor: Colors.red),
+          SnackBar(content: Text("Error: ${next.error}"), backgroundColor: _red),
         );
       }
     });
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.white, // Fondo blanco puro para todo el diálogo
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
         width: 400,
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Nueva Orden de Servicio", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
+            const Text(
+              "Iniciar orden de servicio", 
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)
+            ),
+            const SizedBox(height: 20),
             SizedBox(
               height: 200,
               child: ListView.builder(
@@ -57,38 +81,54 @@ class _CreateOrderDialogState extends ConsumerState<CreateOrderDialog> {
                 itemBuilder: (context, index) {
                   final item = pendingState.data[index];
                   return CheckboxListTile(
-                    title: Text(item.componentName, style: const TextStyle(fontSize: 13)),
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(item.componentName, style: const TextStyle(fontSize: 14)),
                     value: _selectedItems.contains(item.id),
-                    activeColor: const Color(0xFFC62828),
+                    activeColor: _red,
                     onChanged: (val) => setState(() => val! ? _selectedItems.add(item.id) : _selectedItems.remove(item.id)),
                   );
                 },
               ),
             ),
             const SizedBox(height: 16),
-            TextField(controller: _descController, decoration: const InputDecoration(labelText: "Descripción", border: OutlineInputBorder())),
+            TextField(controller: _descController, decoration: _inputDecor("Descripción")),
             const SizedBox(height: 16),
-            TextField(controller: _obsController, decoration: const InputDecoration(labelText: "Observación", border: OutlineInputBorder())),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50)),
-              onPressed: createServiceState.status == Status.loading ? null : () {
-                if (_selectedItems.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Selecciona un componente"), backgroundColor: Colors.orange));
-                  return;
-                }
-                ref.read(createServiceNotifierProvider.notifier).createOrder(
-                  CreateServiceOrderEntity(
-                    vehicleId: widget.vehicleId,
-                    description: _descController.text,
-                    observation: _obsController.text,
-                    serviceItems: _selectedItems.toList(),
+            TextField(controller: _obsController, decoration: _inputDecor("Observación")),
+            const SizedBox(height: 28),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancelar", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   ),
-                );
-              },
-              child: createServiceState.status == Status.loading 
-                ? const CircularProgressIndicator(color: Colors.white) 
-                : const Text("CREAR ORDEN"),
+                  onPressed: createServiceState.status == Status.loading ? null : () {
+                    if (_selectedItems.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Selecciona un componente"), backgroundColor: Colors.orange));
+                      return;
+                    }
+                    ref.read(createServiceNotifierProvider.notifier).createOrder(
+                      CreateServiceOrderEntity(
+                        vehicleId: widget.vehicleId,
+                        description: _descController.text,
+                        observation: _obsController.text,
+                        serviceItems: _selectedItems.toList(),
+                      ),
+                    );
+                  },
+                  child: createServiceState.status == Status.loading 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                    : const Text("Iniciar", style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
           ],
         ),

@@ -8,6 +8,7 @@ import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CompleteServiceDialog extends ConsumerStatefulWidget {
   final ServiceOrderModel order;
@@ -28,8 +29,8 @@ class CompleteServiceDialog extends ConsumerStatefulWidget {
 
 class _CompleteServiceDialogState extends ConsumerState<CompleteServiceDialog> {
   final List<File> _selectedFiles = [];
-
   bool _uploading = false;
+  final ImagePicker _imagePicker = ImagePicker();
 
   Future<void> _pickFiles() async {
     final result = await FilePicker.platform.pickFiles(
@@ -44,6 +45,78 @@ class _CompleteServiceDialogState extends ConsumerState<CompleteServiceDialog> {
     setState(() {
       _selectedFiles.addAll(files);
     });
+  }
+
+  Future<void> _takePhoto() async {
+    final XFile? photo = await _imagePicker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 80,
+    );
+
+    if (photo == null) return;
+
+    setState(() {
+      _selectedFiles.add(File(photo.path));
+    });
+  }
+
+  void _showSourceSelector(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Agregar evidencia",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC62828).withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.camera_alt, color: Color(0xFFC62828)),
+              ),
+              title: const Text("Tomar una foto", style: TextStyle(fontWeight: FontWeight.bold)),
+              onTap: () {
+                Navigator.pop(context);
+                _takePhoto();
+              },
+            ),
+            const Divider(height: 16),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC62828).withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.folder_open, color: Color(0xFFC62828)),
+              ),
+              title: const Text("Seleccionar archivos", style: TextStyle(fontWeight: FontWeight.bold)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickFiles();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _completeService() async {
@@ -119,16 +192,16 @@ class _CompleteServiceDialogState extends ConsumerState<CompleteServiceDialog> {
   Widget _buildEvidenceList() {
     if (_selectedFiles.isEmpty) {
       return Container(
-        height: 180,
+        height: 160,
         alignment: Alignment.center,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
-            Icon(Icons.folder_open, size: 48, color: Colors.grey),
-            SizedBox(height: 12),
+            Icon(Icons.folder_open, size: 42, color: Colors.grey),
+            SizedBox(height: 10),
             Text(
               "No hay evidencias seleccionadas",
-              style: TextStyle(color: Colors.grey, fontSize: 15),
+              style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
           ],
         ),
@@ -136,47 +209,48 @@ class _CompleteServiceDialogState extends ConsumerState<CompleteServiceDialog> {
     }
 
     return SizedBox(
-      height: 220,
+      height: 200,
       child: ListView.separated(
         itemCount: _selectedFiles.length,
         separatorBuilder: (_, __) => const SizedBox(height: 8),
         itemBuilder: (_, index) {
           final file = _selectedFiles[index];
 
-          return Card(
-            elevation: 1,
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
             child: ListTile(
               leading: _isImage(file)
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                       child: Image.file(
                         file,
-                        width: 48,
-                        height: 48,
+                        width: 42,
+                        height: 42,
                         fit: BoxFit.cover,
                       ),
                     )
-                  : Icon(_getFileIcon(file), size: 30),
-
+                  : Icon(_getFileIcon(file), size: 28, color: const Color(0xFFC62828)),
               title: Text(
                 file.path.split('/').last,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
-
               subtitle: FutureBuilder<int>(
                 future: file.length(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return const Text("Calculando tamaño...");
+                    return const Text("Calculando...", style: TextStyle(fontSize: 11));
                   }
-
-                  return Text(_formatFileSize(snapshot.data!));
+                  return Text(_formatFileSize(snapshot.data!), style: const TextStyle(fontSize: 11));
                 },
               ),
-
               trailing: IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
                 onPressed: _uploading
                     ? null
                     : () {
@@ -194,7 +268,6 @@ class _CompleteServiceDialogState extends ConsumerState<CompleteServiceDialog> {
 
   IconData _getFileIcon(File file) {
     final extension = file.path.split('.').last.toLowerCase();
-
     switch (extension) {
       case "png":
       case "jpg":
@@ -203,24 +276,13 @@ class _CompleteServiceDialogState extends ConsumerState<CompleteServiceDialog> {
       case "bmp":
       case "webp":
         return Icons.image;
-
       case "pdf":
         return Icons.picture_as_pdf;
-
       case "mp4":
       case "mov":
       case "avi":
       case "mkv":
         return Icons.video_file;
-
-      case "doc":
-      case "docx":
-        return Icons.description;
-
-      case "xls":
-      case "xlsx":
-        return Icons.table_chart;
-
       default:
         return Icons.insert_drive_file;
     }
@@ -229,62 +291,58 @@ class _CompleteServiceDialogState extends ConsumerState<CompleteServiceDialog> {
   String _formatFileSize(int bytes) {
     const kb = 1024;
     const mb = kb * 1024;
-    const gb = mb * 1024;
-
-    if (bytes >= gb) {
-      return "${(bytes / gb).toStringAsFixed(2)} GB";
-    }
-
-    if (bytes >= mb) {
-      return "${(bytes / mb).toStringAsFixed(2)} MB";
-    }
-
-    if (bytes >= kb) {
-      return "${(bytes / kb).toStringAsFixed(2)} KB";
-    }
-
+    if (bytes >= mb) return "${(bytes / mb).toStringAsFixed(2)} MB";
+    if (bytes >= kb) return "${(bytes / kb).toStringAsFixed(2)} KB";
     return "$bytes B";
   }
 
   bool _isImage(File file) {
     final extension = file.path.split('.').last.toLowerCase();
-
     return ["png", "jpg", "jpeg", "gif", "bmp", "webp"].contains(extension);
   }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      elevation: 10,
       child: Container(
-        width: 500,
-        padding: const EdgeInsets.all(28),
+        width: MediaQuery.of(context).size.width * 0.85,
+        constraints: const BoxConstraints(maxWidth: 450, maxHeight: 600),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               "Completar servicio",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Colors.black87,
+              ),
             ),
-            const SizedBox(height: 20),
-            _buildEvidenceList(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            Flexible(child: SingleChildScrollView(child: _buildEvidenceList())),
+            const SizedBox(height: 16),
             Center(
               child: OutlinedButton.icon(
-                onPressed: _uploading ? null : _pickFiles,
-                icon: const Icon(Icons.attach_file, color: Color(0xFFC62828)),
+                onPressed: _uploading ? null : () => _showSourceSelector(context),
+                icon: const Icon(Icons.attach_file, color: Color(0xFFC62828), size: 18),
                 label: const Text(
-                  "Agregar evidencias",
+                  "Agregar evidencias o tomar foto",
                   style: TextStyle(
                     color: Color(0xFFC62828),
                     fontWeight: FontWeight.bold,
+                    fontSize: 13,
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xFFC62828)),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
+                    horizontal: 18,
                     vertical: 12,
                   ),
                   shape: RoundedRectangleBorder(
@@ -293,44 +351,50 @@ class _CompleteServiceDialogState extends ConsumerState<CompleteServiceDialog> {
                 ),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                TextButton(
-                  onPressed: _uploading ? null : () => Navigator.pop(context),
-                  child: const Text(
-                    "Cancelar",
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
+                Expanded(
+                  child: TextButton(
+                    onPressed: _uploading ? null : () => Navigator.pop(context),
+                    child: const Text(
+                      "Cancelar",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                FilledButton.icon(
-                  onPressed: _uploading ? null : _completeService,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFC62828),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _uploading ? null : _completeService,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFC62828),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: _uploading
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                    child: _uploading
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            "Completar",
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        )
-                      : const Icon(Icons.check),
-                  label: Text(_uploading ? "Completando..." : "Completar"),
+                  ),
                 ),
               ],
             ),

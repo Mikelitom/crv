@@ -16,9 +16,8 @@ class RecentMovementsTable extends StatelessWidget {
     this.identifierTitle = "IDENTIFICADOR"
   });
 
-  @override
+@override
   Widget build(BuildContext context) {
-    // Filtramos los vehículos según la búsqueda
     final filtered = movements.where((m) {
       return m.identifier.toLowerCase().contains(searchQuery.toLowerCase()) ||
           m.assetType.toLowerCase().contains(searchQuery.toLowerCase());
@@ -34,42 +33,22 @@ class RecentMovementsTable extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-              ),
-            ],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Últimos movimientos",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
+              const Text("Últimos movimientos", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
-
               AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
+                duration: const Duration(milliseconds: 400),
                 child: isLoading
-                    ? const SizedBox(
-                        height: 250,
-                        child: Center(child: CircularProgressIndicator()),
-                      )
+                    ? const SizedBox(height: 250, child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))))
                     : filtered.isEmpty
-                    ? const SizedBox(
-                        height: 250,
-                        child: Center(
-                          child: Text(
-                            "No hay movimientos recientes",
-                            style: TextStyle(color: Colors.grey, fontSize: 15),
-                          ),
-                        ),
-                      )
-                    : isMobile
-                    ? _buildMobileList(filtered)
-                    : _buildDesktopTable(filtered),
+                        ? _buildEmptyState()
+                        : isMobile
+                            ? _buildMobileList(filtered)
+                            : _buildDesktopTable(filtered),
               ),
             ],
           ),
@@ -77,7 +56,21 @@ class RecentMovementsTable extends StatelessWidget {
       },
     );
   }
-
+Widget _buildEmptyState() {
+    return const SizedBox(
+      height: 250,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.history, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text("No hay movimientos recientes", style: TextStyle(color: Colors.grey, fontSize: 15)),
+          ],
+        ),
+      ),
+    );
+  }
   // --- MODO DESKTOP: TABLA ORIGINAL ---
   Widget _buildDesktopTable(List<AssetLastMovement> filtered) {
     return Table(
@@ -158,89 +151,103 @@ class RecentMovementsTable extends StatelessWidget {
   }
 
   // --- MODO MÓVIL: LISTA DE TARJETAS ---
-  Widget _buildMobileList(List<AssetLastMovement> filtered) {
+Widget _buildMobileList(List<AssetLastMovement> filtered) {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: filtered.take(10).length,
-      separatorBuilder: (_, __) => const Divider(height: 20),
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (_, i) {
         final m = filtered[i];
-
-        return Card(
-          elevation: 0,
-          color: Colors.grey.shade50,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+        // Animación de entrada para cada tarjeta
+        return AnimatedContainer(
+          duration: Duration(milliseconds: 300 + (i * 100)),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  m.identifier,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    m.identifier,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      color: Color(0xFFC62828), // Rojo institucional
+                    ),
                   ),
+                  Text(
+                    DateFormat('dd/MM/yy • hh:mm a').format(m.eventDate),
+                    style: const TextStyle(color: Colors.grey, fontSize: 11),
+                  ),
+                ],
+              ),
+              Text(m.assetType, style: const TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 12),
+              
+              // Campos con etiquetas
+              _buildMobileField("Estado:", _buildStateBadge(m.state)),
+              const SizedBox(height: 8),
+              _buildMobileField("Movimiento:", _buildMovementBadge(m.movementType)),
+              
+              const Divider(height: 20),
+              
+              Text(
+                m.userName,
+                style: const TextStyle(
+                  fontStyle: FontStyle.italic,
+                  fontSize: 13,
+                  color: Colors.black87,
                 ),
-                const SizedBox(height: 4),
-                Text(m.assetType, style: const TextStyle(color: Colors.grey)),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(child: _buildStateBadge(m.state)),
-                    const SizedBox(width: 8),
-                    Expanded(child: _buildMovementBadge(m.movementType)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  m.userName,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  DateFormat('dd/MM/yyyy • hh:mm a').format(m.eventDate),
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
     );
   }
 
+  // Widget auxiliar para alinear etiqueta y contenido en móvil
+  Widget _buildMobileField(String label, Widget child) => Row(
+    children: [
+      SizedBox(
+        width: 80,
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+      ),
+      child,
+    ],
+  );
+
   String _translateState(String state) {
     switch (state.toUpperCase()) {
-      case 'AVAILABLE':
-        return 'Disponible';
-      case 'OCCUPIED':
-        return 'Ocupado';
-      case 'WORKSHOP':
-        return 'En taller';
-      case 'IN_PROGRESS':
-        return 'En proceso';
-      default:
-        return state;
+      case 'AVAILABLE': return 'Disponible';
+      case 'OCCUPIED': return 'Ocupado';
+      case 'WORKSHOP': return 'En taller';
+      case 'IN_PROGRESS': return 'En proceso';
+      case 'COMPLETED': return 'Completado';
+      default: return state;
     }
   }
 
   Color _stateColor(String state) {
     switch (state.toUpperCase()) {
-      case 'AVAILABLE':
-        return Colors.green;
-      case 'WORKSHOP':
-        return Colors.orange;
-      case 'OCCUPIED':
-        return Colors.blue;
-      default:
-        return Colors.grey;
+      case 'AVAILABLE': return Colors.green;
+      case 'WORKSHOP': return Colors.orange;
+      case 'OCCUPIED': return Colors.blue;
+      case 'COMPLETED': return const Color(0xFFC62828);
+      default: return Colors.grey;
     }
   }
-
   Widget _buildStateBadge(String state) {
     final color = _stateColor(state);
 

@@ -30,6 +30,7 @@ class ServiceDetailView extends ConsumerStatefulWidget {
 }
 
 class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
+  String? _loadingPdfId;
   @override
   void initState() {
     super.initState();
@@ -232,60 +233,227 @@ Widget _buildEvidenciasList(List<ServiceOrderModel> services) {
 void _showServiceEvidenceDialog(BuildContext context, ServiceOrderModel service) {
   final groupedData = _groupEvidences(service.evidences);
   final dates = groupedData.keys.toList();
+  final String displayReportId = service.reportId.isNotEmpty 
+      ? (service.reportId.length >= 6 ? service.reportId.substring(0, 6).toUpperCase() : service.reportId.toUpperCase()) 
+      : "N/A";
 
-  showDialog(
+  showGeneralDialog(
     context: context,
-    builder: (_) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Row(
-        children: [
-          const Icon(Icons.folder_special, color: Color(0xFFC62828)),
-          const SizedBox(width: 8),
-          Expanded(child: Text(service.description, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
-        ],
-      ),
-      content: SizedBox(
-        width: 450,
-        child: ListView.builder(
-          shrinkWrap: true,
-          itemCount: dates.length,
-          itemBuilder: (_, index) {
-            final date = dates[index];
-            final files = groupedData[date]!;
-
-            return ExpansionTile(
-              iconColor: const Color(0xFFC62828),
-              textColor: const Color(0xFFC62828),
-              leading: const Icon(Icons.calendar_month_outlined),
-              title: Text("Subido el $date", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              subtitle: Text("${files.length} archivos", style: const TextStyle(fontSize: 11)),
-              children: files.map((evidence) {
-                final isImage = evidence.mimeType.contains("image");
-                return ListTile(
-                  leading: Container(
-                    width: 45, height: 45,
-                    decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)),
-                    child: isImage && evidence.signedUrl != null
-                        ? ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(evidence.signedUrl!, fit: BoxFit.cover))
-                        : const Icon(Icons.picture_as_pdf, color: Color(0xFFC62828)),
+    barrierDismissible: true,
+    barrierLabel: "Cerrar",
+    barrierColor: Colors.black.withValues(alpha: 0.5),
+    transitionDuration: const Duration(milliseconds: 300),
+    pageBuilder: (context, animation, secondaryAnimation) => const SizedBox.shrink(),
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      return Transform.scale(
+        scale: Curves.easeInOut.transform(animation.value),
+        child: Opacity(
+          opacity: animation.value,
+          child: Dialog(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            elevation: 10,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.85,
+              constraints: const BoxConstraints(maxWidth: 450, maxHeight: 520),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC62828).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.folder_special, color: Color(0xFFC62828), size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              service.description,
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.black87),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "Folio / Reporte: $displayReportId",
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.red.shade700),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  title: Text(evidence.fileName, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
-                  onTap: () => _openEvidence(evidence),
-                );
-              }).toList(),
-            );
-          },
+                  const SizedBox(height: 16),
+                  const Divider(height: 1),
+                  const SizedBox(height: 16),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: dates.length,
+                      itemBuilder: (_, index) {
+                        final date = dates[index];
+                        final files = groupedData[date]!;
+
+                        return ExpansionTile(
+                          iconColor: const Color(0xFFC62828),
+                          textColor: const Color(0xFFC62828),
+                          collapsedTextColor: Colors.black87,
+                          collapsedIconColor: Colors.grey,
+                          leading: const Icon(Icons.calendar_month_outlined, size: 20),
+                          title: Text("Subido el $date", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          subtitle: Text("${files.length} archivos", style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                          children: files.map((evidence) {
+                            final isImage = evidence.mimeType.contains("image") || _isImageExtension(evidence.fileName);
+                            final fileIcon = _getFileIconForEvidence(evidence.fileName, evidence.mimeType);
+                            final fileColor = _getFileColor(evidence.fileName, evidence.mimeType);
+
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              leading: Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: fileColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: fileColor.withValues(alpha: 0.3)),
+                                ),
+                                child: isImage && evidence.signedUrl != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.network(evidence.signedUrl!, fit: BoxFit.cover),
+                                      )
+                                    : Icon(fileIcon, color: fileColor, size: 22),
+                              ),
+                              title: Text(
+                                evidence.fileName,
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                _getFileTypeText(evidence.fileName),
+                                style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                              ),
+                              onTap: () => _openEvidence(evidence),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFC62828),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Cerrar", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context), 
-          child: const Text("Cerrar", style: TextStyle(color: Color(0xFFC62828), fontWeight: FontWeight.bold))
-        )
-      ],
-    ),
+      );
+    },
   );
 }
+
+// Helpers ultra precisos para detección de iconos, colores oficiales y formatos
+bool _isImageExtension(String fileName) {
+  final ext = fileName.split('.').last.toLowerCase();
+  return ["png", "jpg", "jpeg", "gif", "webp", "bmp", "heic"].contains(ext);
+}
+
+IconData _getFileIconForEvidence(String fileName, String mimeType) {
+  final ext = fileName.split('.').last.toLowerCase();
+  
+  if (mimeType.contains("pdf") || ext == "pdf") {
+    return Icons.picture_as_pdf;
+  }
+  if (ext == "xlsx" || ext == "xls" || ext == "csv" || mimeType.contains("sheet") || mimeType.contains("excel") || mimeType.contains("spreadsheet")) {
+    return Icons.table_chart; 
+  }
+  if (ext == "pptx" || ext == "ppt" || mimeType.contains("presentation") || mimeType.contains("powerpoint")) {
+    return Icons.slideshow; 
+  }
+  if (ext == "docx" || ext == "doc" || mimeType.contains("word") || mimeType.contains("document")) {
+    return Icons.description; 
+  }
+  if (ext == "mp4" || ext == "mov" || ext == "avi" || ext == "mkv" || mimeType.contains("video")) {
+    return Icons.video_file;
+  }
+  if (ext == "zip" || ext == "rar" || mimeType.contains("zip")) {
+    return Icons.folder_zip;
+  }
+  if (_isImageExtension(fileName) || mimeType.contains("image")) {
+    return Icons.image;
+  }
+  return Icons.insert_drive_file;
+}
+
+Color _getFileColor(String fileName, String mimeType) {
+  final ext = fileName.split('.').last.toLowerCase();
+
+  if (mimeType.contains("pdf") || ext == "pdf") {
+    return const Color(0xFFD32F2F); // Rojo PDF
+  }
+  if (ext == "xlsx" || ext == "xls" || ext == "csv" || mimeType.contains("sheet") || mimeType.contains("excel") || mimeType.contains("spreadsheet")) {
+    return const Color(0xFF2E7D32); // Verde Excel
+  }
+  if (ext == "pptx" || ext == "ppt" || mimeType.contains("presentation") || mimeType.contains("powerpoint")) {
+    return const Color(0xFFD84315); // Naranja PowerPoint
+  }
+  if (ext == "docx" || ext == "doc" || mimeType.contains("word") || mimeType.contains("document")) {
+    return const Color(0xFF1565C0); // Azul Word
+  }
+  if (_isImageExtension(fileName) || mimeType.contains("image")) {
+    return const Color(0xFF7B1FA2); // Morado Imagen
+  }
+  if (ext == "mp4" || ext == "mov" || mimeType.contains("video")) {
+    return const Color(0xFFC2185B); // Rosa Video
+  }
+  return const Color(0xFF546E7A); // Gris neutro genérico
+}
+
+String _getFileTypeText(String fileName) {
+  final ext = fileName.split('.').last.toLowerCase();
+  switch (ext) {
+    case "pdf": return "Documento PDF";
+    case "xlsx":
+    case "xls":
+    case "csv": return "Hoja de cálculo (Excel)";
+    case "pptx":
+    case "ppt": return "Presentación (PowerPoint)";
+    case "docx":
+    case "doc": return "Documento (Word)";
+    case "png":
+    case "jpg":
+    case "jpeg":
+    case "webp": return "Imagen";
+    case "mp4":
+    case "mov": return "Video";
+    default: return "Archivo adjunto";
+  }
+}
+
 Future<void> _openEvidence(Evidence evidence) async {
   if (evidence.signedUrl == null || evidence.signedUrl!.isEmpty) return;
   final uri = Uri.parse(evidence.signedUrl!);
@@ -293,6 +461,7 @@ Future<void> _openEvidence(Evidence evidence) async {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }
+
 Map<String, List<Evidence>> _groupEvidences(List<Evidence> evidences) {
   final sortedEvidences = List<Evidence>.from(evidences)
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -305,6 +474,7 @@ Map<String, List<Evidence>> _groupEvidences(List<Evidence> evidences) {
   }
   return grouped;
 }
+
   Widget _buildSectionContainer(
     String title,
     Widget content, {
@@ -328,7 +498,7 @@ Map<String, List<Evidence>> _groupEvidences(List<Evidence> evidences) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header del contenedor
+          // Header del contenedor sin el icono '+' inactivo
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -340,47 +510,53 @@ Map<String, List<Evidence>> _groupEvidences(List<Evidence> evidences) {
                   color: Colors.grey,
                 ),
               ),
-              if (title == "GESTIÓN DE EVIDENCIAS")
-                const Icon(Icons.add, size: 20, color: Colors.red),
             ],
           ),
           const Divider(height: 24),
 
-          // AQUÍ LA CORRECCIÓN:
           // Al usar Expanded, el contenido (ListView) se limita al espacio sobrante.
-          // Si el ListView es largo, mostrará su propia barra de scroll.
           Expanded(child: content),
         ],
       ),
     );
   }
 
-  // Dentro de _ServiceDetailViewState
   Future<void> _viewPdfPreview(String versionId) async {
-    // Mostramos un indicador de carga si lo deseas (opcional)
-    final pdfBytes = await PdfReportProcessor.generatePdfFromVersionId(
-      ref,
-      versionId,
-    );
-
-    if (!mounted) return;
-
-    if (pdfBytes == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No se pudo generar la vista previa")),
+    try {
+      final pdfBytes = await PdfReportProcessor.generatePdfFromVersionId(
+        ref,
+        versionId,
       );
-      return;
-    }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => Scaffold(
-          appBar: AppBar(title: const Text("Vista Previa PDF")),
-          body: PdfPreview(build: (format) => pdfBytes),
+      if (!mounted) return;
+
+      if (pdfBytes == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No se pudo generar la vista previa")),
+        );
+        return;
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            appBar: AppBar(title: const Text("Vista Previa PDF")),
+            body: PdfPreview(build: (format) => pdfBytes),
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error al generar la vista previa: $e")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loadingPdfId = null);
+      }
+    }
   }
 
   Widget _buildContainer({required Widget child}) {
@@ -400,18 +576,44 @@ Map<String, List<Evidence>> _groupEvidences(List<Evidence> evidences) {
       child: child,
     );
   }
-// 1. Modificación de _buildSummarySection para usar Wrap responsivo
-Widget _buildSummarySection(List<ServiceOrder> services) {
+
+Widget _buildSummarySection(List<ServiceOrderModel> services) {
+  final total = services.length;
+  final pendientes = services.where((s) => s.status == "PENDING").length;
+  final enProceso = services.where((s) => s.status == "IN_PROGRESS").length;
+  final completados = services.where((s) => s.status == "COMPLETED").length;
+
   final items = [
-    {"value": "339", "label": "Totales", "color": Colors.red, "icon": Icons.bar_chart},
-    {"value": "115", "label": "En Proceso", "color": Colors.orange, "icon": Icons.assignment_turned_in_outlined},
-    {"value": "224", "label": "Completados", "color": Colors.green, "icon": Icons.check_circle_outline},
+    {
+      "value": "$total", 
+      "label": "Totales", 
+      "color": Colors.red, 
+      "icon": Icons.bar_chart
+    },
+    {
+      "value": "$pendientes", 
+      "label": "Pendientes", 
+      "color": Colors.blue, 
+      "icon": Icons.pending_actions_rounded
+    },
+    {
+      "value": "$enProceso", 
+      "label": "En Proceso", 
+      "color": Colors.orange, 
+      "icon": Icons.assignment_turned_in_outlined
+    },
+    {
+      "value": "$completados", 
+      "label": "Completados", 
+      "color": Colors.green, 
+      "icon": Icons.check_circle_outline
+    },
   ];
 
   return LayoutBuilder(builder: (context, constraints) {
-    // Calculamos ancho para que sean 3 columnas en desktop y se ajusten en móvil
     double spacing = 16;
-    double width = (constraints.maxWidth > 800) ? (constraints.maxWidth / 3) - (spacing * 2 / 3) : constraints.maxWidth;
+    int columns = (constraints.maxWidth > 1000) ? 4 : ((constraints.maxWidth > 600) ? 2 : 1);
+    double width = (constraints.maxWidth - (spacing * (columns - 1))) / columns;
 
     return Wrap(
       spacing: spacing,
@@ -429,7 +631,6 @@ Widget _buildSummarySection(List<ServiceOrder> services) {
   });
 }
 
-// 2. Modificación de _counterCard con interactividad (Hover)
 Widget _counterCard(String value, String label, Color color, IconData icon) {
   return StatefulBuilder(builder: (context, setSt) {
     return MouseRegion(
@@ -437,7 +638,7 @@ Widget _counterCard(String value, String label, Color color, IconData icon) {
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white, // Cambia color al pasar mouse
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
           boxShadow: [
@@ -458,7 +659,6 @@ Widget _counterCard(String value, String label, Color color, IconData icon) {
                 Text(value, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900)),
               ],
             ),
-            // Icono redondeado al final
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.all(16),
@@ -490,7 +690,6 @@ Widget _buildComponentesList() {
     return const Padding(padding: EdgeInsets.all(20), child: Center(child: Text("Sin componentes")));
   }
 
-  // 1. Lógica de ordenamiento
   final sortedData = List.from(state.data)..sort((a, b) {
     int getPriority(String status) {
       switch (status.toUpperCase()) {
@@ -573,157 +772,186 @@ Widget _buildComponentesList() {
     return Icons.settings;
   }
 
-  void _showAddItemsDialog(
+void _showAddItemsDialog(
     BuildContext context,
     WidgetRef ref,
     String serviceId,
   ) {
     final Set<String> selectedIds = {};
 
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          final pendingState = ref.watch(pendingComponentNotifierProvider);
-
-          return Dialog(
-            backgroundColor: Colors.white, // Fondo blanco puro
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 420),
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Seleccionar componentes",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Lista estilizada
-                  Flexible(
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: pendingState.data.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, i) {
-                        final item = pendingState.data[i];
-                        final isSelected = selectedIds.contains(item.id);
-
-                        return InkWell(
-                          onTap: () => setDialogState(
-                            () => isSelected
-                                ? selectedIds.remove(item.id)
-                                : selectedIds.add(item.id),
+      barrierDismissible: true,
+      barrierLabel: "Cerrar",
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) => const SizedBox.shrink(),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return Transform.scale(
+          scale: Curves.easeInOut.transform(animation.value),
+          child: Opacity(
+            opacity: animation.value,
+            child: Dialog(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              elevation: 10,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: StatefulBuilder(
+                builder: (context, setDialogState) {
+                  return Container(
+                    width: MediaQuery.of(context).size.width * 0.85,
+                    constraints: const BoxConstraints(maxWidth: 400, maxHeight: 520),
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Seleccionar componentes",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black87,
                           ),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(
-                                      0xFFC62828,
-                                    ).withValues(alpha: 0.05)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFFC62828)
-                                    : Colors.grey.shade200,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  isSelected
-                                      ? Icons.check_circle
-                                      : Icons.circle_outlined,
-                                  color: isSelected
-                                      ? const Color(0xFFC62828)
-                                      : Colors.grey.shade400,
-                                ),
-                                const SizedBox(width: 16),
-                                Text(
-                                  item.componentName,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
+                        ),
+                        const SizedBox(height: 16),
+                        Flexible(
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: ref.watch(pendingComponentNotifierProvider).data.length,
+                            separatorBuilder: (_, _) => const SizedBox(height: 8),
+                            itemBuilder: (context, i) {
+                              final pendingState = ref.watch(pendingComponentNotifierProvider);
+                              final item = pendingState.data[i];
+                              final isSelected = selectedIds.contains(item.id);
+
+                              return InkWell(
+                                onTap: () {
+                                  setDialogState(() {
+                                    if (isSelected) {
+                                      selectedIds.remove(item.id);
+                                    } else {
+                                      selectedIds.add(item.id);
+                                    }
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? const Color(0xFFC62828).withValues(alpha: 0.08)
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? const Color(0xFFC62828)
+                                          : Colors.grey.shade300,
+                                      width: isSelected ? 1.5 : 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        isSelected
+                                            ? Icons.check_circle
+                                            : Icons.circle_outlined,
+                                        color: isSelected
+                                            ? const Color(0xFFC62828)
+                                            : Colors.grey.shade400,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          item.componentName,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                            color: isSelected ? const Color(0xFFC62828) : Colors.black87,
+                                          ),
+                                          softWrap: true,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text(
+                                  "Cancelar",
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        );
-                      },
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: selectedIds.isEmpty 
+                                      ? Colors.grey.shade300 
+                                      : const Color(0xFFC62828),
+                                  foregroundColor: selectedIds.isEmpty 
+                                      ? Colors.grey.shade600 
+                                      : Colors.white,
+                                  elevation: selectedIds.isEmpty ? 0 : 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                                onPressed: selectedIds.isEmpty
+                                    ? null
+                                    : () async {
+                                        await ref
+                                            .read(attachItemsNotifierProvider.notifier)
+                                            .attachItems(
+                                              serviceId,
+                                              selectedIds.toList(),
+                                            );
+                                        _refreshAllData();
+                                        if (context.mounted) Navigator.pop(context);
+                                      },
+                                child: const Text(
+                                  "Confirmar",
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Botones minimalistas
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text(
-                          "Cancelar",
-                          style: TextStyle(
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      FilledButton(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFC62828),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 16,
-                          ),
-                        ),
-                        onPressed: selectedIds.isEmpty
-                            ? null
-                            : () async {
-                                await ref
-                                    .read(attachItemsNotifierProvider.notifier)
-                                    .attachItems(
-                                      serviceId,
-                                      selectedIds.toList(),
-                                    );
-                                _refreshAllData();
-                                if (context.mounted) Navigator.pop(context);
-                              },
-                        child: const Text(
-                          "Confirmar selección",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
+
 Widget _buildOrdenServicioCard(List<ServiceOrderModel> services, BuildContext context, WidgetRef ref) {
   final pending = services.where((s) => s.status == "PENDING").toList();
   final inProgress = services.where((s) => s.status == "IN_PROGRESS").toList();
@@ -737,7 +965,6 @@ Widget _buildOrdenServicioCard(List<ServiceOrderModel> services, BuildContext co
         length: 3,
         child: Column(
           children: [
-            // Diseño moderno de pestañas
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
@@ -776,7 +1003,6 @@ Widget _buildOrdenServicioCard(List<ServiceOrderModel> services, BuildContext co
       );
     }
 
-    // Modo Escritorio: Columnas elegantes
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -830,7 +1056,6 @@ Widget _buildOrderColumn(String title, List<ServiceOrderModel> orders, Color col
     ],
   );
 }
-
 
 Widget _buildServiceOrderItem(
   ServiceOrderModel order,
@@ -930,7 +1155,6 @@ Widget _buildServiceOrderItem(
   });
 }
 
-// Asegúrate de tener este helper en tu clase
 Widget _iconActionButton(IconData icon, Color color, VoidCallback onPressed, bool disabled) {
   return IconButton(
     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -940,77 +1164,155 @@ Widget _iconActionButton(IconData icon, Color color, VoidCallback onPressed, boo
   );
 }
 
-
-  // Método para mostrar los ítems ya adjuntos - DISEÑO Y LÓGICA CORREGIDOS
-  void _showServiceItemsDialog(
+void _showServiceItemsDialog(
     BuildContext context,
     WidgetRef ref,
     String serviceId,
   ) {
-    // Cargamos los ítems antes de abrir el diálogo
     ref.read(serviceItemsNotifierProvider.notifier).loadServiceItems(serviceId);
 
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 400),
-          padding: const EdgeInsets.all(24),
-          child: Consumer(
-            builder: (context, ref, _) {
-              final state = ref.watch(serviceItemsNotifierProvider);
+      barrierDismissible: true,
+      barrierLabel: "Cerrar",
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) => const SizedBox.shrink(),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return Transform.scale(
+          scale: Curves.easeInOut.transform(animation.value),
+          child: Opacity(
+            opacity: animation.value,
+            child: Dialog(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              elevation: 10,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.85,
+                constraints: const BoxConstraints(maxWidth: 400, maxHeight: 480),
+                padding: const EdgeInsets.all(24),
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final state = ref.watch(serviceItemsNotifierProvider);
 
-              if (state.status == Status.loading) {
-                return const SizedBox(
-                  height: 100,
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
+                    if (state.status == Status.loading) {
+                      return const SizedBox(
+                        height: 100,
+                        child: Center(
+                          child: CircularProgressIndicator(color: Color(0xFFC62828)),
+                        ),
+                      );
+                    }
 
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Componentes adjuntos",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  const SizedBox(height: 16),
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          "Componentes adjuntos",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
 
-                  if (state.items.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text("Esta orden no tiene componentes adjuntos"),
-                    ),
+                        if (state.items.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Text(
+                              "Esta orden no tiene componentes adjuntos",
+                              style: TextStyle(color: Colors.grey, fontSize: 13),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
 
-                  // Mapeo utilizando el modelo para acceder a los getters de traducción y color
-                  ...state.items.map((item) {
-                    // Realizamos el cast al modelo para acceder a nuestros getters personalizados
-                    final model = item as ServiceItemModel;
+                        Flexible(
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: state.items.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final model = state.items[index] as ServiceItemModel;
 
-                    return ListTile(
-                      leading: Icon(
-                        Icons.check_circle,
-                        color: model.statusColor,
-                      ),
-                      title: Text(model.description),
-                      subtitle: Text(
-                        "Estado: ${model.statusTranslated}",
-                      ), // Traducción al español
+                              return Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.grey.shade200),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: model.statusColor,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            model.description,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                              color: Colors.black87,
+                                            ),
+                                            softWrap: true,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            "Estado: ${model.statusTranslated}",
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFC62828),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              "Cerrar",
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ),
+                        ),
+                      ],
                     );
-                  }),
-
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("Cerrar"),
-                  ),
-                ],
-              );
-            },
+                  },
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -1043,11 +1345,11 @@ Widget _buildInspeccionesList() {
     itemBuilder: (context, index) {
       final h = historyState.history[index];
       final isLast = index == historyState.history.length - 1;
+      final isLoading = _loadingPdfId == h.versionId;
 
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Timeline visual
           Column(
             children: [
               Container(
@@ -1060,8 +1362,6 @@ Widget _buildInspeccionesList() {
             ],
           ),
           const SizedBox(width: 12),
-
-          // Tarjeta de Inspección
           Expanded(
             child: Container(
               margin: const EdgeInsets.only(bottom: 16),
@@ -1073,7 +1373,6 @@ Widget _buildInspeccionesList() {
               ),
               child: Row(
                 children: [
-                  // Fecha compacta
                   Column(
                     children: [
                       Text("${h.inspectionDate.day}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
@@ -1081,8 +1380,6 @@ Widget _buildInspeccionesList() {
                     ],
                   ),
                   const SizedBox(width: 12),
-                  
-                  // Información principal con límite de texto
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1099,13 +1396,53 @@ Widget _buildInspeccionesList() {
                       ],
                     ),
                   ),
-                  
-                  // Botones de acción compactos
                   Row(
                     children: [
-                      _actionButton(Icons.visibility, Colors.grey.shade600, () => _viewPdfPreview(h.versionId)),
-                      const SizedBox(width: 4),
-                      _actionButton(Icons.download, Colors.red, () => _showPdf(h.versionId)),
+                      isLoading 
+                        ? const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: SizedBox(
+                              width: 16, 
+                              height: 16, 
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red)
+                            ),
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _actionButton(
+                                Icons.visibility, 
+                                Colors.grey.shade600, 
+                                () async {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Generando vista previa del PDF..."),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  setState(() => _loadingPdfId = h.versionId);
+                                  await _viewPdfPreview(h.versionId);
+                                  if (mounted) setState(() => _loadingPdfId = null);
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                              _actionButton(
+                                Icons.download, 
+                                Colors.red, 
+                                () async {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Descargando reporte PDF..."),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  setState(() => _loadingPdfId = h.versionId);
+                                  await _showPdf(h.versionId);
+                                  if (mounted) setState(() => _loadingPdfId = null);
+                                },
+                              ),
+                            ],
+                          ),
                     ],
                   ),
                 ],
@@ -1118,7 +1455,6 @@ Widget _buildInspeccionesList() {
   );
 }
 
-// Botón de acción minimalista y responsivo
 Widget _actionButton(IconData icon, Color color, VoidCallback onPressed) {
   return InkWell(
     onTap: onPressed,
@@ -1134,21 +1470,18 @@ Widget _actionButton(IconData icon, Color color, VoidCallback onPressed) {
   );
 }
 
-
-// Helper para meses en español
 String _getSpanishMonth(int month) {
   const months = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
   return months[month - 1];
 }
-  // 2. Método _buildHeader actualizado
+
 Widget _buildHeader(Vehicle v) {
   return Padding(
-    padding: const EdgeInsets.all(16), // Padding un poco más pequeño
+    padding: const EdgeInsets.all(16),
     child: Row(
       children: [
-        // 1. IMAGEN: Tamaño pequeño como pediste
         Container(
-          width: 60, // Más pequeño
+          width: 60,
           height: 60,
           margin: const EdgeInsets.only(right: 16),
           decoration: BoxDecoration(
@@ -1157,8 +1490,6 @@ Widget _buildHeader(Vehicle v) {
           ),
           child: const Icon(Icons.directions_car, size: 30, color: Colors.grey),
         ),
-
-        // 2. INFORMACION: Ajustada para salto de línea
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1166,10 +1497,9 @@ Widget _buildHeader(Vehicle v) {
               Text(
                 "${v.brand} ${v.model} - ${v.plate}",
                 style: const TextStyle(
-                  fontSize: 14, // Fuente un poco más pequeña
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
-                // Quitamos el maxLines: 1 para que pueda hacer salto de línea
               ),
               const SizedBox(height: 2),
               Text(
@@ -1179,8 +1509,6 @@ Widget _buildHeader(Vehicle v) {
             ],
           ),
         ),
-
-        // 3. BOTÓN: Compacto
         const SizedBox(width: 12),
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
@@ -1202,6 +1530,7 @@ Widget _buildHeader(Vehicle v) {
     ),
   );
 }
+
 Widget _buildRecurrenciaSection() {
   final state = ref.watch(incidenceNotifierProvider);
 
@@ -1241,8 +1570,6 @@ Widget _buildRecurrenciaSection() {
     itemCount: state.incidences.length,
     itemBuilder: (context, index) {
       final incidencia = state.incidences[index];
-      
-      // Escala ajustada a 10 para mayor precisión visual
       final progress = (incidencia.incidenceCount / 10).clamp(0.0, 1.0);
 
       return Padding(
@@ -1284,7 +1611,6 @@ Widget _buildRecurrenciaSection() {
               ],
             ),
             const SizedBox(height: 8),
-            // Indicador estilizado
             Stack(
               children: [
                 Container(
@@ -1326,7 +1652,6 @@ Widget _buildRecurrenciaSection() {
     }
   }
 
-  // En tu _ServiceDetailViewState
   void _refreshAllData() {
     final vehicleId = widget.vehicle.vehicleId;
     ref.read(serviceListNotifierProvider.notifier).loadServices(vehicleId);
