@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/profile/presentation/page/profile_page.dart';
 import 'package:flutter/material.dart';
 
 class DashboardNavbar extends StatelessWidget {
@@ -57,34 +58,53 @@ class DashboardNavbar extends StatelessWidget {
 
             const SizedBox(width: 8),
 
-            // INFORMACIÓN DEL USUARIO
-            if (width > 600)
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: Colors.black87,
+            // CONTENEDOR CLICKEABLE DE USUARIO Y PERFIL
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfilePage(),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(30),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  children: [
+                    // INFORMACIÓN DEL USUARIO (Si la pantalla es mayor a 600)
+                    if (width > 600) ...[
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            userName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            userRole,
+                            style: const TextStyle(fontSize: 10, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+
+                    // AVATAR
+                    const CircleAvatar(
+                      backgroundColor: Color(0xFFC62828),
+                      radius: 18,
+                      child: Icon(Icons.person, color: Colors.white, size: 20),
                     ),
-                  ),
-                  Text(
-                    userRole,
-                    style: const TextStyle(fontSize: 10, color: Colors.grey),
-                  ),
-                ],
+                  ],
+                ),
               ),
-
-            const SizedBox(width: 10),
-
-            // AVATAR
-            const CircleAvatar(
-              backgroundColor: Color(0xFFC62828),
-              radius: 18,
-              child: Icon(Icons.person, color: Colors.white, size: 20),
             ),
           ],
         ),
