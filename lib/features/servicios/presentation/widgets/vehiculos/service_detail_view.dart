@@ -11,7 +11,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:crv_reprosisa/core/config/dio_client.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_history_provider.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_report_detail.dart';
-import 'package:crv_reprosisa/features/servicios/domain/entities/v_service_order.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import '../../../../../core/utils/SGC-PO-MT-01-FO-03-VEHICLE.dart';
@@ -1234,7 +1233,7 @@ void _showServiceItemsDialog(
                           child: ListView.separated(
                             shrinkWrap: true,
                             itemCount: state.items.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            separatorBuilder: (_, _) => const SizedBox(height: 8),
                             itemBuilder: (context, index) {
                               final model = state.items[index] as ServiceItemModel;
 

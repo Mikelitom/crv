@@ -26,7 +26,7 @@ class EvidenceService {
       final entity = UploadFileEntity(
         bucket: StorageBuckets.evidences,
         path: basePath,
-        fileName: const Uuid().v4(),
+        fileName: file.uri.pathSegments.last,
         mimeType: mimeType,
         localPath: file.path,
       );

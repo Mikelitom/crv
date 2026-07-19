@@ -14,8 +14,7 @@ class SupabaseStorageDatasource {
       throw Exception('El archivo no existe');
     }
 
-    final uniqueName =
-        '${DateTime.now().millisecondsSinceEpoch}_${file.fileName}';
+    final uniqueName = file.fileName;
 
     final fullPath = '${file.path}/$uniqueName';
 
