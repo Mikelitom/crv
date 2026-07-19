@@ -58,72 +58,78 @@ class _PressUsageTrendChartState extends ConsumerState<PressUsageTrendChart> {
   Widget build(BuildContext context) {
     final spots = _calculateSpots(widget.data, _selectedRange);
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        height: 380, // ALTURA FIJA PARA ALINEACIÓN
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.grey.withOpacity(0.08)),
-          boxShadow: [
-            BoxShadow(
-              color: isHovered ? Colors.black.withOpacity(0.12) : Colors.black.withOpacity(0.05),
-              blurRadius: isHovered ? 30 : 20,
-              offset: const Offset(0, 10),
-            )
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("Uso Activo", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF1A1A1A))),
-                    Container(height: 4, width: 40, margin: const EdgeInsets.only(top: 6), color: const Color(0xFFC62828)),
-                  ],
-                ),
-                _buildDropdown(),
-              ],
-            ),
-            const SizedBox(height: 32),
-            Expanded(
-              child: LineChart(
-                LineChartData(
-                  minY: 0, maxY: 100,
-                  gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 25, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey[100])),
-                  titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 25, getTitlesWidget: (v, _) => Text("${v.toInt()}%", style: const TextStyle(fontSize: 10, color: Colors.grey)))),
-                    bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 2, getTitlesWidget: (v, _) => Text(DateFormat('d MMM').format(DateTime.now().subtract(Duration(days: _rangeToDays(_selectedRange) - 1 - v.toInt()))), style: const TextStyle(fontSize: 10, color: Colors.grey)))),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+    return LayoutBuilder(builder: (context, constraints) {
+      // Si el espacio es menor a 400, usamos padding más pequeño
+      bool isCompact = constraints.maxWidth < 400;
+
+      return MouseRegion(
+        onEnter: (_) => setState(() => isHovered = true),
+        onExit: (_) => setState(() => isHovered = false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          height: 380,
+          padding: EdgeInsets.all(isCompact ? 16 : 28),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Colors.grey.withOpacity(0.08)),
+            boxShadow: [
+              BoxShadow(
+                color: isHovered ? Colors.black.withOpacity(0.12) : Colors.black.withOpacity(0.05),
+                blurRadius: isHovered ? 30 : 20,
+                offset: const Offset(0, 10),
+              )
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Uso Activo", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF1A1A1A))),
+                      Container(height: 4, width: 40, margin: const EdgeInsets.only(top: 6), color: const Color(0xFFC62828)),
+                    ],
                   ),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: spots,
-                      color: const Color(0xFFC62828),
-                      barWidth: 3,
-                      isCurved: true,
-                      dotData: FlDotData(show: true),
-                      belowBarData: BarAreaData(show: true, color: const Color(0xFFC62828).withOpacity(0.05)),
-                    )
-                  ],
-                  borderData: FlBorderData(show: false),
+                  _buildDropdown(),
+                ],
+              ),
+              const SizedBox(height: 32),
+              Expanded(
+                child: LineChart(
+                  LineChartData(
+                    minY: 0, maxY: 100,
+                    gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 25, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey[100])),
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 25, getTitlesWidget: (v, _) => Text("${v.toInt()}%", style: const TextStyle(fontSize: 10, color: Colors.grey)))),
+                      // Si es modo compacto, reducimos la frecuencia de etiquetas en el eje X
+                      bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: isCompact ? 4 : 2, getTitlesWidget: (v, _) => Text(DateFormat('d MMM').format(DateTime.now().subtract(Duration(days: _rangeToDays(_selectedRange) - 1 - v.toInt()))), style: const TextStyle(fontSize: 10, color: Colors.grey)))),
+                      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    ),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: spots,
+                        color: const Color(0xFFC62828),
+                        barWidth: 3,
+                        isCurved: true,
+                        dotData: FlDotData(show: true),
+                        belowBarData: BarAreaData(show: true, color: const Color(0xFFC62828).withOpacity(0.05)),
+                      )
+                    ],
+                    borderData: FlBorderData(show: false),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildDropdown() => PopupMenuButton<DateRange>(
