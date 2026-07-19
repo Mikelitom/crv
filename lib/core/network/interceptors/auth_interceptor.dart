@@ -50,7 +50,7 @@ class AuthInterceptor extends Interceptor {
         final tokenRepository = ref.read(tokenRepositoryProvider);
         final tokens = await tokenRepository.get();
   
-        if (tokens == null) {
+        if (tokens == null || tokens.refreshToken.isEmpty) {
           return handler.reject(err);
         }
   
