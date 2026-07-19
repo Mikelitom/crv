@@ -7,7 +7,6 @@ import 'package:crv_reprosisa/features/evidence/domain/usecases/upload_file_use_
 import 'package:crv_reprosisa/features/evidence/presentation/dto/evidence_dto.dart';
 import 'package:dartz/dartz.dart';
 import 'package:mime/mime.dart';
-import 'package:uuid/uuid.dart';
 
 class EvidenceService {
   final UploadFileUseCase uploadFile;
