@@ -211,10 +211,11 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
     if (mounted) LoadingOverlay.hide(context);
 
     if (pdfBytes == null) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Error al cargar reporte")),
         );
+      }
       return;
     }
 
@@ -560,50 +561,70 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
             leading: Icon(Icons.assignment_outlined, color: primaryRed),
             title: Row(
               children: [
-                Text(
-                  item.title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Text(
+                    item.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    // 2. (Opcional pero recomendado) Controlar el desbordamiento vertical
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 // --- INDICADOR DE NOTAS NOTORIO ---
-                if (item.reviewNotes != null && item.reviewNotes!.isNotEmpty) ...[
+                if (item.reviewNotes != null &&
+                    item.reviewNotes!.isNotEmpty) ...[
                   const SizedBox(width: 8),
                   InkWell(
                     onTap: () => _showReviewDialog(context, item),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: item.reviewAnswer != null 
-                            ? Colors.green.shade100 
-                            : Colors.orange.shade100, // Color de fondo llamativo
+                        color: item.reviewAnswer != null
+                            ? Colors.green.shade100
+                            : Colors
+                                  .orange
+                                  .shade100, // Color de fondo llamativo
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                            color: item.reviewAnswer != null 
-                                ? Colors.green.shade700 
-                                : Colors.orange.shade700, 
-                            width: 1),
+                          color: item.reviewAnswer != null
+                              ? Colors.green.shade700
+                              : Colors.orange.shade700,
+                          width: 1,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            item.reviewAnswer != null ? Icons.check_circle : Icons.warning_amber_rounded,
-                            color: item.reviewAnswer != null ? Colors.green.shade800 : Colors.orange.shade900,
+                            item.reviewAnswer != null
+                                ? Icons.check_circle
+                                : Icons.warning_amber_rounded,
+                            color: item.reviewAnswer != null
+                                ? Colors.green.shade800
+                                : Colors.orange.shade900,
                             size: 14,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            item.reviewAnswer != null ? "CONTESTADO" : "PENDIENTE",
+                            item.reviewAnswer != null
+                                ? "CONTESTADO"
+                                : "PENDIENTE",
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w900,
-                              color: item.reviewAnswer != null ? Colors.green.shade900 : Colors.orange.shade900,
+                              color: item.reviewAnswer != null
+                                  ? Colors.green.shade900
+                                  : Colors.orange.shade900,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                ]
+                ],
               ],
             ),
             subtitle: Text("${item.date} • ${item.translatedState}"),
@@ -656,27 +677,36 @@ class _StatusBadge extends StatelessWidget {
 }
 
 void _showReviewDialog(BuildContext context, InspectionRowUI item) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Detalles de Revisión"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Nota del Revisor:", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(item.reviewNotes ?? "Sin notas"),
-            const SizedBox(height: 15),
-            const Text("Respuesta del Técnico:", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(item.reviewAnswer ?? "Aún sin respuesta"),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cerrar")),
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("Detalles de Revisión"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Nota del Revisor:",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Text(item.reviewNotes ?? "Sin notas"),
+          const SizedBox(height: 15),
+          const Text(
+            "Respuesta del Técnico:",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Text(item.reviewAnswer ?? "Aún sin respuesta"),
         ],
       ),
-    );
-  }
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cerrar"),
+        ),
+      ],
+    ),
+  );
+}
 
 class _HeaderLabel extends StatelessWidget {
   final String text;

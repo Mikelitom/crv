@@ -30,6 +30,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     _emailController = TextEditingController();
     _phoneController = TextEditingController();
     _areaController = TextEditingController();
+
+    // 1. DISPARAR LA CARGA AL ENTRAR A LA VISTA
+    Future.microtask(() {
+      ref.read(profileProvider.notifier).getUserProfile();
+    });
+
+    final currentState = ref.read(profileProvider);
+    if (currentState.user != null) {
+      _nameController.text = currentState.user!.name;
+      _emailController.text = currentState.user!.email;
+      _phoneController.text = currentState.user!.phone ?? '';
+      _areaController.text = mapScope(currentState.user!.scope);
+    }
   }
 
   @override
