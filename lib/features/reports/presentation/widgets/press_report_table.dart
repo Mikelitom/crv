@@ -20,56 +20,60 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     required this.isAdmin,
   });
 
-  // Traducción completa de estados al español para prensas
   String _translateStatus(String state) {
     switch (state.toUpperCase()) {
-      case 'PENDING':
-      case 'PENDIENTE':
-        return 'PENDIENTE';
-      case 'COMPLETED':
-      case 'COMPLETADO':
-        return 'COMPLETADO';
-      case 'ACCEPTED':
-      case 'ACEPTADO':
-        return 'ACEPTADO';
-      case 'REJECTED':
-      case 'RECHAZADO':
-        return 'RECHAZADO';
       case 'IN_REVISION':
       case 'EN REVISIÓN':
-        return 'EN REVISIÓN';
+      case 'PENDING':
+      case 'PENDIENTE':
+        return 'En revisión';
+      case 'COMPLETED':
+      case 'COMPLETADO':
+      case 'ACCEPTED':
+      case 'ACEPTADO':
+        return 'Aprobado';
+      case 'REJECTED':
+      case 'RECHAZADO':
+        return 'Regresado';
       default:
-        return state.toUpperCase();
+        return 'Aprobado';
     }
   }
 
-  // Chip de estado traducido y con colores correctos (Verde para completado/aceptado, Ámbar para revisión/pendiente, Rojo para rechazado)
   @override
   Widget statusChip(String state) {
     final translated = _translateStatus(state);
-    Color color = Colors.grey;
+    Color color = Colors.green;
+    IconData icon = Icons.check_circle_outlined;
 
-    if (translated.contains('COMPLETADO') || translated.contains('ACEPTADO')) {
-      color = Colors.green;
-    } else if (translated.contains('REVISIÓN') || translated.contains('PENDIENTE')) {
+    if (translated == 'En revisión') {
       color = Colors.amber.shade700;
-    } else if (translated.contains('RECHAZADO')) {
-      color = kPrimaryRed;
+      icon = Icons.access_time_rounded;
+    } else if (translated == 'Regresado') {
+      color = Colors.purple;
+      icon = Icons.keyboard_return;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
-        translated,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.bold,
-          fontSize: 10,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            translated,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -79,55 +83,191 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     return Consumer(
       builder: (context, ref, _) {
         final filteredReports = reports.where((r) => r is PressHistoryModel).toList();
+        final totalCount = filteredReports.length;
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            // Si el ancho es menor a 800px, mostramos la vista móvil de tarjetas desplegables
-            if (constraints.maxWidth < 800) {
-              return _buildMobileView(context, ref, filteredReports);
-            }
-
-            // De lo contrario, mostramos la tabla de escritorio normal
-            return BaseTable(
-              columns: const ["SERIE", "FOLIO", "ESTADO", "FECHA", "ACCIONES"],
-              rows: filteredReports.map((r) {
-                final item = r as PressHistoryModel;
-
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      Text(
-                        item.serie,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Contador compacto estilo tarjeta cuadrada idéntico al de vehículos
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24.0),
+              child: SizedBox(
+                width: 260,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: kPrimaryRed.withValues(alpha: 0.2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                    DataCell(Text(item.folio)),
-                    DataCell(statusChip(item.state)),
-                    DataCell(
-                      Text(
-                        item.inspectionDate != null
-                            ? item.inspectionDate.toString().split(' ')[0]
-                            : 'N/A',
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: kPrimaryRed.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.folder_open, color: kPrimaryRed, size: 18),
                       ),
-                    ),
-                    actionCell(
-                      item,
-                      isAdmin,
-                      onView: () async => _handleView(context, ref, item),
-                      onPrint: () async => _handlePrint(context, ref, item),
-                      onEdit: null, // Omitimos notas/gestión en prensas
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Total de Reportes",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "$totalCount",
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: kPrimaryRed,
+                              ),
+                            ),
+                            const Text(
+                              "Registrados",
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.grey,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < 800) {
+                  return _buildMobileView(context, ref, filteredReports);
+                }
+
+                return BaseTable(
+                  columns: const ["PRENSA", "FECHA", "ESTADO", "ACCIONES"],
+                  rows: filteredReports.map((r) {
+                    final item = r as PressHistoryModel;
+                    final dateStr = item.inspectionDate != null
+                        ? item.inspectionDate.toString().split(' ')[0]
+                        : 'N/A';
+
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          SizedBox(
+                            width: 180,
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.factory_outlined,
+                                  color: kPrimaryRed,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Serie: ${item.serie}",
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        "Folio: ${item.folio}",
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Text(dateStr),
+                        ),
+                        DataCell(statusChip(item.state)),
+                        DataCell(
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert, size: 22, color: Colors.grey),
+                            color: Colors.white,
+                            surfaceTintColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: Colors.grey.shade200),
+                            ),
+                            onSelected: (value) {
+                              if (value == 'view') {
+                                _handleView(context, ref, item);
+                              } else if (value == 'print') {
+                                _handlePrint(context, ref, item);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'view',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.visibility, color: Colors.blue, size: 18),
+                                    SizedBox(width: 8),
+                                    Text('Ver PDF'),
+                                  ],
+                                ),
+                              ),
+                              if (isAdmin)
+                                const PopupMenuItem(
+                                  value: 'print',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.print, color: kPrimaryRed, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Imprimir'),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
                 );
-              }).toList(),
-            );
-          },
+              },
+            ),
+          ],
         );
       },
     );
   }
 
-  // Vista Móvil tipo Acordeón/Expansible para Prensas
   Widget _buildMobileView(BuildContext context, WidgetRef ref, List<dynamic> filteredReports) {
     return ListView.builder(
       shrinkWrap: true,
@@ -141,84 +281,141 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: ExpansionTile(
-            shape: const Border(),
-            leading: const Icon(
-              Icons.precision_manufacturing,
-              color: Colors.orange,
-            ),
-            title: Text(
-              "Serie: ${item.serie}",
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 2),
-                Text(
-                  "Folio: ${item.folio}",
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  "Fecha: $dateStr",
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
-                ),
-              ],
-            ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Divider(height: 1),
-                    const SizedBox(height: 12),
-                    Row(
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: kPrimaryRed.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.factory_outlined,
+                      color: kPrimaryRed,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          "Estado: ",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          "PRENSA",
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
                         ),
-                        const SizedBox(width: 4),
-                        statusChip(item.state),
+                        const SizedBox(height: 2),
+                        Text(
+                          "Serie: ${item.serie}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        Text(
+                          "Folio: ${item.folio}",
+                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "Acciones",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: Colors.grey,
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text(
+                        "ESTADO",
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
                       ),
+                      const SizedBox(height: 4),
+                      statusChip(item.state),
+                    ],
+                  ),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "FECHA",
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        dateStr,
+                        style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, size: 22, color: Colors.grey),
+                    color: Colors.white,
+                    surfaceTintColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.grey.shade200),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.visibility, color: Colors.blue),
-                          onPressed: () async => _handleView(context, ref, item),
-                          tooltip: 'Ver PDF',
+                    onSelected: (value) {
+                      if (value == 'view') {
+                        _handleView(context, ref, item);
+                      } else if (value == 'print') {
+                        _handlePrint(context, ref, item);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'view',
+                        child: Row(
+                          children: [
+                            Icon(Icons.visibility, color: Colors.blue, size: 18),
+                            SizedBox(width: 8),
+                            Text('Ver PDF'),
+                          ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.print, color: Colors.red),
-                          onPressed: () async => _handlePrint(context, ref, item),
-                          tooltip: 'Imprimir',
+                      ),
+                      if (isAdmin)
+                        const PopupMenuItem(
+                          value: 'print',
+                          child: Row(
+                            children: [
+                              Icon(Icons.print, color: kPrimaryRed, size: 18),
+                              SizedBox(width: 8),
+                              Text('Imprimir'),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -227,7 +424,6 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     );
   }
 
-  // Lógica centralizada para la vista previa del PDF en Prensas
   Future<void> _handleView(BuildContext context, WidgetRef ref, PressHistoryModel item) async {
     final data = await PressPdfProcessor.generatePdfFromVersionId(ref, item.versionId);
     
@@ -239,7 +435,6 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     }
   }
 
-  // Lógica centralizada para imprimir de forma directa en Prensas
   Future<void> _handlePrint(BuildContext context, WidgetRef ref, PressHistoryModel item) async {
     final data = await PressPdfProcessor.generatePdfFromVersionId(ref, item.versionId);
     

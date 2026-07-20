@@ -38,7 +38,6 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
       final type = item.reportType.toUpperCase();
       final dio = ref.read(dioProvider);
 
-      // 1. OBTENCIÓN DE DATOS
       dynamic model;
       if (type.contains('PRESS')) {
         await ref
@@ -58,9 +57,7 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
 
       if (model == null) return null;
 
-      // 2. GENERACIÓN SEGÚN TIPO
       if (type.contains('PRESS')) {
-        // --- SOLUCIÓN: MAPA TEMPORAL DE IMÁGENES ---
         final Map<int, Map<String, Uint8List>> cacheImagenes = {};
 
         for (int i = 0; i < model.answers.length; i++) {
@@ -76,8 +73,7 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
                 if (j == 1) fotos['despues'] = bytes;
               }
             }
-            cacheImagenes[i] =
-                fotos; // Usamos el índice de la respuesta como llave
+            cacheImagenes[i] = fotos;
           }
         }
 
@@ -85,10 +81,8 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
           dio: dio,
           detailModel: model,
           mapper: (m) {
-            // A. Ejecuta el mapper original
             final data = PrensaPdfGenerator.mapDetailModelToPdfData(m);
 
-            // B. Inyecta los bytes descargados al mapa resultante
             for (int i = 0; i < data['items'].length; i++) {
               if (cacheImagenes.containsKey(i)) {
                 data['items'][i]['foto_antes_bytes'] =
@@ -109,7 +103,6 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
           generator: (data) => VehiculoPdfGenerator.generateEsqueleto(data),
         );
       } else if (type.contains('CONVEYOR')) {
-        // --- DESCARGA DE IMÁGENES PARA CONVEYOR (Ya funciona) ---
         for (var answer in model.answers) {
           if (answer.evidences != null) {
             for (var ev in answer.evidences) {
@@ -167,21 +160,17 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
     }
   }
 
-  // --- MÉTODO CENTRALIZADO ---
   Future<void> _handleReportAction(
     InspectionRowUI item, {
     required bool isPrint,
   }) async {
-    // 1. Buscamos todas las versiones que tengan el mismo ID (report_id)
-    // Esto agrupa automáticamente todas las versiones del reporte seleccionado
     final List<InspectionRowUI> versiones =
         widget.items.where((i) => i.id == item.id).toList()..sort(
           (a, b) => b.versionNumber.compareTo(a.versionNumber),
-        ); // Ordenar de mayor a menor
+        );
 
     InspectionRowUI itemFinal = item;
 
-    // 2. Si hay más de una versión, mostramos el selector
     if (versiones.length > 1) {
       final selected = await showModalBottomSheet<InspectionRowUI>(
         context: context,
@@ -203,7 +192,7 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
         ),
       );
 
-      if (selected == null) return; // Usuario canceló
+      if (selected == null) return;
       itemFinal = selected;
     }
     LoadingOverlay.show(context, isPrint ? "Generando..." : "Cargando...");
@@ -241,24 +230,9 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
     }
   }
 
-  List<InspectionRowUI> agruparReportes(List<InspectionRowUI> listaCruda) {
-    final Map<String, List<InspectionRowUI>> mapa = {};
-    for (var item in listaCruda) {
-      if (!mapa.containsKey(item.id)) mapa[item.id] = [];
-      mapa[item.id]!.add(item);
-    }
-
-    return mapa.values.map((versiones) {
-      versiones.sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
-      final base = versiones.first;
-      return base;
-    }).toList();
-  }
-
   List<InspectionRowUI> get _filteredItems {
     final Map<String, InspectionRowUI> uniqueMap = {};
     for (var item in widget.items) {
-      // Si el ID no existe o la versión es mayor, actualizamos el mapa
       if (!uniqueMap.containsKey(item.id) ||
           item.versionNumber > (uniqueMap[item.id]?.versionNumber ?? 0)) {
         uniqueMap[item.id] = item;
@@ -267,13 +241,11 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
     return uniqueMap.values.toList();
   }
 
-  // --- MÉTODOS QUE AHORA DISPARAN LA ACCIÓN CENTRALIZADA ---
   Future<void> _viewReport(InspectionRowUI item) =>
       _handleReportAction(item, isPrint: false);
   Future<void> _printReport(InspectionRowUI item) =>
       _handleReportAction(item, isPrint: true);
   Future<void> _editReport(InspectionRowUI item) async {
-    // Cambiamos isReadOnly a false porque es edición
     _navigateToForm(item, isReadOnly: false);
   }
 
@@ -284,7 +256,6 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
     if (type.contains('PRESS')) {
       page = PrensaInspectionPage(isReadOnly: isReadOnly, itemToEdit: item);
     } else if (type.contains('VEHICLE')) {
-      // ESTO ES LO QUE YA TIENES Y ESTÁ BIEN.
       page = VehicleInspectionPage(isReadOnly: isReadOnly, itemToEdit: item);
     } else {
       page = BandaInspectionPage(isReadOnly: isReadOnly, itemToEdit: item);
@@ -315,7 +286,6 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
     final Map<String, List<BandaComponent>> sectionsMap = {};
 
     for (var a in answers) {
-      // 1. Acceso seguro a las propiedades del objeto 'a'
       final String sectionName = (a.section?.name ?? "Sin Sección");
       final String accessoryName = (a.accessory?.name ?? "Accesorio");
 
@@ -341,8 +311,7 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
               ?.where((e) => e.bytes != null)
               .map(
                 (e) => EvidenceFile(
-                  bytes: e
-                      .bytes!, // Usamos los bytes descargados por ImageDownloader
+                  bytes: e.bytes!,
                   type: e.fileType ?? 'image/png',
                   mimeType: e.mimeType ?? 'image/png',
                 ),
@@ -350,7 +319,6 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
               .toList() ??
           [];
 
-      // 2. Mapeo al BandaComponent con las evidencias integradas
       sectionsMap[sectionName]!.add(
         BandaComponent(
           id: a.answerId?.toString() ?? "0",
@@ -365,12 +333,11 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
                   a.option!.value.toString().trim().toLowerCase(),
                 ]
               : [],
-
           customOptions: (esCustom && labelSeleccionado.isNotEmpty)
               ? [labelSeleccionado]
               : [],
           dimentions: a.dimentions?.toString() ?? '',
-          evidenceBefore: evidenciasConvertidas, // Aquí se asignan las fotos
+          evidenceBefore: evidenciasConvertidas,
           evidenceAfter: [],
         ),
       );
@@ -427,7 +394,6 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
                 ),
               ],
               rows: _filteredItems.map((item) {
-                // Buscamos todas las versiones de este reporte
                 final versiones =
                     widget.items.where((i) => i.id == item.id).toList()..sort(
                       (a, b) => b.versionNumber.compareTo(a.versionNumber),
@@ -440,7 +406,6 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
                         onSelected: (selectedItem) => _viewReport(selectedItem),
                         offset: const Offset(0, 40),
                         tooltip: "Cambiar versión",
-                        // Estilo del menú flotante más limpio
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -467,7 +432,6 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
                                         fontSize: 13.5,
                                       ),
                                     ),
-                                    // --- INDICADOR DE NOTAS ---
                                     if (item.reviewNotes != null &&
                                         item.reviewNotes!.isNotEmpty) ...[
                                       const SizedBox(width: 6),
@@ -552,96 +516,264 @@ class _TableInspectorState extends ConsumerState<TableInspector> {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: widget.items.length,
+      itemCount: _filteredItems.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        var item = widget.items[index];
-        return Card(
-          child: ListTile(
-            leading: Icon(Icons.assignment_outlined, color: primaryRed),
-            title: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                    // 2. (Opcional pero recomendado) Controlar el desbordamiento vertical
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                // --- INDICADOR DE NOTAS NOTORIO ---
-                if (item.reviewNotes != null &&
-                    item.reviewNotes!.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: () => _showReviewDialog(context, item),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: item.reviewAnswer != null
-                            ? Colors.green.shade100
-                            : Colors
-                                  .orange
-                                  .shade100, // Color de fondo llamativo
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: item.reviewAnswer != null
-                              ? Colors.green.shade700
-                              : Colors.orange.shade700,
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            item.reviewAnswer != null
-                                ? Icons.check_circle
-                                : Icons.warning_amber_rounded,
-                            color: item.reviewAnswer != null
-                                ? Colors.green.shade800
-                                : Colors.orange.shade900,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            item.reviewAnswer != null
-                                ? "CONTESTADO"
-                                : "PENDIENTE",
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                              color: item.reviewAnswer != null
-                                  ? Colors.green.shade900
-                                  : Colors.orange.shade900,
-                            ),
-                          ),
-                        ],
-                      ),
+        var item = _filteredItems[index];
+        final versiones =
+            widget.items.where((i) => i.id == item.id).toList()..sort(
+              (a, b) => b.versionNumber.compareTo(a.versionNumber),
+            );
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: primaryRed.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.assignment_outlined,
+                      color: primaryRed,
+                      size: 24,
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "REPORTE",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          item.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        // Selector táctil de versión adaptado con salto de línea si es necesario
+                        GestureDetector(
+                          onTap: versiones.length > 1
+                              ? () async {
+                                  final selected = await showModalBottomSheet<InspectionRowUI>(
+                                    context: context,
+                                    builder: (context) => ListView.builder(
+                                      shrinkWrap: true,
+                                      itemCount: versiones.length,
+                                      itemBuilder: (context, idx) {
+                                        final v = versiones[idx];
+                                        return ListTile(
+                                          title: Text("Versión ${v.versionNumber}"),
+                                          subtitle: Text(
+                                            v.versionId == item.versionId
+                                                ? "Versión actual seleccionada"
+                                                : "",
+                                          ),
+                                          onTap: () => Navigator.pop(context, v),
+                                        );
+                                      },
+                                    ),
+                                  );
+                                  if (selected != null) {
+                                    _viewReport(selected);
+                                  }
+                                }
+                              : null,
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 4,
+                            children: [
+                              Text(
+                                "Versión ${item.versionNumber} • ${item.folio}",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                  decoration: versiones.length > 1 ? TextDecoration.underline : null,
+                                ),
+                              ),
+                              if (versiones.length > 1)
+                                Icon(Icons.arrow_drop_down, size: 16, color: Colors.grey.shade600),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text(
+                        "ESTADO",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      _StatusBadge(
+                        state: item.state,
+                        label: item.translatedState,
+                      ),
+                    ],
+                  ),
                 ],
-              ],
-            ),
-            subtitle: Text("${item.date} • ${item.translatedState}"),
-            // Usamos un Row con MainAxisSize.min para los botones
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.visibility, size: 20),
-                  onPressed: () => _viewReport(item),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.print, size: 20),
-                  onPressed: () => _printReport(item),
-                ),
-              ],
-            ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1),
+              ),
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "FECHA",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.date,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (item.reviewNotes != null &&
+                      item.reviewNotes!.isNotEmpty)
+                    InkWell(
+                      onTap: () => _showReviewDialog(context, item),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: item.reviewAnswer != null
+                              ? Colors.green.shade100
+                              : Colors.orange.shade100,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: item.reviewAnswer != null
+                                ? Colors.green.shade700
+                                : Colors.orange.shade700,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              item.reviewAnswer != null
+                                  ? Icons.check_circle
+                                  : Icons.warning_amber_rounded,
+                              color: item.reviewAnswer != null
+                                  ? Colors.green.shade800
+                                  : Colors.orange.shade900,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              item.reviewAnswer != null
+                                  ? "CONTESTADO"
+                                  : "PENDIENTE",
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                color: item.reviewAnswer != null
+                                    ? Colors.green.shade900
+                                    : Colors.orange.shade900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "ACCIONES",
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _ActionIconBtn(
+                        icon: Icons.visibility_outlined,
+                        color: const Color(0xFF6366F1),
+                        onTap: () => _viewReport(item),
+                      ),
+                      const SizedBox(width: 8),
+                      _ActionIconBtn(
+                        icon: Icons.edit_outlined,
+                        color: const Color(0xFF4B5563),
+                        onTap: () => _editReport(item),
+                      ),
+                      const SizedBox(width: 8),
+                      _ActionIconBtn(
+                        icon: Icons.print_outlined,
+                        color: primaryRed,
+                        onTap: () => _printReport(item),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
           ),
         );
       },

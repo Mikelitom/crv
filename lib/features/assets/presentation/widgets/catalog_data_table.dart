@@ -14,7 +14,8 @@ class CatalogDataTable extends ConsumerWidget {
   final Color primaryRed;
   final Function(dynamic) onEdit;
   final Function(dynamic, bool) onToggleStatus;
-final String Function(String?)? statusTranslator; 
+  final String Function(String?)? statusTranslator;
+
   const CatalogDataTable({
     super.key,
     required this.items,
@@ -22,7 +23,7 @@ final String Function(String?)? statusTranslator;
     required this.primaryRed,
     required this.onEdit,
     required this.onToggleStatus,
-    this.statusTranslator, 
+    this.statusTranslator,
   });
 
   dynamic _getProperty(dynamic item, String key) {
@@ -62,16 +63,44 @@ final String Function(String?)? statusTranslator;
     final String title = type == "vehiculo" ? _getProperty(item, 'plate') : (type == "cliente" ? _getProperty(item, 'name') : _getProperty(item, 'serie'));
     final String subtitle = type == "vehiculo" ? "${_getProperty(item, 'brand')} ${_getProperty(item, 'model')}" : (type == "cliente" ? _getProperty(item, 'company') : _getProperty(item, 'model'));
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: ExpansionTile(
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: primaryRed)),
-        subtitle: Text(subtitle),
+        shape: const Border(),
+        collapsedShape: const Border(),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: primaryRed.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            type == "vehiculo" ? Icons.directions_car : (type == "cliente" ? Icons.person_outline : Icons.factory_outlined),
+            color: primaryRed,
+            size: 24,
+          ),
+        ),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: primaryRed, fontSize: 14)),
+        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Column(
               children: [
+                const Divider(height: 1),
+                const SizedBox(height: 12),
                 if (type == "cliente") ...[
                   _buildMobileRow("Compañía", _getProperty(item, 'company')),
                   _buildMobileRow("Email", _getProperty(item, 'email')),
@@ -81,14 +110,24 @@ final String Function(String?)? statusTranslator;
                   _buildMobileRow("Estado", "", custom: _buildStatusBadge(_getProperty(item, 'operationState'))),
                   _buildMobileRow("Ubicación", _getProperty(item, 'currentLocation')),
                 ],
-                const Divider(),
-                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  _buildActionButton(Icons.visibility_rounded, Colors.green.shade50, Colors.green, () => showDialog(context: context, builder: (_) => AssetDetailModal(item: item, type: type, primaryRed: primaryRed))),
-                  const SizedBox(width: 8),
-                  _buildActionButton(Icons.edit_rounded, Colors.blue.shade50, Colors.blue, () => onEdit(item)),
-                  const SizedBox(width: 8),
-                  _buildStatusToggle(isActive, () => _handleToggle(ref, item, isActive, context)),
-                ])
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("ACCIONES", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    Row(
+                      children: [
+                        _buildActionButton(Icons.visibility_rounded, Colors.green.shade50, Colors.green, () => showDialog(context: context, builder: (_) => AssetDetailModal(item: item, type: type, primaryRed: primaryRed))),
+                        const SizedBox(width: 8),
+                        _buildActionButton(Icons.edit_rounded, Colors.blue.shade50, Colors.blue, () => onEdit(item)),
+                        const SizedBox(width: 8),
+                        _buildStatusToggle(isActive, () => _handleToggle(ref, item, isActive, context)),
+                      ],
+                    ),
+                  ],
+                )
               ],
             ),
           )
@@ -107,7 +146,7 @@ final String Function(String?)? statusTranslator;
         Expanded(
           child: Align(
             alignment: Alignment.centerRight,
-            child: custom ?? Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            child: custom ?? Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
           ),
         ),
       ],
@@ -124,38 +163,52 @@ final String Function(String?)? statusTranslator;
         ? [const DataColumn(label: Text("PLACA", style: s)), const DataColumn(label: Text("MODELO", style: s)), const DataColumn(label: Text("AÑO", style: s)), const DataColumn(label: Text("ESTADO", style: s)), const DataColumn(label: Text("UBICACIÓN", style: s)), const DataColumn(label: Text("ACCIONES", style: s))] 
         : [const DataColumn(label: Text("SERIE", style: s)), const DataColumn(label: Text("TAMAÑO", style: s)), const DataColumn(label: Text("TIPO", style: s)), const DataColumn(label: Text("MODELO", style: s)), const DataColumn(label: Text("ESTADO", style: s)), const DataColumn(label: Text("UBICACIÓN", style: s)), const DataColumn(label: Text("ACCIONES", style: s))];
     
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: constraints.maxWidth),
-            child: DataTable(
-              columnSpacing: 30,
-              dataRowMaxHeight: 60,
-              headingRowColor: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
-              columns: cols,
-              rows: items.map((item) => DataRow(
-                color: WidgetStateProperty.all((item.isActive ?? true) ? Colors.white : Colors.grey.shade100),
-                cells: _getDesktopCells(context, ref, item, cs)
-              )).toList(),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-        );
-      },
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: DataTable(
+                  columnSpacing: 30,
+                  dataRowMaxHeight: 65,
+                  headingRowHeight: 56,
+                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
+                  columns: cols,
+                  rows: items.map((item) => DataRow(
+                    color: WidgetStateProperty.all((item.isActive ?? true) ? Colors.white : Colors.grey.shade50),
+                    cells: _getDesktopCells(context, ref, item, cs)
+                  )).toList(),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 
-List<DataCell> _getDesktopCells(BuildContext ctx, WidgetRef ref, dynamic item, TextStyle cs) {
-    // 1. Obtenemos el estado original
+  List<DataCell> _getDesktopCells(BuildContext ctx, WidgetRef ref, dynamic item, TextStyle cs) {
     final String rawStatus = _getProperty(item, 'operationState');
-    
-    // 2. Traducimos si el traductor está disponible, si no, usamos el original
     final String displayStatus = (statusTranslator != null) 
         ? statusTranslator!(rawStatus) 
         : rawStatus;
 
-    // 3. Construimos las celdas usando displayStatus
     List<DataCell> cells = type == "cliente" 
       ? [
           DataCell(Text(_getProperty(item, 'name'), style: cs)), 
@@ -167,7 +220,7 @@ List<DataCell> _getDesktopCells(BuildContext ctx, WidgetRef ref, dynamic item, T
             DataCell(_buildIdentifierCell(_getProperty(item, 'plate'))), 
             DataCell(Text("${_getProperty(item, 'brand')} ${_getProperty(item, 'model')}", style: cs)), 
             DataCell(Text(_getProperty(item, 'year'), style: cs)), 
-            DataCell(_buildStatusBadge(displayStatus)), // <--- Usamos el estado traducido
+            DataCell(_buildStatusBadge(displayStatus)), 
             DataCell(Text(_getProperty(item, 'currentLocation'), style: cs))
           ] 
         : [
@@ -175,7 +228,7 @@ List<DataCell> _getDesktopCells(BuildContext ctx, WidgetRef ref, dynamic item, T
             DataCell(Text(_getProperty(item, 'size'), style: cs)), 
             DataCell(Text(_getProperty(item, 'type'), style: cs)), 
             DataCell(Text(_getProperty(item, 'model'), style: cs)), 
-            DataCell(_buildStatusBadge(displayStatus)), // <--- Usamos el estado traducido
+            DataCell(_buildStatusBadge(displayStatus)), 
             DataCell(Text(_getProperty(item, 'currentLocation'), style: cs))
           ];
     
@@ -190,50 +243,57 @@ List<DataCell> _getDesktopCells(BuildContext ctx, WidgetRef ref, dynamic item, T
   }
 
   Widget _buildIdentifierCell(String text) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(color: primaryRed.withOpacity(0.1), borderRadius: BorderRadius.circular(4), border: Border.all(color: primaryRed.withOpacity(0.3))),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: primaryRed.withValues(alpha: 0.08), 
+      borderRadius: BorderRadius.circular(8), 
+      border: Border.all(color: primaryRed.withValues(alpha: 0.2))
+    ),
     child: Text(text, style: TextStyle(fontFamily: 'Courier', fontWeight: FontWeight.bold, color: primaryRed, fontSize: 13)),
   );
 
- Widget _buildStatusBadge(String s) {
+  Widget _buildStatusBadge(String s) {
     Color bgColor;
     Color textColor;
     
-    // Lógica de colores según el estado traducido
     switch (s.toUpperCase()) {
       case 'DISPONIBLE':
-        bgColor = Colors.green.shade100;
-        textColor = Colors.green.shade800;
+      case 'APROBADO':
+        bgColor = Colors.green.shade50;
+        textColor = Colors.green.shade700;
         break;
       case 'TALLER':
-        bgColor = Colors.blue.shade100;
-        textColor = Colors.blue.shade800;
+      case 'EN REVISIÓN':
+        bgColor = Colors.blue.shade50;
+        textColor = Colors.blue.shade700;
         break;
       case 'OCUPADO':
-        bgColor = Colors.orange.shade100;
-        textColor = Colors.orange.shade900;
+      case 'PENDIENTE':
+        bgColor = Colors.amber.shade50;
+        textColor = Colors.amber.shade800;
         break;
       default:
-        bgColor = Colors.grey.shade200;
+        bgColor = Colors.grey.shade100;
         textColor = Colors.grey.shade700;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: bgColor, 
-        borderRadius: BorderRadius.circular(12)
+        borderRadius: BorderRadius.circular(8)
       ),
       child: Text(
         s.toUpperCase(), 
         style: TextStyle(
-          fontSize: 10, 
-          fontWeight: FontWeight.w900, 
+          fontSize: 11, 
+          fontWeight: FontWeight.bold, 
           color: textColor
         )
       ),
     );
   }
+
   Future<void> _handleToggle(WidgetRef ref, dynamic item, bool isActive, BuildContext context) async {
     final String itemId = (type == "vehiculo") ? (item.vehicleId ?? "") : (item.id ?? "");
     if (itemId.isEmpty) return;
@@ -244,6 +304,42 @@ List<DataCell> _getDesktopCells(BuildContext ctx, WidgetRef ref, dynamic item, T
     if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Estado actualizado")));
   }
 
-  Widget _buildStatusToggle(bool isActive, VoidCallback onTap) => GestureDetector(onTap: onTap, child: AnimatedContainer(duration: const Duration(milliseconds: 300), width: 40, height: 22, padding: const EdgeInsets.all(2), decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: isActive ? Colors.green : Colors.grey), child: AnimatedAlign(duration: const Duration(milliseconds: 300), alignment: isActive ? Alignment.centerRight : Alignment.centerLeft, child: Container(width: 18, height: 18, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)))));
-  Widget _buildActionButton(IconData icon, Color b, Color c, VoidCallback onTap) => InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: b, borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: c, size: 16)));
+  Widget _buildStatusToggle(bool isActive, VoidCallback onTap) => GestureDetector(
+    onTap: onTap, 
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 300), 
+      width: 40, 
+      height: 22, 
+      padding: const EdgeInsets.all(2), 
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20), 
+        color: isActive ? Colors.green : Colors.grey.shade400
+      ), 
+      child: AnimatedAlign(
+        duration: const Duration(milliseconds: 300), 
+        alignment: isActive ? Alignment.centerRight : Alignment.centerLeft, 
+        child: Container(
+          width: 18, 
+          height: 18, 
+          decoration: const BoxDecoration(
+            color: Colors.white, 
+            shape: BoxShape.circle
+          )
+        )
+      )
+    )
+  );
+
+  Widget _buildActionButton(IconData icon, Color b, Color c, VoidCallback onTap) => InkWell(
+    onTap: onTap, 
+    borderRadius: BorderRadius.circular(8),
+    child: Container(
+      padding: const EdgeInsets.all(8), 
+      decoration: BoxDecoration(
+        color: b, 
+        borderRadius: BorderRadius.circular(8)
+      ), 
+      child: Icon(icon, color: c, size: 16)
+    ),
+  );
 }
