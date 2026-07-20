@@ -31,4 +31,9 @@ class ClientSyncService {
       }
     }
   }
+
+  Future<int> pendingReportsCount() async {
+    final pending = await local.getPendingReports();
+    return pending.length;
+  }
 }
