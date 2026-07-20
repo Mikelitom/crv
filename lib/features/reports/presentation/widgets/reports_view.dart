@@ -1,7 +1,6 @@
 import 'package:crv_reprosisa/features/reports/presentation/provider/reports_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'reports_summary_grid.dart';
 import 'vehicle_report_table.dart';
 import 'press_report_table.dart';
 import 'conveyor_report_table.dart';
@@ -60,7 +59,6 @@ class _ReportsViewState extends ConsumerState<ReportsView> {
                 fontSize: 14,
               ),
               tabs: const [
-                // Modifica cada Tab de tu TabBar así:
                 Tab(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -157,16 +155,7 @@ class _ReportsViewState extends ConsumerState<ReportsView> {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          // Grid de contadores con animaciones (asumiendo que ya implementaste el widget anterior)
-          ReportsSummaryGrid(
-            total: total,
-            pending: pending,
-            approved: approved,
-            returned: returned,
-          ),
-          const SizedBox(height: 32),
-
-          // Renderizado de la tabla correspondiente
+          // Renderizado de la tabla correspondiente sin duplicar el summary grid superior
           if (typeIndex == 0)
             ConveyorReportTable(reports: items, isAdmin: widget.isAdmin)
           else if (typeIndex == 1)
