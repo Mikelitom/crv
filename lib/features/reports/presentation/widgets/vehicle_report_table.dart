@@ -19,85 +19,277 @@ class VehicleReportTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, ref, _) {
-        return BaseTable(
-          columns: const [
-            "PLATE",
-            "FOLIO",
-            "STATE",
-            "RESPONSIBLE",
-            "VERSION",
-            "DATE",
-            "ACTIONS",
-          ],
-          rows: reports.map((r) {
-            // Validación de tipo segura
-            final item = r is VehicleHistoryModel ? r : null;
+        final filteredReports = reports
+            .where((r) => r is VehicleHistoryModel)
+            .toList();
 
-            return DataRow(
-              cells: [
-                // PROTECCIÓN TOTAL: Todos los campos usan ?? 'N/A' o valores por defecto
-                DataCell(
-                  Text(
-                    item?.plate ?? 'N/A',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                DataCell(Text(item?.folio ?? 'N/A')),
-                DataCell(
-                  statusChip(item?.state ?? 'PENDING'),
-                ), // Ya protegido en BaseTable
-                DataCell(Text(item?.responsibleName ?? 'N/A')),
-                DataCell(Text("V${item?.versionNumber ?? '0'}")),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            // Si el ancho es menor a 800px, mostramos la vista móvil de tarjetas desplegables
+            if (constraints.maxWidth < 800) {
+              return _buildMobileView(context, ref, filteredReports);
+            }
 
-                // PROTECCIÓN ESPECIAL PARA FECHAS:
-                DataCell(
-                  Text(
-                    item?.inspectionDate != null
-                        ? item!.inspectionDate.toString().split(' ')[0]
-                        : 'Sin fecha',
-                  ),
-                ),
-
-                actionCell(
-                  item,
-                  isAdmin,
-                  onView: () async {
-                    if (item == null) return;
-                    final data =
-                        await PdfReportProcessor.generatePdfFromVersionId(
-                          ref,
-                          r.versionId,
-                        );
-
-                    if (data == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("No se pudo generar la vista previa"),
-                        ),
-                      );
-                      return;
-                    }
-
-                    if (context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => Scaffold(
-                            appBar: AppBar(
-                              title: const Text("Vista Previa PDF"),
-                            ),
-                            body: PdfPreview(build: (format) => data),
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                ),
+            // De lo contrario, mostramos la tabla de escritorio normal
+            return BaseTable(
+              columns: const [
+                "PLATE",
+                "FOLIO",
+                "STATE",
+                "RESPONSIBLE",
+                "VERSION",
+                "DATE",
+                "ACTIONS",
               ],
+              rows: filteredReports.map((r) {
+                final item = r as VehicleHistoryModel;
+
+                return DataRow(
+                  cells: [
+                    DataCell(
+                      Text(
+                        item.plate,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    DataCell(Text(item.folio)),
+                    DataCell(statusChip(item.state)),
+                    DataCell(Text(item.responsibleName)),
+                    DataCell(Text("V${item.versionNumber}")),
+                    DataCell(
+                      Text(item.inspectionDate.toString().split(' ')[0]),
+                    ),
+                    DataCell(
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.visibility,
+                              color: Colors.blue,
+                              size: 20,
+                            ),
+                            onPressed: () async =>
+                                _handleView(context, ref, item),
+                            tooltip: 'Ver PDF',
+                          ),
+                          if (isAdmin)
+                            IconButton(
+                              icon: const Icon(
+                                Icons.print,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                              onPressed: () async =>
+                                  _handlePrint(context, ref, item),
+                              tooltip: 'Imprimir',
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
             );
-          }).toList(),
+          },
         );
       },
     );
+  }
+
+  // Vista Móvil tipo Acordeón/Expansible para Vehículos
+  Widget _buildMobileView(
+    BuildContext context,
+    WidgetRef ref,
+    List<dynamic> filteredReports,
+  ) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: filteredReports.length,
+      itemBuilder: (context, index) {
+        final item = filteredReports[index] as VehicleHistoryModel;
+        final dateStr = item.inspectionDate.toString().split(' ')[0];
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: ExpansionTile(
+            shape: const Border(),
+            leading: const Icon(Icons.directions_car, color: Colors.blueGrey),
+            title: Text(
+              "Placa: ${item.plate}",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 2),
+                Text(
+                  "Folio: ${item.folio}",
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "Fecha: $dateStr",
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Text(
+                          "Responsable: ",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            item.responsibleName,
+                            style: const TextStyle(fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text(
+                          "Versión: ",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        Text(
+                          "V${item.versionNumber}",
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text(
+                          "Estado: ",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        statusChip(item.state),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Acciones",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.visibility,
+                            color: Colors.blue,
+                          ),
+                          onPressed: () async =>
+                              _handleView(context, ref, item),
+                          tooltip: 'Ver PDF',
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.print, color: Colors.red),
+                          onPressed: () async =>
+                              _handlePrint(context, ref, item),
+                          tooltip: 'Imprimir',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Lógica centralizada para la vista previa del PDF
+  Future<void> _handleView(
+    BuildContext context,
+    WidgetRef ref,
+    VehicleHistoryModel item,
+  ) async {
+    final data = await PdfReportProcessor.generatePdfFromVersionId(
+      ref,
+      item.versionId,
+    );
+
+    if (data == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No se pudo generar la vista previa")),
+        );
+      }
+      return;
+    }
+
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            appBar: AppBar(title: const Text("Vista Previa PDF")),
+            body: PdfPreview(build: (format) => data),
+          ),
+        ),
+      );
+    }
+  }
+
+  // Lógica centralizada para imprimir de forma directa
+  Future<void> _handlePrint(
+    BuildContext context,
+    WidgetRef ref,
+    VehicleHistoryModel item,
+  ) async {
+    final data = await PdfReportProcessor.generatePdfFromVersionId(
+      ref,
+      item.versionId,
+    );
+
+    if (data != null) {
+      await Printing.layoutPdf(onLayout: (_) async => data);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("No se pudo generar el documento para impresión"),
+          ),
+        );
+      }
+    }
   }
 }
