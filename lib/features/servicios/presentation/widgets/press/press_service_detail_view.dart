@@ -155,25 +155,6 @@ class _PressServiceDetailViewState
     );
   }
 
-  // Columnas de 3 vías para la parte central
-  Widget _buildColumn1() => _buildSectionContainer(
-        "COMPONENTES",
-        _buildComponentesList(),
-        height: 580,
-      );
-
-  Widget _buildColumn2() => _buildSectionContainer(
-        "INCIDENTES",
-        _buildRecurrenciaSection(),
-        height: 580,
-      );
-
-  Widget _buildColumn3() => _buildSectionContainer(
-        "INSPECCIONES",
-        _buildInspeccionesList(),
-        height: 580,
-      );
-
   // --- ESTRUCTURA ---
   Widget _buildContainer({required Widget child}) => Container(
     width: double.infinity,
@@ -361,6 +342,7 @@ class _PressServiceDetailViewState
     return Icons.settings;
   }
 
+  // Header responsivo adaptado para evitar desbordamientos en pantallas pequeñas
   Widget _buildHeader(Press p) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
@@ -368,82 +350,182 @@ class _PressServiceDetailViewState
       border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       borderRadius: BorderRadius.circular(16),
     ),
-    child: Row(
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          margin: const EdgeInsets.only(right: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.grey.shade100,
-          ),
-          child: const Icon(Icons.print, size: 30, color: Colors.grey),
-        ),
-        Expanded(
-          child: Column(
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        bool isVeryNarrow = constraints.maxWidth < 420;
+
+        if (isVeryNarrow) {
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "${p.model} - ${p.serie}",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 2),
               Row(
                 children: [
-                  Icon(
-                    Icons.circle,
-                    size: 8,
-                    color: p.isActive ? Colors.green : Colors.red,
+                  Container(
+                    width: 50,
+                    height: 50,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.grey.shade100,
+                    ),
+                    child: const Icon(Icons.print, size: 26, color: Colors.grey),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    p.operationState,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade700,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${p.model} - ${p.serie}",
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.circle,
+                              size: 8,
+                              color: p.isActive ? Colors.green : Colors.red,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                p.operationState,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFC62828),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (_) =>
-                  PressCreateOrderDialog(pressId: widget.press.id),
-            ).then((value) {
-              if (value == true) {
-                _refreshAllData();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Orden creada correctamente"),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFC62828),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                );
-              }
-            });
-          },
-          icon: const Icon(Icons.add, size: 14),
-          label: const Text("ORDEN", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ),
-      ],
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) =>
+                          PressCreateOrderDialog(pressId: widget.press.id),
+                    ).then((value) {
+                      if (value == true) {
+                        _refreshAllData();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Orden creada correctamente"),
+                          ),
+                        );
+                      }
+                    });
+                  },
+                  icon: const Icon(Icons.add, size: 14),
+                  label: const Text("ORDEN", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.grey.shade100,
+              ),
+              child: const Icon(Icons.print, size: 30, color: Colors.grey),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "${p.model} - ${p.serie}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 8,
+                        color: p.isActive ? Colors.green : Colors.red,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          p.operationState,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC62828),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) =>
+                      PressCreateOrderDialog(pressId: widget.press.id),
+                ).then((value) {
+                  if (value == true) {
+                    _refreshAllData();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Orden creada correctamente"),
+                      ),
+                    );
+                  }
+                });
+              },
+              icon: const Icon(Icons.add, size: 14),
+              label: const Text("ORDEN", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
     ),
   );
-
-
 
   Widget _buildSummarySection(List<PressServiceOrderModel> orders) {
     final total = orders.length;
