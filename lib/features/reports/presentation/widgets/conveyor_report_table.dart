@@ -45,7 +45,6 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
   }
 
   // Chip de estado traducido y con colores correctos (Verde para completado/aceptado, Ámbar para revisión/pendiente, Rojo para rechazado)
-  @override
   Widget statusChip(String state) {
     final translated = _translateStatus(state);
     Color color = Colors.grey;

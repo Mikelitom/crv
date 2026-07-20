@@ -43,15 +43,14 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     }
   }
 
-  // Chip de estado traducido y con colores correctos (Verde para completado/aceptado, Ámbar para revisión/pendiente, Rojo para rechazado)
-  @override
   Widget statusChip(String state) {
     final translated = _translateStatus(state);
     Color color = Colors.grey;
 
     if (translated.contains('COMPLETADO') || translated.contains('ACEPTADO')) {
       color = Colors.green;
-    } else if (translated.contains('REVISIÓN') || translated.contains('PENDIENTE')) {
+    } else if (translated.contains('REVISIÓN') ||
+        translated.contains('PENDIENTE')) {
       color = Colors.amber.shade700;
     } else if (translated.contains('RECHAZADO')) {
       color = kPrimaryRed;
@@ -78,7 +77,9 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, ref, _) {
-        final filteredReports = reports.where((r) => r is PressHistoryModel).toList();
+        final filteredReports = reports
+            .where((r) => r is PressHistoryModel)
+            .toList();
 
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -104,11 +105,7 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                     DataCell(Text(item.folio)),
                     DataCell(statusChip(item.state)),
                     DataCell(
-                      Text(
-                        item.inspectionDate != null
-                            ? item.inspectionDate.toString().split(' ')[0]
-                            : 'N/A',
-                      ),
+                      Text(item.inspectionDate.toString().split(' ')[0]),
                     ),
                     actionCell(
                       item,
@@ -128,16 +125,18 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
   }
 
   // Vista Móvil tipo Acordeón/Expansible para Prensas
-  Widget _buildMobileView(BuildContext context, WidgetRef ref, List<dynamic> filteredReports) {
+  Widget _buildMobileView(
+    BuildContext context,
+    WidgetRef ref,
+    List<dynamic> filteredReports,
+  ) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: filteredReports.length,
       itemBuilder: (context, index) {
         final item = filteredReports[index] as PressHistoryModel;
-        final dateStr = item.inspectionDate != null
-            ? item.inspectionDate.toString().split(' ')[0]
-            : 'N/A';
+        final dateStr = item.inspectionDate.toString().split(' ')[0];
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -154,10 +153,7 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
             ),
             title: Text(
               "Serie: ${item.serie}",
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +182,10 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                       children: [
                         const Text(
                           "Estado: ",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         statusChip(item.state),
@@ -206,13 +205,18 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.visibility, color: Colors.blue),
-                          onPressed: () async => _handleView(context, ref, item),
+                          icon: const Icon(
+                            Icons.visibility,
+                            color: Colors.blue,
+                          ),
+                          onPressed: () async =>
+                              _handleView(context, ref, item),
                           tooltip: 'Ver PDF',
                         ),
                         IconButton(
                           icon: const Icon(Icons.print, color: Colors.red),
-                          onPressed: () async => _handlePrint(context, ref, item),
+                          onPressed: () async =>
+                              _handlePrint(context, ref, item),
                           tooltip: 'Imprimir',
                         ),
                       ],
@@ -228,9 +232,16 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
   }
 
   // Lógica centralizada para la vista previa del PDF en Prensas
-  Future<void> _handleView(BuildContext context, WidgetRef ref, PressHistoryModel item) async {
-    final data = await PressPdfProcessor.generatePdfFromVersionId(ref, item.versionId);
-    
+  Future<void> _handleView(
+    BuildContext context,
+    WidgetRef ref,
+    PressHistoryModel item,
+  ) async {
+    final data = await PressPdfProcessor.generatePdfFromVersionId(
+      ref,
+      item.versionId,
+    );
+
     if (data != null && context.mounted) {
       Navigator.push(
         context,
@@ -240,9 +251,16 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
   }
 
   // Lógica centralizada para imprimir de forma directa en Prensas
-  Future<void> _handlePrint(BuildContext context, WidgetRef ref, PressHistoryModel item) async {
-    final data = await PressPdfProcessor.generatePdfFromVersionId(ref, item.versionId);
-    
+  Future<void> _handlePrint(
+    BuildContext context,
+    WidgetRef ref,
+    PressHistoryModel item,
+  ) async {
+    final data = await PressPdfProcessor.generatePdfFromVersionId(
+      ref,
+      item.versionId,
+    );
+
     if (data != null) {
       final pdfBytes = await PrensaPdfGenerator.generateEsqueleto(data);
       await Printing.layoutPdf(onLayout: (_) async => pdfBytes);
