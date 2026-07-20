@@ -11,7 +11,7 @@ class EnvironmentConfig {
     switch (env) {
       case 'prod':
         return EnvironmentConfig._(
-          'https://backend-crv-refactor.onrender.com/api/v1',
+          'https://crv-3bmn.onrender.com/api/v1',
         );
       default:
         return EnvironmentConfig._('http://127.0.0.1:8000/api/v1');
