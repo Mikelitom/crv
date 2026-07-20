@@ -2,4 +2,5 @@ import 'package:crv_reprosisa/features/servicios/data/models/last_movements_mode
 
 abstract class DashboardRepository {
   Future<DashboardLastMovements> getLastMovements();
+
 }
