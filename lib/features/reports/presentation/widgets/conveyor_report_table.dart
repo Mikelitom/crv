@@ -48,14 +48,11 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
   Widget statusChip(String state) {
     final translated = _translateStatus(state);
     Color color = Colors.grey;
-
-    if (translated.contains('COMPLETADO') || translated.contains('ACEPTADO')) {
-      color = Colors.green;
-    } else if (translated.contains('REVISIÓN') || translated.contains('PENDIENTE')) {
-      color = Colors.amber.shade700;
-    } else if (translated.contains('RECHAZADO')) {
-      color = kPrimaryRed;
-    }
+    if (translated.contains('COMPLETADO')) color = Colors.orange;
+    if (translated.contains('ACEPTADO')) color = Colors.green;
+    if (translated.contains('PENDIENTE')) color = Colors.blue;
+    if (translated.contains('REVISIÓN')) color = Colors.purple;
+    if (translated.contains('RECHAZADO')) color = kPrimaryRed;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -102,6 +99,39 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
     }
   }
 
+  Future<void> _acceptReport(
+    BuildContext context,
+    WidgetRef ref,
+    String reportId,
+  ) async {
+    try {
+      await ref.read(reportsNotifierProvider.notifier).acceptReport(reportId);
+      await ref.read(reportsNotifierProvider.notifier).loadAllReports();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Reporte aprobado correctamente"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Si hay un diálogo abierto (como el de gestión), lo cerramos
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error al aprobar: $e"),
+            backgroundColor: kPrimaryRed,
+          ),
+        );
+      }
+    }
+  }
+
   void _showManagementDialog(
     BuildContext context,
     WidgetRef ref,
@@ -111,7 +141,6 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: Colors.white,
         title: const Text(
           "Gestionar Reporte",
           style: TextStyle(color: kPrimaryRed, fontWeight: FontWeight.bold),
@@ -125,12 +154,8 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
                 controller: noteController,
                 decoration: const InputDecoration(
                   labelText: "Nueva observación",
-                  labelStyle: TextStyle(color: Colors.grey),
                   border: OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: kPrimaryRed, width: 2),
-                  ),
-                  prefixIcon: Icon(Icons.note_alt_outlined, color: kPrimaryRed),
+                  prefixIcon: Icon(Icons.note_alt_outlined),
                 ),
                 maxLines: 3,
               ),
@@ -140,7 +165,12 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cerrar", style: TextStyle(color: Colors.grey)),
+            child: const Text("Cerrar"),
+          ),
+          OutlinedButton.icon(
+            onPressed: () => _acceptReport(context, ref, item.reportId),
+            icon: const Icon(Icons.check_circle_outline, color: Colors.green),
+            label: const Text("Aprobar"),
           ),
           FilledButton.icon(
             onPressed: () => _sendReviewNote(
@@ -185,6 +215,9 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
                 final versionText = item.versionId.length >= 8
                     ? item.versionId.substring(0, 8)
                     : item.versionId;
+                
+                final isRevision = item.state.toUpperCase().contains('IN_REVISION') || 
+                                   item.state.toUpperCase().contains('REVISIÓN');
 
                 return DataRow(
                   cells: [
@@ -243,14 +276,37 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
                       Text(item.inspectionDate.toString().split(' ')[0]),
                     ),
                     DataCell(statusChip(item.state)),
-                    actionCell(
-                      item,
-                      isAdmin,
-                      onView: () async => _handleView(context, ref, item),
-                      onPrint: () async => _handlePrint(context, ref, item),
-                      onEdit: isAdmin
-                          ? () => _showManagementDialog(context, ref, item)
-                          : null,
+                    DataCell(
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.visibility, color: Colors.blue, size: 20),
+                            onPressed: () async => _handleView(context, ref, item),
+                            tooltip: 'Ver PDF',
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.print, color: kPrimaryRed, size: 20),
+                            onPressed: () async => _handlePrint(context, ref, item),
+                            tooltip: 'Imprimir',
+                          ),
+                          if (isAdmin) ...[
+                            // Botón de revisión/notas
+                            IconButton(
+                              icon: const Icon(Icons.note_add, color: Colors.orange, size: 20),
+                              onPressed: () => _showManagementDialog(context, ref, item),
+                              tooltip: 'Gestionar / Notas',
+                            ),
+                            // Botón de aprobación rápida directo en la tabla si está en revisión
+                            if (isRevision)
+                              IconButton(
+                                icon: const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                                onPressed: () => _acceptReport(context, ref, item.reportId),
+                                tooltip: 'Aprobar Reporte',
+                              ),
+                          ],
+                        ],
+                      ),
                     ),
                   ],
                 );
@@ -278,6 +334,8 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
             ? item.versionId.substring(0, 8)
             : item.versionId;
         final dateStr = item.inspectionDate.toString().split(' ')[0];
+        final isRevision = item.state.toUpperCase().contains('IN_REVISION') || 
+                           item.state.toUpperCase().contains('REVISIÓN');
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -375,6 +433,12 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
                             onPressed: () => _showManagementDialog(context, ref, item),
                             tooltip: 'Gestionar / Notas',
                           ),
+                          if (isRevision)
+                            IconButton(
+                              icon: const Icon(Icons.check_circle, color: Colors.green),
+                              onPressed: () => _acceptReport(context, ref, item.reportId),
+                              tooltip: 'Aprobar Reporte',
+                            ),
                         ],
                       ],
                     ),
