@@ -16,24 +16,40 @@ class BaseTable extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.resolveWith<Color?>(
-              (Set<WidgetState> states) => const Color(0xFFF9FAFB),
-            ),
-            columns: columns.map((c) => DataColumn(
-              label: Container(
-                constraints: const BoxConstraints(maxWidth: 150), 
-                child: Text(
-                  c,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                  overflow: TextOverflow.ellipsis,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              // ConstrainedBox asegura que la tabla ocupe al menos el ancho del contenedor padre
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: DataTable(
+                  // Hace que la tabla se expanda horizontalmente si sobra espacio
+                  headingRowColor: WidgetStateProperty.resolveWith<Color?>(
+                    (Set<WidgetState> states) => const Color(0xFFF9FAFB),
+                  ),
+                  columns: columns
+                      .map(
+                        (c) => DataColumn(
+                          label: Container(
+                            constraints: const BoxConstraints(maxWidth: 150),
+                            child: Text(
+                              c,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  rows: rows,
                 ),
               ),
-            )).toList(),
-            rows: rows,
-          ),
+            );
+          },
         ),
       ),
     );

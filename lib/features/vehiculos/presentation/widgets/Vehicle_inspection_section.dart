@@ -379,8 +379,8 @@ class _VehicleInspectionSectionState extends ConsumerState<VehicleInspectionSect
     if (file != null) {
       final bytes = await file.readAsBytes();
       setState(() {
-        final ev = EvidenceFile(bytes: bytes, type: "image", mimeType: "image/jpeg");
-        if (isBefore) item.evidenceBefore = [ev]; else item.evidenceAfter = [ev];
+        final ev = EvidenceFile(bytes: bytes, type: "image", mimeType: "image/jpeg", fileName: file.name);
+        if (isBefore) {item.evidenceBefore = [ev];} else {item.evidenceAfter = [ev];}
       });
     }
   }

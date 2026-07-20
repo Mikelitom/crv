@@ -6,10 +6,12 @@ import 'package:crv_reprosisa/core/utils/conveyor_pdf_processor.dart';
 import 'package:crv_reprosisa/core/utils/banda_pdf_generator.dart';
 import 'package:crv_reprosisa/features/assets/presentation/pages/client_pdf_viewer_page.dart';
 import 'package:crv_reprosisa/features/reports/presentation/provider/reports_provider.dart';
+import 'package:crv_reprosisa/features/reports/presentation/widgets/base_report_table.dart';
+import 'package:printing/printing.dart';
 
 const Color kPrimaryRed = Color(0xFFC62828);
 
-class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
+class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
   final List<dynamic> reports;
   final bool isAdmin;
 
@@ -27,7 +29,6 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
   ) async {
     if (notes.isEmpty) return;
     try {
-      // Se envía el versionId completo para evitar el error 404
       await ref.read(sendConveyorNoteUseCaseProvider).call(versionId, notes);
       await ref.read(reportsNotifierProvider.notifier).loadAllReports();
       if (context.mounted) {
@@ -40,144 +41,12 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
         Navigator.pop(context);
       }
     } catch (e) {
-      if (context.mounted)
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: $e"), backgroundColor: kPrimaryRed),
         );
+      }
     }
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 800) return _buildMobileView(context, ref);
-        return _buildDesktopView(context, ref, constraints);
-      },
-    );
-  }
-
-  Widget _buildDesktopView(
-    BuildContext context,
-    WidgetRef ref,
-    BoxConstraints constraints,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: DataTable(
-        columnSpacing: 20,
-        columns: const [
-          DataColumn(label: Text("REPORTE")),
-          DataColumn(label: Text("INSPECTOR")),
-          DataColumn(label: Text("FECHA")),
-          DataColumn(label: Text("ESTADO")),
-          DataColumn(label: Text("ACCIONES")),
-        ],
-        rows: reports.map((r) {
-          final item = r as ConveyorHistoryModel;
-          return DataRow(
-            cells: [
-              DataCell(
-                SizedBox(
-                  width: 180, // Límite de ancho para evitar el overflow
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.settings_input_component,
-                        color: kPrimaryRed,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Truncado visual: mostramos solo los primeros 8 caracteres
-                            Text(
-                              "Banda v${item.versionId.substring(0, 8)}...",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              "Folio: ${item.folio}",
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              DataCell(
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.person_outline,
-                      size: 18,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(item.inspectorName),
-                  ],
-                ),
-              ),
-              DataCell(Text(item.inspectionDate.toString().split(' ')[0])),
-              DataCell(_statusChip(item.state)),
-              DataCell(_actionMenu(context, ref, item)),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildMobileView(BuildContext context, WidgetRef ref) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: reports.length,
-      itemBuilder: (context, i) {
-        final item = reports[i] as ConveyorHistoryModel;
-        return Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
-          child: ListTile(
-            leading: const Icon(
-              Icons.settings_input_component,
-              color: kPrimaryRed,
-            ),
-            title: Text(
-              "Banda v${item.versionId.substring(0, 8)}...",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text("Folio: ${item.folio} • ${item.state}"),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              if (isAdmin) {
-                _showManagementDialog(context, ref, item);
-              } else {
-                _handleView(context, ref, item);
-              }
-            },
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _acceptReport(
@@ -186,7 +55,6 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
     String reportId,
   ) async {
     try {
-      // Asegúrate de usar el provider que inyecta tu servicio de aceptación
       await ref.read(reportsNotifierProvider.notifier).acceptReport(reportId);
       await ref.read(reportsNotifierProvider.notifier).loadAllReports();
 
@@ -197,7 +65,7 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context); // Cierra el diálogo si se llama desde ahí
+        Navigator.pop(context);
       }
     } catch (e) {
       if (context.mounted) {
@@ -209,32 +77,6 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
         );
       }
     }
-  }
-
-  Widget _statusChip(String? state) {
-    final statusMap = {
-      'IN_PROGRESS': 'EN PROCESO',
-      'COMPLETED': 'COMPLETADO',
-      'IN_REVISION': 'PENDIENTE DE REVISION',
-      'RETURNED': 'DEVUELTO',
-    };
-    final label = statusMap[(state ?? 'PENDING').toUpperCase()] ?? 'PENDIENTE';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
-      ),
-    );
   }
 
   void _showManagementDialog(
@@ -293,52 +135,241 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
     );
   }
 
-  Widget _actionMenu(
+  @override
+  Widget build(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final filteredReports = reports
+            .where((r) => r is ConveyorHistoryModel)
+            .toList();
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            // Si el ancho es menor a 800px, mostramos la vista móvil de tarjetas desplegables
+            if (constraints.maxWidth < 800) {
+              return _buildMobileView(context, ref, filteredReports);
+            }
+
+            // De lo contrario, mostramos la tabla de escritorio optimizada
+            return BaseTable(
+              columns: const [
+                "REPORTE",
+                "INSPECTOR",
+                "FECHA",
+                "ESTADO",
+                "ACCIONES",
+              ],
+              rows: filteredReports.map((r) {
+                final item = r as ConveyorHistoryModel;
+                final versionText = item.versionId.length >= 8
+                    ? item.versionId.substring(0, 8)
+                    : item.versionId;
+
+                return DataRow(
+                  cells: [
+                    DataCell(
+                      SizedBox(
+                        width: 180,
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.settings_input_component,
+                              color: kPrimaryRed,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Banda v$versionText...",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    "Folio: ${item.folio}",
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    DataCell(
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.person_outline,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(item.inspectorName),
+                        ],
+                      ),
+                    ),
+                    DataCell(
+                      Text(item.inspectionDate.toString().split(' ')[0]),
+                    ),
+                    DataCell(statusChip(item.state)),
+                    actionCell(
+                      item,
+                      isAdmin,
+                      onView: () async => _handleView(context, ref, item),
+                      onPrint: () async => _handlePrint(context, ref, item),
+                      onEdit: isAdmin
+                          ? () => _showManagementDialog(context, ref, item)
+                          : null,
+                    ),
+                  ],
+                );
+              }).toList(),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Vista Móvil tipo Acordeón/Expansible
+  Widget _buildMobileView(
     BuildContext context,
     WidgetRef ref,
-    ConveyorHistoryModel item,
-  ) => PopupMenuButton<String>(
-    onSelected: (val) {
-      if (val == 'view') {
-        _handleView(context, ref, item);
-      } else if (val == 'manage') {
-        _showManagementDialog(context, ref, item);
-      } else if (val == 'accept') {
-        _acceptReport(context, ref, item.reportId);
-      }
-    },
-    itemBuilder: (_) => [
-      const PopupMenuItem(
-        value: 'view',
-        child: ListTile(
-          dense: true,
-          leading: Icon(Icons.picture_as_pdf, color: kPrimaryRed),
-          title: Text("Ver PDF"),
-        ),
-      ),
-    
-      if (isAdmin)
-        const PopupMenuItem(
-          value: 'manage',
-          child: ListTile(
-            dense: true,
-            leading: Icon(Icons.comment, color: Colors.grey),
-            title: Text("Evaluar / Notas"),
-          ),
-        ),
-    
-      if (isAdmin)
-        const PopupMenuItem(
-          value: 'accept',
-          child: ListTile(
-            dense: true,
-            leading: Icon(Icons.check_circle, color: Colors.green),
-            title: Text("Aceptar Reporte"),
-          ),
-        ),
-    ],
-  );
+    List<dynamic> filteredReports,
+  ) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: filteredReports.length,
+      itemBuilder: (context, index) {
+        final item = filteredReports[index] as ConveyorHistoryModel;
+        final versionText = item.versionId.length >= 8
+            ? item.versionId.substring(0, 8)
+            : item.versionId;
+        final dateStr = item.inspectionDate.toString().split(' ')[0];
 
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: ExpansionTile(
+            shape: const Border(), // Evita bordes adicionales al abrirse
+            leading: const Icon(
+              Icons.settings_input_component,
+              color: kPrimaryRed,
+            ),
+            title: Text(
+              "Banda v$versionText...",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 2),
+                Text(
+                  "Folio: ${item.folio}",
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "Fecha: $dateStr",
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+            children: [
+              // ... dentro de _buildMobileView, en la sección de children del ExpansionTile:
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Text(
+                          "Inspector: ",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                        // Expanded evita el overflow si el nombre es muy largo
+                        Expanded(
+                          child: Text(
+                            item.inspectorName,
+                            style: const TextStyle(fontSize: 12),
+                            overflow: TextOverflow.ellipsis, // Opcional: recorta con "..." si es larguísimo
+                            maxLines: 2, // Permite hasta 2 líneas si quieres que baje automáticamente
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text(
+                          "Estado: ",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                        const SizedBox(width: 4),
+                        statusChip(item.state),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Acciones",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.visibility, color: Colors.blue),
+                          onPressed: () => _handleView(context, ref, item),
+                          tooltip: 'Ver PDF',
+                        ),
+                        if (isAdmin) ...[
+                          IconButton(
+                            icon: const Icon(Icons.print, color: Colors.red),
+                            onPressed: () => _handlePrint(context, ref, item),
+                            tooltip: 'Imprimir',
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.note_add, color: Colors.orange),
+                            onPressed: () => _showManagementDialog(context, ref, item),
+                            tooltip: 'Gestionar / Notas',
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Funciones auxiliares para evitar duplicar lógica de PDF
   Future<void> _handleView(
     BuildContext context,
     WidgetRef ref,
@@ -359,6 +390,22 @@ class ConveyorReportTable extends ConsumerWidget with ReportActionHandler {
           ),
         ),
       );
+    }
+  }
+
+  Future<void> _handlePrint(
+    BuildContext context,
+    WidgetRef ref,
+    ConveyorHistoryModel item,
+  ) async {
+    final pdfData = await ConveyorPdfProcessor.getPdfData(ref, item.versionId);
+    if (pdfData != null) {
+      final pdfBytes = await BandaPdfGenerator.generateReport(
+        pdfData.datosNormalizados,
+        pdfData.sections,
+        pdfData.rodillos,
+      );
+      await Printing.layoutPdf(onLayout: (_) async => pdfBytes);
     }
   }
 }

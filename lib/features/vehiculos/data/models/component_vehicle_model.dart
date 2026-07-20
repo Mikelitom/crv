@@ -1,22 +1,23 @@
 import 'dart:typed_data';
+
 class EvidenceFile {
   final Uint8List bytes;
   final String type;
   final String mimeType;
-  
-  // AQUÍ ES DONDE DEBES AGREGAR:
-  final String? path; 
+  final String? path;
+  final String? fileName;
 
   EvidenceFile({
     required this.bytes,
     required this.type,
     required this.mimeType,
-    this.path, // <--- Y AQUÍ EN EL CONSTRUCTOR
+    this.path,
+    this.fileName
   });
 }
 
 class ComponentVehicleModel {
-  final String id; 
+  final String id;
   final String description;
   String? selectedOptionId; // UUID de la opción (good, bad, etc.)
   String observations;
