@@ -31,7 +31,7 @@ class ConnectivitySyncService {
   Future<bool> checkBackend() async {
     try {
       final response = await dio.get(
-        '/info',
+        '/health',
         options: Options(
           sendTimeout: const Duration(seconds: 5),
           receiveTimeout: const Duration(seconds: 5),
