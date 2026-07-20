@@ -45,7 +45,6 @@ class SidebarTechnician extends ConsumerWidget {
             SidebarItem(
               icon: Icons.assignment_outlined,
               label: 'Reportes',
-              badgeCount: 3,
               isActive: selectedIndex == 1,
               onTap: () => onItemSelected(1),
             ),

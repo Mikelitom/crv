@@ -137,19 +137,19 @@ class _ReportsViewState extends ConsumerState<ReportsView> {
 
   Widget _buildTableForType(List<dynamic> items, int typeIndex) {
     // Lógica de cálculo de estados para los contadores
-    final total = items.length;
-    final pending = items
-        .where((r) => (r.state ?? "").toUpperCase() == "PENDING")
-        .length;
-    final approved = items
-        .where((r) => (r.state ?? "").toUpperCase() == "APPROVED")
-        .length;
-    final returned = items
-        .where(
-          (r) =>
-              ["REJECTED", "RETURNED"].contains((r.state ?? "").toUpperCase()),
-        )
-        .length;
+    // final total = items.length;
+    // final pending = items
+    //     .where((r) => (r.state ?? "").toUpperCase() == "PENDING")
+    //     .length;
+    // final approved = items
+    //     .where((r) => (r.state ?? "").toUpperCase() == "APPROVED")
+    //     .length;
+    // final returned = items
+    //     .where(
+    //       (r) =>
+    //           ["REJECTED", "RETURNED"].contains((r.state ?? "").toUpperCase()),
+    //     )
+    //     .length;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
