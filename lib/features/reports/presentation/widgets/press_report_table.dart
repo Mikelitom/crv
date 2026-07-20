@@ -8,6 +8,8 @@ import 'package:crv_reprosisa/features/reports/data/models/press_history_model.d
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
+const Color kPrimaryRed = Color(0xFFC62828);
+
 class PressReportTable extends StatelessWidget with ReportActionHandler {
   final List<dynamic> reports;
   final bool isAdmin;
@@ -17,6 +19,60 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     required this.reports,
     required this.isAdmin,
   });
+
+  // Traducción completa de estados al español para prensas
+  String _translateStatus(String state) {
+    switch (state.toUpperCase()) {
+      case 'PENDING':
+      case 'PENDIENTE':
+        return 'PENDIENTE';
+      case 'COMPLETED':
+      case 'COMPLETADO':
+        return 'COMPLETADO';
+      case 'ACCEPTED':
+      case 'ACEPTADO':
+        return 'ACEPTADO';
+      case 'REJECTED':
+      case 'RECHAZADO':
+        return 'RECHAZADO';
+      case 'IN_REVISION':
+      case 'EN REVISIÓN':
+        return 'EN REVISIÓN';
+      default:
+        return state.toUpperCase();
+    }
+  }
+
+  // Chip de estado traducido y con colores correctos (Verde para completado/aceptado, Ámbar para revisión/pendiente, Rojo para rechazado)
+  @override
+  Widget statusChip(String state) {
+    final translated = _translateStatus(state);
+    Color color = Colors.grey;
+
+    if (translated.contains('COMPLETADO') || translated.contains('ACEPTADO')) {
+      color = Colors.green;
+    } else if (translated.contains('REVISIÓN') || translated.contains('PENDIENTE')) {
+      color = Colors.amber.shade700;
+    } else if (translated.contains('RECHAZADO')) {
+      color = kPrimaryRed;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        translated,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 10,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +89,7 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
 
             // De lo contrario, mostramos la tabla de escritorio normal
             return BaseTable(
-              columns: const ["SERIE", "FOLIO", "STATE", "FECHA", "ACTIONS"],
+              columns: const ["SERIE", "FOLIO", "ESTADO", "FECHA", "ACCIONES"],
               rows: filteredReports.map((r) {
                 final item = r as PressHistoryModel;
 
