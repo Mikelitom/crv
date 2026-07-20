@@ -28,4 +28,12 @@ class SyncController {
       _isSyncing = false;
     }
   }
+
+  Future<int> pendingReportsCount() async {
+    final vehiclePending = await vehicle.pendingReportsCount();
+    final pressPending = await press.pendingReportsCount();
+    final clientPending = await client.pendingReportsCount();
+  
+    return vehiclePending + pressPending + clientPending;
+  }
 }

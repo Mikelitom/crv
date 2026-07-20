@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/core/connectivity/widgets/connection_status_banner.dart';
 import 'package:flutter/material.dart';
 import '../widgets/navbar/dashboard_navbar.dart';
 
@@ -7,7 +8,7 @@ class DashboardLayout extends StatelessWidget {
   final bool isDesktop;
 
   final String userName;
-  final String userRole; // Recibimos el estado desde el ResponsiveLayout
+  final String userRole;
 
   const DashboardLayout({
     super.key,
@@ -22,29 +23,36 @@ class DashboardLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      // Si NO es desktop, la sidebar se va al Drawer (el menú lateral oculto)
+
       drawer: !isDesktop ? Drawer(child: sidebar) : null,
+
       body: Row(
         children: [
-          // La Sidebar solo aparece fija si es Desktop
+
           if (isDesktop) sidebar,
 
           Expanded(
             child: Column(
               children: [
-                // AQUÍ CORREGIMOS EL ERROR: Pasamos todos los parámetros requeridos
+
                 DashboardNavbar(
                   userName: userName,
                   userRole: userRole,
                   isDesktop: isDesktop,
                 ),
-                Expanded(child: content),
+
+                const ConnectionStatusBanner(),
+
+                Expanded(
+                  child: content,
+                ),
+
               ],
             ),
           ),
+
         ],
       ),
     );
   }
 }
-

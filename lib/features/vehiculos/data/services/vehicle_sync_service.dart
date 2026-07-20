@@ -35,4 +35,9 @@ class VehicleSyncService {
       }
     }
   }
+
+  Future<int> pendingReportsCount() async {
+    final pending = await localDatasource.getPendingReports();
+    return pending.length;
+  }
 }
