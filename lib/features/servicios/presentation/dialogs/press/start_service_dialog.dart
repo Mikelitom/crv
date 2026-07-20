@@ -21,131 +21,170 @@ class StartPressServiceDialog extends ConsumerStatefulWidget {
 
 class _StartPressServiceDialogState
     extends ConsumerState<StartPressServiceDialog> {
-  final _observationController = TextEditingController();
+  late final TextEditingController _observationController;
+  final _formKey = GlobalKey<FormState>();
 
-  bool _loading = false;
+  @override
+  void initState() {
+    super.initState();
+    _observationController = TextEditingController();
+  }
 
   @override
   void dispose() {
+    ref.read(startServiceNotifierProvider.notifier).reset();
     _observationController.dispose();
     super.dispose();
   }
 
   Future<void> _startService() async {
-    final observation = _observationController.text.trim();
+    if (!_formKey.currentState!.validate()) return;
+    
+    final notifier = ref.read(startServiceNotifierProvider.notifier);
+    await notifier.startService(
+      widget.order.id,
+      _observationController.text.trim(),
+    );
 
-    if (observation.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Debe ingresar una observación."),
-        ),
-      );
-      return;
-    }
+    final state = ref.read(startServiceNotifierProvider);
+    if (!mounted) return;
 
-    setState(() {
-      _loading = true;
-    });
-
-    try {
-      await ref
-          .read(startServiceNotifierProvider.notifier)
-          .startService(
-            widget.order.id,
-            observation,
-          );
-
-      final state = ref.read(startServiceNotifierProvider);
-
-      if (!mounted) return;
-
-      if (state.status == Status.success) {
-        await widget.onStarted();
-
+    if (state.status == Status.success) {
+      await widget.onStarted();
+      if (mounted) {
         Navigator.pop(context);
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Servicio iniciado correctamente."),
           ),
         );
-
-        ref.read(startServiceNotifierProvider.notifier).reset();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              state.error ?? "Ocurrió un error al iniciar el servicio.",
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text("Iniciar servicio"),
-      content: SizedBox(
-        width: 450,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              widget.order.description,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+    final state = ref.watch(startServiceNotifierProvider);
 
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: _observationController,
-              enabled: !_loading,
-              maxLines: 4,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: "Observación",
-                hintText: "Ingrese la observación del inicio del servicio",
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      child: Container(
+        width: 420,
+        padding: const EdgeInsets.all(28),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Iniciar orden de servicio",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _loading
-              ? null
-              : () => Navigator.pop(context),
-          child: const Text("Cancelar"),
-        ),
-        FilledButton.icon(
-          onPressed: _loading ? null : _startService,
-          icon: _loading
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
+              const SizedBox(height: 12),
+              Text(
+                widget.order.description,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 24),
+              TextFormField(
+                controller: _observationController,
+                enabled: state.status != Status.loading,
+                maxLines: 3,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  labelText: "Observación",
+                  hintText: "Ingrese la observación del inicio del servicio",
+                  alignLabelWithHint: true,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.only(bottom: 32),
+                    child: Icon(Icons.notes, color: Color(0xFFC62828)),
                   ),
-                )
-              : const Icon(Icons.play_arrow),
-          label: Text(
-            _loading ? "Iniciando..." : "Iniciar",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFFC62828), width: 2),
+                  ),
+                ),
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? "Ingrese una observación"
+                    : null,
+              ),
+              if (state.status == Status.error) ...[
+                const SizedBox(height: 16),
+                Text(
+                  state.error ?? "Ocurrió un error",
+                  style: const TextStyle(
+                    color: Color(0xFFC62828),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: state.status == Status.loading
+                        ? null
+                        : () => Navigator.pop(context),
+                    child: const Text(
+                      "Cancelar",
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFC62828),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: state.status == Status.loading ? null : _startService,
+                    child: state.status == Status.loading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            "Iniciar",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }

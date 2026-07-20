@@ -21,6 +21,60 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
     required this.isAdmin,
   });
 
+  // Traducción completa de estados al español
+  String _translateStatus(String state) {
+    switch (state.toUpperCase()) {
+      case 'PENDING':
+      case 'PENDIENTE':
+        return 'PENDIENTE';
+      case 'COMPLETED':
+      case 'COMPLETADO':
+        return 'COMPLETADO';
+      case 'ACCEPTED':
+      case 'ACEPTADO':
+        return 'ACEPTADO';
+      case 'REJECTED':
+      case 'RECHAZADO':
+        return 'RECHAZADO';
+      case 'IN_REVISION':
+      case 'EN REVISIÓN':
+        return 'EN REVISIÓN';
+      default:
+        return state.toUpperCase();
+    }
+  }
+
+  // Chip de estado traducido y con colores correctos (Verde para completado/aceptado, Ámbar para revisión/pendiente, Rojo para rechazado)
+  @override
+  Widget statusChip(String state) {
+    final translated = _translateStatus(state);
+    Color color = Colors.grey;
+
+    if (translated.contains('COMPLETADO') || translated.contains('ACEPTADO')) {
+      color = Colors.green;
+    } else if (translated.contains('REVISIÓN') || translated.contains('PENDIENTE')) {
+      color = Colors.amber.shade700;
+    } else if (translated.contains('RECHAZADO')) {
+      color = kPrimaryRed;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        translated,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 10,
+        ),
+      ),
+    );
+  }
+
   Future<void> _sendReviewNote(
     BuildContext context,
     WidgetRef ref,
@@ -49,36 +103,6 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
     }
   }
 
-  Future<void> _acceptReport(
-    BuildContext context,
-    WidgetRef ref,
-    String reportId,
-  ) async {
-    try {
-      await ref.read(reportsNotifierProvider.notifier).acceptReport(reportId);
-      await ref.read(reportsNotifierProvider.notifier).loadAllReports();
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Reporte aceptado y completado"),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error al aceptar: $e"),
-            backgroundColor: kPrimaryRed,
-          ),
-        );
-      }
-    }
-  }
-
   void _showManagementDialog(
     BuildContext context,
     WidgetRef ref,
@@ -88,6 +112,7 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text(
           "Gestionar Reporte",
           style: TextStyle(color: kPrimaryRed, fontWeight: FontWeight.bold),
@@ -101,8 +126,12 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
                 controller: noteController,
                 decoration: const InputDecoration(
                   labelText: "Nueva observación",
+                  labelStyle: TextStyle(color: Colors.grey),
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.note_alt_outlined),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: kPrimaryRed, width: 2),
+                  ),
+                  prefixIcon: Icon(Icons.note_alt_outlined, color: kPrimaryRed),
                 ),
                 maxLines: 3,
               ),
@@ -112,12 +141,7 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cerrar"),
-          ),
-          OutlinedButton.icon(
-            onPressed: () => _acceptReport(context, ref, item.reportId),
-            icon: const Icon(Icons.check_circle_outline, color: Colors.green),
-            label: const Text("Aceptar"),
+            child: const Text("Cerrar", style: TextStyle(color: Colors.grey)),
           ),
           FilledButton.icon(
             onPressed: () => _sendReviewNote(
@@ -145,12 +169,10 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            // Si el ancho es menor a 800px, mostramos la vista móvil de tarjetas desplegables
             if (constraints.maxWidth < 800) {
               return _buildMobileView(context, ref, filteredReports);
             }
 
-            // De lo contrario, mostramos la tabla de escritorio optimizada
             return BaseTable(
               columns: const [
                 "REPORTE",
@@ -266,7 +288,7 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
             border: Border.all(color: Colors.grey.shade200),
           ),
           child: ExpansionTile(
-            shape: const Border(), // Evita bordes adicionales al abrirse
+            shape: const Border(),
             leading: const Icon(
               Icons.settings_input_component,
               color: kPrimaryRed,
@@ -291,7 +313,6 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
               ],
             ),
             children: [
-              // ... dentro de _buildMobileView, en la sección de children del ExpansionTile:
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -305,13 +326,12 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
                           "Inspector: ",
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                         ),
-                        // Expanded evita el overflow si el nombre es muy largo
                         Expanded(
                           child: Text(
                             item.inspectorName,
                             style: const TextStyle(fontSize: 12),
-                            overflow: TextOverflow.ellipsis, // Opcional: recorta con "..." si es larguísimo
-                            maxLines: 2, // Permite hasta 2 líneas si quieres que baje automáticamente
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
                           ),
                         ),
                       ],
@@ -347,7 +367,7 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
                         ),
                         if (isAdmin) ...[
                           IconButton(
-                            icon: const Icon(Icons.print, color: Colors.red),
+                            icon: const Icon(Icons.print, color: kPrimaryRed),
                             onPressed: () => _handlePrint(context, ref, item),
                             tooltip: 'Imprimir',
                           ),
@@ -369,7 +389,6 @@ class ConveyorReportTable extends StatelessWidget with ReportActionHandler {
     );
   }
 
-  // Funciones auxiliares para evitar duplicar lógica de PDF
   Future<void> _handleView(
     BuildContext context,
     WidgetRef ref,

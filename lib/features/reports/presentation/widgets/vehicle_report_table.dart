@@ -5,6 +5,8 @@ import 'package:crv_reprosisa/features/reports/data/models/vehicle_history_model
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
+const Color kPrimaryRed = Color(0xFFC62828);
+
 class VehicleReportTable extends StatelessWidget {
   final List<dynamic> reports;
   final bool isAdmin;
@@ -14,6 +16,64 @@ class VehicleReportTable extends StatelessWidget {
     required this.reports,
     required this.isAdmin,
   });
+
+  // Traducción completa de estados al español para vehículos (incluyendo IN_PROGRESS)
+  String _translateStatus(String state) {
+    switch (state.toUpperCase()) {
+      case 'PENDING':
+      case 'PENDIENTE':
+        return 'PENDIENTE';
+      case 'COMPLETED':
+      case 'COMPLETADO':
+        return 'COMPLETADO';
+      case 'ACCEPTED':
+      case 'ACEPTADO':
+        return 'ACEPTADO';
+      case 'REJECTED':
+      case 'RECHAZADO':
+        return 'RECHAZADO';
+      case 'IN_REVISION':
+      case 'EN REVISIÓN':
+        return 'EN REVISIÓN';
+      case 'IN_PROGRESS':
+      case 'EN PROGRESO':
+        return 'EN PROGRESO';
+      default:
+        return state.toUpperCase();
+    }
+  }
+
+  // Chip de estado traducido y con colores correctos
+  Widget statusChip(String state) {
+    final translated = _translateStatus(state);
+    Color color = Colors.grey;
+
+    if (translated.contains('COMPLETADO') || translated.contains('ACEPTADO')) {
+      color = Colors.green;
+    } else if (translated.contains('REVISIÓN') || translated.contains('PENDIENTE')) {
+      color = Colors.amber.shade700;
+    } else if (translated.contains('PROGRESO')) {
+      color = Colors.blue;
+    } else if (translated.contains('RECHAZADO')) {
+      color = kPrimaryRed;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        translated,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 10,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,13 +93,13 @@ class VehicleReportTable extends StatelessWidget {
             // De lo contrario, mostramos la tabla de escritorio normal
             return BaseTable(
               columns: const [
-                "PLATE",
+                "PLACA",
                 "FOLIO",
-                "STATE",
-                "RESPONSIBLE",
-                "VERSION",
-                "DATE",
-                "ACTIONS",
+                "ESTADO",
+                "RESPONSABLE",
+                "VERSIÓN",
+                "FECHA",
+                "ACCIONES",
               ],
               rows: filteredReports.map((r) {
                 final item = r as VehicleHistoryModel;
