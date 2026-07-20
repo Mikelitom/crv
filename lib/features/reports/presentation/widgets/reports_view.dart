@@ -60,60 +60,54 @@ class _ReportsViewState extends ConsumerState<ReportsView> {
               ),
               tabs: const [
                 Tab(
-                  child: Flexible(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.layers_outlined, size: 18),
-                        SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            "Bandas",
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.layers_outlined, size: 18),
+                      SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          "Bandas",
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 Tab(
-                  child: Flexible(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.directions_car_outlined, size: 18),
-                        SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            "Vehículos",
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.directions_car_outlined, size: 18),
+                      SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          "Vehiculos",
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 Tab(
-                  child: Flexible(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.factory_outlined, size: 18),
-                        SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            "Prensas",
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.factory_outlined, size: 18),
+                      SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          "Prensas",
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],

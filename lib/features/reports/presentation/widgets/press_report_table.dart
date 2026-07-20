@@ -40,7 +40,6 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     }
   }
 
-  @override
   Widget statusChip(String state) {
     final translated = _translateStatus(state);
     Color color = Colors.green;
@@ -78,11 +77,12 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     );
   }
 
-  @override
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, ref, _) {
-        final filteredReports = reports.where((r) => r is PressHistoryModel).toList();
+        final filteredReports = reports
+            .where((r) => r is PressHistoryModel)
+            .toList();
         final totalCount = filteredReports.length;
 
         return Column(
@@ -98,7 +98,9 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: kPrimaryRed.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: kPrimaryRed.withValues(alpha: 0.2),
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.03),
@@ -115,7 +117,11 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                           color: kPrimaryRed.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.folder_open, color: kPrimaryRed, size: 18),
+                        child: const Icon(
+                          Icons.folder_open,
+                          color: kPrimaryRed,
+                          size: 18,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -143,10 +149,7 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                             ),
                             const Text(
                               "Registrados",
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: Colors.grey,
-                              ),
+                              style: TextStyle(fontSize: 9, color: Colors.grey),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -167,9 +170,9 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                   columns: const ["PRENSA", "FECHA", "ESTADO", "ACCIONES"],
                   rows: filteredReports.map((r) {
                     final item = r as PressHistoryModel;
-                    final dateStr = item.inspectionDate != null
-                        ? item.inspectionDate.toString().split(' ')[0]
-                        : 'N/A';
+                    final dateStr = item.inspectionDate.toString().split(
+                      ' ',
+                    )[0];
 
                     return DataRow(
                       cells: [
@@ -187,7 +190,8 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                                 Expanded(
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         "Serie: ${item.serie}",
@@ -211,13 +215,15 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                             ),
                           ),
                         ),
-                        DataCell(
-                          Text(dateStr),
-                        ),
+                        DataCell(Text(dateStr)),
                         DataCell(statusChip(item.state)),
                         DataCell(
                           PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert, size: 22, color: Colors.grey),
+                            icon: const Icon(
+                              Icons.more_vert,
+                              size: 22,
+                              color: Colors.grey,
+                            ),
                             color: Colors.white,
                             surfaceTintColor: Colors.white,
                             shape: RoundedRectangleBorder(
@@ -236,7 +242,11 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                                 value: 'view',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.visibility, color: Colors.blue, size: 18),
+                                    Icon(
+                                      Icons.visibility,
+                                      color: Colors.blue,
+                                      size: 18,
+                                    ),
                                     SizedBox(width: 8),
                                     Text('Ver PDF'),
                                   ],
@@ -247,7 +257,11 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                                   value: 'print',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.print, color: kPrimaryRed, size: 18),
+                                      Icon(
+                                        Icons.print,
+                                        color: kPrimaryRed,
+                                        size: 18,
+                                      ),
                                       SizedBox(width: 8),
                                       Text('Imprimir'),
                                     ],
@@ -268,16 +282,18 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     );
   }
 
-  Widget _buildMobileView(BuildContext context, WidgetRef ref, List<dynamic> filteredReports) {
+  Widget _buildMobileView(
+    BuildContext context,
+    WidgetRef ref,
+    List<dynamic> filteredReports,
+  ) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: filteredReports.length,
       itemBuilder: (context, index) {
         final item = filteredReports[index] as PressHistoryModel;
-        final dateStr = item.inspectionDate != null
-            ? item.inspectionDate.toString().split(' ')[0]
-            : 'N/A';
+        final dateStr = item.inspectionDate.toString().split(' ')[0];
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -319,7 +335,11 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                       children: [
                         const Text(
                           "PRENSA",
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -334,7 +354,10 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                         ),
                         Text(
                           "Folio: ${item.folio}",
-                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),
@@ -347,7 +370,11 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                     children: [
                       const Text(
                         "ESTADO",
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       statusChip(item.state),
@@ -367,17 +394,29 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                     children: [
                       const Text(
                         "FECHA",
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         dateStr,
-                        style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, size: 22, color: Colors.grey),
+                    icon: const Icon(
+                      Icons.more_vert,
+                      size: 22,
+                      color: Colors.grey,
+                    ),
                     color: Colors.white,
                     surfaceTintColor: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -396,7 +435,11 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                         value: 'view',
                         child: Row(
                           children: [
-                            Icon(Icons.visibility, color: Colors.blue, size: 18),
+                            Icon(
+                              Icons.visibility,
+                              color: Colors.blue,
+                              size: 18,
+                            ),
                             SizedBox(width: 8),
                             Text('Ver PDF'),
                           ],
@@ -424,9 +467,16 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     );
   }
 
-  Future<void> _handleView(BuildContext context, WidgetRef ref, PressHistoryModel item) async {
-    final data = await PressPdfProcessor.generatePdfFromVersionId(ref, item.versionId);
-    
+  Future<void> _handleView(
+    BuildContext context,
+    WidgetRef ref,
+    PressHistoryModel item,
+  ) async {
+    final data = await PressPdfProcessor.generatePdfFromVersionId(
+      ref,
+      item.versionId,
+    );
+
     if (data != null && context.mounted) {
       Navigator.push(
         context,
@@ -435,9 +485,16 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     }
   }
 
-  Future<void> _handlePrint(BuildContext context, WidgetRef ref, PressHistoryModel item) async {
-    final data = await PressPdfProcessor.generatePdfFromVersionId(ref, item.versionId);
-    
+  Future<void> _handlePrint(
+    BuildContext context,
+    WidgetRef ref,
+    PressHistoryModel item,
+  ) async {
+    final data = await PressPdfProcessor.generatePdfFromVersionId(
+      ref,
+      item.versionId,
+    );
+
     if (data != null) {
       final pdfBytes = await PrensaPdfGenerator.generateEsqueleto(data);
       await Printing.layoutPdf(onLayout: (_) async => pdfBytes);
