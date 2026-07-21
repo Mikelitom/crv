@@ -1,4 +1,5 @@
 import 'package:crv_reprosisa/core/bootstrap/load_initial_data.dart';
+import 'package:crv_reprosisa/core/bootstrap/load_templates.dart';
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
 import 'package:crv_reprosisa/features/auth/presentation/di/auth_providers.dart';
 import 'package:crv_reprosisa/features/auth/presentation/providers/auth_state.dart';
@@ -39,6 +40,7 @@ class AuthNotifier extends Notifier<AuthState> {
     );
 
     await loadInitialDataAfterLogin(ref);
+    await loadTemplates(ref);
   }
 
   /// Proceso de inicio de sesión con persistencia selectiva
@@ -82,6 +84,7 @@ class AuthNotifier extends Notifier<AuthState> {
         );
 
         await loadInitialDataAfterLogin(ref);
+        await loadTemplates(ref);
       },
     );
   }
