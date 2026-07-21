@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:crv_reprosisa/features/assets/domain/usecases/get_press_report_detail.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/accept_report_usecase.dart';
+import 'package:crv_reprosisa/features/reports/domain/usecase/get_pending_reports_usecase.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/send_conveyor_note_usecase.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -17,6 +18,7 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
   final GetConveyorReportDetailUseCase getConveyorDetail;
   final SendConveyorNoteUseCase sendConveyorNoteUseCase;
   final AcceptConveyorReportUseCase acceptConveyorReportUseCase;
+  final GetPendingReportsUsecase pendingReportsUsecase;
   final Dio dio;
 
   ReportsNotifier({
@@ -26,6 +28,7 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     required this.getConveyorDetail,
     required this.sendConveyorNoteUseCase,
     required this.acceptConveyorReportUseCase,
+    required this.pendingReportsUsecase,
     required this.dio,
   }) : super(const ReportsState());
 
@@ -79,6 +82,17 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     }
   }
 
+  Future<void> pendingReports() async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final reports = await pendingReportsUsecase.execute();
+      state = state.copyWith(isLoading: false, pendingReports: reports);
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
   /// Carga inicial de todos los reportes
   Future<void> loadAllReports() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -90,7 +104,7 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
         ...data['presses'] ?? [],
       ];
       print(combined);
-      state = state.copyWith(isLoading: false, allReports: combined,);
+      state = state.copyWith(isLoading: false, allReports: combined);
       filterReports();
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());

@@ -5,6 +5,7 @@ import 'package:crv_reprosisa/features/reports/data/repository/report_repository
 import 'package:crv_reprosisa/features/reports/domain/repository/report_repository.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/accept_report_usecase.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/get_all_reports_usecae.dart';
+import 'package:crv_reprosisa/features/reports/domain/usecase/get_pending_reports_usecase.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/send_conveyor_note_usecase.dart';
 import 'package:crv_reprosisa/features/reports/presentation/notifier/reports_notifier.dart';
 import 'package:crv_reprosisa/features/reports/presentation/provider/reports_state.dart';
@@ -40,6 +41,10 @@ final acceptReportUseCaseProvider = Provider((ref) {
   return AcceptConveyorReportUseCase(ref.read(reportRepositoryProvider));
 });
 
+final getPendingReportsUseCaseProvider = Provider((ref) {
+  return GetPendingReportsUsecase(ref.read(reportRepositoryProvider));
+});
+
 // 5. Provider del Notifier con inyección de todos los casos de uso
 final reportsNotifierProvider =
     StateNotifierProvider.autoDispose<ReportsNotifier, ReportsState>((ref) {
@@ -53,6 +58,7 @@ final reportsNotifierProvider =
         getConveyorReportDetailUseCaseProvider,
       );
       final getAcceptReport = ref.read(acceptReportUseCaseProvider);
+      final getPendingReport = ref.read(getPendingReportsUseCaseProvider);
       final dio = ref.read(dioProvider);
 
       return ReportsNotifier(
@@ -62,6 +68,7 @@ final reportsNotifierProvider =
         getPressDetail: getPressDetail,
         getConveyorDetail: getConveyorDetail,
         acceptConveyorReportUseCase: getAcceptReport,
+        pendingReportsUsecase: getPendingReport,
         dio: dio,
       );
     });

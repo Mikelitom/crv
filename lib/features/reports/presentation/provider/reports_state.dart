@@ -3,10 +3,12 @@ import 'package:flutter/foundation.dart';
 @immutable
 class ReportsState {
   final List<dynamic> allReports; // Lista completa cruda de la API
-  final List<dynamic> filteredReports; // Lista que se muestra en la UI tras filtrar
+  final List<dynamic>
+  filteredReports; // Lista que se muestra en la UI tras filtrar
   final bool isLoading;
   final String? errorMessage;
-  final int activeTabIndex; // 0: Bandas, 1: Vehículos, 2: Prensas
+  final int activeTabIndex;
+  final List<dynamic> pendingReports;
 
   const ReportsState({
     this.allReports = const [],
@@ -14,6 +16,7 @@ class ReportsState {
     this.isLoading = false,
     this.errorMessage,
     this.activeTabIndex = 0,
+    this.pendingReports = const []
   });
 
   /// Factory inicial para cuando la app arranca
@@ -25,6 +28,7 @@ class ReportsState {
     bool? isLoading,
     String? errorMessage,
     int? activeTabIndex,
+    List<dynamic>? pendingReports,
   }) {
     return ReportsState(
       allReports: allReports ?? this.allReports,
@@ -32,6 +36,7 @@ class ReportsState {
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
       activeTabIndex: activeTabIndex ?? this.activeTabIndex,
+      pendingReports: pendingReports ?? this.pendingReports
     );
   }
 
