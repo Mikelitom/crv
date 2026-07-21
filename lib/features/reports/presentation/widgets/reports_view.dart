@@ -43,20 +43,21 @@ class _ReportsViewState extends ConsumerState<ReportsView> {
               ),
             ),
 
-            // Pestañas con estilo profesional e iconos
+            // Pestañas mejoradas para evitar desbordamientos con texto flexible e iconos adaptados
             TabBar(
               onTap: (index) =>
                   ref.read(reportsNotifierProvider.notifier).changeTab(index),
               labelColor: const Color(0xFFC62828),
               unselectedLabelColor: Colors.grey.shade600,
               indicatorSize: TabBarIndicatorSize.tab,
+              isScrollable: false,
               indicator: const UnderlineTabIndicator(
                 borderSide: BorderSide(color: Color(0xFFC62828), width: 3),
-                insets: EdgeInsets.symmetric(horizontal: 16),
+                insets: EdgeInsets.symmetric(horizontal: 8),
               ),
               labelStyle: const TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: 12.5,
               ),
               tabs: const [
                 Tab(
@@ -64,12 +65,12 @@ class _ReportsViewState extends ConsumerState<ReportsView> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.layers_outlined, size: 18),
-                      SizedBox(width: 8),
+                      Icon(Icons.layers_outlined, size: 16),
+                      SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           "Bandas",
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.visible,
                           maxLines: 1,
                         ),
                       ),
@@ -81,12 +82,12 @@ class _ReportsViewState extends ConsumerState<ReportsView> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.directions_car_outlined, size: 18),
-                      SizedBox(width: 8),
+                      Icon(Icons.directions_car_outlined, size: 16),
+                      SizedBox(width: 4),
                       Flexible(
                         child: Text(
-                          "Vehiculos",
-                          overflow: TextOverflow.ellipsis,
+                          "Vehículos",
+                          overflow: TextOverflow.visible,
                           maxLines: 1,
                         ),
                       ),
@@ -98,12 +99,12 @@ class _ReportsViewState extends ConsumerState<ReportsView> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.factory_outlined, size: 18),
-                      SizedBox(width: 8),
+                      Icon(Icons.factory_outlined, size: 16),
+                      SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           "Prensas",
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.visible,
                           maxLines: 1,
                         ),
                       ),
@@ -136,26 +137,10 @@ class _ReportsViewState extends ConsumerState<ReportsView> {
   }
 
   Widget _buildTableForType(List<dynamic> items, int typeIndex) {
-    // Lógica de cálculo de estados para los contadores
-    final total = items.length;
-    final pending = items
-        .where((r) => (r.state ?? "").toUpperCase() == "PENDING")
-        .length;
-    final approved = items
-        .where((r) => (r.state ?? "").toUpperCase() == "APPROVED")
-        .length;
-    final returned = items
-        .where(
-          (r) =>
-              ["REJECTED", "RETURNED"].contains((r.state ?? "").toUpperCase()),
-        )
-        .length;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          // Renderizado de la tabla correspondiente sin duplicar el summary grid superior
           if (typeIndex == 0)
             ConveyorReportTable(reports: items, isAdmin: widget.isAdmin)
           else if (typeIndex == 1)

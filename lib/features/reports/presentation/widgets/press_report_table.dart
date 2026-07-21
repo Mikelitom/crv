@@ -9,8 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 const Color kPrimaryRed = Color(0xFFC62828);
+const Color kCardBg = Colors.white;
+const Color kDarkText = Color(0xFF1A1C1E);
+const Color kGreyText = Color(0xFF757575);
 
-class PressReportTable extends StatelessWidget with ReportActionHandler {
+class PressReportTable extends ConsumerStatefulWidget {
   final List<dynamic> reports;
   final bool isAdmin;
 
@@ -19,6 +22,17 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     required this.reports,
     required this.isAdmin,
   });
+
+  @override
+  ConsumerState<PressReportTable> createState() => _PressReportTableState();
+}
+
+class _PressReportTableState extends ConsumerState<PressReportTable> with ReportActionHandler {
+  String searchQuery = '';
+  String selectedStatus = 'Todos';
+
+  // Mapa para guardar la versión seleccionada actualmente por cada reporte usando el identificador base
+  final Map<String, PressHistoryModel> _selectedVersions = {};
 
   String _translateStatus(String state) {
     switch (state.toUpperCase()) {
@@ -34,22 +48,31 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
         return 'Aprobado';
       case 'REJECTED':
       case 'RECHAZADO':
+      case 'DEVUELTO':
         return 'Regresado';
       default:
         return 'Aprobado';
     }
   }
 
+  Color _getStatusColor(String state) {
+    final translated = _translateStatus(state);
+    if (translated == 'En revisión') {
+      return Colors.amber.shade700;
+    } else if (translated == 'Regresado') {
+      return Colors.purple;
+    }
+    return Colors.green;
+  }
+
   Widget statusChip(String state) {
     final translated = _translateStatus(state);
-    Color color = Colors.green;
+    final color = _getStatusColor(state);
     IconData icon = Icons.check_circle_outlined;
 
     if (translated == 'En revisión') {
-      color = Colors.amber.shade700;
       icon = Icons.access_time_rounded;
     } else if (translated == 'Regresado') {
-      color = Colors.purple;
       icon = Icons.keyboard_return;
     }
 
@@ -77,205 +100,367 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
     );
   }
 
+  // Selector de versión compacto integrado en el título con formato v1, v2 y salto de línea seguro
+  Widget _buildVersionSelector(BuildContext context, PressHistoryModel currentItem, List<PressHistoryModel> allReports) {
+    final versiones = allReports.where((i) => i.reportId == currentItem.reportId).toList()
+      ..sort((a, b) => b.inspectionDate.compareTo(a.inspectionDate));
+
+    final versionIndex = versiones.indexWhere((v) => v.versionId == currentItem.versionId);
+    final versionNumber = versionIndex != -1 ? versiones.length - versionIndex : (currentItem.versionNumber > 0 ? currentItem.versionNumber : 1);
+
+    if (versiones.length <= 1) {
+      return Text(
+        "Serie: ${currentItem.serie} (v$versionNumber)",
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+          color: kDarkText,
+        ),
+      );
+    }
+
+    return PopupMenuButton<PressHistoryModel>(
+      padding: EdgeInsets.zero,
+      tooltip: "Cambiar versión",
+      offset: const Offset(0, 30),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      color: Colors.white,
+      surfaceTintColor: Colors.white,
+      onSelected: (selectedVersion) {
+        setState(() {
+          _selectedVersions[currentItem.reportId] = selectedVersion;
+        });
+      },
+      itemBuilder: (context) {
+        return List.generate(versiones.length, (idx) {
+          final v = versiones[idx];
+          final vNum = versiones.length - idx;
+          final isSelected = v.versionId == currentItem.versionId;
+          return PopupMenuItem(
+            value: v,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.factory_outlined,
+                  size: 16,
+                  color: isSelected ? kPrimaryRed : Colors.grey,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "v$vNum • Folio: ${v.folio}",
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? kPrimaryRed : kDarkText,
+                  ),
+                ),
+                if (isSelected) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.check, size: 14, color: Colors.green),
+                ],
+              ],
+            ),
+          );
+        });
+      },
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 2,
+        runSpacing: 2,
+        children: [
+          Text(
+            "Serie: ${currentItem.serie} (v$versionNumber)",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: kDarkText,
+            ),
+          ),
+          const Icon(Icons.arrow_drop_down, size: 18, color: kPrimaryRed),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, _) {
-        final filteredReports = reports
-            .where((r) => r is PressHistoryModel)
-            .toList();
-        final totalCount = filteredReports.length;
+    final allReports = widget.reports
+        .where((r) => r is PressHistoryModel)
+        .cast<PressHistoryModel>()
+        .toList();
+
+    // Agrupamos por reportId para mostrar la versión más reciente por defecto o la seleccionada
+    final Map<String, PressHistoryModel> uniqueMap = {};
+    for (var item in allReports) {
+      if (!uniqueMap.containsKey(item.reportId) ||
+          item.inspectionDate.isAfter(uniqueMap[item.reportId]!.inspectionDate)) {
+        uniqueMap[item.reportId] = item;
+      }
+    }
+
+    final activeReports = uniqueMap.entries.map((entry) {
+      return _selectedVersions[entry.key] ?? entry.value;
+    }).toList();
+
+    // Aplicar buscador y filtros de estado
+    final filteredReports = activeReports.where((item) {
+      final matchesSearch = searchQuery.isEmpty ||
+          item.folio.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          item.serie.toLowerCase().contains(searchQuery.toLowerCase());
+
+      final translatedState = _translateStatus(item.state);
+      final matchesStatus = selectedStatus == 'Todos' || translatedState == selectedStatus;
+
+      return matchesSearch && matchesStatus;
+    }).toList();
+
+    final totalCount = allReports.length;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 800;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Contador compacto estilo tarjeta cuadrada idéntico al de vehículos
+            // Contador compacto estilo tarjeta cuadrada idéntico al solicitado
             Padding(
               padding: const EdgeInsets.only(bottom: 24.0),
               child: SizedBox(
                 width: 260,
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: kPrimaryRed.withValues(alpha: 0.2),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: kPrimaryRed.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.folder_open,
-                          color: kPrimaryRed,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "Total de Reportes",
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              "$totalCount",
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                                color: kPrimaryRed,
-                              ),
-                            ),
-                            const Text(
-                              "Registrados",
-                              style: TextStyle(fontSize: 9, color: Colors.grey),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                child: _AnimatedStatCard(
+                  value: "$totalCount",
+                  label: "Total Registrados",
+                  icon: Icons.folder_open,
+                  color: kPrimaryRed,
                 ),
               ),
             ),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                if (constraints.maxWidth < 800) {
-                  return _buildMobileView(context, ref, filteredReports);
-                }
 
-                return BaseTable(
-                  columns: const ["PRENSA", "FECHA", "ESTADO", "ACCIONES"],
-                  rows: filteredReports.map((r) {
-                    final item = r as PressHistoryModel;
-                    final dateStr = item.inspectionDate.toString().split(
-                      ' ',
-                    )[0];
+            // Barra de búsqueda y filtros
+            Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 300,
+                    child: TextField(
+                      onChanged: (val) => setState(() => searchQuery = val),
+                      decoration: InputDecoration(
+                        hintText: "Buscar por folio, serie...",
+                        hintStyle: const TextStyle(fontSize: 12, color: kGreyText),
+                        prefixIcon: const Icon(Icons.search, size: 18, color: kPrimaryRed),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: kPrimaryRed, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedStatus,
+                        icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: kPrimaryRed),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kDarkText),
+                        items: ['Todos', 'En revisión', 'Aprobado', 'Regresado'].map((status) {
+                          return DropdownMenuItem(value: status, child: Text("Estado: $status"));
+                        }).toList(),
+                        onChanged: (val) => setState(() => selectedStatus = val ?? 'Todos'),
+                      ),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() {
+                      searchQuery = '';
+                      selectedStatus = 'Todos';
+                      _selectedVersions.clear();
+                    }),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: kPrimaryRed,
+                      side: BorderSide(color: kPrimaryRed.withValues(alpha: 0.4)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                    icon: const Icon(Icons.filter_alt_off_outlined, size: 16, color: kPrimaryRed),
+                    label: const Text("Limpiar filtros", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
 
-                    return DataRow(
-                      cells: [
-                        DataCell(
-                          SizedBox(
-                            width: 180,
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.factory_outlined,
-                                  color: kPrimaryRed,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+            const Padding(
+              padding: EdgeInsets.only(bottom: 14.0, left: 4.0),
+              child: Text(
+                "Historial de Reportes de Prensas",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: kDarkText,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+
+            if (isMobile)
+              _buildMobileView(context, ref, filteredReports, allReports)
+            else
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: BaseTable(
+                    columns: const ["PRENSA", "FECHA", "ESTADO", "ACCIONES"],
+                    rows: filteredReports.map((item) {
+                      final dynamicIconColor = _getStatusColor(item.state);
+                      final dateStr = item.inspectionDate.toString().split(' ')[0];
+
+                      return DataRow(
+                        cells: [
+                          DataCell(
+                            SizedBox(
+                              width: 230,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: dynamicIconColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.factory_outlined,
+                                        color: dynamicIconColor,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        _buildVersionSelector(context, item, allReports),
+                                        Text(
+                                          "Folio: ${item.folio}",
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: kGreyText,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            Text(
+                              dateStr,
+                              style: const TextStyle(color: kDarkText, fontWeight: FontWeight.w500, fontSize: 12),
+                            ),
+                          ),
+                          DataCell(statusChip(item.state)),
+                          DataCell(
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert, size: 22, color: kGreyText),
+                              color: Colors.white,
+                              surfaceTintColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: Colors.grey.shade200),
+                              ),
+                              onSelected: (value) {
+                                if (value == 'view') {
+                                  _handleView(context, ref, item);
+                                } else if (value == 'print') {
+                                  _handlePrint(context, ref, item);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'view',
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        "Serie: ${item.serie}",
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Text(
-                                        "Folio: ${item.folio}",
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                      Icon(Icons.visibility, color: Colors.blue, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Ver PDF'),
                                     ],
                                   ),
                                 ),
+                                if (widget.isAdmin)
+                                  const PopupMenuItem(
+                                    value: 'print',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.print, color: kPrimaryRed, size: 18),
+                                        SizedBox(width: 8),
+                                        Text('Imprimir'),
+                                      ],
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
-                        ),
-                        DataCell(Text(dateStr)),
-                        DataCell(statusChip(item.state)),
-                        DataCell(
-                          PopupMenuButton<String>(
-                            icon: const Icon(
-                              Icons.more_vert,
-                              size: 22,
-                              color: Colors.grey,
-                            ),
-                            color: Colors.white,
-                            surfaceTintColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: Colors.grey.shade200),
-                            ),
-                            onSelected: (value) {
-                              if (value == 'view') {
-                                _handleView(context, ref, item);
-                              } else if (value == 'print') {
-                                _handlePrint(context, ref, item);
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                value: 'view',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.visibility,
-                                      color: Colors.blue,
-                                      size: 18,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text('Ver PDF'),
-                                  ],
-                                ),
-                              ),
-                              if (isAdmin)
-                                const PopupMenuItem(
-                                  value: 'print',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.print,
-                                        color: kPrimaryRed,
-                                        size: 18,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text('Imprimir'),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                );
-              },
-            ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
           ],
         );
       },
@@ -285,15 +470,17 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
   Widget _buildMobileView(
     BuildContext context,
     WidgetRef ref,
-    List<dynamic> filteredReports,
+    List<PressHistoryModel> filteredReports,
+    List<PressHistoryModel> allReports,
   ) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: filteredReports.length,
       itemBuilder: (context, index) {
-        final item = filteredReports[index] as PressHistoryModel;
+        final item = filteredReports[index];
         final dateStr = item.inspectionDate.toString().split(' ')[0];
+        final dynamicIconColor = _getStatusColor(item.state);
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -304,81 +491,73 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
             border: Border.all(color: Colors.grey.shade200),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: kPrimaryRed.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.factory_outlined,
-                      color: kPrimaryRed,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "PRENSA",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          "Serie: ${item.serie}",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: Colors.black87,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                        Text(
-                          "Folio: ${item.folio}",
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Text(
-                        "ESTADO",
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: dynamicIconColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.factory_outlined,
+                            color: dynamicIconColor,
+                            size: 22,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      statusChip(item.state),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "PRENSA",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            _buildVersionSelector(context, item, allReports),
+                          ],
+                        ),
+                      ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 54.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "Folio: ${item.folio}",
+                            style: const TextStyle(fontSize: 11, color: Colors.grey),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        statusChip(item.state),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -394,29 +573,17 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                     children: [
                       const Text(
                         "FECHA",
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         dateStr,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: const TextStyle(fontSize: 11.5, color: Colors.black87, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
                   PopupMenuButton<String>(
-                    icon: const Icon(
-                      Icons.more_vert,
-                      size: 22,
-                      color: Colors.grey,
-                    ),
+                    icon: const Icon(Icons.more_vert, size: 22, color: Colors.grey),
                     color: Colors.white,
                     surfaceTintColor: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -435,17 +602,13 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
                         value: 'view',
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.visibility,
-                              color: Colors.blue,
-                              size: 18,
-                            ),
+                            Icon(Icons.visibility, color: Colors.blue, size: 18),
                             SizedBox(width: 8),
                             Text('Ver PDF'),
                           ],
                         ),
                       ),
-                      if (isAdmin)
+                      if (widget.isAdmin)
                         const PopupMenuItem(
                           value: 'print',
                           child: Row(
@@ -499,5 +662,103 @@ class PressReportTable extends StatelessWidget with ReportActionHandler {
       final pdfBytes = await PrensaPdfGenerator.generateEsqueleto(data);
       await Printing.layoutPdf(onLayout: (_) async => pdfBytes);
     }
+  }
+}
+
+class _AnimatedStatCard extends StatefulWidget {
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _AnimatedStatCard({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  State<_AnimatedStatCard> createState() => _AnimatedStatCardState();
+}
+
+class _AnimatedStatCardState extends State<_AnimatedStatCard> {
+  bool isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isHovered ? const Color(0xFFFAFAFA) : kCardBg,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: isHovered
+                  ? widget.color.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.05),
+              blurRadius: isHovered ? 18 : 10,
+              offset: Offset(0, isHovered ? 6 : 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    widget.label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: isHovered ? widget.color : kGreyText,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.value,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: kDarkText,
+                      letterSpacing: -1,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                color: isHovered ? widget.color : widget.color.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                widget.icon,
+                color: isHovered ? Colors.white : widget.color,
+                size: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
