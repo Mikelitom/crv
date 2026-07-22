@@ -490,6 +490,13 @@ class _InteractiveWeeklyChartCardState
     List<int> dataValues = [];
     List<String> labels = [];
 
+    // Filtrar estrictamente los reportes que estén aprobados/completados usando su inspection_date
+    final approvedInspections = widget.inspections.where((item) {
+      final state = (item.state).toUpperCase();
+      final bool isCompleted = state == 'COMPLETED' || state == 'COMPLETADO' || state == 'APPROVED' || state == 'APROBADO' || state == 'ACCEPTED' || state == 'ACEPTADO';
+      return isCompleted;
+    }).toList();
+
     if (selectedPeriod == 'Últimos 7 días') {
       List<DateTime> days = List.generate(
         7,
@@ -518,7 +525,7 @@ class _InteractiveWeeklyChartCardState
       }).toList();
 
       dataValues = days.map((day) {
-        return widget.inspections.where((item) {
+        return approvedInspections.where((item) {
           try {
             if (item.date.isEmpty) return false;
       
@@ -621,7 +628,7 @@ class _InteractiveWeeklyChartCardState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "2. Reportes Totales",
+                      "2. Reportes Aprobados",
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 15,
