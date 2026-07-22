@@ -1987,7 +1987,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     return months[month - 1];
   }
 
-  Widget _buildHeader(Vehicle v) {
+Widget _buildHeader(Vehicle v) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -1999,12 +1999,20 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
               color: Colors.grey.shade100,
+              image: (v.imageUrl != null && v.imageUrl!.isNotEmpty)
+                  ? DecorationImage(
+                      image: NetworkImage(v.imageUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: const Icon(
-              Icons.directions_car,
-              size: 30,
-              color: Colors.grey,
-            ),
+            child: (v.imageUrl == null || v.imageUrl!.isEmpty)
+                ? const Icon(
+                    Icons.directions_car,
+                    size: 30,
+                    color: Colors.grey,
+                  )
+                : null,
           ),
           Expanded(
             child: Column(
@@ -2051,7 +2059,6 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
       ),
     );
   }
-
   Widget _buildRecurrenciaSection() {
     final state = ref.watch(incidenceNotifierProvider);
 
