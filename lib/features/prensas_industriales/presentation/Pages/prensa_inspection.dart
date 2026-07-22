@@ -1,6 +1,7 @@
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:intl/intl.dart';
@@ -289,9 +290,16 @@ Future<void> _guardarInspeccion() async {
                     onActionTap: () => Navigator.pop(context),
                   ),
                   const SizedBox(height: 32),
-                  CaptureMethodSelector(
+               CaptureMethodSelector(
                     onManualFill: () => setState(() => isScanning = false),
-                    onScan: () => setState(() => isScanning = true),
+                    onImageCaptured: (XFile? image) {
+                      if (image != null) {
+                        // Aquí puedes manejar la imagen capturada por la cámara,
+                        // por ejemplo, guardarla en tu provider o procesarla.
+                        setState(() => isScanning = false);
+                        _showSnack("¡Imagen capturada con éxito!", Colors.green);
+                      }
+                    },
                   ),
                   const SizedBox(height: 32),
                   AnimatedSwitcher(

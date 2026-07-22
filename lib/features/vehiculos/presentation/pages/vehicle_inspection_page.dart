@@ -150,10 +150,20 @@ Future<void> _finalizar() async {
                     onActionTap: () => Navigator.pop(context),
                   ),
                   const SizedBox(height: 24),
-                  CaptureMethodSelector(
-                    onManualFill: () => notifier.setScanning(false),
-                    onScan: () => notifier.setScanning(true),
-                  ),
+                 CaptureMethodSelector(
+  onManualFill: () => notifier.setScanning(false),
+  onImageCaptured: (image) {
+    if (image != null) {
+      notifier.setScanning(false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("¡Imagen capturada con éxito!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  },
+),
                   const SizedBox(height: 24),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
