@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:crv_reprosisa/features/ocr/domain/contracts/image_processsor.dart';
+
+import 'package:crv_reprosisa/features/ocr/domain/repositories/image_processsor.dart';
 
 import '../../domain/entities/scan_result.dart';
 
