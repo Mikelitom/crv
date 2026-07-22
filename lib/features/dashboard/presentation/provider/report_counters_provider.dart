@@ -3,7 +3,6 @@ import 'package:crv_reprosisa/features/dashboard/data/model/report_counters_mode
 import 'package:crv_reprosisa/features/dashboard/domain/repository/dashboard_repository.dart';
 import 'package:crv_reprosisa/features/dashboard/domain/usecase/get_report_counters_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../data/datasource/dashboard_remote_datasource.dart';
 import '../../data/repository/dashboard_repository_impl.dart';

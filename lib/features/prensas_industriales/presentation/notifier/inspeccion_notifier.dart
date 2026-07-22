@@ -31,6 +31,19 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
   void updateTemplateItems(List<ComponentItem> items) =>
       state = state.copyWith(templateItems: items);
 
+  Future<void> loadTemplate() async {
+    try {
+      final repo = ref.read(inspeccionRepositoryProvider);
+      final result = await repo.getInspectionTemplate();
+      result.fold(
+        (f) => null,
+        (items) => state = state.copyWith(templateItems: items),
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
   Future<void> loadReportDetail(String versionId) async {
     // 1. Reset seguro que mantiene templates si existen
     final currentTemplates = state.templateItems;

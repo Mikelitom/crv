@@ -14,14 +14,4 @@ Future<void> loadInitialDataAfterLogin(Ref ref) async {
   await pressInspRepo.getLoanAreas();
   await vehicleRepo.getAllVehicle();
   await clientRepo.getAllClients();
-
-  // presses.fold(
-  //   (_) {},
-  //   (data) => ref.read(pressStateProvider.notifier).setAll(data),
-  // );
-
-  // vehicles.fold(
-  //   (_) {},
-  //   (data) => ref.read(vehicleStateProvider.notifier).setAll(data),
-  // );
 }

@@ -11,17 +11,40 @@ class InspectionNotifier extends Notifier<InspectionState> {
   InspectionState build() => InspectionState();
 
   Future<void> loadInspections() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    final result = await ref.read(getMyInspectionsUseCaseProvider).call();
-    result.fold(
-      (f) => state = state.copyWith(isLoading: false, errorMessage: "Error"),
-      (data) => state = state.copyWith(
-        isLoading: false, 
-        allInspections: data, 
-        filteredInspections: data,
-        stats: _calculateStats(data)
-      ),
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
     );
+  
+    try {
+      final result =
+          await ref.read(getMyInspectionsUseCaseProvider).call();
+  
+      result.fold(
+        (_) {
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: "Error",
+          );
+        },
+        (data) {
+          state = state.copyWith(
+            isLoading: false,
+            allInspections: data,
+            filteredInspections: data,
+            stats: _calculateStats(data),
+          );
+        },
+      );
+    } catch (e, s) {
+      debugPrint("loadInspections: $e");
+      debugPrintStack(stackTrace: s);
+  
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
   Future<void> loadInspectionDetail(String id) async {
