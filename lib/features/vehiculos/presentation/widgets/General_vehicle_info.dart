@@ -1,6 +1,6 @@
 import 'package:crv_reprosisa/features/vehiculos/presentation/provider/vehicle_inspection_state.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Para LogicalKeySet
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../provider/vehicle_inspection_provider.dart';
@@ -15,6 +15,7 @@ class GeneralVehicleInfo extends ConsumerStatefulWidget {
 class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
   final TextEditingController _unitController = TextEditingController();
   final TextEditingController _mileageController = TextEditingController();
+  bool _showError = false;
 
   @override
   void dispose() {
@@ -23,9 +24,26 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
     super.dispose();
   }
 
+  // Método público o de acceso para validar antes de enviar
+  bool validateMileage() {
+    final state = ref.read(vehicleInspectionProvider);
+    final mileageValue = double.tryParse(state.mileage) ?? 0.0;
+
+    if (mileageValue <= 0) {
+      setState(() {
+        _showError = true;
+      });
+      return false;
+    }
+
+    setState(() {
+      _showError = false;
+    });
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Sincronización de controladores con el estado
     ref.listen<VehicleInspectionState>(vehicleInspectionProvider, (previous, next) {
       if (next.selectedVehicle != null) {
         final v = next.selectedVehicle!;
@@ -48,17 +66,10 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
     final allPlatesAsync = ref.watch(allPlatesProvider);
     final String formattedDate = DateFormat('dd/MM/yyyy').format(state.inspectionDate);
 
-    // --- ATAJOS DE TECLADO ---
     return CallbackShortcuts(
       bindings: <ShortcutActivator, VoidCallback>{
-        // Ctrl + S para Finalizar/Guardar (Igual que en Neovim/Prensas)
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyS): () {
-          // Asumiendo que esta función está en tu Page o Notifier
-          // ref.read(vehicleInspectionProvider.notifier).finalizarInspeccion();
-        },
-        // Ctrl + P para Vista Previa
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyP): () {
-           // _showPdfPreview(context);
+          validateMileage();
         },
       },
       child: LayoutBuilder(
@@ -94,7 +105,7 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
                 if (isMobile)
                   Column(
                     children: [
-                      _buildPlateAutocomplete(allPlatesAsync, constraints.maxWidth),
+                      _buildPlateAutocomplete(allPlatesAsync),
                       const SizedBox(height: 16),
                       _buildField("Unidad (Marca Modelo Año)", _buildUnitTextField()),
                       const SizedBox(height: 16),
@@ -107,7 +118,7 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(child: _buildPlateAutocomplete(allPlatesAsync, constraints.maxWidth / 4)),
+                      Expanded(child: _buildPlateAutocomplete(allPlatesAsync)),
                       const SizedBox(width: 16),
                       Expanded(child: _buildField("Unidad (Marca Modelo Año)", _buildUnitTextField())),
                       const SizedBox(width: 16),
@@ -129,19 +140,18 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
       controller: _unitController,
       readOnly: true,
       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1A1C1E)),
-      decoration: _inputStyle(true),
+      decoration: _inputStyle(readOnly: true),
     );
   }
 
-  Widget _buildPlateAutocomplete(AsyncValue<List<String>> allPlatesAsync, double width) {
+  Widget _buildPlateAutocomplete(AsyncValue<List<String>> allPlatesAsync) {
     return _buildField(
       "Placas",
       allPlatesAsync.when(
         data: (plates) => Autocomplete<String>(
-          // MEJORA: Mostrar todas las opciones si el campo está vacío
           optionsBuilder: (TextEditingValue textValue) {
             if (textValue.text == '') {
-              return plates; // Retorna la lista completa al hacer click
+              return plates;
             }
             return plates.where((p) => p.toUpperCase().contains(textValue.text.toUpperCase()));
           },
@@ -154,9 +164,9 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
               focusNode: focusNode,
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               decoration: _inputStyle(
-                false, 
+                readOnly: false, 
                 hint: "Escribe o selecciona...", 
-                suffixIcon: Icons.arrow_drop_down_circle_outlined // Icono de lista
+                suffixIcon: Icons.arrow_drop_down_circle_outlined
               ),
             );
           },
@@ -168,15 +178,54 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
   }
 
   Widget _buildMileageField() {
-    return _buildField(
-      "Kilometraje",
-      TextField(
-        controller: _mileageController,
-        keyboardType: TextInputType.number,
-        onChanged: (v) => ref.read(vehicleInspectionProvider.notifier).updateMileage(v),
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        decoration: _inputStyle(false, hint: "0"),
-      ),
+    // Verificación en tiempo real para activar la alerta visual inmediatamente si borran el valor o ponen 0
+    final state = ref.watch(vehicleInspectionProvider);
+    final val = double.tryParse(state.mileage) ?? 0.0;
+    final bool hasError = _showError || val <= 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildField(
+          "Kilometraje",
+          TextField(
+            controller: _mileageController,
+            keyboardType: TextInputType.number,
+            onChanged: (v) {
+              ref.read(vehicleInspectionProvider.notifier).updateMileage(v);
+              setState(() {
+                // Actualiza el estado visual al escribir
+                final parsed = double.tryParse(v) ?? 0.0;
+                _showError = parsed <= 0;
+              });
+            },
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            decoration: _inputStyle(
+              readOnly: false, 
+              hint: "0", 
+              isError: hasError,
+            ),
+          ),
+        ),
+        if (hasError) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: const [
+              Icon(Icons.error_outline_rounded, color: Color(0xFFC62828), size: 14),
+              SizedBox(width: 4),
+              Text(
+                "ERROR KILOMETRAJE TIENE QUE SER MAYOR A 0",
+                style: TextStyle(
+                  color: Color(0xFFC62828),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 
@@ -185,7 +234,7 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
       controller: TextEditingController(text: value),
       readOnly: true,
       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-      decoration: _inputStyle(true),
+      decoration: _inputStyle(readOnly: true),
     ));
   }
 
@@ -200,15 +249,32 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
     );
   }
 
-  InputDecoration _inputStyle(bool readOnly, {IconData? suffixIcon, String? hint}) {
+  InputDecoration _inputStyle({
+    required bool readOnly, 
+    IconData? suffixIcon, 
+    String? hint, 
+    bool isError = false,
+  }) {
     return InputDecoration(
       hintText: hint,
       filled: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: const Color(0xFFC62828), size: 18) : null,
       fillColor: readOnly ? const Color(0xFFF1F3F4) : const Color(0xFFF8F9FA),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFDDE1E6))),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.5)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12), 
+        borderSide: BorderSide(
+          color: isError ? const Color(0xFFC62828) : const Color(0xFFDDE1E6),
+          width: isError ? 2.0 : 1.0,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12), 
+        borderSide: BorderSide(
+          color: isError ? const Color(0xFFC62828) : const Color(0xFFC62828), 
+          width: 2.0,
+        ),
+      ),
     );
   }
 }
