@@ -1274,7 +1274,7 @@ class _PressServiceDetailViewState
     if (evidence.signedUrl == null || evidence.signedUrl!.isEmpty) return;
     final uri = Uri.parse(evidence.signedUrl!);
     if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      await launchUrl(uri, mode: LaunchMode.platformDefault);
     }
   }
 
