@@ -461,6 +461,13 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
     List<int> dataValues = [];
     List<String> labels = [];
 
+    // Filtrar estrictamente los reportes que estén aprobados/completados usando su inspection_date
+    final approvedInspections = widget.inspections.where((item) {
+      final state = (item.state ?? '').toUpperCase();
+      final bool isCompleted = state == 'COMPLETED' || state == 'COMPLETADO' || state == 'APPROVED' || state == 'APROBADO' || state == 'ACCEPTED' || state == 'ACEPTADO';
+      return isCompleted;
+    }).toList();
+
     if (selectedPeriod == 'Últimos 7 días') {
       List<DateTime> days = List.generate(7, (i) => now.subtract(Duration(days: 6 - i)));
       
@@ -478,11 +485,11 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
       }).toList();
 
       dataValues = days.map((day) {
-        return widget.inspections.where((item) {
+        return approvedInspections.where((item) {
           try {
-            final dynamic rawDate = item.inspectionDate ?? item.createdAt;
+            final dynamic rawDate = item.inspectionDate;
             if (rawDate == null) return false;
-            final dt = rawDate is DateTime ? rawDate : DateTime.parse(rawDate.toString());
+            final dt = rawDate is DateTime ? rawDate : DateTime.parse(rawDate.toString()).toLocal();
             return dt.year == day.year && dt.month == day.month && dt.day == day.day;
           } catch (_) {
             return false;
@@ -495,11 +502,11 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
       dataValues = List.generate(5, (index) {
         int startDay = (4 - index) * 7;
         int endDay = startDay + 7;
-        return widget.inspections.where((item) {
+        return approvedInspections.where((item) {
           try {
-            final dynamic rawDate = item.inspectionDate ?? item.createdAt;
+            final dynamic rawDate = item.inspectionDate;
             if (rawDate == null) return false;
-            final dt = rawDate is DateTime ? rawDate : DateTime.parse(rawDate.toString());
+            final dt = rawDate is DateTime ? rawDate : DateTime.parse(rawDate.toString()).toLocal();
             final diff = now.difference(dt).inDays;
             return diff >= startDay && diff < endDay;
           } catch (_) {
@@ -511,11 +518,11 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
     } else {
       labels = ['Q1', 'Q2', 'Q3', 'Q4', 'Pasado', 'Actual'];
       dataValues = List.generate(6, (index) {
-        return widget.inspections.where((item) {
+        return approvedInspections.where((item) {
           try {
-            final dynamic rawDate = item.inspectionDate ?? item.createdAt;
+            final dynamic rawDate = item.inspectionDate;
             if (rawDate == null) return false;
-            final dt = rawDate is DateTime ? rawDate : DateTime.parse(rawDate.toString());
+            final dt = rawDate is DateTime ? rawDate : DateTime.parse(rawDate.toString()).toLocal();
             return dt.year == now.year;
           } catch (_) {
             return false;
@@ -557,7 +564,7 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "2. Reportes Totales",
+                      "2. Reportes Aprobados",
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 15,
@@ -566,7 +573,7 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      selectedPeriod == 'Últimos 7 días' ? "Rendimiento semanal" : "Histórico por periodo",
+                      selectedPeriod == 'Últimos 7 días' ? "Basado en fecha de inspección" : "Histórico por periodo",
                       style: const TextStyle(
                         fontSize: 11,
                         color: kGreyText,
@@ -673,14 +680,14 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
                     children: [
                       const Icon(Icons.bar_chart_rounded, size: 14, color: kGreyText),
                       const SizedBox(width: 6),
-                      Text("Total reportes: $totalReports", style: const TextStyle(color: kDarkText, fontSize: 10, fontWeight: FontWeight.bold)),
+                      Text("Total aprobados: $totalReports", style: const TextStyle(color: kDarkText, fontSize: 10, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   Row(
                     children: [
                       Container(width: 6, height: 6, decoration: const BoxDecoration(color: kPrimaryRed, shape: BoxShape.circle)),
                       const SizedBox(width: 4),
-                      const Text("Actividad en curso", style: TextStyle(color: kGreyText, fontSize: 10, fontWeight: FontWeight.w600)),
+                      const Text("Por fecha de inspección", style: TextStyle(color: kGreyText, fontSize: 10, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ],
