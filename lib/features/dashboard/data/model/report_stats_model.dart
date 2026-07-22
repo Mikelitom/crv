@@ -16,6 +16,8 @@ class ReportStatModel {
     );
   }
 
+  String? get responsibleName => null;
+
   static List<ReportStatModel> listFromJson(dynamic str) {
     final data = str is String ? json.decode(str) : str;
     return List<ReportStatModel>.from(data.map((x) => ReportStatModel.fromJson(x)));
