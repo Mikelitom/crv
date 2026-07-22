@@ -1,5 +1,5 @@
-import 'dart:math' as math;
 import 'package:crv_reprosisa/features/auth/domain/entities/user.dart';
+import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/provider/inspection_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,7 +45,7 @@ class _TechnicianDashboardPageState
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authNotifierProvider).user;
-    
+
     if (user == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator(color: kPrimaryRed)),
@@ -61,10 +61,7 @@ class _TechnicianDashboardPageState
         onNavigateTab: (i) => setState(() => _internalIndex = i),
       ),
       const ReportsPage(),
-      const InspectionPage(
-        stats: [], 
-        actions: [],
-      ),
+      const InspectionPage(stats: [], actions: []),
       const ProfilePage(),
     ];
 
@@ -119,16 +116,24 @@ class _TechnicianHomePage extends ConsumerWidget {
             data: (inspections) {
               final total = inspections.length;
               final inProgress = inspections.where((i) {
-                final state = (i.state ?? '').toUpperCase();
+                final state = (i.state).toUpperCase();
                 return state == 'IN_PROGRESS' || state == 'EN PROGRESO';
               }).length;
               final inReview = inspections.where((i) {
-                final state = (i.state ?? '').toUpperCase();
-                return state == 'IN_REVISION' || state == 'EN REVISIÓN' || state == 'PENDING' || state == 'PENDIENTE';
+                final state = (i.state).toUpperCase();
+                return state == 'IN_REVISION' ||
+                    state == 'EN REVISIÓN' ||
+                    state == 'PENDING' ||
+                    state == 'PENDIENTE';
               }).length;
               final approved = inspections.where((i) {
-                final state = (i.state ?? '').toUpperCase();
-                return state == 'COMPLETED' || state == 'COMPLETADO' || state == 'APPROVED' || state == 'APROBADO' || state == 'ACCEPTED' || state == 'ACEPTADO';
+                final state = (i.state).toUpperCase();
+                return state == 'COMPLETED' ||
+                    state == 'COMPLETADO' ||
+                    state == 'APPROVED' ||
+                    state == 'APROBADO' ||
+                    state == 'ACCEPTED' ||
+                    state == 'ACEPTADO';
               }).length;
 
               final cards = [
@@ -163,7 +168,16 @@ class _TechnicianHomePage extends ConsumerWidget {
                   bool isWide = constraints.maxWidth >= 950;
                   if (isWide) {
                     return Row(
-                      children: cards.map((c) => Expanded(child: Padding(padding: const EdgeInsets.only(right: 12), child: c))).toList(),
+                      children: cards
+                          .map(
+                            (c) => Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: c,
+                              ),
+                            ),
+                          )
+                          .toList(),
                     );
                   } else {
                     return Column(
@@ -191,16 +205,27 @@ class _TechnicianHomePage extends ConsumerWidget {
             },
             loading: () => const SizedBox(
               height: 100,
-              child: Center(child: CircularProgressIndicator(color: kPrimaryRed)),
+              child: Center(
+                child: CircularProgressIndicator(color: kPrimaryRed),
+              ),
             ),
             error: (err, _) => Center(
-              child: Text("Error al cargar contadores: $err", style: const TextStyle(color: Colors.red, fontSize: 12)),
+              child: Text(
+                "Error al cargar contadores: $err",
+                style: const TextStyle(color: Colors.red, fontSize: 12),
+              ),
             ),
           ),
           const SizedBox(height: 16),
           inspectionsAsync.when(
-            data: (inspections) => _TechnicianBuildingChartsContainer(inspections: inspections),
-            loading: () => const SizedBox(height: 355, child: Center(child: CircularProgressIndicator(color: kPrimaryRed))),
+            data: (inspections) =>
+                _TechnicianBuildingChartsContainer(inspections: inspections),
+            loading: () => const SizedBox(
+              height: 355,
+              child: Center(
+                child: CircularProgressIndicator(color: kPrimaryRed),
+              ),
+            ),
             error: (_, __) => const SizedBox.shrink(),
           ),
           const SizedBox(height: 16),
@@ -302,7 +327,7 @@ class _TechnicianHomePage extends ConsumerWidget {
 }
 
 class _TechnicianBuildingChartsContainer extends StatelessWidget {
-  final List<dynamic> inspections;
+  final List<InspectionRowUI> inspections;
 
   const _TechnicianBuildingChartsContainer({required this.inspections});
 
@@ -312,7 +337,9 @@ class _TechnicianBuildingChartsContainer extends StatelessWidget {
       builder: (context, constraints) {
         double width = constraints.maxWidth;
         bool isDesktop = width >= 1250;
-        double cardWidth = isDesktop ? (width - 32) / 3 : (width > 700 ? (width - 16) / 2 : width);
+        double cardWidth = isDesktop
+            ? (width - 32) / 3
+            : (width > 700 ? (width - 16) / 2 : width);
 
         return Wrap(
           spacing: 16,
@@ -328,9 +355,7 @@ class _TechnicianBuildingChartsContainer extends StatelessWidget {
             ),
             SizedBox(
               width: cardWidth,
-              child: _InteractiveWeeklyChartCard(
-                inspections: inspections,
-              ),
+              child: _InteractiveWeeklyChartCard(inspections: inspections),
             ),
             SizedBox(
               width: cardWidth,
@@ -376,7 +401,9 @@ class _InteractiveChartCardState extends State<_InteractiveChartCard> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: isHovered ? kPrimaryRed.withOpacity(0.12) : Colors.black.withOpacity(0.04),
+              color: isHovered
+                  ? kPrimaryRed.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.04),
               blurRadius: isHovered ? 24 : 12,
               offset: Offset(0, isHovered ? 8 : 4),
             ),
@@ -412,15 +439,17 @@ class _InteractiveChartCardState extends State<_InteractiveChartCard> {
 }
 
 class _InteractiveWeeklyChartCard extends StatefulWidget {
-  final List<dynamic> inspections;
+  final List<InspectionRowUI> inspections;
 
   const _InteractiveWeeklyChartCard({required this.inspections});
 
   @override
-  State<_InteractiveWeeklyChartCard> createState() => _InteractiveWeeklyChartCardState();
+  State<_InteractiveWeeklyChartCard> createState() =>
+      _InteractiveWeeklyChartCardState();
 }
 
-class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard>
+class _InteractiveWeeklyChartCardState
+    extends State<_InteractiveWeeklyChartCard>
     with SingleTickerProviderStateMixin {
   bool isHovered = false;
   String selectedPeriod = 'Últimos 7 días';
@@ -462,69 +491,102 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
     List<String> labels = [];
 
     if (selectedPeriod == 'Últimos 7 días') {
-      List<DateTime> days = List.generate(7, (i) => now.subtract(Duration(days: 6 - i)));
-      
+      List<DateTime> days = List.generate(
+        7,
+        (i) => now.subtract(Duration(days: 6 - i)),
+      );
+
       labels = days.map((d) {
         switch (d.weekday) {
-          case 1: return 'Lun';
-          case 2: return 'Mar';
-          case 3: return 'Mié';
-          case 4: return 'Jue';
-          case 5: return 'Vie';
-          case 6: return 'Sáb';
-          case 7: return 'Dom';
-          default: return '';
+          case 1:
+            return 'Lun';
+          case 2:
+            return 'Mar';
+          case 3:
+            return 'Mié';
+          case 4:
+            return 'Jue';
+          case 5:
+            return 'Vie';
+          case 6:
+            return 'Sáb';
+          case 7:
+            return 'Dom';
+          default:
+            return '';
         }
       }).toList();
 
       dataValues = days.map((day) {
         return widget.inspections.where((item) {
           try {
-            final dynamic rawDate = item.inspectionDate ?? item.createdAt;
-            if (rawDate == null) return false;
-            final dt = rawDate is DateTime ? rawDate : DateTime.parse(rawDate.toString());
-            return dt.year == day.year && dt.month == day.month && dt.day == day.day;
-          } catch (_) {
+            if (item.date.isEmpty) return false;
+      
+            final dt = DateTime.parse(item.date);
+      
+            return dt.year == day.year &&
+                dt.month == day.month &&
+                dt.day == day.day;
+          } catch (e) {
+            print("Error leyendo fecha: $e");
             return false;
           }
         }).length;
       }).toList();
-
     } else if (selectedPeriod == 'Último mes') {
       labels = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Actual'];
       dataValues = List.generate(5, (index) {
         int startDay = (4 - index) * 7;
         int endDay = startDay + 7;
+      
         return widget.inspections.where((item) {
           try {
-            final dynamic rawDate = item.inspectionDate ?? item.createdAt;
-            if (rawDate == null) return false;
-            final dt = rawDate is DateTime ? rawDate : DateTime.parse(rawDate.toString());
+            if (item.date.isEmpty) return false;
+      
+            final dt = DateTime.parse(item.date);
+      
             final diff = now.difference(dt).inDays;
+      
             return diff >= startDay && diff < endDay;
-          } catch (_) {
+          } catch (e) {
+            print("Error leyendo fecha: $e");
             return false;
           }
         }).length;
       }).reversed.toList();
-
     } else {
-      labels = ['Q1', 'Q2', 'Q3', 'Q4', 'Pasado', 'Actual'];
-      dataValues = List.generate(6, (index) {
+      final months = List.generate(
+        12,
+        (i) => DateTime(now.year, now.month - 11 + i),
+      );
+      
+      labels = months.map((m) {
+        const names = [
+          'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+          'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+        ];
+        return names[m.month - 1];
+      }).toList();
+      
+      dataValues = months.map((month) {
         return widget.inspections.where((item) {
           try {
-            final dynamic rawDate = item.inspectionDate ?? item.createdAt;
-            if (rawDate == null) return false;
-            final dt = rawDate is DateTime ? rawDate : DateTime.parse(rawDate.toString());
-            return dt.year == now.year;
+            if (item.date.isEmpty) return false;
+      
+            final dt = DateTime.parse(item.date);
+      
+            return dt.year == month.year &&
+                   dt.month == month.month;
           } catch (_) {
             return false;
           }
         }).length;
-      });
+      }).toList();
     }
 
-    int maxVal = dataValues.isNotEmpty ? dataValues.reduce((curr, next) => curr > next ? curr : next) : 0;
+    int maxVal = dataValues.isNotEmpty
+        ? dataValues.reduce((curr, next) => curr > next ? curr : next)
+        : 0;
     if (maxVal == 0) maxVal = 5;
     int totalReports = dataValues.fold(0, (sum, val) => sum + val);
 
@@ -541,7 +603,9 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: isHovered ? kPrimaryRed.withOpacity(0.12) : Colors.black.withOpacity(0.04),
+              color: isHovered
+                  ? kPrimaryRed.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.04),
               blurRadius: isHovered ? 24 : 12,
               offset: Offset(0, isHovered ? 8 : 4),
             ),
@@ -566,7 +630,9 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      selectedPeriod == 'Últimos 7 días' ? "Rendimiento semanal" : "Histórico por periodo",
+                      selectedPeriod == 'Últimos 7 días'
+                          ? "Rendimiento semanal"
+                          : "Histórico por periodo",
                       style: const TextStyle(
                         fontSize: 11,
                         color: kGreyText,
@@ -585,14 +651,24 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: selectedPeriod,
-                      icon: const Icon(Icons.arrow_drop_down, size: 16, color: kGreyText),
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kDarkText),
-                      items: ['Últimos 7 días', 'Último mes', 'Último año'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                      icon: const Icon(
+                        Icons.arrow_drop_down,
+                        size: 16,
+                        color: kGreyText,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: kDarkText,
+                      ),
+                      items: ['Últimos 7 días', 'Último mes', 'Último año'].map(
+                        (String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        },
+                      ).toList(),
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           setState(() {
@@ -614,7 +690,9 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
                 children: List.generate(dataValues.length, (index) {
                   double heightFactor = dataValues[index] / maxVal;
                   if (heightFactor > 1.0) heightFactor = 1.0;
-                  if (heightFactor < 0.12 && dataValues[index] > 0) heightFactor = 0.15;
+                  if (heightFactor < 0.12 && dataValues[index] > 0) {
+                    heightFactor = 0.15;
+                  }
 
                   return Expanded(
                     child: Column(
@@ -632,7 +710,8 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
                         AnimatedBuilder(
                           animation: _animation,
                           builder: (context, child) {
-                            double currentHeight = 110 * heightFactor * _animation.value;
+                            double currentHeight =
+                                110 * heightFactor * _animation.value;
                             if (currentHeight < 4) currentHeight = 4;
                             return Container(
                               width: dataValues.length > 6 ? 11 : 15,
@@ -671,16 +750,41 @@ class _InteractiveWeeklyChartCardState extends State<_InteractiveWeeklyChartCard
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.bar_chart_rounded, size: 14, color: kGreyText),
+                      const Icon(
+                        Icons.bar_chart_rounded,
+                        size: 14,
+                        color: kGreyText,
+                      ),
                       const SizedBox(width: 6),
-                      Text("Total reportes: $totalReports", style: const TextStyle(color: kDarkText, fontSize: 10, fontWeight: FontWeight.bold)),
+                      Text(
+                        "Total reportes: $totalReports",
+                        style: const TextStyle(
+                          color: kDarkText,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   Row(
                     children: [
-                      Container(width: 6, height: 6, decoration: const BoxDecoration(color: kPrimaryRed, shape: BoxShape.circle)),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: kPrimaryRed,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                       const SizedBox(width: 4),
-                      const Text("Actividad en curso", style: TextStyle(color: kGreyText, fontSize: 10, fontWeight: FontWeight.w600)),
+                      const Text(
+                        "Actividad en curso",
+                        style: TextStyle(
+                          color: kGreyText,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -707,7 +811,7 @@ class _InteractiveProductivityCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -743,12 +847,22 @@ class _InteractiveProductivityCard extends StatelessWidget {
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text("ACTIVO", style: TextStyle(color: Colors.blue, fontSize: 8, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    "ACTIVO",
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -770,7 +884,11 @@ class _InteractiveProductivityCard extends StatelessWidget {
               children: [
                 _buildMetricRow("Calidad de entrega", "98%", Colors.green),
                 const SizedBox(height: 8),
-                _buildMetricRow("Tiempo promedio", "1.2 hrs", Colors.blueAccent),
+                _buildMetricRow(
+                  "Tiempo promedio",
+                  "1.2 hrs",
+                  Colors.blueAccent,
+                ),
                 const SizedBox(height: 8),
                 _buildMetricRow("Estado general", "Óptimo", kPrimaryRed),
               ],
@@ -789,7 +907,11 @@ class _InteractiveProductivityCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       "Excelente ritmo de inspección registrado.",
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: kPrimaryRed),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: kPrimaryRed,
+                      ),
                     ),
                   ),
                 ],
@@ -810,10 +932,7 @@ class _InteractiveProductivityCard extends StatelessWidget {
             Container(
               width: 6,
               height: 6,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             const SizedBox(width: 8),
             Text(
@@ -851,10 +970,15 @@ class _InspectionTypeChartContent extends StatelessWidget {
     int pressCount = 0;
 
     for (var item in inspections) {
-      final type = (item.reportType ?? item.type ?? '').toString().toLowerCase().trim();
+      final type = (item.reportType ?? item.type ?? '')
+          .toString()
+          .toLowerCase()
+          .trim();
       if (type.contains('conveyor') || type.contains('banda')) {
         conveyorCount++;
-      } else if (type.contains('vehicle') || type.contains('vehiculo') || type.contains('vehículo')) {
+      } else if (type.contains('vehicle') ||
+          type.contains('vehiculo') ||
+          type.contains('vehículo')) {
         vehicleCount++;
       } else if (type.contains('press') || type.contains('prensa')) {
         pressCount++;
@@ -875,11 +999,29 @@ class _InspectionTypeChartContent extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildAssetProgressRow("Bandas de Transporte", conveyorCount, conveyorPct, conveyorRatio, kPrimaryRed),
+        _buildAssetProgressRow(
+          "Bandas de Transporte",
+          conveyorCount,
+          conveyorPct,
+          conveyorRatio,
+          kPrimaryRed,
+        ),
         const SizedBox(height: 10),
-        _buildAssetProgressRow("Flota de Vehículos", vehicleCount, vehiclePct, vehicleRatio, const Color(0xFF37474F)),
+        _buildAssetProgressRow(
+          "Flota de Vehículos",
+          vehicleCount,
+          vehiclePct,
+          vehicleRatio,
+          const Color(0xFF37474F),
+        ),
         const SizedBox(height: 10),
-        _buildAssetProgressRow("Prensas Industriales", pressCount, pressPct, pressRatio, Colors.grey.shade500),
+        _buildAssetProgressRow(
+          "Prensas Industriales",
+          pressCount,
+          pressPct,
+          pressRatio,
+          Colors.grey.shade500,
+        ),
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -890,8 +1032,22 @@ class _InspectionTypeChartContent extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Total de activos inspeccionados", style: TextStyle(color: kGreyText, fontSize: 10.5, fontWeight: FontWeight.w700)),
-              Text("$total registros", style: const TextStyle(color: kDarkText, fontSize: 11, fontWeight: FontWeight.w900)),
+              const Text(
+                "Total de activos inspeccionados",
+                style: TextStyle(
+                  color: kGreyText,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                "$total registros",
+                style: const TextStyle(
+                  color: kDarkText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ],
           ),
         ),
@@ -899,15 +1055,35 @@ class _InspectionTypeChartContent extends StatelessWidget {
     );
   }
 
-  Widget _buildAssetProgressRow(String title, int count, double percentage, double ratio, Color color) {
+  Widget _buildAssetProgressRow(
+    String title,
+    int count,
+    double percentage,
+    double ratio,
+    Color color,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title, style: const TextStyle(color: kDarkText, fontSize: 11, fontWeight: FontWeight.w800)),
-            Text("$count (${percentage.toStringAsFixed(0)}%)", style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w900)),
+            Text(
+              title,
+              style: const TextStyle(
+                color: kDarkText,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            Text(
+              "$count (${percentage.toStringAsFixed(0)}%)",
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 3),
@@ -961,9 +1137,9 @@ class _AnimatedStatCardState extends State<_AnimatedStatCard> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: isHovered 
-                    ? kPrimaryRed.withOpacity(0.12) 
-                    : Colors.black.withOpacity(0.04),
+                color: isHovered
+                    ? kPrimaryRed.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.04),
                 blurRadius: isHovered ? 16 : 8,
                 offset: Offset(0, isHovered ? 5 : 2),
               ),
