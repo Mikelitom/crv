@@ -1,8 +1,8 @@
-import '../entities/processed_document.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
 
 abstract class ImageProcessorRepository {
 
-  Future<ProcessedDocument> processImage(
+  Future<ProcessedImage> processImage(
     String imagePath,
   );
 
