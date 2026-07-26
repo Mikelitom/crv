@@ -20,8 +20,8 @@ class PrensaInspectionPage extends ConsumerStatefulWidget {
   final InspectionRowUI? itemToEdit; // <-- Cambiado a opcional
 
   const PrensaInspectionPage({
-    super.key, 
-    this.isReadOnly = false, 
+    super.key,
+    this.isReadOnly = false,
     this.itemToEdit, // <-- Constructor corregido
   });
 
@@ -42,32 +42,31 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
     "b1c263cd-5882-4153-b48a-04859e79f2ed",
     "7c0bcebc-ce53-4a1e-8cf1-1b83e6782f53",
   };
-@override
-void initState() {
-  super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) async {
-    final notifier = ref.read(inspeccionProvider.notifier);
-    if (widget.itemToEdit != null) {
-      await notifier.loadReportDetail(widget.itemToEdit!.versionId);
-    } else {
-      notifier.reset();
-      await _fetchTemplate(); // Este método ahora actualizará el notifier
-    }
-  });
-}
-Future<void> _fetchTemplate() async {
-  setState(() => isLoading = true);
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final notifier = ref.read(inspeccionProvider.notifier);
+      if (widget.itemToEdit != null) {
+        await notifier.loadReportDetail(widget.itemToEdit!.versionId);
+      } else {
+        notifier.reset();
+        await _fetchTemplate(); // Este método ahora actualizará el notifier
+      }
+    });
+  }
 
-  final state = ref.read(inspeccionProvider);
-  final repo = ref.read(inspeccionRepositoryProvider);
+  Future<void> _fetchTemplate() async {
+    setState(() => isLoading = true);
 
-  final result = await repo.getInspectionTemplate();
+    final state = ref.read(inspeccionProvider);
+    final repo = ref.read(inspeccionRepositoryProvider);
 
-  final String tipoPrensa = state.selectedPress?.type?.toLowerCase() ?? "";
+    final result = await repo.getInspectionTemplate();
 
-  result.fold(
-    (failure) => setState(() => isLoading = false),
-    (components) {
+    final String tipoPrensa = state.selectedPress?.type?.toLowerCase() ?? "";
+
+    result.fold((failure) => setState(() => isLoading = false), (components) {
       List<ComponentItem> itemsFiltrados = components;
 
       final bool esNeumaticaOMovil =
@@ -89,14 +88,14 @@ Future<void> _fetchTemplate() async {
         templateItems = itemsFiltrados;
         isLoading = false;
       });
-    },
-  );
-}
+    });
+  }
 
   void _showPdfPreview(BuildContext context) {
     final state = ref.read(inspeccionProvider);
-    final String fechaActual =
-        DateFormat('dd/MM/yyyy').format(state.inspectionDate);
+    final String fechaActual = DateFormat(
+      'dd/MM/yyyy',
+    ).format(state.inspectionDate);
 
     final Map<String, dynamic> pdfData = {
       "serie": state.selectedPress?.serie ?? "S/N",
@@ -134,8 +133,7 @@ Future<void> _fetchTemplate() async {
             backgroundColor: const Color(0xFFC62828),
           ),
           body: PdfPreview(
-            build: (format) =>
-                PrensaPdfGenerator.generateEsqueleto(pdfData),
+            build: (format) => PrensaPdfGenerator.generateEsqueleto(pdfData),
             initialPageFormat: PdfPageFormat.letter.landscape,
           ),
         ),
@@ -143,88 +141,100 @@ Future<void> _fetchTemplate() async {
     );
   }
 
-Future<void> _showStatusDialog() async {
-  // 1. Identificar componentes faltantes
-  final componentesFaltantes = templateItems.where((item) => item.status.isEmpty).toList();
-  final bool estaCompleto = componentesFaltantes.isEmpty;
-  
-  final String? result = await showDialog<String>(
-    context: context,
-    builder: (context) => AlertDialog(
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.9,
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Row(
-        children: [
-          Icon(
-            estaCompleto ? Icons.check_circle : Icons.warning_amber_rounded, 
-            color: estaCompleto ? Colors.green : Colors.orange.shade800
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              estaCompleto ? "Reporte Listo" : "Reporte Incompleto",
-              overflow: TextOverflow.ellipsis,
+  Future<void> _showStatusDialog() async {
+    // 1. Identificar componentes faltantes
+    final componentesFaltantes = templateItems
+        .where((item) => item.status.isEmpty)
+        .toList();
+    final bool estaCompleto = componentesFaltantes.isEmpty;
+
+    final String? result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.9,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              estaCompleto ? Icons.check_circle : Icons.warning_amber_rounded,
+              color: estaCompleto ? Colors.green : Colors.orange.shade800,
             ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                estaCompleto ? "Reporte Listo" : "Reporte Incompleto",
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          estaCompleto
+              ? "¿Deseas finalizar y enviar el reporte como COMPLETADO?"
+              : "Faltan ${componentesFaltantes.length} componentes por inspeccionar. El reporte se guardará automáticamente como EN PROCESO.",
+          style: const TextStyle(fontSize: 14, color: Colors.black87),
+        ),
+        actions: [
+          Wrap(
+            spacing: 8.0,
+            runSpacing: 8.0,
+            alignment: WrapAlignment.end,
+            children: [
+              // BOTÓN CANCELAR: Siempre visible
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.red.shade700,
+                ),
+                child: const Text(
+                  "CANCELAR",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+
+              // BOTÓN GUARDAR (Dinámico)
+              // Si está completo: Muestra "COMPLETAR"
+              // Si NO está completo: Muestra "GUARDAR EN PROCESO"
+              if (estaCompleto)
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, "COMPLETED"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFC62828),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text("COMPLETAR"),
+                )
+              else
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, "IN_PROGRESS"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.shade800,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text("GUARDAR EN PROCESO"),
+                ),
+            ],
           ),
         ],
       ),
-      content: Text(
-        estaCompleto 
-            ? "¿Deseas finalizar y enviar el reporte como COMPLETADO?" 
-            : "Faltan ${componentesFaltantes.length} componentes por inspeccionar. El reporte se guardará automáticamente como EN PROCESO.",
-        style: const TextStyle(fontSize: 14, color: Colors.black87),
-      ),
-      actions: [
-        Wrap(
-          spacing: 8.0, 
-          runSpacing: 8.0,
-          alignment: WrapAlignment.end,
-          children: [
-            // BOTÓN CANCELAR: Siempre visible
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
-              child: const Text("CANCELAR", style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            
-            // BOTÓN GUARDAR (Dinámico)
-            // Si está completo: Muestra "COMPLETAR"
-            // Si NO está completo: Muestra "GUARDAR EN PROCESO"
-            if (estaCompleto)
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, "COMPLETED"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC62828),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text("COMPLETAR"),
-              )
-            else
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, "IN_PROGRESS"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange.shade800,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text("GUARDAR EN PROCESO"),
-              ),
-          ],
-        ),
-      ],
-    ),
-  );
+    );
 
-  // 2. Ejecutar la acción
-  if (result != null) {
-    ref.read(inspeccionProvider.notifier).updateState(result);
-    await _guardarInspeccion();
+    // 2. Ejecutar la acción
+    if (result != null) {
+      ref.read(inspeccionProvider.notifier).updateState(result);
+      await _guardarInspeccion();
+    }
   }
-}
-Future<void> _guardarInspeccion() async {
+
+  Future<void> _guardarInspeccion() async {
     final state = ref.read(inspeccionProvider);
     final notifier = ref.read(inspeccionProvider.notifier);
 
@@ -241,7 +251,12 @@ Future<void> _guardarInspeccion() async {
       final String? resultId = await notifier.finalizarInspeccion();
 
       if (resultId != null) {
-        _showSnack(notifier.isEditing ? "¡Inspección actualizada!" : "¡Guardada con éxito!", Colors.green);
+        _showSnack(
+          notifier.isEditing
+              ? "¡Inspección actualizada!"
+              : "¡Guardada con éxito!",
+          Colors.green,
+        );
         notifier.reset();
         Navigator.pop(context);
       } else {
@@ -253,6 +268,7 @@ Future<void> _guardarInspeccion() async {
       if (mounted) setState(() => isLoading = false);
     }
   }
+
   void _showSnack(String m, Color c) =>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -261,11 +277,12 @@ Future<void> _guardarInspeccion() async {
           behavior: SnackBarBehavior.floating,
         ),
       );
-@override
+      
+  @override
   Widget build(BuildContext context) {
     // 1. Escuchamos al provider para obtener el estado real
     final state = ref.watch(inspeccionProvider);
-    
+
     // 2. Usamos los items que vienen del estado del notifier
     final itemsToShow = state.templateItems;
 
@@ -274,30 +291,31 @@ Future<void> _guardarInspeccion() async {
       // 3. Usamos state.isLoading del Notifier para controlar el loader
       body: state.isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFFC62828),
-              ),
+              child: CircularProgressIndicator(color: Color(0xFFC62828)),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
                   CustomHeader(
-                    title: widget.itemToEdit != null 
-                        ? "Editar Inspección de Prensa" 
+                    title: widget.itemToEdit != null
+                        ? "Editar Inspección de Prensa"
                         : "Inspección de Prensas",
                     actionIcon: Icons.arrow_back_ios_new_rounded,
                     onActionTap: () => Navigator.pop(context),
                   ),
                   const SizedBox(height: 32),
-               CaptureMethodSelector(
+                  CaptureMethodSelector(
                     onManualFill: () => setState(() => isScanning = false),
                     onImageCaptured: (XFile? image) {
                       if (image != null) {
                         // Aquí puedes manejar la imagen capturada por la cámara,
                         // por ejemplo, guardarla en tu provider o procesarla.
                         setState(() => isScanning = false);
-                        _showSnack("¡Imagen capturada con éxito!", Colors.green);
+                        _showSnack(
+                          "¡Imagen capturada con éxito!",
+                          Colors.green,
+                        );
                       }
                     },
                   ),
@@ -321,9 +339,7 @@ Future<void> _guardarInspeccion() async {
                               const InformationGeneralEquipo(),
                               const SizedBox(height: 32),
                               // 4. PASAMOS LA LISTA DEL ESTADO AQUÍ
-                              PrensaInspectionTable(
-                                items: itemsToShow, 
-                              ),
+                              PrensaInspectionTable(items: itemsToShow),
                               const SizedBox(height: 32),
                               const LoanAndInspectorSection(),
                             ],
@@ -357,12 +373,8 @@ Future<void> _guardarInspeccion() async {
             ),
     );
   }
-  Widget _actionBtn(
-    String l,
-    Color c,
-    IconData i,
-    VoidCallback t,
-  ) =>
+
+  Widget _actionBtn(String l, Color c, IconData i, VoidCallback t) =>
       ElevatedButton.icon(
         onPressed: t,
         icon: Icon(i, color: Colors.white, size: 20),
