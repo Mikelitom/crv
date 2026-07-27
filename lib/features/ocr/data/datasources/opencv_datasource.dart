@@ -21,11 +21,13 @@ class OpenCVDataSource {
     );
 
     // Blanco y negro
-    final threshold = cv.threshold(
-      blur,
-      120,
+    final threshold = cv.adaptiveThreshold(
+      gray,
       255,
+      cv.ADAPTIVE_THRESH_GAUSSIAN_C,
       cv.THRESH_BINARY,
+      21,
+      10,
     );
 
     final outputPath = imagePath.replaceFirst(
@@ -35,7 +37,7 @@ class OpenCVDataSource {
 
     cv.imwrite(
       outputPath,
-      threshold.$2,
+      threshold,
     );
 
     return outputPath;

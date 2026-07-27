@@ -19,32 +19,37 @@ class ImageProcessingNotifier
   Future<void> processImage(
     String imagePath,
   ) async {
-
+  
+    if (state.isProcessing) {
+      return;
+    }
+  
     try {
-
+  
       state = state.copyWith(
         isProcessing: true,
         errorMessage: null,
+        processedImage: null,
       );
-
-
+  
+  
       final result =
           await processImageUseCase(imagePath);
-
-
+  
+  
       state = state.copyWith(
         isProcessing: false,
         processedImage: result,
       );
-
-
+  
+  
     } catch(e) {
-
+  
       state = state.copyWith(
         isProcessing: false,
         errorMessage: e.toString(),
       );
-
+  
     }
   }
 
