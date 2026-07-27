@@ -1,6 +1,6 @@
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
+import 'package:crv_reprosisa/features/ocr/presentation/pages/ocr_debug_page.dart';
 import 'package:crv_reprosisa/features/ocr/presentation/providers/image_processor_provider.dart';
-import 'package:crv_reprosisa/features/ocr/presentation/widgets/image_processing_review.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -272,37 +272,31 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                     
                       if (image == null) return;
                     
+                      final notifier = ref.read(imageProcessingProvider.notifier);
                     
-                      await ref
-                          .read(imageProcessingProvider.notifier)
-                          .processImage(image.path);
+                      await notifier.processImage(image.path);
                     
+                      if (!mounted) return;
                     
                       final state = ref.read(imageProcessingProvider);
                     
-                    
                       if (state.errorMessage != null) {
-                    
                         _showSnack(
-                          "Error procesando imagen: ${state.errorMessage}",
+                          state.errorMessage!,
                           Colors.red,
                         );
-                    
                         return;
                       }
                     
-                    
-                      _showSnack(
-                        "Imagen procesada correctamente",
-                        Colors.green,
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OCRDebugPage(),
+                        ),
                       );
-                    },
+                    }
                   ),
                   const SizedBox(height: 32),
-                  const SizedBox(
-                    height: 600,
-                    child: ImageProcessingPreview(),
-                  ),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
                     child: isScanning

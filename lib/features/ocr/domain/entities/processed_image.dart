@@ -7,6 +7,7 @@ class ProcessedImage {
   final String? cannyPath;
   final String? contourPath;
   final String? perspectivePath;
+  final String? closedPath;
 
   const ProcessedImage({
     required this.originalPath,
@@ -16,5 +17,6 @@ class ProcessedImage {
     this.cannyPath,
     this.contourPath,
     this.perspectivePath,
+    this.closedPath
   });
 }
