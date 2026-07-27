@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:crv_reprosisa/core/error/failure.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -152,24 +153,25 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     final state = ref.read(authNotifierProvider);
 
     if (state.status == AuthStatus.unauthenticated && state.error != null) {
-      // 1. EXTRAEMOS EL MENSAJE DE ERROR REAL
-      final String fullError = state.error.toString().toLowerCase();
+      final failure = state.error!;
+
       String errorMessage;
 
-      // 2. DETECCIÓN PRIORITARIA DE CONEXIÓN (Basado en tu log de DioException)
-      if (fullError.contains('timeout') ||
-          fullError.contains('connection') ||
-          fullError.contains('socket') ||
-          fullError.contains('network') ||
-          fullError.contains('serverfailure') ||
-          fullError.contains('dioexception')) {
+      if (failure is InvalidCredentialsFailure) {
+        errorMessage = "Correo o contraseña incorrectos";
+
+        setState(() => failedAttempts++);
+
+        if (failedAttempts >= 3) {
+          _startBlockTimer();
+        }
+      } else if (failure is NetworkFailure) {
         errorMessage =
             "Error de conexión: No se pudo contactar con el servidor";
+      } else if (failure is ServerFailure) {
+        errorMessage = "Error interno del servidor";
       } else {
-        // Solo si no es error de red, mostramos credenciales incorrectas
-        errorMessage = "Correo o contraseña incorrectos";
-        setState(() => failedAttempts++);
-        if (failedAttempts >= 3) _startBlockTimer();
+        errorMessage = failure.message;
       }
 
       _showToast(errorMessage, true);
