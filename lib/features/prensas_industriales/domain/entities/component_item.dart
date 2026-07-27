@@ -10,7 +10,7 @@ class EvidenceFile {
     required this.bytes, 
     required this.type, 
     required this.mimeType,
-    this.path,
+    this.path
   });
 }
 

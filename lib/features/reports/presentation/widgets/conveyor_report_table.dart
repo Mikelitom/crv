@@ -352,33 +352,49 @@ class _ConveyorReportTableState extends ConsumerState<ConveyorReportTable> with 
                 builder: (context, gridConstraints) {
                   bool isWide = gridConstraints.maxWidth >= 950;
                   
-                  final counterCards = [
+                  // Definimos las tarjetas base que siempre verá el admin
+                  final List<Widget> counterCards = [
                     _AnimatedStatCard(
                       value: "$totalCount",
                       label: "Total Registrados",
                       icon: Icons.folder_open,
                       color: kPrimaryRed,
                     ),
-                    _AnimatedStatCard(
-                      value: "$revisionCount",
-                      label: "En revisión",
-                      icon: Icons.access_time_rounded,
-                      color: kPrimaryRed,
-                    ),
-                    _AnimatedStatCard(
-                      value: "$approvedCount",
-                      label: "Aprobados",
-                      icon: Icons.check_circle_outline,
-                      color: kPrimaryRed,
-                    ),
-                    _AnimatedStatCard(
-                      value: "$returnedCount",
-                      label: "Regresados",
-                      icon: Icons.keyboard_return,
-                      color: kPrimaryRed,
-                    ),
                   ];
 
+                  // Si es administrador, agregamos el resto de las tarjetas de estado
+                  if (widget.isAdmin) {
+                    counterCards.addAll([
+                      _AnimatedStatCard(
+                        value: "$revisionCount",
+                        label: "En revisión",
+                        icon: Icons.access_time_rounded,
+                        color: kPrimaryRed,
+                      ),
+                      _AnimatedStatCard(
+                        value: "$approvedCount",
+                        label: "Aprobados",
+                        icon: Icons.check_circle_outline,
+                        color: kPrimaryRed,
+                      ),
+                      _AnimatedStatCard(
+                        value: "$returnedCount",
+                        label: "Regresados",
+                        icon: Icons.keyboard_return,
+                        color: kPrimaryRed,
+                      ),
+                    ]);
+                  }
+
+                  // Si es técnico, solo se renderiza la tarjeta de Total Registrados centrada o expandida de forma limpia
+                  if (!widget.isAdmin) {
+                    return SizedBox(
+                      width: isWide ? 300 : double.infinity,
+                      child: counterCards[0],
+                    );
+                  }
+
+                  // Renderizado para Administrador
                   if (isWide) {
                     return Row(
                       children: counterCards
