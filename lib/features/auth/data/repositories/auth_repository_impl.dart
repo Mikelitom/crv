@@ -1,6 +1,8 @@
+import 'package:crv_reprosisa/core/error/dio_failure_mapper.dart';
 import 'package:crv_reprosisa/features/auth/domain/repositories/token_repository.dart';
 import 'package:crv_reprosisa/features/auth/domain/repositories/user_session_repository.dart';
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/entities/auth_tokens.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -78,9 +80,17 @@ class AuthRepositoryImpl implements AuthRepository {
       await sessionRepository.saveUser(user);
 
       return Right(user);
+    } on DioException catch (e) {
+      final failure = mapDioException(e);
+
+      if (failure is SessionExpiredFailure || failure is UnauthorizedFailure) {
+        await tokenRepository.clear();
+      }
+
+      return Left(failure);
     } catch (e) {
       await tokenRepository.clear();
-      return Left(ServerFailure(e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
 
@@ -99,7 +109,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       print("Refreshing with:");
       print(storedTokens.refreshToken);
-      
+
       final newTokens = await remote.refresh(storedTokens.refreshToken);
 
       await tokenRepository.save(newTokens);

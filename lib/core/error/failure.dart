@@ -44,6 +44,10 @@ class UnauthorizedFailure extends Failure {
   const UnauthorizedFailure() : super("No autorizado");
 }
 
+class InvalidCredentialsFailure extends Failure {
+  const InvalidCredentialsFailure() : super("Correo o contraseña incorrectos");
+}
+
 class BadRequestFailure extends Failure {
   const BadRequestFailure(String message) : super(message);
 }

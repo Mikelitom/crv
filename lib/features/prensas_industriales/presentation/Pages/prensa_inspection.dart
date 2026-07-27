@@ -37,13 +37,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
   bool isLoading = true;
   List<ComponentItem> templateItems = [];
 
-  static const Set<String> excludedComponentIds = {
-    "70f9a2a0-ed74-4958-97aa-87a279cdbdd7",
-    "97b38d7b-53bf-43bb-9459-cc2db92d89ad",
-    "335fcf27-4a9c-4302-bf20-29dd0ad4b8ac",
-    "b1c263cd-5882-4153-b48a-04859e79f2ed",
-    "7c0bcebc-ce53-4a1e-8cf1-1b83e6782f53",
-  };
   @override
   void initState() {
     super.initState();
@@ -53,43 +46,9 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
         await notifier.loadReportDetail(widget.itemToEdit!.versionId);
       } else {
         notifier.reset();
-        await _fetchTemplate(); // Este método ahora actualizará el notifier
+        await notifier
+            .loadTemplate(); // <-- Se manda a llamar desde el Notifier
       }
-    });
-  }
-
-  Future<void> _fetchTemplate() async {
-    setState(() => isLoading = true);
-
-    final state = ref.read(inspeccionProvider);
-    final repo = ref.read(inspeccionRepositoryProvider);
-
-    final result = await repo.getInspectionTemplate();
-
-    final String tipoPrensa = state.selectedPress?.type?.toLowerCase() ?? "";
-
-    result.fold((failure) => setState(() => isLoading = false), (components) {
-      List<ComponentItem> itemsFiltrados = components;
-
-      final bool esNeumaticaOMovil =
-          tipoPrensa.contains("neumática") ||
-          tipoPrensa.contains("movil") ||
-          tipoPrensa.contains("móvil");
-
-      if (esNeumaticaOMovil) {
-        itemsFiltrados = components
-            .where((c) => !excludedComponentIds.contains(c.id))
-            .toList();
-      }
-
-      // 1. Sincronizamos con el Notifier para que el estado global sea correcto
-      ref.read(inspeccionProvider.notifier).updateTemplateItems(itemsFiltrados);
-
-      // 2. Actualizamos la UI local
-      setState(() {
-        templateItems = itemsFiltrados;
-        isLoading = false;
-      });
     });
   }
 
@@ -279,12 +238,10 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-      
   @override
   Widget build(BuildContext context) {
     // 1. Escuchamos al provider para obtener el estado real
     final state = ref.watch(inspeccionProvider);
-    // final imageState = ref.watch(imageProcessingProvider);
 
     // 2. Usamos los items que vienen del estado del notifier
     final itemsToShow = state.templateItems;
