@@ -35,14 +35,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
   bool isLoading = true;
   List<ComponentItem> templateItems = [];
 
-  static const Set<String> excludedComponentIds = {
-    "70f9a2a0-ed74-4958-97aa-87a279cdbdd7",
-    "97b38d7b-53bf-43bb-9459-cc2db92d89ad",
-    "335fcf27-4a9c-4302-bf20-29dd0ad4b8ac",
-    "b1c263cd-5882-4153-b48a-04859e79f2ed",
-    "7c0bcebc-ce53-4a1e-8cf1-1b83e6782f53",
-  };
-
   @override
   void initState() {
     super.initState();
@@ -55,46 +47,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
         await notifier
             .loadTemplate(); // <-- Se manda a llamar desde el Notifier
       }
-    });
-  }
-
-  Future<void> _fetchTemplate() async {
-    setState(() => isLoading = true);
-
-    final repo = ref.read(inspeccionRepositoryProvider);
-
-    final result = await repo.getInspectionTemplate();
-
-    final state = ref.read(inspeccionProvider);
-
-    final String tipoPrensa = state.selectedPress?.type?.toLowerCase() ?? "";
-
-    result.fold((failure) => setState(() => isLoading = false), (components) {
-      List<ComponentItem> itemsFiltrados = components;
-
-      final bool esNeumaticaOMovil =
-          tipoPrensa.contains("neumática") ||
-          tipoPrensa.contains("movil") ||
-          tipoPrensa.contains("móvil");
-
-      if (esNeumaticaOMovil) {
-        itemsFiltrados = components
-            .where((c) => !excludedComponentIds.contains(c.id))
-            .toList();
-      }
-
-      // 1. Sincronizamos con el Notifier para que el estado global sea correcto
-      ref.read(inspeccionProvider.notifier).updateTemplateItems(itemsFiltrados);
-
-      print("TIPO DE PRENSA ACTUAL: ${tipoPrensa}");
-      print("COMPONENTES ANTES: ${components.length}");
-      print("COMPONENTES DESPUÉS: ${itemsFiltrados.length}");
-
-      // 2. Actualizamos la UI local
-      setState(() {
-        templateItems = itemsFiltrados;
-        isLoading = false;
-      });
     });
   }
 

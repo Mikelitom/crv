@@ -278,13 +278,9 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
     await result.fold((f) async => state = state.copyWith(isLoading: false), (
       press,
     ) async {
-      // 1. Asignamos la nueva prensa seleccionada
       state = state.copyWith(selectedPress: press);
 
-      // 2. Si ya tenemos ítems en memoria o necesitamos pedirlos, volvemos a aplicar el filtro por el tipo de esta nueva prensa
       if (state.templateItems.isNotEmpty) {
-        // Si ya tenías la plantilla cargada, la re-filtramos con el tipo de la nueva prensa
-        // (Nota: Lo ideal es mantener una copia cruda o llamar a loadTemplate si prefieres refrescar desde el repo)
         await loadTemplate();
       } else {
         await loadTemplate();
