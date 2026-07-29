@@ -1,8 +1,8 @@
 import 'package:crv_reprosisa/features/servicios/data/models/vehiculos/pending_component_entity_v.dart' show PendingComponentModelV;
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/pending_componenet_state_v.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/pending_component_provider_v.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 
 class PendingComponentNotifier extends Notifier<PendingComponentState> {
   @override
@@ -16,37 +16,50 @@ class PendingComponentNotifier extends Notifier<PendingComponentState> {
     state = result.fold(
       (failure) => state.copyWith(isLoading: false, error: failure.toString()),
       (data) {
-        final Map<String, int> conteo = {};
-        // Guardamos el objeto original para recuperar datos si es necesario
+        // Diagnóstico para verificar si la API trae todos los registros históricos o si vienen filtrados
+        debugPrint("Total registros obtenidos de la API: ${data.length}");
+        for (final item in data) {
+          debugPrint("ID: ${item.componentId} | Nombre: ${item.componentName} | Opción: ${item.selectedOption}");
+        }
+
+        final Map<String, int> conteoFrecuencia = {};
         final Map<String, PendingComponentModelV> unicos = {};
 
+        // Agrupamos utilizando componentId para evitar problemas de variaciones en el nombre
         for (var item in data) {
-          final option = item.selectedOption.toLowerCase();
+          final option = item.selectedOption.toLowerCase().trim()
+              .replaceAll('ó', 'o')
+              .replaceAll('á', 'a')
+              .replaceAll('é', 'e')
+              .replaceAll('í', 'i')
+              .replaceAll('ú', 'u');
           
-          // Solo si es un estado que requiere acción (Mala, Reposición, Reparación)
-          if (option.contains('mala') || option.contains('repos') || option.contains('repa')) {
-            conteo[item.componentName] = (conteo[item.componentName] ?? 0) + 1;
-            // Guardamos la referencia para el modelo final
-            unicos[item.componentName] = item as PendingComponentModelV;
+          if (option.contains('mala') || 
+              option.contains('reposicion') || 
+              option.contains('reparacion')) {
+            
+            conteoFrecuencia[item.componentId] = (conteoFrecuencia[item.componentId] ?? 0) + 1;
+            unicos[item.componentId] = item as PendingComponentModelV;
           }
         }
 
-        // 2. CONSTRUIR LISTA ÚNICA
+        // Construimos la lista procesada usando el entry.key que ahora es el componentId
         final listaProcesada = unicos.entries.map((entry) {
-          final name = entry.key;
+          final compId = entry.key;
           final item = entry.value;
-          int count = conteo[name] ?? 0;
+          
+          int count = conteoFrecuencia[compId] ?? 1;
           
           String nuevoStatus = 'PENDIENTE';
           if (count > 3) nuevoStatus = 'CRÍTICO';
-          else if (count > 1) nuevoStatus = 'ATENCIÓN'; // >1 y <=3
+          else if (count > 1) nuevoStatus = 'ATENCIÓN';
 
           return PendingComponentModelV(
             id: item.id,
             vehicleId: item.vehicleId,
             serviceId: item.serviceId,
-            componentId: item.componentId,
-            componentName: name,
+            componentId: compId,
+            componentName: item.componentName,
             reportAnswerId: item.reportAnswerId,
             selectedOption: item.selectedOption,
             description: item.description,
