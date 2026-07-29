@@ -260,11 +260,11 @@ class _PressServicePageState extends ConsumerState<PressServicePage> {
     String translatedState = "DISPONIBLE";
     Color statusColor = Colors.green;
 
-    if (rawState.contains("IN_USE") || rawState.contains("USO") || rawState.contains("OCUPADA")) {
-      translatedState = "EN USO";
+    if (rawState.contains("LOANED") || rawState.contains("USO") || rawState.contains("EN PRÉSTAMO")) {
+      translatedState = "PRESTADA";
       statusColor = Colors.orange;
-    } else if (rawState.contains("MAINTENANCE") || rawState.contains("MANTENIMIENTO")) {
-      translatedState = "MANTENIMIENTO";
+    } else if (rawState.contains("MANTENIMIENTO")) {
+      translatedState = "EN SERVICIO";
       statusColor = Colors.red;
     } else if (rawState.contains("AVAILABLE") || rawState.contains("DISPONIBLE")) {
       translatedState = "DISPONIBLE";

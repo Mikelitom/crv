@@ -24,36 +24,38 @@ class VehicleModel extends Vehicle {
   });
 
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
-    return VehicleModel(
-      vehicleId: _asString(json['id'] ?? json['vehicle_id']),
-      plate: _asString(json['plate']),
-      brand: _asString(json['brand']),
-      model: _asString(json['model']),
-      year: _asInt(json['year']),
-      unit: _asInt(json['unit']),
-      isActive: _asBool(json['is_active']),
-      typeId: _asString(json['type_id']),
-      type: _asString(json['type']),
-      operationState: _asString(json['operation_state']),
-      currentLocation: _asString(json['current_location']),
-      responsible: _asString(json['responsible']),
-      mileage: _asInt(json['mileage']),
-      serviceReason: json['service_reason'] != null
-          ? _asString(json['service_reason'])
-          : null,
-      phone: json['phone'] != null ? _asString(json['phone']) : null,
-
-      serviceDate: json['service_date'] != null
-          ? DateTime.parse(json['service_date'])
-          : null,
-
-      checkoutDate: json['checkout_date'] != null
-          ? DateTime.parse(json['checkout_date'])
-          : null,
-      imageUrl: json['image_url'],
-      imagePath: json['image_path'],
-    );
-  }
+      return VehicleModel(
+        vehicleId: _asString(json['id'] ?? json['vehicle_id'] ?? json['vehicleId']),
+        plate: _asString(json['plate']),
+        brand: _asString(json['brand']),
+        model: _asString(json['model']),
+        year: _asInt(json['year']),
+        unit: _asInt(json['unit']),
+        isActive: json['is_active'] != null ? _asBool(json['is_active']) : _asBool(json['isActive']),
+        typeId: _asString(json['type_id'] ?? json['typeId']),
+        type: _asString(json['type']),
+        
+        // Mapeo flexible para campos que suelen venir de joins o vistas
+        operationState: _asString(json['operation_state'] ?? json['operationState'] ?? json['state'] ?? 'AVAILABLE'),
+        currentLocation: _asString(json['current_location'] ?? json['currentLocation'] ?? json['location']),
+        responsible: _asString(json['responsible'] ?? json['responsible_name']),
+        
+        mileage: _asInt(json['mileage']),
+        serviceReason: json['service_reason'] != null ? _asString(json['service_reason']) : null,
+        phone: json['phone'] != null ? _asString(json['phone']) : null,
+  
+        serviceDate: json['service_date'] != null
+            ? DateTime.tryParse(json['service_date'].toString())
+            : null,
+  
+        checkoutDate: json['checkout_date'] != null
+            ? DateTime.tryParse(json['checkout_date'].toString())
+            : null,
+            
+        imageUrl: json['image_url'] ?? json['imageUrl'],
+        imagePath: json['image_path'] ?? json['imagePath'],
+      );
+    }
 
   static String _asString(dynamic value) {
     if (value == null) return '';

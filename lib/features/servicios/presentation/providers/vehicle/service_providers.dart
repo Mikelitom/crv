@@ -29,6 +29,7 @@ import 'package:crv_reprosisa/features/servicios/presentation/notifiers/service_
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/v_service_notifier.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/vehicle/start_service_notifier.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/notifiers/vehicle/start_service_state.dart';
+import 'package:crv_reprosisa/features/servicios/presentation/providers/press/press_usage_provider.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/attach_item_state.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/incidence_state_g.dart';
 import 'package:crv_reprosisa/features/servicios/presentation/providers/vehicle/service_items_state.dart';
@@ -148,7 +149,59 @@ final startServiceUseCaseProvider = Provider<StartServiceUsecase>((ref) {
   return StartServiceUsecase(ref.watch(startServiceRepositoryProvider));
 });
 
+final globalVPendingMaintenanceProvider = FutureProvider<List<dynamic>>((ref) async {
+  final dataSource = ref.read(serviceRemoteDataSourceProvider);
+  return await dataSource.getPendingMaintenanceGlobal();
+});
+
 final startServiceNotifierProvider =
     NotifierProvider<StartServiceNotifier, StartVehicleServiceState>(() {
       return StartServiceNotifier();
     });
+
+// --- PROVIDER GLOBAL UNIFICADO DE MANTENIMIENTOS PENDIENTES ---
+
+final globalVehiclePendingMaintenanceProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+      final dio = ref.watch(dioProvider);
+
+      // Asumiendo que tienes un endpoint para listar todos los servicios de vehículos pendientes o general
+      // O puedes adaptarlo según la ruta de tu API en FastAPI:
+      final response = await dio.get(
+        '/vehicle/services/pending',
+      ); // Ajusta la ruta exacta de tu API si difiere
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data
+            .map(
+              (json) => {
+                'status': json['status'] ?? 'PENDING',
+                'order_number': json['order_number'] ?? json['id'] ?? 'N/A',
+                'vehicle_id': json['vehicle_id'],
+                'press_id':
+                    null, // Importante para diferenciarlo de las prensas
+              },
+            )
+            .toList();
+      } else {
+        throw Exception('Error al obtener mantenimientos de vehículos');
+      }
+    });
+
+// Opcional: Un provider que combine ambos mundos (Prensas + Vehículos) en una sola lista estandarizada
+final globalAllPendingMaintenanceProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  // 1. Obtenemos las de prensas (usando tu provider existente o llamando al datasource)
+  // Nota: Si globalPendingMaintenanceProvider ya es un FutureProvider/Provider, puedes leerlo así:
+  final pressOrders = await ref.watch(globalPendingMaintenanceProvider.future);
+
+  // 2. Obtenemos las de vehículos
+  final vehicleOrders = await ref.watch(
+    globalVPendingMaintenanceProvider.future,
+  );
+
+  // 3. Unimos ambas listas en una sola
+  return [...pressOrders, ...vehicleOrders];
+});

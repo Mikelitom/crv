@@ -13,10 +13,10 @@ class RecentMovementsTable extends StatelessWidget {
     required this.movements,
     this.searchQuery = "",
     this.isLoading = false,
-    this.identifierTitle = "IDENTIFICADOR"
+    this.identifierTitle = "IDENTIFICADOR",
   });
 
-@override
+  @override
   Widget build(BuildContext context) {
     final filtered = movements.where((m) {
       return m.identifier.toLowerCase().contains(searchQuery.toLowerCase()) ||
@@ -33,22 +33,37 @@ class RecentMovementsTable extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Últimos movimientos", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                "Últimos movimientos",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 20),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 400),
                 child: isLoading
-                    ? const SizedBox(height: 250, child: Center(child: CircularProgressIndicator(color: Color(0xFFC62828))))
+                    ? const SizedBox(
+                        height: 250,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFC62828),
+                          ),
+                        ),
+                      )
                     : filtered.isEmpty
-                        ? _buildEmptyState()
-                        : isMobile
-                            ? _buildMobileList(filtered)
-                            : _buildDesktopTable(filtered),
+                    ? _buildEmptyState()
+                    : isMobile
+                    ? _buildMobileList(filtered)
+                    : _buildDesktopTable(filtered),
               ),
             ],
           ),
@@ -56,7 +71,8 @@ class RecentMovementsTable extends StatelessWidget {
       },
     );
   }
-Widget _buildEmptyState() {
+
+  Widget _buildEmptyState() {
     return const SizedBox(
       height: 250,
       child: Center(
@@ -65,22 +81,28 @@ Widget _buildEmptyState() {
           children: [
             Icon(Icons.history, size: 48, color: Colors.grey),
             SizedBox(height: 16),
-            Text("No hay movimientos recientes", style: TextStyle(color: Colors.grey, fontSize: 15)),
+            Text(
+              "No hay movimientos recientes",
+              style: TextStyle(color: Colors.grey, fontSize: 15),
+            ),
           ],
         ),
       ),
     );
   }
+
   // --- MODO DESKTOP: TABLA ORIGINAL ---
   Widget _buildDesktopTable(List<AssetLastMovement> filtered) {
     return Table(
       columnWidths: const {
-        0: FlexColumnWidth(1),
-        1: FlexColumnWidth(2),
-        2: FlexColumnWidth(1.2),
-        3: FlexColumnWidth(1.6),
-        4: FlexColumnWidth(1.5),
-        5: FlexColumnWidth(1.5),
+        0: FlexColumnWidth(1.0), // Serie
+        1: FlexColumnWidth(1.8), // Activo
+        2: FlexColumnWidth(1.2), // Estado
+        3: FlexColumnWidth(
+          1.8,
+        ), // Fecha (Le damos más espacio para que no rompa)
+        4: FlexColumnWidth(2.0), // Usuario
+        5: FlexColumnWidth(1.4), // Movimiento
       },
       children: [
         TableRow(
@@ -122,27 +144,47 @@ Widget _buildEmptyState() {
                     ),
                   ),
                   _tableCell(Text(m.assetType)),
-                  _tableCell(_buildStateBadge(m.state)),
                   _tableCell(
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          DateFormat('dd/MM/yyyy').format(m.eventDate),
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        Text(
-                          DateFormat('hh:mm a').format(m.eventDate),
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
+                    _buildStateBadge(m.state),
+                    alignment: Alignment.center,
+                  ), // Centrado para insignias
+                  _tableCell(
+                    SizedBox(
+                      width: 110,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            DateFormat('dd/MM/yyyy').format(m.eventDate),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
                           ),
-                        ),
-                      ],
+                          Text(
+                            DateFormat('hh:mm a').format(m.eventDate),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  _tableCell(Text(m.userName)),
-                  _tableCell(_buildMovementBadge(m.movementType)),
+                  _tableCell(
+                    Text(
+                      m.userName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                  _tableCell(
+                    _buildMovementBadge(m.movementType),
+                    alignment: Alignment.center,
+                  ), // Centrado para insignias
                 ],
               ),
             ),
@@ -151,7 +193,7 @@ Widget _buildEmptyState() {
   }
 
   // --- MODO MÓVIL: LISTA DE TARJETAS ---
-Widget _buildMobileList(List<AssetLastMovement> filtered) {
+  Widget _buildMobileList(List<AssetLastMovement> filtered) {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -189,16 +231,22 @@ Widget _buildMobileList(List<AssetLastMovement> filtered) {
                   ),
                 ],
               ),
-              Text(m.assetType, style: const TextStyle(fontWeight: FontWeight.w500)),
+              Text(
+                m.assetType,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
               const SizedBox(height: 12),
-              
+
               // Campos con etiquetas
               _buildMobileField("Estado:", _buildStateBadge(m.state)),
               const SizedBox(height: 8),
-              _buildMobileField("Movimiento:", _buildMovementBadge(m.movementType)),
-              
+              _buildMobileField(
+                "Movimiento:",
+                _buildMovementBadge(m.movementType),
+              ),
+
               const Divider(height: 20),
-              
+
               Text(
                 m.userName,
                 style: const TextStyle(
@@ -230,24 +278,36 @@ Widget _buildMobileList(List<AssetLastMovement> filtered) {
 
   String _translateState(String state) {
     switch (state.toUpperCase()) {
-      case 'AVAILABLE': return 'Disponible';
-      case 'OCCUPIED': return 'Ocupado';
-      case 'WORKSHOP': return 'En taller';
-      case 'IN_PROGRESS': return 'En proceso';
-      case 'COMPLETED': return 'Completado';
-      default: return state;
+      case 'AVAILABLE':
+        return 'Disponible';
+      case 'OCCUPIED':
+        return 'Ocupado';
+      case 'WORKSHOP':
+        return 'En taller';
+      case 'IN_PROGRESS':
+        return 'En proceso';
+      case 'COMPLETED':
+        return 'Completado';
+      default:
+        return state;
     }
   }
 
   Color _stateColor(String state) {
     switch (state.toUpperCase()) {
-      case 'AVAILABLE': return Colors.green;
-      case 'WORKSHOP': return Colors.orange;
-      case 'OCCUPIED': return Colors.blue;
-      case 'COMPLETED': return const Color(0xFFC62828);
-      default: return Colors.grey;
+      case 'AVAILABLE':
+        return Colors.green;
+      case 'WORKSHOP':
+        return Colors.orange;
+      case 'OCCUPIED':
+        return Colors.blue;
+      case 'COMPLETED':
+        return const Color(0xFFC62828);
+      default:
+        return Colors.grey;
     }
   }
+
   Widget _buildStateBadge(String state) {
     final color = _stateColor(state);
 
@@ -313,13 +373,19 @@ Widget _buildMobileList(List<AssetLastMovement> filtered) {
     );
   }
 
-  Widget _tableCell(Widget child) {
+  Widget _tableCell(
+    Widget child, {
+    AlignmentGeometry alignment = Alignment.centerLeft,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+      constraints: const BoxConstraints(
+        minHeight: 52,
+      ), // Altura mínima fija para estandarizar las filas
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
-      child: child,
+      child: Align(alignment: alignment, child: child),
     );
   }
 }

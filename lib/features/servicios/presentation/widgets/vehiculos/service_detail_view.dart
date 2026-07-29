@@ -1858,8 +1858,8 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Inspección general",
+                          Text(
+                            h.folio,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
@@ -1987,7 +1987,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     return months[month - 1];
   }
 
-Widget _buildHeader(Vehicle v) {
+  Widget _buildHeader(Vehicle v) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -2007,11 +2007,7 @@ Widget _buildHeader(Vehicle v) {
                   : null,
             ),
             child: (v.imageUrl == null || v.imageUrl!.isEmpty)
-                ? const Icon(
-                    Icons.directions_car,
-                    size: 30,
-                    color: Colors.grey,
-                  )
+                ? const Icon(Icons.directions_car, size: 30, color: Colors.grey)
                 : null,
           ),
           Expanded(
@@ -2059,10 +2055,11 @@ Widget _buildHeader(Vehicle v) {
       ),
     );
   }
-  Widget _buildRecurrenciaSection() {
-    final state = ref.watch(incidenceNotifierProvider);
 
-    if (state.status == Status.loading) {
+  Widget _buildRecurrenciaSection() {
+    final state = ref.watch(pendingComponentNotifierProvider);
+
+    if (state.isLoading) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20),
@@ -2084,7 +2081,12 @@ Widget _buildHeader(Vehicle v) {
       );
     }
 
-    if (state.incidences.isEmpty) {
+    // Filtramos únicamente los componentes que tengan más de 0 incidencias acumuladas
+    final incidentesList = state.data
+        .where((item) => item.incidenciasPrevias > 0)
+        .toList();
+
+    if (incidentesList.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(20),
         child: Center(
@@ -2098,10 +2100,10 @@ Widget _buildHeader(Vehicle v) {
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      itemCount: state.incidences.length,
+      itemCount: incidentesList.length,
       itemBuilder: (context, index) {
-        final incidencia = state.incidences[index];
-        final progress = (incidencia.incidenceCount / 10).clamp(0.0, 1.0);
+        final item = incidentesList[index];
+        final progress = (item.incidenciasPrevias / 10).clamp(0.0, 1.0);
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 16.0),
@@ -2113,7 +2115,7 @@ Widget _buildHeader(Vehicle v) {
                 children: [
                   Expanded(
                     child: Text(
-                      incidencia.componentName,
+                      item.componentName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -2134,7 +2136,7 @@ Widget _buildHeader(Vehicle v) {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      "${incidencia.incidenceCount} veces",
+                      "${item.incidenciasPrevias} veces",
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,

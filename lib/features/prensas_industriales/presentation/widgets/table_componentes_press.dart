@@ -66,7 +66,7 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
         borderRadius: BorderRadius.circular(16),
         child: DataTable(
           headingRowHeight: 56,
-          dataRowMaxHeight: 95,
+          dataRowMaxHeight: 120,
           columnSpacing: 20,
           headingRowColor: WidgetStateProperty.all(kHeaderGray),
           columns: const [
@@ -75,7 +75,7 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
             DataColumn(label: _HeaderLabel('DESCRIPCIÓN DEL COMPONENTE')),
             DataColumn(label: _HeaderLabel('CONDICIÓN')),
             DataColumn(label: _HeaderLabel('OBSERVACIONES')), 
-            DataColumn(label: _HeaderLabel('EVIDENCIA (A / D)')),
+            DataColumn(label: _HeaderLabel('EVID. (A / D)')),
           ],
           rows: widget.items.map((item) => DataRow(
             cells: [
@@ -87,7 +87,7 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
               )),
               DataCell(_desktopStatus(item)), 
               DataCell(_desktopNoteField(item)), 
-              DataCell(_evidenceDual(item, 44, true)),
+              DataCell(_evidenceDual(item, 35, true)),
             ],
           )).toList(),
         ),
@@ -166,7 +166,7 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
                       const Spacer(),
                       const Text("FOTOS (A / D)", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.blueGrey)),
                       const SizedBox(width: 12),
-                      _evidenceDual(item, 40, false),
+                      _evidenceDual(item, 35, false),
                     ],
                   ),
                 ),
@@ -285,7 +285,6 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     );
   }
 
-  // Se corrige para evitar que muestre ceros por defecto (si es 0 o null, muestra vacío)
   Widget _qtyField(ComponentItem item) => SizedBox(
     width: 60,
     child: TextField(
@@ -313,35 +312,92 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     ),
   );
 
-  Widget _evidenceDual(ComponentItem item, double size, bool showLabel) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      _mediaBox("A", item.evidenceBefore, () => _pick(item, true), () => setState(() => item.evidenceBefore = []), size),
-      const SizedBox(width: 8),
-      _mediaBox("D", item.evidenceAfter, () => _pick(item, false), () => setState(() => item.evidenceAfter = []), size),
-    ],
-  );
-
-  Widget _mediaBox(String label, List<EvidenceFile> files, VoidCallback onAdd, VoidCallback onDelete, double size) {
-    bool hasData = files.isNotEmpty;
-    return GestureDetector(
-      onTap: hasData ? () => _showFullImage(files.first.bytes) : onAdd,
-      child: Container(
-        width: size, height: size,
-        decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(10), 
-          border: Border.all(color: hasData ? kRedReprosisa : kBorderSuave, width: 1.5)
-        ),
-        child: hasData
-            ? Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.memory(files.first.bytes, fit: BoxFit.cover, width: size, height: size)),
-                  Positioned(top: -6, right: -6, child: GestureDetector(onTap: onDelete, child: Container(padding: const EdgeInsets.all(3), decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle), child: const Icon(Icons.close, size: 10, color: Colors.white)))),
-                ],
-              )
-            : Icon(Icons.camera_alt_rounded, size: 18, color: kRedReprosisa.withOpacity(0.6)),
+  Widget _evidenceDual(ComponentItem item, double size, bool showLabel) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildVerticalSection("A", item.evidenceBefore, true, size, item),
+          const SizedBox(height: 6),
+          _buildVerticalSection("D", item.evidenceAfter, false, size, item),
+        ],
       ),
+    );
+  }
+
+  Widget _buildVerticalSection(String label, List<EvidenceFile> files, bool isBefore, double size, ComponentItem item) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: Colors.blueGrey,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ...files.asMap().entries.map((entry) {
+              final index = entry.key;
+              final file = entry.value;
+              return Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    GestureDetector(
+                      onTap: () => _showFullImage(file.bytes),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.memory(file.bytes, fit: BoxFit.cover, width: size, height: size),
+                      ),
+                    ),
+                    Positioned(
+                      top: -5,
+                      right: -5,
+                      child: GestureDetector(
+                        onTap: () => setState(() {
+                          if (isBefore) {
+                            item.evidenceBefore.removeAt(index);
+                          } else {
+                            item.evidenceAfter.removeAt(index);
+                          }
+                        }),
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                          child: const Icon(Icons.close, size: 8, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            GestureDetector(
+              onTap: () => _pick(item, isBefore),
+              child: Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  color: kHeaderGray,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: kBorderSuave, width: 1.2),
+                ),
+                child: Icon(Icons.add_a_photo_rounded, size: 16, color: kRedReprosisa.withOpacity(0.8)),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -375,7 +431,11 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
         final bytes = await file.readAsBytes();
         setState(() {
           final ev = EvidenceFile(bytes: bytes, type: "image", mimeType: "image/jpeg");
-          if (isBefore) item.evidenceBefore = [ev]; else item.evidenceAfter = [ev];
+          if (isBefore) {
+            item.evidenceBefore.add(ev);
+          } else {
+            item.evidenceAfter.add(ev);
+          }
         });
       }
     }

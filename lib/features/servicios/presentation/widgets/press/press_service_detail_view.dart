@@ -719,8 +719,8 @@ class _PressServiceDetailViewState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Inspección general", 
+                          Text(
+                            h.folio, 
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87),
                           ),
                           const SizedBox(height: 2),

@@ -13,12 +13,16 @@ abstract class ServiceDataSource {
   Future<void> createService(CreateServiceOrderModel model);
   Future<List<IncidenceModel>> getIncidenceSummary(String vehicleId);
   Future<List<ServiceOrderModel>> getPendingServicesByVehicle(String vehicleId);
+  Future<List<dynamic>> getPendingMaintenanceGlobal();
   Future<void> startService({
     required String serviceId,
     required String location,
     required int mileage,
   });
-  Future<bool> completeService(String serviceId, List<ServiceEvidence> evidences);
+  Future<bool> completeService(
+    String serviceId,
+    List<ServiceEvidence> evidences,
+  );
 }
 
 class ServiceDataSourceImpl implements ServiceDataSource {
@@ -79,6 +83,22 @@ class ServiceDataSourceImpl implements ServiceDataSource {
   }
 
   @override
+  Future<List<dynamic>> getPendingMaintenanceGlobal() async {
+    final response = await dio.post(
+      '/vehicle_service/multi-filter',
+      data: {"status": "PENDING"},
+    );
+
+    if (response.statusCode == 200) {
+      return response.data as List<dynamic>;
+    } else {
+      throw Exception(
+        'Error al obtener mantenimientos pendientes: ${response.statusCode}',
+      );
+    }
+  }
+
+  @override
   Future<List<ServiceItemModel>> getServiceItems(String serviceId) async {
     final response = await dio.get('/vehicle/service/service-items/$serviceId');
 
@@ -117,18 +137,14 @@ class ServiceDataSourceImpl implements ServiceDataSource {
     final response = await dio.patch(
       '/vehicle/service/$serviceId/complete',
       data: {
-        "evidences": evidences
-            .map((evidence) => evidence.toJson())
-            .toList(),
+        "evidences": evidences.map((evidence) => evidence.toJson()).toList(),
       },
     );
-  
+
     if (response.statusCode == 200) {
       return true;
     } else {
-      throw Exception(
-        'Error al completar el servicio: ${response.statusCode}',
-      );
+      throw Exception('Error al completar el servicio: ${response.statusCode}');
     }
   }
 
