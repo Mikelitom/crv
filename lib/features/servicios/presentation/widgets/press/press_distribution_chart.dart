@@ -27,7 +27,7 @@ class _PressDistributionChartState extends ConsumerState<PressDistributionChart>
       return pressList.where((p) {
         final s = p.operationState.trim().toUpperCase();
         if (stateName == "AVAILABLE") return (s == "AVAILABLE" || s == "DISPONIBLE");
-        if (stateName == "OCCUPIED") return (s == "OCCUPIED" || s == "OCUPADA" || s == "EN USO");
+        if (stateName == "OCCUPIED" || stateName == "LOANED") return (s == "OCCUPIED" || s == "OCUPADA" || s == "EN USO");
         if (stateName == "WORKSHOP") return (s == "WORKSHOP" || s == "TALLER");
         return s == stateName;
       }).length;
@@ -55,7 +55,7 @@ class _PressDistributionChartState extends ConsumerState<PressDistributionChart>
           color: Colors.white,
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(isHovered ? 0.12 : 0.05), blurRadius: isHovered ? 30 : 20, offset: const Offset(0, 10))
+            BoxShadow(color: Colors.black.withValues(alpha: (isHovered ? 0.12 : 0.05)), blurRadius: isHovered ? 30 : 20, offset: const Offset(0, 10))
           ],
         ),
         child: Column(
