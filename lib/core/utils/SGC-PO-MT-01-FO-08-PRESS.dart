@@ -7,8 +7,6 @@ class PrensaPdfGenerator {
   
   // --- MÉTODO REQUERIDO POR PDFREPORTMANAGER ---
   static Map<String, dynamic> mapDetailModelToPdfData(dynamic model) {
-    // Aquí transformas tu modelo de Prensa a la estructura que el generador espera.
-    // Ajusta los campos según cómo venga tu modelo (ej. model.report, model.press, etc.)
     return {
       'fecha': model.report['inspection_date'] ?? 'N/A',
       'tipo': model.press['type'] ?? 'N/A',
@@ -149,26 +147,34 @@ class PrensaPdfGenerator {
     return pw.Table(
       border: pw.TableBorder.all(width: 0.8),
       columnWidths: {
-  0: const pw.FixedColumnWidth(25), 
-        1: const pw.FixedColumnWidth(30), 
-        2: const pw.FlexColumnWidth(3),
-        3: const pw.FixedColumnWidth(20), // Columna Bueno (B)
-        4: const pw.FixedColumnWidth(20), // Columna Malo (M)
-        5: const pw.FlexColumnWidth(1.5), 
-        6: const pw.FixedColumnWidth(25), 
-        7: const pw.FixedColumnWidth(25),
+        0: const pw.FixedColumnWidth(25),  // Cantidad
+        1: const pw.FixedColumnWidth(30),  // Unidad
+        2: const pw.FlexColumnWidth(3.0),  // Descripción
+        3: const pw.FixedColumnWidth(20),  // B (Bueno)
+        4: const pw.FixedColumnWidth(20),  // M (Malo)
+        5: const pw.FlexColumnWidth(2.0),  // Observaciones
+        6: const pw.FixedColumnWidth(25),  // ANT (Antes)
+        7: const pw.FixedColumnWidth(25),  // DES (Después)
       },
       children: [
+        // 8 Columnas exactas sincronizadas con el ancho y celdas
         pw.TableRow(decoration: const pw.BoxDecoration(color: PdfColors.grey200), children: [
-          _tH("CANT"), _tH("UNID"), _tH("DESCRIPCIÓN"), _tH("B"), _tH("M"), _tH("N/A"), _tH("OBS."), _tH("ANT"), _tH("DES")
+          _tH("CANT"), 
+          _tH("UNID"), 
+          _tH("DESCRIPCIÓN DEL COMPONENTE"), 
+          _tH("B"), 
+          _tH("M"), 
+          _tH("OBS."), 
+          _tH("ANT"), 
+          _tH("DES")
         ]),
         ...items.map((item) => pw.TableRow(children: [
-          _tC(item['quantity']?.toString() ?? ""),
+          _tC(item['quantity'] != null && item['quantity'] > 0 ? item['quantity'].toString() : ""),
           _tC(item['measureUnit'] ?? ""),
-          pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(item['name'] ?? "", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))),
+          pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(item['name'] ?? "", style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold))),
           _tC(item['status'] == 'GOOD' ? "V" : ""),
           _tC(item['status'] == 'BAD' ? "X" : ""),
-          pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(item['observation'] ?? "", style: const pw.TextStyle(fontSize: 7))),
+          pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(item['observation'] ?? "", style: const pw.TextStyle(fontSize: 7))),
           _tC_Image(item['foto_antes_provider']),
           _tC_Image(item['foto_despues_provider']),
         ])),
@@ -178,7 +184,7 @@ class PrensaPdfGenerator {
 
   static pw.Widget _tH(String label) => pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(label, textAlign: pw.TextAlign.center, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)));
   static pw.Widget _tC(String val) => pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(val, textAlign: pw.TextAlign.center, style: pw.TextStyle(fontSize: 7)));
-  static pw.Widget _tC_Image(pw.ImageProvider? provider) => pw.Container(height: 20, width: 20, alignment: pw.Alignment.center, padding: const pw.EdgeInsets.all(2), child: provider != null ? pw.Image(provider, fit: pw.BoxFit.cover) : pw.SizedBox());
+  static pw.Widget _tC_Image(pw.ImageProvider? provider) => pw.Container(height: 22, width: 22, alignment: pw.Alignment.center, padding: const pw.EdgeInsets.all(1), child: provider != null ? pw.Image(provider, fit: pw.BoxFit.cover) : pw.SizedBox());
   
   static pw.Widget _buildLoanFooterSection(Map<String, dynamic> data) {
     return pw.Column(children: [

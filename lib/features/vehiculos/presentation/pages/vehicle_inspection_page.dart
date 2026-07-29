@@ -26,10 +26,11 @@ class VehicleInspectionPage extends ConsumerStatefulWidget {
   ConsumerState<VehicleInspectionPage> createState() =>
       _VehicleInspectionPageState();
 }
+
 class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
   final TextEditingController _notesController = TextEditingController();
 
-@override
+  @override
   void initState() {
     super.initState();
     if (widget.itemToEdit != null) {
@@ -39,6 +40,7 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
       });
     }
   }
+
   @override
   void dispose() {
     _notesController.dispose();
@@ -80,11 +82,9 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
     );
   }
 
-Future<void> _finalizar() async {
-    // Determinamos si estamos editando para mostrar un mensaje más preciso
+  Future<void> _finalizar() async {
     final bool esEdicion = widget.itemToEdit != null;
     
-    // Llamamos al método que ya configuramos en el Notifier
     final resultId = await ref
         .read(vehicleInspectionProvider.notifier)
         .finalizarInspeccion();
@@ -116,12 +116,12 @@ Future<void> _finalizar() async {
       }
     }
   }
-@override
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(vehicleInspectionProvider);
     final notifier = ref.read(vehicleInspectionProvider.notifier);
 
-    // Sincroniza el controlador cuando los datos llegan de la API (modo edición)
     ref.listen(vehicleInspectionProvider.select((s) => s.generalNotes), (prev, next) {
       if (_notesController.text != next) {
         _notesController.text = next;
@@ -130,15 +130,17 @@ Future<void> _finalizar() async {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await ref.read(vehicleSyncServiceProvider).syncPendingReports();
-        },
-        child: const Icon(Icons.sync),
-      ),
+      // Pantalla de carga general institucional
       body: state.isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFC62828)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: Color(0xFFC62828)),
+                  SizedBox(height: 16),
+                  Text("Procesando información, por favor espere...", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey))
+                ],
+              ),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -152,7 +154,17 @@ Future<void> _finalizar() async {
                   const SizedBox(height: 24),
                   CaptureMethodSelector(
                     onManualFill: () => notifier.setScanning(false),
-                    onScan: () => notifier.setScanning(true),
+                    onImageCaptured: (image) {
+                      if (image != null) {
+                        notifier.setScanning(false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("¡Imagen capturada con éxito!"),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    },
                   ),
                   const SizedBox(height: 24),
                   AnimatedSwitcher(
@@ -173,7 +185,6 @@ Future<void> _finalizar() async {
                               ...state.templateSections.map((section) {
                                 final List<ComponentVehicleModel> sectionItems =
                                     (section['components'] as List).map((c) {
-                                      // Buscamos en state.items (donde vive la data cargada de la API)
                                       final index = state.items.indexWhere((i) => i.id == c['id']);
                                       return index != -1 
                                           ? state.items[index] 
@@ -189,17 +200,64 @@ Future<void> _finalizar() async {
                               const VehicleServiceRequired(),
                               const SizedBox(height: 24),
                               
-                              TextField(
-                                controller: _notesController,
-                                maxLines: 4,
-                                decoration: InputDecoration(
-                                  labelText: "NOTAS:",
-                                  alignLabelWithHint: true,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                  filled: true,
-                                  fillColor: Colors.white,
+                              // Nuevo diseño para las Notas Generales (Fondo blanco, contenedor estilizado sin bordes toscos)
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: const Color(0xFFEAECEF), width: 1.2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.03),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
                                 ),
-                                onChanged: (value) => notifier.setGeneralNotes(value),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Row(
+                                      children: [
+                                        Icon(Icons.note_alt_outlined, size: 18, color: Color(0xFFC62828)),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          "OBSERVACIONES / NOTAS GENERALES",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w900,
+                                            color: Color(0xFF1A1C1E),
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextField(
+                                      controller: _notesController,
+                                      maxLines: 4,
+                                      style: const TextStyle(fontSize: 13, color: Color(0xFF1A1C1E), fontWeight: FontWeight.w500),
+                                      decoration: InputDecoration(
+                                        hintText: "Escribe aquí cualquier observación relevante sobre la unidad...",
+                                        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        isDense: true,
+                                        contentPadding: const EdgeInsets.all(14),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.5),
+                                        ),
+                                      ),
+                                      onChanged: (value) => notifier.setGeneralNotes(value),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -232,89 +290,120 @@ Future<void> _finalizar() async {
             ),
     );
   }
-Future<void> _showStatusDialog() async {
-  // 1. Obtén el estado actual desde el ref
-  final state = ref.read(vehicleInspectionProvider);
-  
-  // 2. Validar si está completo
-  final bool estaCompleto = state.items.every((item) => item.selectedOptionId != null);
-  
-  final String? result = await showDialog<String>(
-    context: context,
-    builder: (context) => AlertDialog(
-      // Responsividad: Limitamos el ancho al 90% de la pantalla para evitar desbordes
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.9,
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Row(
-        children: [
-          Icon(
-            estaCompleto ? Icons.check_circle : Icons.warning_amber_rounded, 
-            color: estaCompleto ? Colors.green : Colors.orange
-          ),
-          const SizedBox(width: 10),
-          Expanded( // Expanded evita que un título largo rompa el diseño
-            child: Text(
-              estaCompleto ? "Reporte Listo" : "Reporte Incompleto",
-              overflow: TextOverflow.ellipsis,
+
+  Future<void> _showStatusDialog() async {
+    final state = ref.read(vehicleInspectionProvider);
+    
+    final componentesFaltantes = state.items.where((item) => item.selectedOptionId == null).toList();
+    final bool estaCompleto = componentesFaltantes.isEmpty;
+    
+    final String? result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.9,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              estaCompleto ? Icons.check_circle : Icons.warning_amber_rounded, 
+              color: estaCompleto ? Colors.green : Colors.orange.shade800
             ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                estaCompleto ? "Reporte Listo" : "Componentes Faltantes",
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                estaCompleto 
+                    ? "¿Deseas finalizar y enviar el reporte como COMPLETADO?" 
+                    : "Faltan ${componentesFaltantes.length} componentes por marcar:",
+                style: const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w600),
+              ),
+              if (!estaCompleto) ...[
+                const SizedBox(height: 10),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 150),
+                  child: Scrollbar(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: componentesFaltantes.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2.0),
+                          child: Text(
+                            "• ${componentesFaltantes[index].description}",
+                            style: const TextStyle(fontSize: 12, color: Color(0xFFC62828), fontWeight: FontWeight.w500),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Se guardará automáticamente como EN PROCESO si continúas.",
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ]
+            ],
+          ),
+        ),
+        actions: [
+          Wrap(
+            spacing: 8.0,
+            runSpacing: 8.0,
+            alignment: WrapAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
+                child: const Text("CANCELAR", style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context, "IN_PROGRESS"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFC62828),
+                  side: const BorderSide(color: Color(0xFFC62828)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text("GUARDAR EN PROCESO"),
+              ),
+              if (estaCompleto)
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, "COMPLETED"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFC62828),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text("COMPLETAR"),
+                ),
+            ],
           ),
         ],
       ),
-      content: Text(
-        estaCompleto 
-            ? "¿Deseas finalizar y enviar el reporte como COMPLETADO?" 
-            : "Faltan componentes por inspeccionar. El reporte se guardará automáticamente como EN PROCESO.",
-        style: const TextStyle(fontSize: 14, color: Colors.black87),
-      ),
-      // Usamos Wrap para que los botones se acomoden en filas si no caben en una
-      actions: [
-        Wrap(
-          spacing: 8.0,
-          runSpacing: 8.0,
-          alignment: WrapAlignment.end,
-          children: [
-            // BOTÓN CANCELAR
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
-              child: const Text("CANCELAR", style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            
-            // BOTÓN EN PROCESO
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context, "IN_PROGRESS"),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.grey),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text("EN PROCESO"),
-            ),
-            
-            // BOTÓN COMPLETAR
-            if (estaCompleto)
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, "COMPLETED"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC62828),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text("COMPLETAR"),
-              ),
-          ],
-        ),
-      ],
-    ),
-  );
+    );
 
-  // 3. Ejecutar acción si hubo una selección
-  if (result != null) {
-    ref.read(vehicleInspectionProvider.notifier).updateReportState(result);
-    await _finalizar();
+    if (result != null) {
+      ref.read(vehicleInspectionProvider.notifier).updateReportState(result);
+      await _finalizar();
+    }
   }
-}
+
   Widget _actionBtn(String l, Color c, IconData i, VoidCallback t) => SizedBox(
     height: 55,
     child: ElevatedButton.icon(

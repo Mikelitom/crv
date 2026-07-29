@@ -34,8 +34,8 @@ class BandaInspectionPage extends ConsumerStatefulWidget {
 
 class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
   int _currentSectionIndex = 0;
-  // final bool _mostrarRodilleria = true;
-  bool _isSaving = false;
+  bool _isSaving = false; 
+bool isScanning = false; // <-- Declarada para evitar el error de variable indefinida  bool _isSaving = false;
 
   // 🔹 Llave global para identificar el inicio de la tabla/sección
   final GlobalKey _sectionKey = GlobalKey();
@@ -399,7 +399,7 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
           children: [
-            CustomHeader(
+          CustomHeader(
               title: state.isEditing
                   ? "Editar Inspección de Banda"
                   : "Inspección de Bandas",
@@ -407,7 +407,15 @@ class _BandaInspectionPageState extends ConsumerState<BandaInspectionPage> {
               onActionTap: () => Navigator.pop(context),
             ),
             const SizedBox(height: 24),
-            CaptureMethodSelector(onManualFill: () {}, onScan: () {}),
+            CaptureMethodSelector(
+              onManualFill: () => setState(() => isScanning = false),
+              onImageCaptured: (image) {
+                if (image != null) {
+                  setState(() => isScanning = false);
+                  _showSnack("¡Imagen capturada con éxito!", Colors.green);
+                }
+              },
+            ),
             const SizedBox(height: 24),
 
             // 🔥 CAMBIO: Eliminamos ValueKey del padre.
