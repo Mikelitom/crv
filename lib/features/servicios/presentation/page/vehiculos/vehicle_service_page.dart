@@ -134,10 +134,10 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
                 bottom: 16,
                 child: selectedVehicle == null
                     ? _buildDashboard(
-                      state.vehicles,
-                      dashboardState.vehicleMovements,
-                      dashboardState.isLoading
-                    )
+                        state.vehicles,
+                        dashboardState.vehicleMovements,
+                        dashboardState.isLoading,
+                      )
                     : ServiceDetailView(
                         key: ValueKey(selectedVehicle!.vehicleId),
                         vehicle: selectedVehicle!,
@@ -196,7 +196,8 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
                           ),
                           // ... dentro de tu ListView.separated
                           itemBuilder: (_, i) => Material(
-                            color: Colors.white, // Define el color de fondo aquí
+                            color:
+                                Colors.white, // Define el color de fondo aquí
                             child: ListTile(
                               leading: _buildVehicleAvatar(filtered[i]),
                               title: Column(
@@ -205,11 +206,16 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
                                   _buildPlateBadge(filtered[i].plate),
                                   Text(
                                     "${filtered[i].brand} ${filtered[i].model}",
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 ],
                               ),
-                              trailing: _buildStatusBadge(filtered[i].operationState),
+                              trailing: _buildStatusBadge(
+                                filtered[i].operationState,
+                              ),
                               onTap: () => setState(() {
                                 selectedVehicle = filtered[i];
                                 if (!isWide) showList = false;
@@ -229,12 +235,11 @@ class _VehicleServicePageState extends ConsumerState<VehicleServicePage> {
     );
   }
 
-Widget _buildDashboard(
+  Widget _buildDashboard(
     List<Vehicle> vehicles,
     List<AssetLastMovement> movements,
-    bool isLoading
+    bool isLoading,
   ) {
-    // Calculamos las métricas basándonos en el estado de operación
     final occupiedCount = vehicles
         .where((v) => v.operationState.toUpperCase() == 'OCCUPIED')
         .length;
@@ -244,11 +249,20 @@ Widget _buildDashboard(
     final workshopCount = vehicles
         .where((v) => v.operationState.toUpperCase() == 'WORKSHOP')
         .length;
-    
-    // Asumimos que los pendientes de mantenimiento son los que están en taller
-    final pendingCount = workshopCount;
-    // Puedes ajustar 'progressCount' si tienes una lógica distinta para órdenes en proceso
-    final progressCount = 0; 
+
+    // Filtramos los movimientos que correspondan a servicios pendientes o en proceso
+    final pendingServices = movements
+        .where((m) => m.state.toUpperCase() == 'PENDING')
+        .toList();
+    final progressServices = movements
+        .where((m) => m.state.toUpperCase() == 'IN_PROGRESS')
+        .toList();
+
+    final pendingCount = pendingServices.length;
+    final progressCount = progressServices.length;
+    final lastService = pendingServices.isNotEmpty
+        ? pendingServices.first
+        : null;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -281,14 +295,28 @@ Widget _buildDashboard(
                     cardWidth,
                   ),
                   _buildAnimatedCard(const UsageTrendChart(), cardWidth),
-                  // Mantenimiento actualizado con los parámetros requeridos
+
+                  // Mantenimiento conectado a los movimientos reales de la API
                   _buildAnimatedCard(
                     MaintenancePendingCard(
                       pendingCount: pendingCount,
                       progressCount: progressCount,
-                      lastOrderNumber: "N/A", // O asigna el valor dinámico correspondiente
+                      lastOrderNumber: lastService != null
+                          ? lastService.identifier
+                          : "N/A",
                       onNavigate: () {
-                        // Agrega tu lógica de navegación aquí
+                        if (lastService != null) {
+                          // Buscamos si el vehículo existe en la lista para seleccionarlo
+                          final targetVehicle = vehicles.firstWhere(
+                            (v) =>
+                                v.plate.toLowerCase() ==
+                                lastService.identifier.toLowerCase(),
+                            orElse: () => vehicles.first,
+                          );
+                          setState(() {
+                            selectedVehicle = targetVehicle;
+                          });
+                        }
                       },
                     ),
                     cardWidth,

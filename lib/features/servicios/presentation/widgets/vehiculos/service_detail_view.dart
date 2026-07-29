@@ -1858,8 +1858,8 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Inspección general",
+                          Text(
+                            h.folio,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
@@ -1987,7 +1987,7 @@ class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     return months[month - 1];
   }
 
-Widget _buildHeader(Vehicle v) {
+  Widget _buildHeader(Vehicle v) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -2007,11 +2007,7 @@ Widget _buildHeader(Vehicle v) {
                   : null,
             ),
             child: (v.imageUrl == null || v.imageUrl!.isEmpty)
-                ? const Icon(
-                    Icons.directions_car,
-                    size: 30,
-                    color: Colors.grey,
-                  )
+                ? const Icon(Icons.directions_car, size: 30, color: Colors.grey)
                 : null,
           ),
           Expanded(
@@ -2059,7 +2055,8 @@ Widget _buildHeader(Vehicle v) {
       ),
     );
   }
-Widget _buildRecurrenciaSection() {
+
+  Widget _buildRecurrenciaSection() {
     final state = ref.watch(pendingComponentNotifierProvider);
 
     if (state.isLoading) {
@@ -2085,7 +2082,9 @@ Widget _buildRecurrenciaSection() {
     }
 
     // Filtramos únicamente los componentes que tengan más de 0 incidencias acumuladas
-    final incidentesList = state.data.where((item) => item.incidenciasPrevias > 0).toList();
+    final incidentesList = state.data
+        .where((item) => item.incidenciasPrevias > 0)
+        .toList();
 
     if (incidentesList.isEmpty) {
       return const Padding(
