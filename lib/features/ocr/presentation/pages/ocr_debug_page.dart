@@ -25,9 +25,7 @@ class OCRDebugPage extends ConsumerWidget {
 
           if (state.processedImage == null) {
             return const Center(
-              child: Text(
-                "No hay ninguna imagen procesada.",
-              ),
+              child: Text("No hay ninguna imagen procesada."),
             );
           }
 
@@ -35,9 +33,10 @@ class OCRDebugPage extends ConsumerWidget {
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
-            child: Column(
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
               children: [
-
                 _ImageCard(
                   title: "Original",
                   imagePath: image.originalPath,
@@ -47,6 +46,12 @@ class OCRDebugPage extends ConsumerWidget {
                   _ImageCard(
                     title: "Escala de grises",
                     imagePath: image.grayPath!,
+                  ),
+
+                if (image.clahePath != null)
+                  _ImageCard(
+                    title: "CLAHE",
+                    imagePath: image.clahePath!,
                   ),
 
                 if (image.blurPath != null)
@@ -61,10 +66,22 @@ class OCRDebugPage extends ConsumerWidget {
                     imagePath: image.thresholdPath!,
                   ),
 
-                if (image.cannyPath != null)
+                if (image.medianPath != null)
                   _ImageCard(
-                    title: "Canny",
-                    imagePath: image.cannyPath!,
+                    title: "Median Blur",
+                    imagePath: image.medianPath!,
+                  ),
+
+                if (image.dilatedPath != null)
+                  _ImageCard(
+                    title: "Dilated",
+                    imagePath: image.dilatedPath!,
+                  ),
+
+                if (image.closedPath != null)
+                  _ImageCard(
+                    title: "Morph Close",
+                    imagePath: image.closedPath!,
                   ),
 
                 if (image.contourPath != null)
@@ -75,9 +92,10 @@ class OCRDebugPage extends ConsumerWidget {
 
                 if (image.perspectivePath != null)
                   _ImageCard(
-                    title: "Perspectiva Corregida",
+                    title: "Perspectiva",
                     imagePath: image.perspectivePath!,
                   ),
+
               ],
             ),
           );
@@ -98,33 +116,81 @@ class _ImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 24),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    final file = File(imagePath);
 
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+    final exists = file.existsSync();
+
+    return SizedBox(
+      width: 350,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
-            InteractiveViewer(
-              minScale: 1,
-              maxScale: 6,
-              child: Image.file(
-                File(imagePath),
+              SelectableText(
+                imagePath,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey,
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 8),
+
+              Text(
+                exists
+                    ? "Tamaño: ${(file.lengthSync() / 1024).toStringAsFixed(1)} KB"
+                    : "Archivo no encontrado",
+                style: const TextStyle(
+                  fontSize: 12,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              if (!exists)
+                const SizedBox(
+                  height: 250,
+                  child: Center(
+                    child: Text(
+                      "No se encontró la imagen",
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                )
+              else
+                InteractiveViewer(
+                  minScale: 1,
+                  maxScale: 8,
+                  child: Image.file(
+                    file,
+                    errorBuilder: (_, error, __) {
+                      return SizedBox(
+                        height: 250,
+                        child: Center(
+                          child: Text(
+                            error.toString(),
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

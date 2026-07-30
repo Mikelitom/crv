@@ -1,0 +1,23 @@
+features/
+└── ocr/
+    ├── data/
+    │   ├── datasources/
+    │   │   └── opencv_data_source.dart
+    │   │
+    │   ├── detectors/
+    │   │   ├── document_detector.dart
+    │   │   ├── perspective_transformer.dart
+    │   │   ├── document_classifier.dart
+    │   │   └── field_detector.dart
+    │   │
+    │   ├── preprocessors/
+    │   │   └── ocr_preprocessor.dart
+    │   │
+    │   └── services/
+    │       └── debug_image_service.dart
+    │
+    ├── domain/
+    │   ├── entities/
+    │   └── repositories/
+    │
+    └── presentation/

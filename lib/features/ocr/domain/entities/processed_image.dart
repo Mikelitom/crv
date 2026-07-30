@@ -4,9 +4,12 @@ class ProcessedImage {
   final String? grayPath;
   final String? blurPath;
   final String? thresholdPath;
+  final String? medianPath;
   final String? cannyPath;
   final String? contourPath;
   final String? perspectivePath;
+  final String? clahePath;
+  final String? dilatedPath;
   final String? closedPath;
 
   const ProcessedImage({
@@ -14,9 +17,12 @@ class ProcessedImage {
     this.grayPath,
     this.blurPath,
     this.thresholdPath,
+    this.medianPath,
     this.cannyPath,
     this.contourPath,
     this.perspectivePath,
-    this.closedPath
+    this.clahePath,
+    this.dilatedPath,
+    this.closedPath,
   });
 }
