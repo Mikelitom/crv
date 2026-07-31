@@ -1,16 +1,21 @@
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
-class DocumentContour {
-  final int index;
+class ReportRegion {
   final cv.Contours contours;
+  final int index;
+  final cv.VecPoint corners;
 
-  const DocumentContour({required this.index, required this.contours});
+  const ReportRegion({
+    required this.contours,
+    required this.index,
+    required this.corners,
+  });
 }
 
-class DocumentDetector {
-  const DocumentDetector();
+class ReportRegionDetector {
+  const ReportRegionDetector();
 
-  DocumentContour? detect(cv.Mat binaryImage, cv.Mat originalImage) {
+  ReportRegion? detect(cv.Mat binaryImage, cv.Mat originalImage) {
     final result = cv.findContours(
       binaryImage,
       cv.RETR_EXTERNAL,
@@ -22,12 +27,13 @@ class DocumentDetector {
     return _findBestContour(contours, originalImage);
   }
 
-  DocumentContour? _findBestContour(cv.Contours contours, cv.Mat image) {
+  ReportRegion? _findBestContour(cv.Contours contours, cv.Mat image) {
     double bestScore = -1;
     int? bestIndex;
 
     final imageArea = image.rows * image.cols;
-
+    
+    print("Imagen: ${image.cols} x ${image.rows}");
     print("Total de contornos encontrados: ${contours.length}");
 
     for (int i = 0; i < contours.length; i++) {
@@ -37,27 +43,37 @@ class DocumentDetector {
 
       final areaRatio = area / imageArea;
 
-      print(
-        "Contour $i areaRatio=${areaRatio.toStringAsFixed(3)}"
-      );
+      // print(
+      //   "Contour $i areaRatio=${areaRatio.toStringAsFixed(3)}"
+      // );
 
-      if (areaRatio < 0.02) {
-        print(
-          "Contour $i descartado por area: ${areaRatio.toStringAsFixed(3)}",
-        );
+      if (areaRatio < 0.015) {
+        // print(
+        //   "Contour $i descartado por area: ${areaRatio.toStringAsFixed(3)}",
+        // );
         continue;
       }
 
       if (areaRatio > 0.98) {
-        print(
-          "Contour $i descartado por area: ${areaRatio.toStringAsFixed(3)}",
-        );
+        // print(
+        //   "Contour $i descartado por area: ${areaRatio.toStringAsFixed(3)}",
+        // );
         continue;
       }
 
-      final perimeter = cv.arcLength(contour, true);
+      
 
-      final approx = cv.approxPolyDP(contour, 0.015 * perimeter, true);
+
+      final perimeter = cv.arcLength(
+        contour,
+        true,
+      );
+      
+      final approx = cv.approxPolyDP(
+        contour,
+        0.015 * perimeter,
+        true,
+      );
 
       print(
         "Contour $i candidato | "
@@ -74,19 +90,6 @@ class DocumentDetector {
       }
 
       final rect = cv.boundingRect(approx);
-
-      final marginX = rect.x / image.cols;
-      final marginY = rect.y / image.rows;
-
-      final rightMargin = (image.cols - (rect.x + rect.width)) / image.cols;
-
-      final bottomMargin = (image.rows - (rect.y + rect.height)) / image.rows;
-
-      final touchesBorder =
-          marginX < 0.05 &&
-          marginY < 0.05 &&
-          rightMargin < 0.05 &&
-          bottomMargin < 0.05;
 
       final widthRatio = rect.width / image.cols;
       final heightRatio = rect.height / image.rows;
@@ -112,12 +115,6 @@ class DocumentDetector {
         continue;
       }
 
-      double ratio = rect.width / rect.height;
-
-      if (ratio > 1) {
-        ratio = 1 / ratio;
-      }
-
       // if (ratio < 0.45 || ratio > 0.95) {
       //   print(
       //     "Contour $i descartado ratio ${ratio.toStringAsFixed(2)}"
@@ -137,26 +134,25 @@ class DocumentDetector {
 
       final centerScore = 1 - distance;
 
-      final borderScore = touchesBorder ? 1.0 : 0.0;
-
       final sizeScore = (widthRatio + heightRatio) / 2;
 
-      final ratioScore = 1 - (ratio - 0.77).abs();
 
       final score =
-          areaRatio * 0.25 +
-          rectangularity * 0.15 +
+          areaRatio * 0.40 +
+          rectangularity * 0.20 +
           centerScore * 0.10 +
-          sizeScore * 0.25 +
-          borderScore * 0.25;
+          sizeScore * 0.30;
 
-      print(
-        "Contour $i | "
-        "AreaRatio: ${areaRatio.toStringAsFixed(2)} | "
-        "Rectangularity: ${rectangularity.toStringAsFixed(2)} | "
-        "Ratio: ${ratio.toStringAsFixed(2)} | "
-        "Score: ${score.toStringAsFixed(2)}",
-      );
+      if (areaRatio > 0.05) {
+        print(
+          "Contour $i | "
+          "Area=${areaRatio.toStringAsFixed(2)} | "
+          "Rect=${rectangularity.toStringAsFixed(2)} | "
+          "W=${widthRatio.toStringAsFixed(2)} | "
+          "H=${heightRatio.toStringAsFixed(2)} | "
+          "Score=${score.toStringAsFixed(2)}",
+        );
+      }
 
       if (score > bestScore) {
         bestScore = score;
@@ -167,9 +163,33 @@ class DocumentDetector {
     if (bestIndex == null) {
       return null;
     }
+    
+    final bestContour = contours[bestIndex];
+    
+    final perimeter = cv.arcLength(
+      bestContour,
+      true,
+    );
+    
+    final approx = cv.approxPolyDP(
+      bestContour,
+      0.015 * perimeter,
+      true,
+    );
 
-    print("MEJOR DOCUMENTO: Contour $bestIndex | Score: $bestScore");
-
-    return DocumentContour(index: bestIndex, contours: contours);
+    
+    
+    final rect = cv.boundingRect(bestContour);
+    
+    print(
+      "RECT FINAL x:${rect.x} y:${rect.y} "
+      "w:${rect.width} h:${rect.height}"
+    );
+    
+    return ReportRegion(
+      contours: contours,
+      index: bestIndex,
+      corners: approx,
+    );
   }
 }

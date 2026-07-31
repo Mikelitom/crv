@@ -1,10 +1,10 @@
-import 'package:crv_reprosisa/features/ocr/data/detectors/document_detector.dart';
+import 'package:crv_reprosisa/features/ocr/data/detectors/report_region_detector.dart';
 import 'package:crv_reprosisa/features/ocr/data/preprocessors/document_preprocessor.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 class OpenCVDataSource {
-  final DocumentDetector _documentDetector = const DocumentDetector();
+  final ReportRegionDetector _documentDetector = const ReportRegionDetector();
   final DocumentPreprocessor _documentPreprocessor =
       const DocumentPreprocessor();
 
@@ -41,15 +41,15 @@ class OpenCVDataSource {
 
   cv.Mat _drawDocumentContour(
     cv.Mat original,
-    DocumentContour? document,
+    ReportRegion? document,
   ) {
     final output = original.clone();
-
+  
     if (document == null) {
-      print("No se encontró documento");
+      print("No se encontró región del reporte");
       return output;
     }
-
+  
     cv.drawContours(
       output,
       document.contours,
@@ -57,7 +57,7 @@ class OpenCVDataSource {
       cv.Scalar(0, 255, 0),
       thickness: 4,
     );
-
+  
     return output;
   }
 
