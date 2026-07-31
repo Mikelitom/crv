@@ -3,7 +3,7 @@ import 'package:opencv_dart/opencv_dart.dart' as cv;
 class ReportRegion {
   final cv.Contours contours;
   final int index;
-  final cv.VecPoint corners;
+  final List<cv.Point> corners;
 
   const ReportRegion({
     required this.contours,
@@ -30,9 +30,10 @@ class ReportRegionDetector {
   ReportRegion? _findBestContour(cv.Contours contours, cv.Mat image) {
     double bestScore = -1;
     int? bestIndex;
+    cv.VecPoint? bestApprox;
 
     final imageArea = image.rows * image.cols;
-    
+
     print("Imagen: ${image.cols} x ${image.rows}");
     print("Total de contornos encontrados: ${contours.length}");
 
@@ -61,19 +62,9 @@ class ReportRegionDetector {
         continue;
       }
 
-      
+      final perimeter = cv.arcLength(contour, true);
 
-
-      final perimeter = cv.arcLength(
-        contour,
-        true,
-      );
-      
-      final approx = cv.approxPolyDP(
-        contour,
-        0.015 * perimeter,
-        true,
-      );
+      final approx = cv.approxPolyDP(contour, 0.015 * perimeter, true);
 
       print(
         "Contour $i candidato | "
@@ -136,7 +127,6 @@ class ReportRegionDetector {
 
       final sizeScore = (widthRatio + heightRatio) / 2;
 
-
       final score =
           areaRatio * 0.40 +
           rectangularity * 0.20 +
@@ -157,39 +147,41 @@ class ReportRegionDetector {
       if (score > bestScore) {
         bestScore = score;
         bestIndex = i;
+        bestApprox = approx;
       }
     }
 
-    if (bestIndex == null) {
+    if (bestIndex == null || bestApprox == null) {
       return null;
     }
-    
+
     final bestContour = contours[bestIndex];
     
-    final perimeter = cv.arcLength(
-      bestContour,
-      true,
-    );
-    
-    final approx = cv.approxPolyDP(
-      bestContour,
-      0.015 * perimeter,
-      true,
-    );
-
-    
+    if (bestApprox.length != 4) {
+      print(
+        "La mejor región tiene ${bestApprox.length} vértices. "
+        "No se puede aplicar perspectiva.",
+      );
+      return null;
+    }
     
     final rect = cv.boundingRect(bestContour);
     
     print(
       "RECT FINAL x:${rect.x} y:${rect.y} "
-      "w:${rect.width} h:${rect.height}"
+      "w:${rect.width} h:${rect.height}",
     );
+    
+    final corners = <cv.Point>[];
+    
+    for (int i = 0; i < bestApprox.length; i++) {
+      corners.add(bestApprox[i]);
+    }
     
     return ReportRegion(
       contours: contours,
       index: bestIndex,
-      corners: approx,
+      corners: corners,
     );
   }
 }

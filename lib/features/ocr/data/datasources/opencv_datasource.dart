@@ -1,12 +1,15 @@
+import 'package:crv_reprosisa/features/ocr/data/detectors/perspective_transformer.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/report_region_detector.dart';
 import 'package:crv_reprosisa/features/ocr/data/preprocessors/document_preprocessor.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 class OpenCVDataSource {
-  final ReportRegionDetector _documentDetector = const ReportRegionDetector();
+  final ReportRegionDetector _reportRegionDetector = const ReportRegionDetector();
   final DocumentPreprocessor _documentPreprocessor =
       const DocumentPreprocessor();
+  final PerspectiveTransformer _perspectiveTransformer =
+      const PerspectiveTransformer();
 
   Future<ProcessedImage> processImage(String imagePath) async {
     final image = cv.imread(imagePath);
@@ -14,20 +17,19 @@ class OpenCVDataSource {
     final processed = _documentPreprocessor.process(image);
 
     // Guardar temporalmente para inspección
-    cv.imwrite(
-      _generatePath(imagePath, "closed"),
-      processed.closed,
-    );
+    cv.imwrite(_generatePath(imagePath, "closed"), processed.closed);
 
-    final document = _documentDetector.detect(
-      processed.closed,
-      image,
-    );
+    final document = _reportRegionDetector.detect(processed.closed, image);
 
-    final contour = _drawDocumentContour(
-      image,
-      document,
-    );
+    final perspective =
+        document == null
+            ? image.clone()
+            : _perspectiveTransformer.transform(
+                image,
+                document,
+              );
+
+    final contour = _drawDocumentContour(image, document);
 
     return _saveResults(
       imagePath: imagePath,
@@ -35,21 +37,18 @@ class OpenCVDataSource {
       contour: contour,
       threshold: processed.threshold,
       closed: processed.closed,
+      perspective: perspective,
     );
   }
 
-
-  cv.Mat _drawDocumentContour(
-    cv.Mat original,
-    ReportRegion? document,
-  ) {
+  cv.Mat _drawDocumentContour(cv.Mat original, ReportRegion? document) {
     final output = original.clone();
-  
+
     if (document == null) {
       print("No se encontró región del reporte");
       return output;
     }
-  
+
     cv.drawContours(
       output,
       document.contours,
@@ -57,10 +56,9 @@ class OpenCVDataSource {
       cv.Scalar(0, 255, 0),
       thickness: 4,
     );
-  
+
     return output;
   }
-
 
   ProcessedImage _saveResults({
     required String imagePath,
@@ -68,34 +66,29 @@ class OpenCVDataSource {
     required cv.Mat contour,
     required cv.Mat threshold,
     required cv.Mat closed,
+    required cv.Mat perspective,
   }) {
+    final grayPath = _generatePath(imagePath, "gray");
 
-    final grayPath = _generatePath(
+    final contourPath = _generatePath(imagePath, "contour");
+
+    final thresholdPath = _generatePath(imagePath, "threshold");
+
+    final closedPath = _generatePath(imagePath, "closed");
+
+    final perspectivePath = _generatePath(
       imagePath,
-      "gray",
+      "perspective",
     );
-
-    final contourPath = _generatePath(
-      imagePath,
-      "contour",
-    );
-
-    final thresholdPath = _generatePath(
-      imagePath,
-      "threshold",
-    );
-
-    final closedPath = _generatePath(
-      imagePath,
-      "closed",
-    );
-
 
     cv.imwrite(grayPath, gray);
     cv.imwrite(contourPath, contour);
     cv.imwrite(thresholdPath, threshold);
     cv.imwrite(closedPath, closed);
-
+    cv.imwrite(
+      perspectivePath,
+      perspective,
+    );
 
     return ProcessedImage(
       originalPath: imagePath,
@@ -103,15 +96,11 @@ class OpenCVDataSource {
       contourPath: contourPath,
       thresholdPath: thresholdPath,
       closedPath: closedPath,
-      perspectivePath: null,
+      perspectivePath: perspectivePath,
     );
   }
 
-
-  String _generatePath(
-    String originalPath,
-    String suffix,
-  ) {
+  String _generatePath(String originalPath, String suffix) {
     final index = originalPath.lastIndexOf(".");
 
     if (index == -1) {
