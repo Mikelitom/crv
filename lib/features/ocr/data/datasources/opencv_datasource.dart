@@ -2,14 +2,17 @@ import 'package:crv_reprosisa/features/ocr/data/detectors/perspective_transforme
 import 'package:crv_reprosisa/features/ocr/data/detectors/report_region_detector.dart';
 import 'package:crv_reprosisa/features/ocr/data/preprocessors/document_preprocessor.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
+import 'package:crv_reprosisa/features/ocr/data/layouts/press_layout.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 class OpenCVDataSource {
-  final ReportRegionDetector _reportRegionDetector = const ReportRegionDetector();
+  final ReportRegionDetector _reportRegionDetector =
+      const ReportRegionDetector();
   final DocumentPreprocessor _documentPreprocessor =
       const DocumentPreprocessor();
   final PerspectiveTransformer _perspectiveTransformer =
       const PerspectiveTransformer();
+  final PressLayout _pressLayout = PressLayout();
 
   Future<ProcessedImage> processImage(String imagePath) async {
     final image = cv.imread(imagePath);
@@ -21,13 +24,11 @@ class OpenCVDataSource {
 
     final document = _reportRegionDetector.detect(processed.closed, image);
 
-    final perspective =
-        document == null
-            ? image.clone()
-            : _perspectiveTransformer.transform(
-                image,
-                document,
-              );
+    final perspective = document == null
+        ? image.clone()
+        : _perspectiveTransformer.transform(image, document);
+
+    final layout = _pressLayout.drawLayout(perspective);
 
     final contour = _drawDocumentContour(image, document);
 
@@ -38,6 +39,7 @@ class OpenCVDataSource {
       threshold: processed.threshold,
       closed: processed.closed,
       perspective: perspective,
+      layout: layout,
     );
   }
 
@@ -67,6 +69,7 @@ class OpenCVDataSource {
     required cv.Mat threshold,
     required cv.Mat closed,
     required cv.Mat perspective,
+    required cv.Mat layout,
   }) {
     final grayPath = _generatePath(imagePath, "gray");
 
@@ -76,19 +79,16 @@ class OpenCVDataSource {
 
     final closedPath = _generatePath(imagePath, "closed");
 
-    final perspectivePath = _generatePath(
-      imagePath,
-      "perspective",
-    );
+    final perspectivePath = _generatePath(imagePath, "perspective");
+
+    final layoutPath = _generatePath(imagePath, "layout");
 
     cv.imwrite(grayPath, gray);
     cv.imwrite(contourPath, contour);
     cv.imwrite(thresholdPath, threshold);
     cv.imwrite(closedPath, closed);
-    cv.imwrite(
-      perspectivePath,
-      perspective,
-    );
+    cv.imwrite(perspectivePath, perspective);
+    cv.imwrite(layoutPath, layout);
 
     return ProcessedImage(
       originalPath: imagePath,
@@ -97,6 +97,7 @@ class OpenCVDataSource {
       thresholdPath: thresholdPath,
       closedPath: closedPath,
       perspectivePath: perspectivePath,
+      layoutPath: layoutPath,
     );
   }
 
