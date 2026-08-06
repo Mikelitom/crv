@@ -23,7 +23,12 @@ class OpenCVDataSource {
     String imagePath, {
     required ReportType reportType,
   }) async {
-    final image = cv.imread(imagePath);
+    final original = cv.imread(imagePath);
+    final image = _resizeIfNeeded(original);
+
+    if (!identical(original, image)) {
+      original.dispose();
+    }
 
     final processed = _documentPreprocessor.process(image);
 
@@ -72,6 +77,25 @@ class OpenCVDataSource {
     );
 
     return output;
+  }
+
+  cv.Mat _resizeIfNeeded(cv.Mat image, {int maxDimension = 2000}) {
+    final width = image.cols;
+    final height = image.rows;
+
+    final scale = width > height ? maxDimension / width : maxDimension / height;
+
+    if (scale >= 1) {
+      return image.clone();
+    }
+
+    final newWidth = (width * scale).round();
+    final newHeight = (height * scale).round();
+
+    return cv.resize(image, (
+      newWidth,
+      newHeight,
+    ), interpolation: cv.INTER_AREA);
   }
 
   ProcessedImage _saveResults({
