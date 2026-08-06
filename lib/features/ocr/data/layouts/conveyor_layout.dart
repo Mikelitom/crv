@@ -2,7 +2,7 @@ import 'package:crv_reprosisa/features/ocr/data/layouts/layout_builder.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/report_layout.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
-class VehicleLayout extends LayoutBuilder {
+class ConveyorLayout extends LayoutBuilder {
   @override
   ReportLayout build(cv.Mat image) {
     final width = image.cols;
@@ -11,29 +11,29 @@ class VehicleLayout extends LayoutBuilder {
     return ReportLayout(
       regions: [
         ReportRegionArea(
-          name: 'header',
-          rect: cv.Rect(0, 0, width, (height * 0.09).round()),
+          name: 'ignore',
+          rect: cv.Rect(0, 0, width, (height * 0.14).round()),
         ),
         ReportRegionArea(
           name: 'header',
-          rect: cv.Rect(0, (height * 0.09).round(), width, (height * 0.09).round()),
+          rect: cv.Rect(0, (height * 14).round(), width, (height * 0.10).round()),
         ),
         ReportRegionArea(
           name: 'inspection',
           rect: cv.Rect(
             0,
-            (height * 0.18).round(),
-            (width * 0.64).round(),
-            (height * 0.71).round(),
+            (height * 0.24).round(),
+            width,
+            (height * 0.62).round(),
           ),
         ),
         ReportRegionArea(
-          name: 'notes',
+          name: 'rollers',
           rect: cv.Rect(
             0,
-            (height * 0.89).round(),
+            (height * 0.86).round(),
             width,
-            (height * 0.11).round(),
+            (height * 0.14).round(),
           ),
         ),
       ],

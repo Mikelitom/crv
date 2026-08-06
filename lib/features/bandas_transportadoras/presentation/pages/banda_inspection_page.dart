@@ -1,6 +1,10 @@
 import 'dart:io';
+import 'package:camera/camera.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/client_actions_providers.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
+import 'package:crv_reprosisa/features/ocr/presentation/pages/ocr_debug_page.dart';
+import 'package:crv_reprosisa/features/ocr/presentation/providers/image_processor_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
@@ -409,11 +413,28 @@ bool isScanning = false; // <-- Declarada para evitar el error de variable indef
             const SizedBox(height: 24),
             CaptureMethodSelector(
               onManualFill: () => setState(() => isScanning = false),
-              onImageCaptured: (image) {
-                if (image != null) {
-                  setState(() => isScanning = false);
-                  _showSnack("¡Imagen capturada con éxito!", Colors.green);
+              onImageCaptured: (XFile? image) async {
+                if (image == null) return;
+
+                final notifier = ref.read(
+                  imageProcessingProvider.notifier,
+                );
+
+                await notifier.processImage(image.path, ReportType.conveyor);
+
+                if (!mounted) return;
+
+                final state = ref.read(imageProcessingProvider);
+
+                if (state.errorMessage != null) {
+                  _showSnack(state.errorMessage!, Colors.red);
+                  return;
                 }
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const OCRDebugPage()),
+                );
               },
             ),
             const SizedBox(height: 24),

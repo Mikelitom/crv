@@ -1,8 +1,11 @@
 import 'package:crv_reprosisa/features/ocr/data/detectors/perspective_transformer.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/report_region_detector.dart';
+import 'package:crv_reprosisa/features/ocr/data/layouts/conveyor_layout.dart';
+import 'package:crv_reprosisa/features/ocr/data/layouts/vehicle_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/preprocessors/document_preprocessor.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/press_layout.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 class OpenCVDataSource {
@@ -13,8 +16,13 @@ class OpenCVDataSource {
   final PerspectiveTransformer _perspectiveTransformer =
       const PerspectiveTransformer();
   final PressLayout _pressLayout = PressLayout();
+  final VehicleLayout _vehicleLayout = VehicleLayout();
+  final ConveyorLayout _conveyorLayout = ConveyorLayout();
 
-  Future<ProcessedImage> processImage(String imagePath) async {
+  Future<ProcessedImage> processImage(
+    String imagePath, {
+    required ReportType reportType,
+  }) async {
     final image = cv.imread(imagePath);
 
     final processed = _documentPreprocessor.process(image);
@@ -28,7 +36,11 @@ class OpenCVDataSource {
         ? image.clone()
         : _perspectiveTransformer.transform(image, document);
 
-    final layout = _pressLayout.drawLayout(perspective);
+    final layout = switch (reportType) {
+      ReportType.press => _pressLayout.drawLayout(perspective),
+      ReportType.vehicle => _vehicleLayout.drawLayout(perspective),
+      ReportType.conveyor => _conveyorLayout.drawLayout(perspective),
+    };
 
     final contour = _drawDocumentContour(image, document);
 

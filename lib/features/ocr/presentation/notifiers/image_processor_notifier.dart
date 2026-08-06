@@ -1,3 +1,4 @@
+import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
 import 'package:crv_reprosisa/features/ocr/domain/usecase/process_image_usecase.dart';
 import 'package:crv_reprosisa/features/ocr/presentation/state/image_processing_state.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -18,6 +19,7 @@ class ImageProcessingNotifier
 
   Future<void> processImage(
     String imagePath,
+    ReportType reportType
   ) async {
   
     if (state.isProcessing) {
@@ -34,7 +36,7 @@ class ImageProcessingNotifier
   
   
       final result =
-          await processImageUseCase(imagePath);
+          await processImageUseCase(imagePath, reportType);
   
   
       state = state.copyWith(

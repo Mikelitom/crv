@@ -1,7 +1,9 @@
+import 'package:crv_reprosisa/features/ocr/data/layouts/layout_builder.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/report_layout.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
-class PressLayout {
+class PressLayout extends LayoutBuilder {
+  @override
   ReportLayout build(cv.Mat image) {
     final width = image.cols;
     final height = image.rows;
@@ -10,7 +12,7 @@ class PressLayout {
       regions: [
         ReportRegionArea(
           name: 'inspection',
-          rect: cv.Rect(0, 0, width, (height * 0.7).round()),
+          rect: cv.Rect(0, 0, width, (height * 0.78).round()),
         ),
         ReportRegionArea(
           name: 'loan',
@@ -23,16 +25,5 @@ class PressLayout {
         ),
       ],
     );
-  }
-
-  cv.Mat drawLayout(cv.Mat image) {
-    final output = image.clone();
-    final layout = build(image);
-
-    for (final region in layout.regions) {
-      cv.rectangle(output, region.rect, cv.Scalar(0, 255, 0), thickness: 3);
-    }
-
-    return output;
   }
 }
