@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 import 'package:crv_reprosisa/features/assets/domain/usecases/get_press_report_detail.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/accept_report_usecase.dart';
+import 'package:crv_reprosisa/features/reports/domain/usecase/get_client_emauls_usecase.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/get_pending_reports_usecase.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/send_conveyor_note_usecase.dart';
+import 'package:crv_reprosisa/features/reports/domain/usecase/send_report_email_usecase.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:crv_reprosisa/features/reports/domain/usecase/get_all_reports_usecae.dart';
@@ -19,6 +21,8 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
   final SendConveyorNoteUseCase sendConveyorNoteUseCase;
   final AcceptConveyorReportUseCase acceptConveyorReportUseCase;
   final GetPendingReportsUsecase pendingReportsUsecase;
+  final GetClientEmailsUseCase getClientEmailsUseCase;
+  final SendReportEmailUseCase sendReportEmailUseCase;
   final Dio dio;
 
   ReportsNotifier({
@@ -29,6 +33,8 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     required this.sendConveyorNoteUseCase,
     required this.acceptConveyorReportUseCase,
     required this.pendingReportsUsecase,
+    required this.getClientEmailsUseCase,
+    required this.sendReportEmailUseCase,
     required this.dio,
   }) : super(const ReportsState());
 
@@ -43,7 +49,6 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     final tipos = ["BANDA", "VEHICULO", "PRENSA"];
     final tipoBuscado = tipos[state.activeTabIndex];
 
-    // Acceso seguro a la propiedad 'tipo' del reporte
     final filtered = state.allReports.where((r) {
       final dynamic report = r;
       return report.tipo.toString().toUpperCase() == tipoBuscado;
@@ -56,13 +61,8 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
   Future<void> acceptReport(String reportId) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      // Llamada al caso de uso inyectado
       await acceptConveyorReportUseCase.call(reportId);
-
-      // Recargamos la lista para reflejar el cambio de estado en la UI
       await loadAllReports();
-
-      // La carga exitosa ya maneja el estado de isLoading en loadAllReports
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -75,7 +75,6 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     state = state.copyWith(isLoading: true);
     try {
       await sendConveyorNoteUseCase.call(versionId, notes);
-      // Aquí podrías recargar los reportes si es necesario
       state = state.copyWith(isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
@@ -84,13 +83,49 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
 
   Future<void> pendingReports() async {
     state = state.copyWith(isLoading: true);
-
     try {
       final reports = await pendingReportsUsecase.execute();
       state = state.copyWith(isLoading: false, pendingReports: reports);
     } catch (e) {
       state = state.copyWith(isLoading: false);
     }
+  }
+
+  /// Carga los correos del cliente directamente sin alterar el estado global para evitar congelamientos en la UI
+  Future<List<String>> fetchClientEmails(String clientId) async {
+    final result = await getClientEmailsUseCase(clientId);
+    
+    return result.fold(
+      (failure) => [],
+      (emails) => emails,
+    );
+  }
+
+  /// Envía el reporte por correo con el PDF adjunto
+  Future<bool> sendReportByEmail({
+    required String versionId,
+    required String email,
+    required String message,
+    required Uint8List pdfBytes,
+  }) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    final result = await sendReportEmailUseCase(
+      versionId: versionId,
+      email: email,
+      message: message,
+      pdfBytes: pdfBytes,
+    );
+
+    return result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, errorMessage: failure.message);
+        return false;
+      },
+      (_) {
+        state = state.copyWith(isLoading: false);
+        return true;
+      },
+    );
   }
 
   /// Carga inicial de todos los reportes
@@ -103,7 +138,6 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
         ...data['conveyors'] ?? [],
         ...data['presses'] ?? [],
       ];
-      print(combined);
       state = state.copyWith(isLoading: false, allReports: combined);
       filterReports();
     } catch (e) {
@@ -119,7 +153,6 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
       final String id = (reportItem as dynamic).id.toString();
       dynamic detail;
 
-      // 1. Obtención de detalle según el tipo de reporte
       if (tipo == 'PRENSA') {
         final res = await getPressDetail.call(id);
         detail = res.fold((l) => null, (r) => r);
@@ -131,16 +164,11 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
         detail = res.fold((l) => null, (r) => r);
       }
 
-      // 2. Validación de datos obtenidos
       if (detail == null) {
-        throw Exception(
-          "No se pudo obtener el detalle del reporte para el ID: $id",
-        );
+        throw Exception("No se pudo obtener el detalle del reporte para el ID: $id");
       }
 
-      // 3. Delegación al Coordinador de PDF
       final bytes = await PdfReportCoordinator.generate(dio, detail, tipo);
-
       state = state.copyWith(isLoading: false);
       return bytes;
     } catch (e) {
