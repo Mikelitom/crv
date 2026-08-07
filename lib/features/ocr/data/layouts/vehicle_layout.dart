@@ -11,15 +11,20 @@ class VehicleLayout extends LayoutBuilder {
     return ReportLayout(
       regions: [
         ReportRegionArea(
-          name: 'header',
+          type: ReportSectionType.ignore,
           rect: cv.Rect(0, 0, width, (height * 0.09).round()),
         ),
         ReportRegionArea(
-          name: 'header',
-          rect: cv.Rect(0, (height * 0.09).round(), width, (height * 0.09).round()),
+          type: ReportSectionType.header,
+          rect: cv.Rect(
+            0,
+            (height * 0.09).round(),
+            width,
+            (height * 0.09).round(),
+          ),
         ),
         ReportRegionArea(
-          name: 'inspection',
+          type: ReportSectionType.inspection,
           rect: cv.Rect(
             0,
             (height * 0.18).round(),
@@ -28,7 +33,7 @@ class VehicleLayout extends LayoutBuilder {
           ),
         ),
         ReportRegionArea(
-          name: 'notes',
+          type: ReportSectionType.notes,
           rect: cv.Rect(
             0,
             (height * 0.89).round(),

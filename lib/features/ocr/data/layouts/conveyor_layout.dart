@@ -11,15 +11,15 @@ class ConveyorLayout extends LayoutBuilder {
     return ReportLayout(
       regions: [
         ReportRegionArea(
-          name: 'ignore',
+          type: ReportSectionType.ignore,
           rect: cv.Rect(0, 0, width, (height * 0.14).round()),
         ),
         ReportRegionArea(
-          name: 'header',
+          type: ReportSectionType.header,
           rect: cv.Rect(0, (height * 14).round(), width, (height * 0.10).round()),
         ),
         ReportRegionArea(
-          name: 'inspection',
+          type: ReportSectionType.inspection,
           rect: cv.Rect(
             0,
             (height * 0.24).round(),
@@ -28,7 +28,7 @@ class ConveyorLayout extends LayoutBuilder {
           ),
         ),
         ReportRegionArea(
-          name: 'rollers',
+          type: ReportSectionType.rollers,
           rect: cv.Rect(
             0,
             (height * 0.86).round(),

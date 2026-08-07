@@ -82,6 +82,18 @@ class OCRDebugPage extends ConsumerWidget {
 
                 if (image.layoutPath != null)
                   _ImageCard(title: "Layout", imagePath: image.layoutPath!),
+
+                if (image.pressRowsPath != null)
+                  _ImageCard(
+                    title: "Filas de inspección - Prensa",
+                    imagePath: image.pressRowsPath!,
+                  ),
+
+                if (image.pressCheckboxesPath != null)
+                  _ImageCard(
+                    title: "Casillas - Prensa",
+                    imagePath: image.pressCheckboxesPath!,
+                  ),
               ],
             ),
           );

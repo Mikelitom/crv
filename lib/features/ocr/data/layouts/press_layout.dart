@@ -11,11 +11,16 @@ class PressLayout extends LayoutBuilder {
     return ReportLayout(
       regions: [
         ReportRegionArea(
-          name: 'inspection',
-          rect: cv.Rect(0, 0, width, (height * 0.78).round()),
+          type: ReportSectionType.inspection,
+          rect: cv.Rect(
+            0,
+            (height * 0.04).round(),
+            width,
+            (height * 0.74).round(),
+          ),
         ),
         ReportRegionArea(
-          name: 'loan',
+          type: ReportSectionType.loan,
           rect: cv.Rect(
             0,
             (height * 0.78).round(),

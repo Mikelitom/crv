@@ -1,11 +1,16 @@
+import 'package:crv_reprosisa/features/ocr/data/debug/press_checkbox_debug_renderer.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/perspective_transformer.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/report_region_detector.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/conveyor_layout.dart';
+import 'package:crv_reprosisa/features/ocr/data/layouts/report_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/vehicle_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/preprocessors/document_preprocessor.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/press_layout.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/press_row_extractor.dart';
+import 'package:crv_reprosisa/features/ocr/data/debug/press_row_debug_renderer.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/report_section_extractor.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 class OpenCVDataSource {
@@ -18,6 +23,17 @@ class OpenCVDataSource {
   final PressLayout _pressLayout = PressLayout();
   final VehicleLayout _vehicleLayout = VehicleLayout();
   final ConveyorLayout _conveyorLayout = ConveyorLayout();
+
+  final ReportSectionExtractor _reportSectionExtractor =
+      const ReportSectionExtractor();
+
+  final PressRowExtractor _pressRowExtractor = const PressRowExtractor();
+
+  final PressRowDebugRenderer _pressRowDebugRenderer =
+      const PressRowDebugRenderer();
+
+  final PressCheckboxDebugRenderer _pressCheckboxDebugRenderer =
+      const PressCheckboxDebugRenderer();
 
   Future<ProcessedImage> processImage(
     String imagePath, {
@@ -41,12 +57,60 @@ class OpenCVDataSource {
         ? image.clone()
         : _perspectiveTransformer.transform(image, document);
 
-    final layout = switch (reportType) {
-      ReportType.press => _pressLayout.drawLayout(perspective),
-      ReportType.vehicle => _vehicleLayout.drawLayout(perspective),
-      ReportType.conveyor => _conveyorLayout.drawLayout(perspective),
+    final reportLayout = switch (reportType) {
+      ReportType.press => _pressLayout.build(perspective),
+      ReportType.vehicle => _vehicleLayout.build(perspective),
+      ReportType.conveyor => _conveyorLayout.build(perspective),
     };
 
+    final layout = switch (reportType) {
+      ReportType.press => _pressLayout.drawLayout(perspective, reportLayout),
+      ReportType.vehicle => _vehicleLayout.drawLayout(
+        perspective,
+        reportLayout,
+      ),
+      ReportType.conveyor => _conveyorLayout.drawLayout(
+        perspective,
+        reportLayout,
+      ),
+    };
+
+    final extractedReport = _reportSectionExtractor.extract(
+      perspective,
+      reportLayout,
+    );
+
+    String? pressRowsPath;
+    String? pressCheckboxesPath;
+
+    if (reportType == ReportType.press) {
+      final inspection = extractedReport.sections[ReportSectionType.inspection];
+
+      if (inspection != null) {
+        final rowRects = _pressRowExtractor.getRowRects(inspection);
+
+        // Debug de las 23 filas
+        final rowsDebug = _pressRowDebugRenderer.drawRows(inspection, rowRects);
+
+        pressRowsPath = _generatePath(imagePath, "press_rows");
+
+        cv.imwrite(pressRowsPath, rowsDebug);
+
+        // Debug de las casillas
+        final checkboxDebug = _pressCheckboxDebugRenderer.drawCheckboxes(
+          inspection,
+          rowRects,
+          goodX: 855,
+          badX: 930,
+          checkboxWidth: 70,
+          checkboxHeight: 40,
+        );
+
+        pressCheckboxesPath = _generatePath(imagePath, "press_checkboxes");
+
+        cv.imwrite(pressCheckboxesPath, checkboxDebug);
+      }
+    }
     final contour = _drawDocumentContour(image, document);
 
     return _saveResults(
@@ -57,6 +121,8 @@ class OpenCVDataSource {
       closed: processed.closed,
       perspective: perspective,
       layout: layout,
+      pressRowsPath: pressRowsPath,
+      pressCheckboxesPath: pressCheckboxesPath,
     );
   }
 
@@ -106,6 +172,8 @@ class OpenCVDataSource {
     required cv.Mat closed,
     required cv.Mat perspective,
     required cv.Mat layout,
+    String? pressRowsPath,
+    String? pressCheckboxesPath,
   }) {
     final grayPath = _generatePath(imagePath, "gray");
 
@@ -134,6 +202,8 @@ class OpenCVDataSource {
       closedPath: closedPath,
       perspectivePath: perspectivePath,
       layoutPath: layoutPath,
+      pressRowsPath: pressRowsPath,
+      pressCheckboxesPath: pressCheckboxesPath,
     );
   }
 
