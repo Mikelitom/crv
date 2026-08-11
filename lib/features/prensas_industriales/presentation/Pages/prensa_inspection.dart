@@ -20,12 +20,12 @@ import '../../../dashboard/presentation/widgets/header.dart';
 
 class PrensaInspectionPage extends ConsumerStatefulWidget {
   final bool isReadOnly;
-  final InspectionRowUI? itemToEdit; // <-- Cambiado a opcional
+  final InspectionRowUI? itemToEdit;
 
   const PrensaInspectionPage({
     super.key,
     this.isReadOnly = false,
-    this.itemToEdit, // <-- Constructor corregido
+    this.itemToEdit,
   });
 
   @override
@@ -36,7 +36,6 @@ class PrensaInspectionPage extends ConsumerStatefulWidget {
 class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
   bool isScanning = false;
   bool isLoading = true;
-  List<ComponentItem> templateItems = [];
 
   @override
   void initState() {
@@ -47,29 +46,35 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
         await notifier.loadReportDetail(widget.itemToEdit!.versionId);
       } else {
         notifier.reset();
-        await notifier
-            .loadTemplate(); // <-- Se manda a llamar desde el Notifier
+        await notifier.loadTemplate();
       }
     });
   }
 
   void _showPdfPreview(BuildContext context) {
+    // Obtenemos el estado real del Notifier para leer los componentes y datos correctos
     final state = ref.read(inspeccionProvider);
+
     final String fechaActual = DateFormat(
       'dd/MM/yyyy',
     ).format(state.inspectionDate);
 
+    // Evitamos que tome "General" por defecto si el campo de área tiene un valor real o está vacío
+    final String areaReal = state.area.trim().isNotEmpty ? state.area : "N/A";
+
     final Map<String, dynamic> pdfData = {
       "serie": state.selectedPress?.serie ?? "S/N",
       "fecha": fechaActual,
-      "area": state.area.isEmpty ? "General" : state.area,
+      "area": areaReal,
       "tipo": state.selectedPress?.type ?? "N/A",
       "modelo": state.selectedPress?.model ?? "N/A",
       "volts": state.selectedPress?.voltz ?? "N/A",
       "nombre_recibe": state.solicitantsName,
       "area_solicita": state.selectedLoanArea?.name ?? "N/A",
       "observaciones_footer": state.observations,
-      "items": templateItems.map((item) {
+
+      // Mapeo corregido usando state.templateItems para que los componentes no salgan vacíos
+      "items": state.templateItems.map((item) {
         return {
           "quantity": item.quantity ?? 0,
           "measureUnit": item.measureUnit,
@@ -104,8 +109,8 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
   }
 
   Future<void> _showStatusDialog() async {
-    // 1. Identificar componentes faltantes
-    final componentesFaltantes = templateItems
+    final state = ref.read(inspeccionProvider);
+    final componentesFaltantes = state.templateItems
         .where((item) => item.status.isEmpty)
         .toList();
     final bool estaCompleto = componentesFaltantes.isEmpty;
@@ -144,7 +149,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
             runSpacing: 8.0,
             alignment: WrapAlignment.end,
             children: [
-              // BOTÓN CANCELAR: Siempre visible
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 style: TextButton.styleFrom(
@@ -155,10 +159,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-
-              // BOTÓN GUARDAR (Dinámico)
-              // Si está completo: Muestra "COMPLETAR"
-              // Si NO está completo: Muestra "GUARDAR EN PROCESO"
               if (estaCompleto)
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, "COMPLETED"),
@@ -189,7 +189,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
       ),
     );
 
-    // 2. Ejecutar la acción
     if (result != null) {
       ref.read(inspeccionProvider.notifier).updateState(result);
       await _guardarInspeccion();
@@ -200,7 +199,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
     final state = ref.read(inspeccionProvider);
     final notifier = ref.read(inspeccionProvider.notifier);
 
-    // 1. Validaciones previas
     if (state.selectedPress == null) {
       _showSnack("Selecciona una prensa primero", Colors.orange);
       return;
@@ -209,7 +207,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
     setState(() => isLoading = true);
 
     try {
-      // 2. Delegamos TODO al Notifier (el cual ya contiene la lógica de limpieza y construcción)
       final String? resultId = await notifier.finalizarInspeccion();
 
       if (resultId != null) {
@@ -239,18 +236,14 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-      
+
   @override
   Widget build(BuildContext context) {
-    // 1. Escuchamos al provider para obtener el estado real
     final state = ref.watch(inspeccionProvider);
-
-    // 2. Usamos los items que vienen del estado del notifier
     final itemsToShow = state.templateItems;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      // 3. Usamos state.isLoading del Notifier para controlar el loader
       body: state.isLoading
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFFC62828)),
@@ -269,34 +262,30 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                   const SizedBox(height: 32),
                   CaptureMethodSelector(
                     onManualFill: () => setState(() => isScanning = false),
-                  
+
                     onImageCaptured: (XFile? image) async {
-                    
                       if (image == null) return;
-                    
-                      final notifier = ref.read(imageProcessingProvider.notifier);
-                    
+
+                      final notifier = ref.read(
+                        imageProcessingProvider.notifier,
+                      );
+
                       await notifier.processImage(image.path, ReportType.press);
-                    
+
                       if (!mounted) return;
-                    
+
                       final state = ref.read(imageProcessingProvider);
-                    
+
                       if (state.errorMessage != null) {
-                        _showSnack(
-                          state.errorMessage!,
-                          Colors.red,
-                        );
+                        _showSnack(state.errorMessage!, Colors.red);
                         return;
                       }
-                    
+
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const OCRDebugPage(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const OCRDebugPage()),
                       );
-                    }
+                    },
                   ),
                   const SizedBox(height: 32),
                   AnimatedSwitcher(
@@ -317,7 +306,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                             children: [
                               const InformationGeneralEquipo(),
                               const SizedBox(height: 32),
-                              // 4. PASAMOS LA LISTA DEL ESTADO AQUÍ
                               PrensaInspectionTable(items: itemsToShow),
                               const SizedBox(height: 32),
                               const LoanAndInspectorSection(),
