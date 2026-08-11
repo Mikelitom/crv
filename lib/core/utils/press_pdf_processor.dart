@@ -38,9 +38,7 @@ class PressPdfProcessor {
   ) async {
     try {
       final data = await _getReportData(ref, versionId);
-
       if (data == null) return null;
-
       return data;
     } catch (e) {
       debugPrint("Error generando PDF: $e");
@@ -53,9 +51,7 @@ class PressPdfProcessor {
     String versionId,
   ) async {
     final notifier = ref.read(pressReportDetailProvider.notifier);
-
     await notifier.fetchDetail(versionId);
-
     final state = ref.read(pressReportDetailProvider);
 
     if (state.data == null) {
@@ -64,13 +60,30 @@ class PressPdfProcessor {
 
     final data = state.data!;
 
+    // Extracción segura de datos del reporte (Maneja tanto Map como propiedades directas)
+    final reportMap = data.report is Map ? data.report : {};
+    final pressMap = data.press is Map ? data.press : {};
+
+    // 1. Fecha de inspección segura
+    String fechaStr = DateTime.now().toIso8601String();
+    final rawDate = reportMap['inspection_date'] ?? reportMap['fecha'];
+    if (rawDate != null) {
+      try {
+        fechaStr = DateFormat('yyyy-MM-dd').format(DateTime.parse(rawDate.toString()));
+      } catch (_) {
+        fechaStr = rawDate.toString();
+      }
+    }
+
+    // 2. Extracción de Área (Evita que tome "General" por defecto si existe un valor real)
+    final String areaReporte = (reportMap['area'] ?? reportMap['ubicacion'] ?? 'N/A').toString();
+
     List<Map<String, dynamic>> itemsOrdenados = [];
     List<dynamic> respuestasPendientes = List.from(data.answers);
 
     for (var nombre in ordenOficial) {
       final index = respuestasPendientes.indexWhere(
-        (a) =>
-            a.componentName.toUpperCase().trim() == nombre.toUpperCase().trim(),
+        (a) => a.componentName.toUpperCase().trim() == nombre.toUpperCase().trim(),
       );
 
       if (index != -1) {
@@ -85,16 +98,16 @@ class PressPdfProcessor {
     }
 
     return {
-      'fecha': DateFormat('yyyy-MM-dd').format(DateTime.parse(data.report['inspection_date'])),
-      'tipo': data.press['type'] ?? 'N/A',
-      'modelo': data.press['model'] ?? 'N/A',
-      'volts': data.press['voltz'] ?? 'N/A',
-      'serie': data.press['serie'] ?? 'N/A',
-      'folio': data.report['folio'] ?? 'N/A',
-      'area': (data.report['area'] ?? 'N/A').toString(),
-      'area_solicita': data.report['loan_area'] ?? '',
-      'nombre_recibe': data.report['loan_received_by'] ?? '',
-      'observaciones_footer': data.report['general_notes'] ?? '',
+      'fecha': fechaStr,
+      'tipo': pressMap['type'] ?? pressMap['tipo'] ?? 'N/A',
+      'modelo': pressMap['model'] ?? pressMap['modelo'] ?? 'N/A',
+      'volts': pressMap['voltz'] ?? pressMap['volts'] ?? 'N/A',
+      'serie': pressMap['serie'] ?? pressMap['serial'] ?? 'N/A',
+      'folio': reportMap['folio'] ?? 'N/A',
+      'area': areaReporte, // <-- Área corregida y extraída correctamente
+      'area_solicita': reportMap['loan_area'] ?? reportMap['loan']?['area_id'] ?? '',
+      'nombre_recibe': reportMap['loan_received_by'] ?? reportMap['loan']?['solicitants_name'] ?? '',
+      'observaciones_footer': reportMap['general_notes'] ?? reportMap['observation'] ?? '',
       'items': itemsOrdenados,
     };
   }
@@ -105,7 +118,6 @@ class PressPdfProcessor {
   ) async {
     try {
       final dio = ref.read(dioProvider);
-
       final response = await dio.get(
         url,
         options: dio_package.Options(
@@ -140,8 +152,7 @@ class PressPdfProcessor {
     return {
       'name': answer.componentName,
       'status': answer.status,
-      'observation':
-          (answer.observation == "Notaas" || answer.observation.isEmpty)
+      'observation': (answer.observation == "Notaas" || answer.observation.isEmpty)
           ? ''
           : answer.observation,
       'measureUnit': answer.measureUnit,

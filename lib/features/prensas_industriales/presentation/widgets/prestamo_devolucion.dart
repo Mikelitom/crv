@@ -16,7 +16,6 @@ class LoanAndInspectorSection extends ConsumerStatefulWidget {
 }
 
 class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSection> {
-  // Controlador para manejar el texto del buscador manualmente
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -97,10 +96,6 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                     }
                   },
                   fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
-                    
-                    // --- IMPLEMENTACIÓN DE AUTOCOMPLETADO POR ESTADO (PRESTAMO) ---
-                    // Si el estado tiene un área seleccionada (por el autocompletado del Notifier)
-                    // y el texto del controller es diferente, actualizamos.
                     if (state.selectedLoanArea != null && controller.text != state.selectedLoanArea!.name) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         controller.text = state.selectedLoanArea!.name;
@@ -108,7 +103,6 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                       });
                     }
 
-                    // Si se reinicia el estado (reset), limpiamos el controlador local
                     if (state.selectedLoanArea == null && controller.text.isNotEmpty && _searchController.text.isEmpty) {
                        controller.text = "";
                     }
@@ -125,7 +119,6 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                 const SizedBox(height: 20),
                 _buildFieldLabel("NOMBRE DE QUIEN RECIBE"),
                 TextField(
-                  // Agregamos un controlador o valor inicial si necesitas que también se autocomplete
                   controller: TextEditingController(text: state.solicitantsName)..selection = TextSelection.collapsed(offset: (state.solicitantsName ?? "").length),
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   decoration: _inputStyle(hint: "Nombre completo del responsable"),
@@ -149,7 +142,7 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
     );
   }
 
-  // --- POPUP DE CREACIÓN (SE MANTIENE IGUAL) ---
+  // --- POPUP DE CREACIÓN CORREGIDO (CAMPOS OPCIONALES Y CIERRE SEGURO) ---
   void _showCreatePopUp(BuildContext context, notifier, List<LoanArea> existingAreas, {String initialName = ""}) {
     final nameCtrl = TextEditingController(text: initialName);
     final phoneCtrl = TextEditingController();
@@ -158,7 +151,7 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -173,38 +166,57 @@ class _LoanAndInspectorSectionState extends ConsumerState<LoanAndInspectorSectio
                   controller: nameCtrl,
                   decoration: const InputDecoration(labelText: "Nombre del área *"),
                   validator: (value) {
-                    if (value == null || value.isEmpty) return "Obligatorio";
-                    if (existingAreas.any((a) => a.name.toLowerCase() == value.toLowerCase())) return "Ya existe";
+                    if (value == null || value.trim().isEmpty) return "El nombre es obligatorio";
+                    if (existingAreas.any((a) => a.name.toLowerCase() == value.trim().toLowerCase())) {
+                      return "Esta área ya existe";
+                    }
                     return null;
                   },
                 ),
                 const SizedBox(height: 12),
-                TextFormField(controller: phoneCtrl, decoration: const InputDecoration(labelText: "Teléfono")),
+                TextFormField(
+                  controller: phoneCtrl, 
+                  decoration: const InputDecoration(labelText: "Teléfono (Opcional)"),
+                  keyboardType: TextInputType.phone,
+                ),
                 const SizedBox(height: 12),
-                TextFormField(controller: emailCtrl, decoration: const InputDecoration(labelText: "Correo")),
+                TextFormField(
+                  controller: emailCtrl, 
+                  decoration: const InputDecoration(labelText: "Correo (Opcional)"),
+                  keyboardType: TextInputType.emailAddress,
+                ),
               ],
             ),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCELAR")),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext), 
+            child: const Text("CANCELAR")
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: kRedReprosisa),
             onPressed: () async {
               if (formKey.currentState!.validate()) {
-                final newName = nameCtrl.text;
+                final newName = nameCtrl.text.trim();
+                final phone = phoneCtrl.text.trim();
+                final email = emailCtrl.text.trim();
+
+                // 1. Cerramos el diálogo primero de forma segura
+                Navigator.pop(dialogContext);
+
+                // 2. Ejecutamos la creación en el servidor/provider
                 await notifier.createAndSelectLoanArea(
                   name: newName,
-                  phone: phoneCtrl.text.isEmpty ? "N/A" : phoneCtrl.text,
-                  address: emailCtrl.text.isEmpty ? "N/A" : emailCtrl.text,
+                  phone: phone.isEmpty ? "N/A" : phone,
+                  address: email.isEmpty ? "N/A" : email,
                 );
                 
                 setState(() {
                   _searchController.text = newName;
                 });
                 
-                if (mounted) {
-                  Navigator.pop(context);
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Taller creado con éxito"), backgroundColor: Colors.green),
                   );

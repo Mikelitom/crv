@@ -15,6 +15,9 @@ class GeneralVehicleInfo extends ConsumerStatefulWidget {
 class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
   final TextEditingController _unitController = TextEditingController();
   final TextEditingController _mileageController = TextEditingController();
+  
+  // Control estricto para no mostrar el error al cargar por primera vez
+  bool _hasInteractedWithMileage = false;
   bool _showError = false;
 
   @override
@@ -24,22 +27,17 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
     super.dispose();
   }
 
-  // Método público o de acceso para validar antes de enviar
+  // Método público para validar antes de enviar
   bool validateMileage() {
     final state = ref.read(vehicleInspectionProvider);
     final mileageValue = double.tryParse(state.mileage) ?? 0.0;
 
-    if (mileageValue <= 0) {
-      setState(() {
-        _showError = true;
-      });
-      return false;
-    }
-
     setState(() {
-      _showError = false;
+      _hasInteractedWithMileage = true;
+      _showError = mileageValue <= 0;
     });
-    return true;
+
+    return !_showError;
   }
 
   @override
@@ -74,11 +72,15 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
       },
       child: LayoutBuilder(
         builder: (context, constraints) {
-          bool isMobile = constraints.maxWidth < 800;
+          double width = constraints.maxWidth;
+          
+          // Layout responsivo por rangos: Móvil (< 700), Tablet (700 - 1100), Escritorio (> 1100)
+          bool isMobile = width < 700;
+          bool isTablet = width >= 700 && width < 1100;
 
           return Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(32),
+            padding: EdgeInsets.all(isMobile ? 20 : 32),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
@@ -114,7 +116,31 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
                       _buildMileageField(),
                     ],
                   )
+                else if (isTablet)
+                  // Estructura en parrilla de 2x2 para evitar que se comprima en tablets
+                  Column(
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _buildPlateAutocomplete(allPlatesAsync)),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildField("Unidad (Marca Modelo Año)", _buildUnitTextField())),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _buildReadOnlyField("Fecha", formattedDate)),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildMileageField()),
+                        ],
+                      ),
+                    ],
+                  )
                 else
+                  // Escritorio en una sola línea de 4 columnas
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -178,10 +204,11 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
   }
 
   Widget _buildMileageField() {
-    // Verificación en tiempo real para activar la alerta visual inmediatamente si borran el valor o ponen 0
     final state = ref.watch(vehicleInspectionProvider);
     final val = double.tryParse(state.mileage) ?? 0.0;
-    final bool hasError = _showError || val <= 0;
+    
+    // Solo muestra error si ya hubo interacción o validación y el valor no es válido
+    final bool hasError = _hasInteractedWithMileage && (_showError || val <= 0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,7 +221,7 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
             onChanged: (v) {
               ref.read(vehicleInspectionProvider.notifier).updateMileage(v);
               setState(() {
-                // Actualiza el estado visual al escribir
+                _hasInteractedWithMileage = true;
                 final parsed = double.tryParse(v) ?? 0.0;
                 _showError = parsed <= 0;
               });
@@ -213,13 +240,15 @@ class _GeneralVehicleInfoState extends ConsumerState<GeneralVehicleInfo> {
             children: const [
               Icon(Icons.error_outline_rounded, color: Color(0xFFC62828), size: 14),
               SizedBox(width: 4),
-              Text(
-                "ERROR KILOMETRAJE TIENE QUE SER MAYOR A 0",
-                style: TextStyle(
-                  color: Color(0xFFC62828),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
+              Expanded(
+                child: Text(
+                  "ERROR KILOMETRAJE TIENE QUE SER MAYOR A 0",
+                  style: TextStyle(
+                    color: Color(0xFFC62828),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                  ),
                 ),
               ),
             ],
