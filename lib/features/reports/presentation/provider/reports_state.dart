@@ -2,9 +2,8 @@ import 'package:flutter/foundation.dart';
 
 @immutable
 class ReportsState {
-  final List<dynamic> allReports; // Lista completa cruda de la API
-  final List<dynamic>
-  filteredReports; // Lista que se muestra en la UI tras filtrar
+  final List<dynamic> allReports;
+  final List<dynamic> filteredReports;
   final bool isLoading;
   final String? errorMessage;
   final int activeTabIndex;
@@ -16,10 +15,9 @@ class ReportsState {
     this.isLoading = false,
     this.errorMessage,
     this.activeTabIndex = 0,
-    this.pendingReports = const []
+    this.pendingReports = const [],
   });
 
-  /// Factory inicial para cuando la app arranca
   factory ReportsState.initial() => const ReportsState();
 
   ReportsState copyWith({
@@ -36,7 +34,7 @@ class ReportsState {
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
       activeTabIndex: activeTabIndex ?? this.activeTabIndex,
-      pendingReports: pendingReports ?? this.pendingReports
+      pendingReports: pendingReports ?? this.pendingReports,
     );
   }
 
@@ -48,7 +46,8 @@ class ReportsState {
         other.filteredReports == filteredReports &&
         other.isLoading == isLoading &&
         other.errorMessage == errorMessage &&
-        other.activeTabIndex == activeTabIndex;
+        other.activeTabIndex == activeTabIndex &&
+        other.pendingReports == pendingReports;
   }
 
   @override
@@ -57,6 +56,7 @@ class ReportsState {
         filteredReports.hashCode ^
         isLoading.hashCode ^
         errorMessage.hashCode ^
-        activeTabIndex.hashCode;
+        activeTabIndex.hashCode ^
+        pendingReports.hashCode;
   }
 }

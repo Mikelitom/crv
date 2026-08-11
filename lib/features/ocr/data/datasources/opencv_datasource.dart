@@ -1,18 +1,58 @@
+import 'package:crv_reprosisa/features/ocr/data/debug/press_checkbox_debug_renderer.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/perspective_transformer.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/report_region_detector.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/press_inspection_extractor.dart';
+import 'package:crv_reprosisa/features/ocr/data/layouts/conveyor_layout.dart';
+import 'package:crv_reprosisa/features/ocr/data/layouts/inspections/press_inspection_layout.dart';
+import 'package:crv_reprosisa/features/ocr/data/layouts/report_layout.dart';
+import 'package:crv_reprosisa/features/ocr/data/layouts/vehicle_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/preprocessors/document_preprocessor.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
+import 'package:crv_reprosisa/features/ocr/data/layouts/press_layout.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/press_row_extractor.dart';
+import 'package:crv_reprosisa/features/ocr/data/debug/press_row_debug_renderer.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/report_section_extractor.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 class OpenCVDataSource {
-  final ReportRegionDetector _reportRegionDetector = const ReportRegionDetector();
+  final ReportRegionDetector _reportRegionDetector =
+      const ReportRegionDetector();
   final DocumentPreprocessor _documentPreprocessor =
       const DocumentPreprocessor();
   final PerspectiveTransformer _perspectiveTransformer =
       const PerspectiveTransformer();
+  final PressLayout _pressLayout = PressLayout();
+  final VehicleLayout _vehicleLayout = VehicleLayout();
+  final ConveyorLayout _conveyorLayout = ConveyorLayout();
 
-  Future<ProcessedImage> processImage(String imagePath) async {
-    final image = cv.imread(imagePath);
+  final ReportSectionExtractor _reportSectionExtractor =
+      const ReportSectionExtractor();
+
+  // final PressRowExtractor _pressRowExtractor = const PressRowExtractor();
+
+  final PressRowDebugRenderer _pressRowDebugRenderer =
+      const PressRowDebugRenderer();
+
+  final PressCheckboxDebugRenderer _pressCheckboxDebugRenderer =
+      const PressCheckboxDebugRenderer();
+
+  final PressInspectionExtractor _pressInspectionExtractor =
+      PressInspectionExtractor(
+        rowExtractor: const PressRowExtractor(),
+        layout: const PressInspectionLayout(),
+      );
+
+  Future<ProcessedImage> processImage(
+    String imagePath, {
+    required ReportType reportType,
+  }) async {
+    final original = cv.imread(imagePath);
+    final image = _resizeIfNeeded(original);
+
+    if (!identical(original, image)) {
+      original.dispose();
+    }
 
     final processed = _documentPreprocessor.process(image);
 
@@ -21,13 +61,64 @@ class OpenCVDataSource {
 
     final document = _reportRegionDetector.detect(processed.closed, image);
 
-    final perspective =
-        document == null
-            ? image.clone()
-            : _perspectiveTransformer.transform(
-                image,
-                document,
-              );
+    final perspective = document == null
+        ? image.clone()
+        : _perspectiveTransformer.transform(image, document);
+
+    final reportLayout = switch (reportType) {
+      ReportType.press => _pressLayout.build(perspective),
+      ReportType.vehicle => _vehicleLayout.build(perspective),
+      ReportType.conveyor => _conveyorLayout.build(perspective),
+    };
+
+    final layout = switch (reportType) {
+      ReportType.press => _pressLayout.drawLayout(perspective, reportLayout),
+      ReportType.vehicle => _vehicleLayout.drawLayout(
+        perspective,
+        reportLayout,
+      ),
+      ReportType.conveyor => _conveyorLayout.drawLayout(
+        perspective,
+        reportLayout,
+      ),
+    };
+
+    final extractedReport = _reportSectionExtractor.extract(
+      perspective,
+      reportLayout,
+    );
+
+    String? pressRowsPath;
+    String? pressCheckboxesPath;
+
+    if (reportType == ReportType.press) {
+      final inspection = extractedReport.sections[ReportSectionType.inspection];
+
+      if (inspection != null) {
+        // Extrae filas + regiones GOOD/BAD.
+        final inspectionResult = _pressInspectionExtractor.extract(inspection);
+
+        // Debug de filas.
+        final rowsDebug = _pressRowDebugRenderer.drawRows(
+          inspection,
+          inspectionResult.rows.map((row) => row.rowRect).toList(),
+        );
+
+        pressRowsPath = _generatePath(imagePath, "press_rows");
+
+        cv.imwrite(pressRowsPath, rowsDebug);
+
+        // Debug de checkboxes.
+        final checkboxDebug = _pressCheckboxDebugRenderer.drawCheckboxes(
+          inspection,
+          inspectionResult,
+        );
+
+        pressCheckboxesPath = _generatePath(imagePath, "press_checkboxes");
+
+        cv.imwrite(pressCheckboxesPath, checkboxDebug);
+      }
+    }
 
     final contour = _drawDocumentContour(image, document);
 
@@ -38,6 +129,9 @@ class OpenCVDataSource {
       threshold: processed.threshold,
       closed: processed.closed,
       perspective: perspective,
+      layout: layout,
+      pressRowsPath: pressRowsPath,
+      pressCheckboxesPath: pressCheckboxesPath,
     );
   }
 
@@ -60,6 +154,25 @@ class OpenCVDataSource {
     return output;
   }
 
+  cv.Mat _resizeIfNeeded(cv.Mat image, {int maxDimension = 2000}) {
+    final width = image.cols;
+    final height = image.rows;
+
+    final scale = width > height ? maxDimension / width : maxDimension / height;
+
+    if (scale >= 1) {
+      return image.clone();
+    }
+
+    final newWidth = (width * scale).round();
+    final newHeight = (height * scale).round();
+
+    return cv.resize(image, (
+      newWidth,
+      newHeight,
+    ), interpolation: cv.INTER_AREA);
+  }
+
   ProcessedImage _saveResults({
     required String imagePath,
     required cv.Mat gray,
@@ -67,6 +180,9 @@ class OpenCVDataSource {
     required cv.Mat threshold,
     required cv.Mat closed,
     required cv.Mat perspective,
+    required cv.Mat layout,
+    String? pressRowsPath,
+    String? pressCheckboxesPath,
   }) {
     final grayPath = _generatePath(imagePath, "gray");
 
@@ -76,19 +192,16 @@ class OpenCVDataSource {
 
     final closedPath = _generatePath(imagePath, "closed");
 
-    final perspectivePath = _generatePath(
-      imagePath,
-      "perspective",
-    );
+    final perspectivePath = _generatePath(imagePath, "perspective");
+
+    final layoutPath = _generatePath(imagePath, "layout");
 
     cv.imwrite(grayPath, gray);
     cv.imwrite(contourPath, contour);
     cv.imwrite(thresholdPath, threshold);
     cv.imwrite(closedPath, closed);
-    cv.imwrite(
-      perspectivePath,
-      perspective,
-    );
+    cv.imwrite(perspectivePath, perspective);
+    cv.imwrite(layoutPath, layout);
 
     return ProcessedImage(
       originalPath: imagePath,
@@ -97,6 +210,9 @@ class OpenCVDataSource {
       thresholdPath: thresholdPath,
       closedPath: closedPath,
       perspectivePath: perspectivePath,
+      layoutPath: layoutPath,
+      pressRowsPath: pressRowsPath,
+      pressCheckboxesPath: pressCheckboxesPath,
     );
   }
 

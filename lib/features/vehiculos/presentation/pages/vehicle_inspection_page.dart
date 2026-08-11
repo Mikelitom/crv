@@ -1,4 +1,8 @@
+import 'package:camera/camera.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
+import 'package:crv_reprosisa/features/ocr/presentation/pages/ocr_debug_page.dart';
+import 'package:crv_reprosisa/features/ocr/presentation/providers/image_processor_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
@@ -17,8 +21,8 @@ class VehicleInspectionPage extends ConsumerStatefulWidget {
   final InspectionRowUI? itemToEdit;
 
   const VehicleInspectionPage({
-    super.key, 
-    this.isReadOnly = false, 
+    super.key,
+    this.isReadOnly = false,
     this.itemToEdit,
   });
 
@@ -35,8 +39,9 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
     super.initState();
     if (widget.itemToEdit != null) {
       Future.microtask(() {
-        ref.read(vehicleInspectionProvider.notifier)
-           .loadReportDetail(widget.itemToEdit!.versionId);
+        ref
+            .read(vehicleInspectionProvider.notifier)
+            .loadReportDetail(widget.itemToEdit!.versionId);
       });
     }
   }
@@ -84,7 +89,7 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
 
   Future<void> _finalizar() async {
     final bool esEdicion = widget.itemToEdit != null;
-    
+
     final resultId = await ref
         .read(vehicleInspectionProvider.notifier)
         .finalizarInspeccion();
@@ -94,9 +99,9 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              esEdicion 
-                  ? "¡Inspección actualizada con éxito!" 
-                  : "¡Inspección guardada con éxito!"
+              esEdicion
+                  ? "¡Inspección actualizada con éxito!"
+                  : "¡Inspección guardada con éxito!",
             ),
             backgroundColor: Colors.green,
           ),
@@ -106,9 +111,9 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              esEdicion 
-                  ? "Error al actualizar el reporte" 
-                  : "Error al guardar el reporte"
+              esEdicion
+                  ? "Error al actualizar el reporte"
+                  : "Error al guardar el reporte",
             ),
             backgroundColor: Colors.red,
           ),
@@ -122,7 +127,10 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
     final state = ref.watch(vehicleInspectionProvider);
     final notifier = ref.read(vehicleInspectionProvider.notifier);
 
-    ref.listen(vehicleInspectionProvider.select((s) => s.generalNotes), (prev, next) {
+    ref.listen(vehicleInspectionProvider.select((s) => s.generalNotes), (
+      prev,
+      next,
+    ) {
       if (_notesController.text != next) {
         _notesController.text = next;
       }
@@ -138,7 +146,13 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                 children: [
                   CircularProgressIndicator(color: Color(0xFFC62828)),
                   SizedBox(height: 16),
-                  Text("Procesando información, por favor espere...", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey))
+                  Text(
+                    "Procesando información, por favor espere...",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
                 ],
               ),
             )
@@ -147,23 +161,37 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
               child: Column(
                 children: [
                   CustomHeader(
-                    title: widget.itemToEdit != null ? "Editar Inspección" : "Inspección de Unidades",
+                    title: widget.itemToEdit != null
+                        ? "Editar Inspección"
+                        : "Inspección de Unidades",
                     actionIcon: Icons.arrow_back_ios_new_rounded,
                     onActionTap: () => Navigator.pop(context),
                   ),
                   const SizedBox(height: 24),
                   CaptureMethodSelector(
                     onManualFill: () => notifier.setScanning(false),
-                    onImageCaptured: (image) {
-                      if (image != null) {
-                        notifier.setScanning(false);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("¡Imagen capturada con éxito!"),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
+                    onImageCaptured: (XFile? image) async {
+                      if (image == null) return;
+
+                      final notifier = ref.read(
+                        imageProcessingProvider.notifier,
+                      );
+
+                      await notifier.processImage(image.path, ReportType.vehicle);
+
+                      if (!mounted) return;
+
+                      final state = ref.read(imageProcessingProvider);
+
+                      if (state.errorMessage != null) {
+                        _showSnack(state.errorMessage!, Colors.red);
+                        return;
                       }
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const OCRDebugPage()),
+                      );
                     },
                   ),
                   const SizedBox(height: 24),
@@ -173,7 +201,11 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                         ? const SizedBox(
                             height: 300,
                             child: Center(
-                              child: Icon(Icons.qr_code_scanner, size: 80, color: Colors.grey),
+                              child: Icon(
+                                Icons.qr_code_scanner,
+                                size: 80,
+                                color: Colors.grey,
+                              ),
                             ),
                           )
                         : Column(
@@ -181,35 +213,45 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                             children: [
                               const GeneralVehicleInfo(),
                               const SizedBox(height: 24),
-                              
+
                               ...state.templateSections.map((section) {
                                 final List<ComponentVehicleModel> sectionItems =
                                     (section['components'] as List).map((c) {
-                                      final index = state.items.indexWhere((i) => i.id == c['id']);
-                                      return index != -1 
-                                          ? state.items[index] 
-                                          : ComponentVehicleModel(id: c['id'], description: c['name']);
+                                      final index = state.items.indexWhere(
+                                        (i) => i.id == c['id'],
+                                      );
+                                      return index != -1
+                                          ? state.items[index]
+                                          : ComponentVehicleModel(
+                                              id: c['id'],
+                                              description: c['name'],
+                                            );
                                     }).toList();
-                                
+
                                 return VehicleInspectionSection(
                                   title: section['name'],
                                   items: sectionItems,
                                 );
                               }).toList(),
-                              
+
                               const VehicleServiceRequired(),
                               const SizedBox(height: 24),
-                              
+
                               // Nuevo diseño para las Notas Generales (Fondo blanco, contenedor estilizado sin bordes toscos)
                               Container(
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: const Color(0xFFEAECEF), width: 1.2),
+                                  border: Border.all(
+                                    color: const Color(0xFFEAECEF),
+                                    width: 1.2,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.03),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.03,
+                                      ),
                                       blurRadius: 15,
                                       offset: const Offset(0, 5),
                                     ),
@@ -220,7 +262,11 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                                   children: [
                                     const Row(
                                       children: [
-                                        Icon(Icons.note_alt_outlined, size: 18, color: Color(0xFFC62828)),
+                                        Icon(
+                                          Icons.note_alt_outlined,
+                                          size: 18,
+                                          color: Color(0xFFC62828),
+                                        ),
                                         SizedBox(width: 8),
                                         Text(
                                           "OBSERVACIONES / NOTAS GENERALES",
@@ -237,24 +283,45 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                                     TextField(
                                       controller: _notesController,
                                       maxLines: 4,
-                                      style: const TextStyle(fontSize: 13, color: Color(0xFF1A1C1E), fontWeight: FontWeight.w500),
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Color(0xFF1A1C1E),
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                       decoration: InputDecoration(
-                                        hintText: "Escribe aquí cualquier observación relevante sobre la unidad...",
-                                        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                                        hintText:
+                                            "Escribe aquí cualquier observación relevante sobre la unidad...",
+                                        hintStyle: TextStyle(
+                                          color: Colors.grey.shade400,
+                                          fontSize: 13,
+                                        ),
                                         filled: true,
                                         fillColor: Colors.white,
                                         isDense: true,
-                                        contentPadding: const EdgeInsets.all(14),
+                                        contentPadding: const EdgeInsets.all(
+                                          14,
+                                        ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                          borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: Colors.grey.shade300,
+                                            width: 1,
+                                          ),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                          borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.5),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFFC62828),
+                                            width: 1.5,
+                                          ),
                                         ),
                                       ),
-                                      onChanged: (value) => notifier.setGeneralNotes(value),
+                                      onChanged: (value) =>
+                                          notifier.setGeneralNotes(value),
                                     ),
                                   ],
                                 ),
@@ -293,10 +360,12 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
 
   Future<void> _showStatusDialog() async {
     final state = ref.read(vehicleInspectionProvider);
-    
-    final componentesFaltantes = state.items.where((item) => item.selectedOptionId == null).toList();
+
+    final componentesFaltantes = state.items
+        .where((item) => item.selectedOptionId == null)
+        .toList();
     final bool estaCompleto = componentesFaltantes.isEmpty;
-    
+
     final String? result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -308,8 +377,8 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
         title: Row(
           children: [
             Icon(
-              estaCompleto ? Icons.check_circle : Icons.warning_amber_rounded, 
-              color: estaCompleto ? Colors.green : Colors.orange.shade800
+              estaCompleto ? Icons.check_circle : Icons.warning_amber_rounded,
+              color: estaCompleto ? Colors.green : Colors.orange.shade800,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -328,10 +397,14 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                estaCompleto 
-                    ? "¿Deseas finalizar y enviar el reporte como COMPLETADO?" 
+                estaCompleto
+                    ? "¿Deseas finalizar y enviar el reporte como COMPLETADO?"
                     : "Faltan ${componentesFaltantes.length} componentes por marcar:",
-                style: const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               if (!estaCompleto) ...[
                 const SizedBox(height: 10),
@@ -346,7 +419,11 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                           padding: const EdgeInsets.symmetric(vertical: 2.0),
                           child: Text(
                             "• ${componentesFaltantes[index].description}",
-                            style: const TextStyle(fontSize: 12, color: Color(0xFFC62828), fontWeight: FontWeight.w500),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFC62828),
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         );
                       },
@@ -358,7 +435,7 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                   "Se guardará automáticamente como EN PROCESO si continúas.",
                   style: TextStyle(fontSize: 11, color: Colors.grey),
                 ),
-              ]
+              ],
             ],
           ),
         ),
@@ -370,15 +447,22 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
             children: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
-                child: const Text("CANCELAR", style: TextStyle(fontWeight: FontWeight.bold)),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey.shade700,
+                ),
+                child: const Text(
+                  "CANCELAR",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
               OutlinedButton(
                 onPressed: () => Navigator.pop(context, "IN_PROGRESS"),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFC62828),
                   side: const BorderSide(color: Color(0xFFC62828)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: const Text("GUARDAR EN PROCESO"),
               ),
@@ -388,7 +472,9 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFC62828),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: const Text("COMPLETAR"),
                 ),
@@ -423,4 +509,13 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
       ),
     ),
   );
+
+  void _showSnack(String m, Color c) =>
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(m),
+          backgroundColor: c,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
 }

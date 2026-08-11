@@ -220,6 +220,273 @@ class _ConveyorReportTableState extends ConsumerState<ConveyorReportTable> with 
     );
   }
 
+  /// Diálogo compacto, limpio y sin espacios vacíos para enviar el reporte por correo
+  Future<void> _showSendEmailDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ConveyorHistoryModel item,
+  ) async {
+    // 1. Mostrar diálogo de carga limpio
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: kPrimaryRed),
+      ),
+    );
+
+    final clientId = item.clientId ?? "";
+    
+    // 2. Obtenemos los correos directamente sin mutar el estado global
+    final List<String> fetchedEmails = await ref
+        .read(reportsNotifierProvider.notifier)
+        .fetchClientEmails(clientId);
+
+    // 3. Cerrar el loading de manera segura usando rootNavigator
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+
+    // Conjunto para manejar múltiples correos seleccionados
+    final Set<String> selectedEmails = {};
+    if (fetchedEmails.isNotEmpty) {
+      selectedEmails.add(fetchedEmails.first); // Seleccionar el primero por defecto
+    }
+
+    final messageController = TextEditingController(
+      text: "Estimado cliente,\n\nAdjunto a este correo encontrará el reporte de inspección de banda correspondiente al folio ${item.folio}.\n\nQuedamos a su disposición para cualquier duda o comentario.\n\nSaludos cordiales,\nEquipo Reprosisa",
+    );
+
+    if (!context.mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: kPrimaryRed.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.mark_email_read_rounded, color: kPrimaryRed, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "Enviar Reporte por Correo",
+                style: TextStyle(
+                  color: kDarkText,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 450,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Seleccione los destinatarios:",
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: kDarkText),
+                  ),
+                  const SizedBox(height: 8),
+
+                  if (fetchedEmails.isNotEmpty)
+                    ...fetchedEmails.map((email) {
+                      final isSelected = selectedEmails.contains(email);
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected ? kPrimaryRed.withValues(alpha: 0.04) : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected ? kPrimaryRed.withValues(alpha: 0.4) : Colors.grey.shade200,
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: CheckboxListTile(
+                          title: Text(
+                            email,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? kPrimaryRed : kDarkText,
+                            ),
+                          ),
+                          value: isSelected,
+                          activeColor: kPrimaryRed,
+                          checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          dense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                          onChanged: (bool? value) {
+                            setDialogState(() {
+                              if (value == true) {
+                                selectedEmails.add(email);
+                              } else {
+                                selectedEmails.remove(email);
+                              }
+                            });
+                          },
+                        ),
+                      );
+                    }).toList()
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.orange.shade200),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 18),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "No se encontraron correos predeterminados para este cliente.",
+                              style: TextStyle(fontSize: 12, color: Colors.orange),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: 14),
+
+                  const Text(
+                    "Mensaje del correo:",
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: kDarkText),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: messageController,
+                    maxLines: 4,
+                    style: const TextStyle(fontSize: 12.5),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: kPrimaryRed, width: 1.5),
+                      ),
+                      contentPadding: const EdgeInsets.all(10),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: TextButton.styleFrom(foregroundColor: kGreyText),
+              child: const Text("Cancelar", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+            ),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: kPrimaryRed,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.send_rounded, size: 15),
+              label: const Text("Enviar con PDF", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+              onPressed: () async {
+                if (selectedEmails.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Debe seleccionar al menos un correo destinatario"),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.pop(dialogContext);
+
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Generando PDF y enviando correos..."),
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                }
+
+                try {
+                  // 1. Obtener y generar los bytes del PDF en memoria
+                  final pdfData = await ConveyorPdfProcessor.getPdfData(ref, item.versionId);
+                  if (pdfData == null) throw Exception("No se pudo estructurar el PDF");
+
+                  final pdfBytes = await BandaPdfGenerator.generateReport(
+                    pdfData.datosNormalizados,
+                    pdfData.sections,
+                    pdfData.rodillos,
+                  );
+
+                  // 2. Unificar los correos seleccionados en formato de cadena separada por comas
+                  final emailsString = selectedEmails.join(',');
+
+                  // 3. Enviar el correo adjuntando los bytes del PDF
+                  final success = await ref.read(reportsNotifierProvider.notifier).sendReportByEmail(
+                    versionId: item.versionId,
+                    email: emailsString,
+                    message: messageController.text,
+                    pdfBytes: pdfBytes,
+                  );
+
+                  if (context.mounted) {
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("¡Reporte y PDF enviados con éxito!"),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Error al enviar el correo"),
+                          backgroundColor: kPrimaryRed,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Excepción: $e"), backgroundColor: kPrimaryRed),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Selector compacto con formato v1, v2 en lugar de "Versión"
   Widget _buildVersionSelector(BuildContext context, ConveyorHistoryModel currentItem, List<ConveyorHistoryModel> allReports) {
     final versiones = allReports.where((i) => i.reportId == currentItem.reportId).toList()
@@ -352,7 +619,6 @@ class _ConveyorReportTableState extends ConsumerState<ConveyorReportTable> with 
                 builder: (context, gridConstraints) {
                   bool isWide = gridConstraints.maxWidth >= 950;
                   
-                  // Definimos las tarjetas base que siempre verá el admin
                   final List<Widget> counterCards = [
                     _AnimatedStatCard(
                       value: "$totalCount",
@@ -362,7 +628,6 @@ class _ConveyorReportTableState extends ConsumerState<ConveyorReportTable> with 
                     ),
                   ];
 
-                  // Si es administrador, agregamos el resto de las tarjetas de estado
                   if (widget.isAdmin) {
                     counterCards.addAll([
                       _AnimatedStatCard(
@@ -386,7 +651,6 @@ class _ConveyorReportTableState extends ConsumerState<ConveyorReportTable> with 
                     ]);
                   }
 
-                  // Si es técnico, solo se renderiza la tarjeta de Total Registrados centrada o expandida de forma limpia
                   if (!widget.isAdmin) {
                     return SizedBox(
                       width: isWide ? 300 : double.infinity,
@@ -394,7 +658,6 @@ class _ConveyorReportTableState extends ConsumerState<ConveyorReportTable> with 
                     );
                   }
 
-                  // Renderizado para Administrador
                   if (isWide) {
                     return Row(
                       children: counterCards
@@ -657,6 +920,8 @@ class _ConveyorReportTableState extends ConsumerState<ConveyorReportTable> with 
                                   _showManagementDialog(context, ref, item);
                                 } else if (value == 'approve') {
                                   _acceptReport(context, ref, item.reportId);
+                                } else if (value == 'send_email') {
+                                  _showSendEmailDialog(context, ref, item);
                                 }
                               },
                               itemBuilder: (context) => [
@@ -677,6 +942,16 @@ class _ConveyorReportTableState extends ConsumerState<ConveyorReportTable> with 
                                       Icon(Icons.print, color: kPrimaryRed, size: 18),
                                       SizedBox(width: 8),
                                       Text('Imprimir'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'send_email',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.mark_email_read_outlined, color: Colors.teal, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Enviar por correo'),
                                     ],
                                   ),
                                 ),
@@ -901,6 +1176,8 @@ class _ConveyorReportTableState extends ConsumerState<ConveyorReportTable> with 
                         _showManagementDialog(context, ref, item);
                       } else if (value == 'approve') {
                         _acceptReport(context, ref, item.reportId);
+                      } else if (value == 'send_email') {
+                        _showSendEmailDialog(context, ref, item);
                       }
                     },
                     itemBuilder: (context) => [
@@ -921,6 +1198,16 @@ class _ConveyorReportTableState extends ConsumerState<ConveyorReportTable> with 
                             Icon(Icons.print, color: kPrimaryRed, size: 18),
                             SizedBox(width: 8),
                             Text('Imprimir'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'send_email',
+                        child: Row(
+                          children: [
+                            Icon(Icons.mark_email_read_outlined, color: Colors.teal, size: 18),
+                            SizedBox(width: 8),
+                            Text('Enviar por correo'),
                           ],
                         ),
                       ),

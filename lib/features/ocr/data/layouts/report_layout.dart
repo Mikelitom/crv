@@ -1,10 +1,12 @@
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
+enum ReportSectionType { header, inspection, notes, rollers, loan, ignore }
+
 class ReportRegionArea {
-  final String name;
+  final ReportSectionType type;
   final cv.Rect rect;
 
-  const ReportRegionArea({required this.name, required this.rect});
+  const ReportRegionArea({required this.type, required this.rect});
 }
 
 class ReportLayout {

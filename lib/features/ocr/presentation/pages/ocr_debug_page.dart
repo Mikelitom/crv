@@ -1,11 +1,38 @@
 import 'dart:io';
 
+import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
 import 'package:crv_reprosisa/features/ocr/presentation/providers/image_processor_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class OCRDebugPage extends ConsumerWidget {
   const OCRDebugPage({super.key});
+
+  Future<void> _reprocess(WidgetRef ref, ProcessedImage image) async {
+    // Todas las imágenes que OpenCV puede sobrescribir.
+    final paths = <String?>[
+      image.grayPath,
+      image.clahePath,
+      image.blurPath,
+      image.thresholdPath,
+      image.medianPath,
+      image.dilatedPath,
+      image.closedPath,
+      image.contourPath,
+      image.perspectivePath,
+      image.layoutPath,
+      image.pressRowsPath,
+      image.pressCheckboxesPath,
+    ];
+
+    // Sacamos las imágenes actuales del cache de Flutter
+    // ANTES de volver a procesarlas.
+    for (final path in paths) {
+      await FileImage(File(path!)).evict();
+    }
+
+    await ref.read(imageProcessingProvider.notifier).reprocess();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -14,12 +41,33 @@ class OCRDebugPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("OCR Debug"),
+        actions: [
+          IconButton(
+            tooltip: "Reprocesar imagen",
+            onPressed: state.processedImage == null || state.isProcessing
+                ? null
+                : () {
+                    _reprocess(ref, state.processedImage!);
+                  },
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
       body: Builder(
         builder: (_) {
           if (state.isProcessing) {
-            return const Center(
-              child: CircularProgressIndicator(),
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state.errorMessage != null) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  state.errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
             );
           }
 
@@ -37,10 +85,7 @@ class OCRDebugPage extends ConsumerWidget {
               spacing: 16,
               runSpacing: 16,
               children: [
-                _ImageCard(
-                  title: "Original",
-                  imagePath: image.originalPath,
-                ),
+                _ImageCard(title: "Original", imagePath: image.originalPath),
 
                 if (image.grayPath != null)
                   _ImageCard(
@@ -49,10 +94,7 @@ class OCRDebugPage extends ConsumerWidget {
                   ),
 
                 if (image.clahePath != null)
-                  _ImageCard(
-                    title: "CLAHE",
-                    imagePath: image.clahePath!,
-                  ),
+                  _ImageCard(title: "CLAHE", imagePath: image.clahePath!),
 
                 if (image.blurPath != null)
                   _ImageCard(
@@ -73,10 +115,7 @@ class OCRDebugPage extends ConsumerWidget {
                   ),
 
                 if (image.dilatedPath != null)
-                  _ImageCard(
-                    title: "Dilated",
-                    imagePath: image.dilatedPath!,
-                  ),
+                  _ImageCard(title: "Dilated", imagePath: image.dilatedPath!),
 
                 if (image.closedPath != null)
                   _ImageCard(
@@ -85,10 +124,7 @@ class OCRDebugPage extends ConsumerWidget {
                   ),
 
                 if (image.contourPath != null)
-                  _ImageCard(
-                    title: "Contornos",
-                    imagePath: image.contourPath!,
-                  ),
+                  _ImageCard(title: "Contornos", imagePath: image.contourPath!),
 
                 if (image.perspectivePath != null)
                   _ImageCard(
@@ -96,6 +132,20 @@ class OCRDebugPage extends ConsumerWidget {
                     imagePath: image.perspectivePath!,
                   ),
 
+                if (image.layoutPath != null)
+                  _ImageCard(title: "Layout", imagePath: image.layoutPath!),
+
+                if (image.pressRowsPath != null)
+                  _ImageCard(
+                    title: "Filas de inspección - Prensa",
+                    imagePath: image.pressRowsPath!,
+                  ),
+
+                if (image.pressCheckboxesPath != null)
+                  _ImageCard(
+                    title: "Casillas - Prensa",
+                    imagePath: image.pressCheckboxesPath!,
+                  ),
               ],
             ),
           );
@@ -109,10 +159,7 @@ class _ImageCard extends StatelessWidget {
   final String title;
   final String imagePath;
 
-  const _ImageCard({
-    required this.title,
-    required this.imagePath,
-  });
+  const _ImageCard({required this.title, required this.imagePath});
 
   @override
   Widget build(BuildContext context) {
@@ -141,10 +188,7 @@ class _ImageCard extends StatelessWidget {
 
               SelectableText(
                 imagePath,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey,
-                ),
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
               ),
 
               const SizedBox(height: 8),
@@ -153,9 +197,7 @@ class _ImageCard extends StatelessWidget {
                 exists
                     ? "Tamaño: ${(file.lengthSync() / 1024).toStringAsFixed(1)} KB"
                     : "Archivo no encontrado",
-                style: const TextStyle(
-                  fontSize: 12,
-                ),
+                style: const TextStyle(fontSize: 12),
               ),
 
               const SizedBox(height: 12),

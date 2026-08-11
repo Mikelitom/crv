@@ -1,4 +1,5 @@
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
 import 'package:crv_reprosisa/features/ocr/presentation/pages/ocr_debug_page.dart';
 import 'package:crv_reprosisa/features/ocr/presentation/providers/image_processor_provider.dart';
 import 'package:flutter/material.dart';
@@ -238,6 +239,7 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+      
   @override
   Widget build(BuildContext context) {
     // 1. Escuchamos al provider para obtener el estado real
@@ -274,7 +276,7 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                     
                       final notifier = ref.read(imageProcessingProvider.notifier);
                     
-                      await notifier.processImage(image.path);
+                      await notifier.processImage(image.path, ReportType.press);
                     
                       if (!mounted) return;
                     

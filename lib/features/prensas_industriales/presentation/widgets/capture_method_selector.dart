@@ -28,7 +28,10 @@ class _CaptureMethodSelectorState extends State<CaptureMethodSelector> {
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
           child: Container(
             width: double.infinity,
             constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
@@ -52,7 +55,11 @@ class _CaptureMethodSelectorState extends State<CaptureMethodSelector> {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.document_scanner_rounded, color: Color(0xFFC62828), size: 22),
+                        Icon(
+                          Icons.document_scanner_rounded,
+                          color: Color(0xFFC62828),
+                          size: 22,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           "Escáner de Documentos",
@@ -65,7 +72,10 @@ class _CaptureMethodSelectorState extends State<CaptureMethodSelector> {
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded, color: Color(0xFF616161)),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Color(0xFF616161),
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
@@ -73,14 +83,11 @@ class _CaptureMethodSelectorState extends State<CaptureMethodSelector> {
                 const SizedBox(height: 6),
                 const Text(
                   "Alinea el documento completo dentro del rectángulo delimitador.",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF616161),
-                  ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF616161)),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // --- MARCO RECTANGULAR GRANDE PARA DOCUMENTOS ---
                 Expanded(
                   child: Container(
@@ -112,31 +119,47 @@ class _CaptureMethodSelectorState extends State<CaptureMethodSelector> {
                         Positioned(
                           top: 20,
                           right: 20,
-                          child: _buildLargeCornerBorder(top: true, left: false),
+                          child: _buildLargeCornerBorder(
+                            top: true,
+                            left: false,
+                          ),
                         ),
                         Positioned(
                           bottom: 20,
                           left: 20,
-                          child: _buildLargeCornerBorder(top: false, left: true),
+                          child: _buildLargeCornerBorder(
+                            top: false,
+                            left: true,
+                          ),
                         ),
                         Positioned(
                           bottom: 20,
                           right: 20,
-                          child: _buildLargeCornerBorder(top: false, left: false),
+                          child: _buildLargeCornerBorder(
+                            top: false,
+                            left: false,
+                          ),
                         ),
 
                         // Texto indicador dentro del visor
                         Positioned(
                           bottom: 12,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.black54,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
                               "Área de captura de documento",
-                              style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -188,10 +211,18 @@ class _CaptureMethodSelectorState extends State<CaptureMethodSelector> {
       height: 32,
       decoration: BoxDecoration(
         border: Border(
-          top: top ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-          bottom: !top ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-          left: left ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-          right: !left ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
+          top: top
+              ? const BorderSide(color: Colors.white, width: 4)
+              : BorderSide.none,
+          bottom: !top
+              ? const BorderSide(color: Colors.white, width: 4)
+              : BorderSide.none,
+          left: left
+              ? const BorderSide(color: Colors.white, width: 4)
+              : BorderSide.none,
+          right: !left
+              ? const BorderSide(color: Colors.white, width: 4)
+              : BorderSide.none,
         ),
       ),
     );
@@ -225,78 +256,93 @@ class _CaptureMethodSelectorState extends State<CaptureMethodSelector> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      bool isMobile = constraints.maxWidth < 600;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        bool isMobile = constraints.maxWidth < 600;
 
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(isMobile ? 16 : 24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.document_scanner_rounded, color: Color(0xFFC62828), size: 22),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    "Método de Captura de Datos",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900, 
-                      fontSize: isMobile ? 15 : 17, 
-                      color: const Color(0xFF1A1C1E)
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(isMobile ? 16 : 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.document_scanner_rounded,
+                    color: Color(0xFFC62828),
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      "Método de Captura de Datos",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: isMobile ? 15 : 17,
+                        color: const Color(0xFF1A1C1E),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Seleccione el método para ingresar la información",
-              style: TextStyle(
-                color: const Color(0xFF616161), 
-                fontSize: isMobile ? 12 : 13,
+                ],
               ),
-            ),
-            const SizedBox(height: 20),
-            Flex(
-              direction: isMobile ? Axis.vertical : Axis.horizontal,
-              children: [
-                _buildCompactButton(
-                  0, 
-                  "Llenado Manual", 
-                  Icons.edit_note_rounded, 
-                  widget.onManualFill, 
-                  isMobile
+              const SizedBox(height: 8),
+              Text(
+                "Seleccione el método para ingresar la información",
+                style: TextStyle(
+                  color: const Color(0xFF616161),
+                  fontSize: isMobile ? 12 : 13,
                 ),
-                if (isMobile) const SizedBox(height: 12) else const SizedBox(width: 16),
-                _buildCompactButton(
-                  1, 
-                  kIsWeb ? "Cargar Documento" : "Escanear Documento", 
-                  Icons.document_scanner_rounded, 
-                  _showDocumentScannerModal, // Muestra el marco grande de documentos antes de abrir la cámara
-                  isMobile
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    });
+              ),
+              const SizedBox(height: 20),
+              Flex(
+                direction: isMobile ? Axis.vertical : Axis.horizontal,
+                children: [
+                  _buildCompactButton(
+                    0,
+                    "Llenado Manual",
+                    Icons.edit_note_rounded,
+                    widget.onManualFill,
+                    isMobile,
+                  ),
+                  if (isMobile)
+                    const SizedBox(height: 12)
+                  else
+                    const SizedBox(width: 16),
+                  _buildCompactButton(
+                    1,
+                    kIsWeb ? "Cargar Documento" : "Escanear Documento",
+                    Icons.document_scanner_rounded,
+                    _showDocumentScannerModal, // Muestra el marco grande de documentos antes de abrir la cámara
+                    isMobile,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
-  Widget _buildCompactButton(int index, String label, IconData icon, VoidCallback onTap, bool isMobile) {
+  Widget _buildCompactButton(
+    int index,
+    String label,
+    IconData icon,
+    VoidCallback onTap,
+    bool isMobile,
+  ) {
     bool isSelected = selectedMethod == index;
     return Expanded(
       flex: isMobile ? 0 : 1,
@@ -311,23 +357,31 @@ class _CaptureMethodSelectorState extends State<CaptureMethodSelector> {
           width: isMobile ? double.infinity : null,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFC62828) : const Color(0xFFF5F5F5),
+            color: isSelected
+                ? const Color(0xFFC62828)
+                : const Color(0xFFF5F5F5),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? const Color(0xFFC62828) : const Color(0xFFE0E0E0),
+              color: isSelected
+                  ? const Color(0xFFC62828)
+                  : const Color(0xFFE0E0E0),
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isSelected ? Colors.white : const Color(0xFF616161), size: 20),
+              Icon(
+                icon,
+                color: isSelected ? Colors.white : const Color(0xFF616161),
+                size: 20,
+              ),
               const SizedBox(width: 10),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : const Color(0xFF1A1C1E), 
-                  fontWeight: FontWeight.bold, 
-                  fontSize: 14
+                  color: isSelected ? Colors.white : const Color(0xFF1A1C1E),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
               ),
             ],
