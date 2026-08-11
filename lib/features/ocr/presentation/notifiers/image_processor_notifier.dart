@@ -3,63 +3,45 @@ import 'package:crv_reprosisa/features/ocr/domain/usecase/process_image_usecase.
 import 'package:crv_reprosisa/features/ocr/presentation/state/image_processing_state.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
-class ImageProcessingNotifier 
-    extends StateNotifier<ImageProcessingState> {
-
-
+class ImageProcessingNotifier extends StateNotifier<ImageProcessingState> {
   final ProcessImageUseCase processImageUseCase;
 
+  ImageProcessingNotifier(this.processImageUseCase)
+    : super(const ImageProcessingState());
 
-  ImageProcessingNotifier(
-    this.processImageUseCase,
-  ) : super(
-    const ImageProcessingState(),
-  );
-
-
-  Future<void> processImage(
-    String imagePath,
-    ReportType reportType
-  ) async {
-  
+  Future<void> processImage(String imagePath, ReportType reportType) async {
     if (state.isProcessing) {
       return;
     }
-  
+
     try {
-  
       state = state.copyWith(
         isProcessing: true,
         errorMessage: null,
         processedImage: null,
+        reportType: reportType,
       );
-  
-  
-      final result =
-          await processImageUseCase(imagePath, reportType);
-  
-  
-      state = state.copyWith(
-        isProcessing: false,
-        processedImage: result,
-      );
-  
-  
-    } catch(e) {
-  
-      state = state.copyWith(
-        isProcessing: false,
-        errorMessage: e.toString(),
-      );
-  
+
+      final result = await processImageUseCase(imagePath, reportType);
+
+      state = state.copyWith(isProcessing: false, processedImage: result);
+    } catch (e) {
+      state = state.copyWith(isProcessing: false, errorMessage: e.toString());
     }
   }
 
+  Future<void> reprocess() async {
+    final image = state.processedImage;
+    final reportType = state.reportType;
 
-  void clear() {
+    if (image == null || reportType == null) {
+      return;
+    }
 
-    state = const ImageProcessingState();
-
+    await processImage(image.originalPath, reportType);
   }
 
+  void clear() {
+    state = const ImageProcessingState();
+  }
 }

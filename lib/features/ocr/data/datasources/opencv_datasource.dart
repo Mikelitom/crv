@@ -1,7 +1,9 @@
 import 'package:crv_reprosisa/features/ocr/data/debug/press_checkbox_debug_renderer.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/perspective_transformer.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/report_region_detector.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/press_inspection_extractor.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/conveyor_layout.dart';
+import 'package:crv_reprosisa/features/ocr/data/layouts/inspections/press_inspection_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/report_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/vehicle_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/preprocessors/document_preprocessor.dart';
@@ -27,13 +29,19 @@ class OpenCVDataSource {
   final ReportSectionExtractor _reportSectionExtractor =
       const ReportSectionExtractor();
 
-  final PressRowExtractor _pressRowExtractor = const PressRowExtractor();
+  // final PressRowExtractor _pressRowExtractor = const PressRowExtractor();
 
   final PressRowDebugRenderer _pressRowDebugRenderer =
       const PressRowDebugRenderer();
 
   final PressCheckboxDebugRenderer _pressCheckboxDebugRenderer =
       const PressCheckboxDebugRenderer();
+
+  final PressInspectionExtractor _pressInspectionExtractor =
+      PressInspectionExtractor(
+        rowExtractor: const PressRowExtractor(),
+        layout: const PressInspectionLayout(),
+      );
 
   Future<ProcessedImage> processImage(
     String imagePath, {
@@ -87,23 +95,23 @@ class OpenCVDataSource {
       final inspection = extractedReport.sections[ReportSectionType.inspection];
 
       if (inspection != null) {
-        final rowRects = _pressRowExtractor.getRowRects(inspection);
+        // Extrae filas + regiones GOOD/BAD.
+        final inspectionResult = _pressInspectionExtractor.extract(inspection);
 
-        // Debug de las 23 filas
-        final rowsDebug = _pressRowDebugRenderer.drawRows(inspection, rowRects);
+        // Debug de filas.
+        final rowsDebug = _pressRowDebugRenderer.drawRows(
+          inspection,
+          inspectionResult.rows.map((row) => row.rowRect).toList(),
+        );
 
         pressRowsPath = _generatePath(imagePath, "press_rows");
 
         cv.imwrite(pressRowsPath, rowsDebug);
 
-        // Debug de las casillas
+        // Debug de checkboxes.
         final checkboxDebug = _pressCheckboxDebugRenderer.drawCheckboxes(
           inspection,
-          rowRects,
-          goodX: 855,
-          badX: 930,
-          checkboxWidth: 70,
-          checkboxHeight: 40,
+          inspectionResult,
         );
 
         pressCheckboxesPath = _generatePath(imagePath, "press_checkboxes");
@@ -111,6 +119,7 @@ class OpenCVDataSource {
         cv.imwrite(pressCheckboxesPath, checkboxDebug);
       }
     }
+
     final contour = _drawDocumentContour(image, document);
 
     return _saveResults(

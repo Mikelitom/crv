@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
 import 'package:crv_reprosisa/features/ocr/presentation/providers/image_processor_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,16 +8,67 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class OCRDebugPage extends ConsumerWidget {
   const OCRDebugPage({super.key});
 
+  Future<void> _reprocess(WidgetRef ref, ProcessedImage image) async {
+    // Todas las imágenes que OpenCV puede sobrescribir.
+    final paths = <String?>[
+      image.grayPath,
+      image.clahePath,
+      image.blurPath,
+      image.thresholdPath,
+      image.medianPath,
+      image.dilatedPath,
+      image.closedPath,
+      image.contourPath,
+      image.perspectivePath,
+      image.layoutPath,
+      image.pressRowsPath,
+      image.pressCheckboxesPath,
+    ];
+
+    // Sacamos las imágenes actuales del cache de Flutter
+    // ANTES de volver a procesarlas.
+    for (final path in paths) {
+      await FileImage(File(path!)).evict();
+    }
+
+    await ref.read(imageProcessingProvider.notifier).reprocess();
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(imageProcessingProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("OCR Debug")),
+      appBar: AppBar(
+        title: const Text("OCR Debug"),
+        actions: [
+          IconButton(
+            tooltip: "Reprocesar imagen",
+            onPressed: state.processedImage == null || state.isProcessing
+                ? null
+                : () {
+                    _reprocess(ref, state.processedImage!);
+                  },
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
       body: Builder(
         builder: (_) {
           if (state.isProcessing) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state.errorMessage != null) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  state.errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            );
           }
 
           if (state.processedImage == null) {
