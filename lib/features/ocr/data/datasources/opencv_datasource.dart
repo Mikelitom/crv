@@ -1,6 +1,8 @@
 import 'package:crv_reprosisa/features/ocr/data/debug/press_checkbox_debug_renderer.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/perspective_transformer.dart';
+import 'package:crv_reprosisa/features/ocr/data/detectors/press_inspection_classifier.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/report_region_detector.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/press_checkbox_extractor.dart';
 import 'package:crv_reprosisa/features/ocr/data/extractors/press_inspection_extractor.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/conveyor_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/inspections/press_inspection_layout.dart';
@@ -29,8 +31,6 @@ class OpenCVDataSource {
   final ReportSectionExtractor _reportSectionExtractor =
       const ReportSectionExtractor();
 
-  // final PressRowExtractor _pressRowExtractor = const PressRowExtractor();
-
   final PressRowDebugRenderer _pressRowDebugRenderer =
       const PressRowDebugRenderer();
 
@@ -42,6 +42,12 @@ class OpenCVDataSource {
         rowExtractor: const PressRowExtractor(),
         layout: const PressInspectionLayout(),
       );
+
+  final PressCheckboxExtractor _pressCheckboxExtractor =
+      const PressCheckboxExtractor();
+
+  final PressInspectionClassifier _pressInspectionClassifier =
+      const PressInspectionClassifier();
 
   Future<ProcessedImage> processImage(
     String imagePath, {
@@ -95,8 +101,47 @@ class OpenCVDataSource {
       final inspection = extractedReport.sections[ReportSectionType.inspection];
 
       if (inspection != null) {
-        // Extrae filas + regiones GOOD/BAD.
+        // Extrae las 23 filas y sus respectivos ROI GOOD/BAD.
         final inspectionResult = _pressInspectionExtractor.extract(inspection);
+
+        // Analizar los 46 checkbox.
+        for (final row in inspectionResult.rows) {
+          final goodRoi = _pressCheckboxExtractor.extract(
+            inspection,
+            row.goodRect,
+          );
+
+          final badRoi = _pressCheckboxExtractor.extract(
+            inspection,
+            row.badRect,
+          );
+
+          final goodAnalysis = _pressCheckboxExtractor.analyze(goodRoi);
+
+          final badAnalysis = _pressCheckboxExtractor.analyze(badRoi);
+
+          final result = _pressInspectionClassifier.classify(
+            goodRatio: goodAnalysis.darkPixelRatio,
+            badRatio: badAnalysis.darkPixelRatio,
+          );
+
+          final good = goodAnalysis.darkPixelRatio;
+
+          final bad = badAnalysis.darkPixelRatio;
+
+          final difference = (good - bad).abs();
+
+          print(
+            'Fila ${row.index} | '
+            'GOOD: ${(good * 100).toStringAsFixed(2)}% | '
+            'BAD: ${(bad * 100).toStringAsFixed(2)}% | '
+            'DIF: ${(difference * 100).toStringAsFixed(2)}% | '
+            'RESULT: $result',
+          );
+
+          goodRoi.dispose();
+          badRoi.dispose();
+        }
 
         // Debug de filas.
         final rowsDebug = _pressRowDebugRenderer.drawRows(
@@ -108,6 +153,8 @@ class OpenCVDataSource {
 
         cv.imwrite(pressRowsPath, rowsDebug);
 
+        rowsDebug.dispose();
+
         // Debug de checkboxes.
         final checkboxDebug = _pressCheckboxDebugRenderer.drawCheckboxes(
           inspection,
@@ -117,6 +164,8 @@ class OpenCVDataSource {
         pressCheckboxesPath = _generatePath(imagePath, "press_checkboxes");
 
         cv.imwrite(pressCheckboxesPath, checkboxDebug);
+
+        checkboxDebug.dispose();
       }
     }
 

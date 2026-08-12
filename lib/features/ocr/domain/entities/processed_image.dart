@@ -15,6 +15,7 @@ class ProcessedImage {
 
   final String? pressRowsPath;
   final String? pressCheckboxesPath;
+  final String? pressCheckboxRoisPath;
 
   const ProcessedImage({
     required this.originalPath,
@@ -31,5 +32,6 @@ class ProcessedImage {
     this.layoutPath,
     this.pressRowsPath,
     this.pressCheckboxesPath,
+    this.pressCheckboxRoisPath,
   });
 }

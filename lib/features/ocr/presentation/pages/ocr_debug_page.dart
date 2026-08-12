@@ -146,6 +146,12 @@ class OCRDebugPage extends ConsumerWidget {
                     title: "Casillas - Prensa",
                     imagePath: image.pressCheckboxesPath!,
                   ),
+
+                if (image.pressCheckboxRoisPath != null)
+                  _ImageCard(
+                    title: "ROI de checkboxes - Prensa",
+                    imagePath: image.pressCheckboxRoisPath!,
+                  ),
               ],
             ),
           );
