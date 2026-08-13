@@ -41,6 +41,7 @@ class OpenCVDataSource {
       PressInspectionExtractor(
         rowExtractor: const PressRowExtractor(),
         layout: const PressInspectionLayout(),
+        checkboxExtractor: const PressCheckboxExtractor(),
       );
 
   final PressCheckboxExtractor _pressCheckboxExtractor =
@@ -114,6 +115,16 @@ class OpenCVDataSource {
           final badRoi = _pressCheckboxExtractor.extract(
             inspection,
             row.badRect,
+          );
+
+          _pressCheckboxExtractor.saveDebugRoi(
+            goodRoi,
+            _generatePath(imagePath, 'row_${row.index}_good'),
+          );
+
+          _pressCheckboxExtractor.saveDebugRoi(
+            badRoi,
+            _generatePath(imagePath, 'row_${row.index}_bad'),
           );
 
           final goodAnalysis = _pressCheckboxExtractor.analyze(goodRoi);
