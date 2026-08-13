@@ -49,14 +49,12 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
   }
 
   void _showPdfPreview(BuildContext context) {
-    // Obtenemos el estado real del Notifier para leer los componentes y datos correctos
     final state = ref.read(inspeccionProvider);
     
     final String fechaActual = DateFormat(
       'dd/MM/yyyy',
     ).format(state.inspectionDate);
 
-    // Evitamos que tome "General" por defecto si el campo de área tiene un valor real o está vacío
     final String areaReal = state.area.trim().isNotEmpty ? state.area : "N/A";
 
     final Map<String, dynamic> pdfData = {
@@ -70,7 +68,6 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
       "area_solicita": state.selectedLoanArea?.name ?? "N/A",
       "observaciones_footer": state.observations,
       
-      // Mapeo corregido usando state.templateItems para que los componentes no salgan vacíos
       "items": state.templateItems.map((item) {
         return {
           "quantity": item.quantity ?? 0,
@@ -107,78 +104,157 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
 
   Future<void> _showStatusDialog() async {
     final state = ref.read(inspeccionProvider);
-    final componentesFaltantes = state.templateItems
-        .where((item) => item.status.isEmpty)
-        .toList();
+    
+    // Validación estricta: Un componente está incompleto si su status está vacío o no es válido
+    final componentesFaltantes = state.templateItems.where((item) {
+      final s = item.status.trim().toUpperCase();
+      return s.isEmpty || (s != 'GOOD' && s != 'BAD');
+    }).toList();
+    
     final bool estaCompleto = componentesFaltantes.isEmpty;
 
     final String? result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.fromLTRB(28, 28, 28, 20),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.9,
+          maxWidth: MediaQuery.of(context).size.width * 0.85,
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Icon(
               estaCompleto ? Icons.check_circle : Icons.warning_amber_rounded,
-              color: estaCompleto ? Colors.green : Colors.orange.shade800,
+              color: estaCompleto ? Colors.green : Colors.orange,
+              size: 28,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
-                estaCompleto ? "Reporte Listo" : "Reporte Incompleto",
+                estaCompleto ? "Reporte Listo" : "Componentes Faltantes",
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF1A1C1E),
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
-        content: Text(
-          estaCompleto
-              ? "¿Deseas finalizar y enviar el reporte como COMPLETADO?"
-              : "Faltan ${componentesFaltantes.length} componentes por inspeccionar. El reporte se guardará automáticamente como EN PROCESO.",
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
+        content: SizedBox(
+          width: 500,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                estaCompleto
+                    ? "¿Deseas finalizar y enviar el reporte como COMPLETADO?"
+                    : "Faltan ${componentesFaltantes.length} componentes por marcar:",
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF444444),
+                ),
+              ),
+              if (!estaCompleto) ...[
+                const SizedBox(height: 14),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: componentesFaltantes.map((c) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3.5),
+                          child: Text(
+                            "• ${c.name}",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFC62828), // Rojo institucional Reprosisa
+                            ),
+                          ),
+                        )).toList(),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Se guardará automáticamente como EN PROCESO si continúas.",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF757575),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         actions: [
-          Wrap(
-            spacing: 8.0,
-            runSpacing: 8.0,
-            alignment: WrapAlignment.end,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.red.shade700,
+                  foregroundColor: const Color(0xFF444444),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 child: const Text(
                   "CANCELAR",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
                 ),
               ),
+              const SizedBox(width: 12),
               if (estaCompleto)
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, "COMPLETED"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFC62828),
                     foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text("COMPLETAR"),
+                  child: const Text(
+                    "COMPLETAR",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                    ),
+                  ),
                 )
               else
-                ElevatedButton(
+                OutlinedButton(
                   onPressed: () => Navigator.pop(context, "IN_PROGRESS"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.shade800,
-                    foregroundColor: Colors.white,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFC62828),
+                    side: const BorderSide(color: Color(0xFFC62828), width: 1.5),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text("GUARDAR EN PROCESO"),
+                  child: const Text(
+                    "GUARDAR EN PROCESO",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -210,7 +286,7 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
         _showSnack(
           notifier.isEditing
               ? "¡Inspección actualizada!"
-              : "¡Guardada con éxito!",
+              : "¡Guardada con éxito (${state.state})!",
           Colors.green,
         );
         notifier.reset();
