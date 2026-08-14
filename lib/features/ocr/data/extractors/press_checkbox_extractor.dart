@@ -12,6 +12,7 @@ class PressCheckboxExtractor {
 
     final x1 = rect.x + marginX;
     final y1 = rect.y + marginY;
+
     final x2 = rect.x + rect.width - marginX;
     final y2 = rect.y + rect.height - marginY;
 
@@ -27,14 +28,14 @@ class PressCheckboxExtractor {
   CheckboxAnalysis analyze(cv.Mat roi) {
     final gray = cv.cvtColor(roi, cv.COLOR_BGR2GRAY);
 
-    final thresholdResult = cv.threshold(
+    final threshold = cv.adaptiveThreshold(
       gray,
-      0,
       255,
-      cv.THRESH_BINARY_INV + cv.THRESH_OTSU,
+      cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+      cv.THRESH_BINARY_INV,
+      11,
+      5,
     );
-
-    final threshold = thresholdResult.$2;
 
     final totalPixels = threshold.rows * threshold.cols;
     final darkPixels = cv.countNonZero(threshold);
