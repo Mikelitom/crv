@@ -8,7 +8,6 @@ class InspeccionState {
   final DateTime inspectionDate;
   final String area;
 
-  // Cambiamos a nullable para poder diferenciarlos de un string vacío
   final String? solicitantsName;
   final String? observations;
 
@@ -18,7 +17,9 @@ class InspeccionState {
   final List<LoanArea> loanAreas;
   final LoanArea? selectedLoanArea;
 
+  final List<ComponentItem> allTemplateItems;
   final List<ComponentItem> templateItems;
+
   final bool isLoading;
 
   const InspeccionState({
@@ -28,11 +29,12 @@ class InspeccionState {
     this.area = '',
     this.loanAreas = const [],
     this.selectedLoanArea,
-    this.solicitantsName, // Ahora es null por defecto
-    this.observations, // Ahora es null por defecto
+    this.solicitantsName,
+    this.observations,
     this.state = "IN_PROGRESS",
     this.status = '',
     this.isLoading = false,
+    this.allTemplateItems = const [],
     this.templateItems = const [],
   });
 
@@ -41,50 +43,60 @@ class InspeccionState {
   InspeccionState copyWith({
     String? editingVersionId,
     bool clearEditingVersion = false,
-
+  
     Press? selectedPress,
     bool clearPress = false,
-
+  
     DateTime? inspectionDate,
     String? area,
     List<LoanArea>? loanAreas,
     LoanArea? selectedLoanArea,
     bool clearLoanArea = false,
-
+  
     String? solicitantsName,
     bool clearSolicitantsName = false,
-
+  
     String? observations,
     bool clearObservations = false,
-
+  
     String? state,
     String? status,
     bool? isLoading,
+  
+    List<ComponentItem>? allTemplateItems,
     List<ComponentItem>? templateItems,
   }) {
     return InspeccionState(
       editingVersionId: clearEditingVersion
           ? null
           : (editingVersionId ?? this.editingVersionId),
-      selectedPress: clearPress ? null : (selectedPress ?? this.selectedPress),
+  
+      selectedPress: clearPress
+          ? null
+          : (selectedPress ?? this.selectedPress),
+  
       inspectionDate: inspectionDate ?? this.inspectionDate,
       area: area ?? this.area,
+  
       loanAreas: loanAreas ?? this.loanAreas,
+  
       selectedLoanArea: clearLoanArea
           ? null
           : (selectedLoanArea ?? this.selectedLoanArea),
-
-      // Lógica de limpieza para strings opcionales
+  
       solicitantsName: clearSolicitantsName
           ? null
           : (solicitantsName ?? this.solicitantsName),
+  
       observations: clearObservations
           ? null
           : (observations ?? this.observations),
-
+  
       state: state ?? this.state,
       status: status ?? this.status,
       isLoading: isLoading ?? this.isLoading,
+  
+      allTemplateItems: allTemplateItems ?? this.allTemplateItems,
       templateItems: templateItems ?? this.templateItems,
     );
   }

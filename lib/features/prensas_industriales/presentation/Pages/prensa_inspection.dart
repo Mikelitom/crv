@@ -1,6 +1,6 @@
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
-import 'package:crv_reprosisa/features/ocr/presentation/pages/ocr_debug_page.dart';
+// import 'package:crv_reprosisa/features/ocr/presentation/pages/ocr_debug_page.dart';
 import 'package:crv_reprosisa/features/ocr/presentation/providers/image_processor_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -346,25 +346,32 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                     onActionTap: () => Navigator.pop(context),
                   ),
                   const SizedBox(height: 32),
+                  
+                  // 1. Información general del equipo
+                  const InformationGeneralEquipo(),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // 2. Método de captura / OCR
                   CaptureMethodSelector(
                     onManualFill: () => setState(() => isScanning = false),
-
+                  
                     onImageCaptured: (XFile? image) async {
                       if (image == null) return;
-                    
+                  
                       final ocrNotifier = ref.read(
                         imageProcessingProvider.notifier,
                       );
-                    
+                  
                       await ocrNotifier.processImage(
                         image.path,
                         ReportType.press,
                       );
-                    
+                  
                       if (!mounted) return;
-                    
+                  
                       final ocrState = ref.read(imageProcessingProvider);
-                    
+                  
                       if (ocrState.errorMessage != null) {
                         _showSnack(
                           ocrState.errorMessage!,
@@ -372,9 +379,9 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                         );
                         return;
                       }
-                    
+                  
                       final result = ocrState.pressInspection;
-                    
+                  
                       if (result == null) {
                         _showSnack(
                           'No se obtuvo resultado del OCR',
@@ -382,53 +389,30 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
                         );
                         return;
                       }
-                    
+                  
                       final inspeccionNotifier = ref.read(
                         inspeccionProvider.notifier,
                       );
-                    
-                      inspeccionNotifier.applyOCRResult(
-                        result,
-                      );
-                    
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (_) => const OCRDebugPage(),
-                      //   ),
-                      // );
-                      
+                  
+                      inspeccionNotifier.applyOCRResult(result);
+                  
                       _showSnack(
                         'Inspección analizada correctamente',
                         Colors.green,
                       );
                     },
                   ),
+                  
                   const SizedBox(height: 32),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    child: isScanning
-                        ? Container(
-                            height: 400,
-                            color: Colors.black,
-                            child: const Center(
-                              child: Icon(
-                                Icons.qr_code_scanner,
-                                color: Colors.white,
-                                size: 80,
-                              ),
-                            ),
-                          )
-                        : Column(
-                            children: [
-                              const InformationGeneralEquipo(),
-                              const SizedBox(height: 32),
-                              PrensaInspectionTable(items: itemsToShow),
-                              const SizedBox(height: 32),
-                              const LoanAndInspectorSection(),
-                            ],
-                          ),
-                  ),
+                  
+                  // 3. Tabla de componentes
+                  PrensaInspectionTable(items: itemsToShow),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // 4. Préstamo / devolución
+                  const LoanAndInspectorSection(),
+                  
                   const SizedBox(height: 40),
                   Row(
                     children: [

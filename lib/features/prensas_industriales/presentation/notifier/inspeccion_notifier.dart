@@ -8,7 +8,6 @@ import 'package:crv_reprosisa/features/evidence/presentation/providers/evidence_
 import 'package:crv_reprosisa/features/prensas_industriales/data/models/component_model.dart';
 import 'package:crv_reprosisa/features/prensas_industriales/data/models/press_model.dart';
 import 'package:crv_reprosisa/features/prensas_industriales/domain/entities/component_item.dart';
-import 'package:crv_reprosisa/features/ocr/data/extractors/press_inspection_extractor.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/press_inspection_result.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/press_checkbox_result.dart';
 import 'package:flutter/foundation.dart';
@@ -57,22 +56,30 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
   // }
 
   void _applyTemplateFilter(List<ComponentItem> rawItems) {
-    final String tipoPrensa = state.selectedPress?.type?.toLowerCase() ?? "";
-
+    // Guardamos SIEMPRE el template completo.
+    state = state.copyWith(
+      allTemplateItems: rawItems,
+    );
+  
+    final String tipoPrensa =
+        state.selectedPress?.type?.toLowerCase() ?? "";
+  
     final bool esNeumaticaOMovil =
         tipoPrensa.contains("neumática") ||
         tipoPrensa.contains("movil") ||
         tipoPrensa.contains("móvil");
-
+  
     List<ComponentItem> itemsFiltrados = rawItems;
-
+  
     if (esNeumaticaOMovil) {
       itemsFiltrados = rawItems
           .where((c) => !excludedComponentIds.contains(c.id))
           .toList();
     }
-
-    state = state.copyWith(templateItems: itemsFiltrados);
+  
+    state = state.copyWith(
+      templateItems: itemsFiltrados,
+    );
   }
 
   Future<void> loadTemplate() async {
@@ -274,21 +281,53 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
 
   void applyOCRResult(PressInspectionResult inspectionResult) {
     final items = [...state.templateItems];
+    final allItems = state.allTemplateItems;
   
     debugPrint(
       'OCR filas: ${inspectionResult.rows.length} | '
-      'Template items: ${items.length}',
+      'Template completo: ${allItems.length} | '
+      'Template visible: ${items.length}',
     );
   
-    if (items.length != inspectionResult.rows.length) {
+    if (allItems.length != inspectionResult.rows.length) {
       debugPrint(
-        'ERROR: El número de filas OCR no coincide con el template.',
+        'ERROR: El número de filas OCR no coincide con el template completo.',
       );
       return;
     }
   
     for (final row in inspectionResult.rows) {
       final index = row.index;
+  
+      if (index < 0 || index >= allItems.length) {
+        debugPrint(
+          'ERROR: Índice OCR fuera de rango: $index',
+        );
+        continue;
+      }
+  
+      final originalItem = allItems[index];
+  
+      // Este componente no aplica para este tipo de prensa.
+      if (excludedComponentIds.contains(originalItem.id)) {
+        debugPrint(
+          'OCR -> fila $index | '
+          '${originalItem.name} | NO APLICA | ignorado',
+        );
+        continue;
+      }
+  
+      final visibleIndex = items.indexWhere(
+        (item) => item.id == originalItem.id,
+      );
+  
+      if (visibleIndex == -1) {
+        debugPrint(
+          'OCR -> fila $index | '
+          '${originalItem.name} | no encontrado en template visible',
+        );
+        continue;
+      }
   
       String status;
   
@@ -308,11 +347,11 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
   
       debugPrint(
         'OCR -> fila $index | '
-        '${items[index].name} | '
+        '${originalItem.name} | '
         '$status',
       );
   
-      items[index].status = status;
+      items[visibleIndex].status = status;
     }
   
     state = state.copyWith(
@@ -415,10 +454,11 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
 
   void reset() {
     _editingReportId = null;
-
+  
     state = InspeccionState(
       inspectionDate: DateTime.now(),
       loanAreas: state.loanAreas,
+      allTemplateItems: [],
       templateItems: [],
     );
   }
