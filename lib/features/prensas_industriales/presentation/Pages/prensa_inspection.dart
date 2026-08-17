@@ -10,7 +10,6 @@ import 'package:pdf/pdf.dart';
 import 'package:intl/intl.dart';
 
 import 'package:crv_reprosisa/core/utils/SGC-PO-MT-01-FO-08-PRESS.dart';
-import '../../domain/entities/component_item.dart';
 import '../provider/inspeccion_providers.dart';
 import '../widgets/information_general_equipo.dart';
 import '../widgets/table_componentes_press.dart';
@@ -352,25 +351,56 @@ class _PrensaInspectionPageState extends ConsumerState<PrensaInspectionPage> {
 
                     onImageCaptured: (XFile? image) async {
                       if (image == null) return;
-
-                      final notifier = ref.read(
+                    
+                      final ocrNotifier = ref.read(
                         imageProcessingProvider.notifier,
                       );
-
-                      await notifier.processImage(image.path, ReportType.press);
-
+                    
+                      await ocrNotifier.processImage(
+                        image.path,
+                        ReportType.press,
+                      );
+                    
                       if (!mounted) return;
-
-                      final state = ref.read(imageProcessingProvider);
-
-                      if (state.errorMessage != null) {
-                        _showSnack(state.errorMessage!, Colors.red);
+                    
+                      final ocrState = ref.read(imageProcessingProvider);
+                    
+                      if (ocrState.errorMessage != null) {
+                        _showSnack(
+                          ocrState.errorMessage!,
+                          Colors.red,
+                        );
                         return;
                       }
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const OCRDebugPage()),
+                    
+                      final result = ocrState.pressInspection;
+                    
+                      if (result == null) {
+                        _showSnack(
+                          'No se obtuvo resultado del OCR',
+                          Colors.orange,
+                        );
+                        return;
+                      }
+                    
+                      final inspeccionNotifier = ref.read(
+                        inspeccionProvider.notifier,
+                      );
+                    
+                      inspeccionNotifier.applyOCRResult(
+                        result,
+                      );
+                    
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (_) => const OCRDebugPage(),
+                      //   ),
+                      // );
+                      
+                      _showSnack(
+                        'Inspección analizada correctamente',
+                        Colors.green,
                       );
                     },
                   ),

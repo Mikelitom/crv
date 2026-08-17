@@ -1,9 +1,9 @@
-import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/ocr_processing_result.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
 
 abstract class ImageProcessorRepository {
 
-  Future<ProcessedImage> processImage(
+  Future<OcrProcessingResult> processImage(
     String imagePath,
     ReportType reportType
   );

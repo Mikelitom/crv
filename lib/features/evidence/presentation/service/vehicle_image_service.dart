@@ -30,7 +30,7 @@ class VehicleImageService {
 
       final result = await uploadFile(entity);
 
-      return result.fold(
+      return await result.fold(
         (failure) => Left(failure),
         (filePath) => Right(filePath),
       );

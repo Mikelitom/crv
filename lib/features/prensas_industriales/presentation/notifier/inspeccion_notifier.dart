@@ -8,6 +8,9 @@ import 'package:crv_reprosisa/features/evidence/presentation/providers/evidence_
 import 'package:crv_reprosisa/features/prensas_industriales/data/models/component_model.dart';
 import 'package:crv_reprosisa/features/prensas_industriales/data/models/press_model.dart';
 import 'package:crv_reprosisa/features/prensas_industriales/domain/entities/component_item.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/press_inspection_extractor.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/press_inspection_result.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/press_checkbox_result.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
@@ -254,7 +257,7 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
                 .read(updatePressReportProvider)
                 .call(_editingReportId!, reportRequest)
           : ref.read(createPressReportProvider).call(reportRequest);
-      return (await useCase).fold(
+      return await (await useCase).fold(
         (f) {
           debugPrint("Error: ${f.message}");
           return null;
@@ -267,6 +270,54 @@ class InspeccionNotifier extends Notifier<InspeccionState> {
     } finally {
       state = state.copyWith(isLoading: false);
     }
+  }
+
+  void applyOCRResult(PressInspectionResult inspectionResult) {
+    final items = [...state.templateItems];
+  
+    debugPrint(
+      'OCR filas: ${inspectionResult.rows.length} | '
+      'Template items: ${items.length}',
+    );
+  
+    if (items.length != inspectionResult.rows.length) {
+      debugPrint(
+        'ERROR: El número de filas OCR no coincide con el template.',
+      );
+      return;
+    }
+  
+    for (final row in inspectionResult.rows) {
+      final index = row.index;
+  
+      String status;
+  
+      switch (row.result) {
+        case PressCheckboxResult.good:
+          status = 'GOOD';
+          break;
+  
+        case PressCheckboxResult.bad:
+          status = 'BAD';
+          break;
+  
+        case PressCheckboxResult.none:
+          status = '';
+          break;
+      }
+  
+      debugPrint(
+        'OCR -> fila $index | '
+        '${items[index].name} | '
+        '$status',
+      );
+  
+      items[index].status = status;
+    }
+  
+    state = state.copyWith(
+      templateItems: items,
+    );
   }
 
   Future<void> onSerieSelected(String serie) async {

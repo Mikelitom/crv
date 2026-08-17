@@ -9,7 +9,10 @@ class ImageProcessingNotifier extends StateNotifier<ImageProcessingState> {
   ImageProcessingNotifier(this.processImageUseCase)
     : super(const ImageProcessingState());
 
-  Future<void> processImage(String imagePath, ReportType reportType) async {
+  Future<void> processImage(
+    String imagePath,
+    ReportType reportType,
+  ) async {
     if (state.isProcessing) {
       return;
     }
@@ -22,11 +25,21 @@ class ImageProcessingNotifier extends StateNotifier<ImageProcessingState> {
         reportType: reportType,
       );
 
-      final result = await processImageUseCase(imagePath, reportType);
+      final result = await processImageUseCase(
+        imagePath,
+        reportType,
+      );
 
-      state = state.copyWith(isProcessing: false, processedImage: result);
+      state = state.copyWith(
+        isProcessing: false,
+        processedImage: result.processedImage,
+        pressInspection: result.pressInspection,
+      );
     } catch (e) {
-      state = state.copyWith(isProcessing: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isProcessing: false,
+        errorMessage: e.toString(),
+      );
     }
   }
 
@@ -38,7 +51,10 @@ class ImageProcessingNotifier extends StateNotifier<ImageProcessingState> {
       return;
     }
 
-    await processImage(image.originalPath, reportType);
+    await processImage(
+      image.originalPath,
+      reportType,
+    );
   }
 
   void clear() {

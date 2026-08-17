@@ -1,15 +1,18 @@
 import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/press_inspection_result.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
 
 class ImageProcessingState {
   final bool isProcessing;
   final ProcessedImage? processedImage;
+  final PressInspectionResult? pressInspection;
   final String? errorMessage;
   final ReportType? reportType;
 
   const ImageProcessingState({
     this.isProcessing = false,
     this.processedImage,
+    this.pressInspection,
     this.errorMessage,
     this.reportType,
   });
@@ -17,12 +20,14 @@ class ImageProcessingState {
   ImageProcessingState copyWith({
     bool? isProcessing,
     ProcessedImage? processedImage,
+    PressInspectionResult? pressInspection,
     String? errorMessage,
     ReportType? reportType,
   }) {
     return ImageProcessingState(
       isProcessing: isProcessing ?? this.isProcessing,
       processedImage: processedImage ?? this.processedImage,
+      pressInspection: pressInspection ?? this.pressInspection,
       errorMessage: errorMessage,
       reportType: reportType ?? this.reportType,
     );

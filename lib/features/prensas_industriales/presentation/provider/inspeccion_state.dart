@@ -3,18 +3,17 @@ import '../../domain/entities/loan_area.dart';
 import '../../domain/entities/component_item.dart';
 
 class InspeccionState {
-  
   final String? editingVersionId;
   final Press? selectedPress;
   final DateTime inspectionDate;
   final String area;
-  
+
   // Cambiamos a nullable para poder diferenciarlos de un string vacío
-  final String? solicitantsName; 
-  final String? observations;    
-  
-  final String state; 
-  final String status; 
+  final String? solicitantsName;
+  final String? observations;
+
+  final String state;
+  final String status;
 
   final List<LoanArea> loanAreas;
   final LoanArea? selectedLoanArea;
@@ -30,7 +29,7 @@ class InspeccionState {
     this.loanAreas = const [],
     this.selectedLoanArea,
     this.solicitantsName, // Ahora es null por defecto
-    this.observations,    // Ahora es null por defecto
+    this.observations, // Ahora es null por defecto
     this.state = "IN_PROGRESS",
     this.status = '',
     this.isLoading = false,
@@ -42,39 +41,47 @@ class InspeccionState {
   InspeccionState copyWith({
     String? editingVersionId,
     bool clearEditingVersion = false,
-    
+
     Press? selectedPress,
     bool clearPress = false,
-    
+
     DateTime? inspectionDate,
     String? area,
     List<LoanArea>? loanAreas,
     LoanArea? selectedLoanArea,
     bool clearLoanArea = false,
-    
+
     String? solicitantsName,
     bool clearSolicitantsName = false,
-    
+
     String? observations,
     bool clearObservations = false,
-    
+
     String? state,
     String? status,
     bool? isLoading,
     List<ComponentItem>? templateItems,
   }) {
     return InspeccionState(
-      editingVersionId: clearEditingVersion ? null : (editingVersionId ?? this.editingVersionId),
+      editingVersionId: clearEditingVersion
+          ? null
+          : (editingVersionId ?? this.editingVersionId),
       selectedPress: clearPress ? null : (selectedPress ?? this.selectedPress),
       inspectionDate: inspectionDate ?? this.inspectionDate,
       area: area ?? this.area,
       loanAreas: loanAreas ?? this.loanAreas,
-      selectedLoanArea: clearLoanArea ? null : (selectedLoanArea ?? this.selectedLoanArea),
-      
+      selectedLoanArea: clearLoanArea
+          ? null
+          : (selectedLoanArea ?? this.selectedLoanArea),
+
       // Lógica de limpieza para strings opcionales
-      solicitantsName: clearSolicitantsName ? null : (solicitantsName ?? this.solicitantsName),
-      observations: clearObservations ? null : (observations ?? this.observations),
-      
+      solicitantsName: clearSolicitantsName
+          ? null
+          : (solicitantsName ?? this.solicitantsName),
+      observations: clearObservations
+          ? null
+          : (observations ?? this.observations),
+
       state: state ?? this.state,
       status: status ?? this.status,
       isLoading: isLoading ?? this.isLoading,

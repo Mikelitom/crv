@@ -1,4 +1,4 @@
-import 'package:crv_reprosisa/features/ocr/domain/entities/processed_image.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/ocr_processing_result.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
 import 'package:crv_reprosisa/features/ocr/domain/repositories/image_processor_repository.dart';
 
@@ -7,7 +7,7 @@ class ProcessImageUseCase {
 
   ProcessImageUseCase(this.repository);
 
-  Future<ProcessedImage> call(String imagePath, ReportType reportType) {
+  Future<OcrProcessingResult> call(String imagePath, ReportType reportType) {
     return repository.processImage(imagePath, reportType);
   }
 }

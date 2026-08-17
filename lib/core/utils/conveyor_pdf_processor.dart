@@ -33,7 +33,7 @@ class ConveyorPdfProcessor {
 
       if (pdfData == null) return null;
 
-      return BandaPdfGenerator.generateReport(
+      return await BandaPdfGenerator.generateReport(
         pdfData.datosNormalizados,
         pdfData.sections,
         pdfData.rodillos,

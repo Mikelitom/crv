@@ -110,7 +110,7 @@ class InspectionNotifier extends Notifier<InspectionState> {
       
       state = state.copyWith(isDetailLoading: false);
       
-      return result.fold(
+      return await result.fold(
         (failure) {
           debugPrint("Error al cargar detalle: ${failure.toString()}");
           return null;

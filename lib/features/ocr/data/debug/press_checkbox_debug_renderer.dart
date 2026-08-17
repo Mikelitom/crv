@@ -1,5 +1,5 @@
 import 'package:crv_reprosisa/features/ocr/data/extractors/press_checkbox_extractor.dart';
-import 'package:crv_reprosisa/features/ocr/data/extractors/press_inspection_extractor.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/press_inspection_result.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 class PressCheckboxDebugRenderer {

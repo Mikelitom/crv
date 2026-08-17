@@ -235,7 +235,7 @@ class _ConveyorReportTableState extends ConsumerState<ConveyorReportTable> with 
       ),
     );
 
-    final clientId = item.clientId ?? "";
+    final clientId = item.clientId;
     
     // 2. Obtenemos los correos directamente sin mutar el estado global
     final List<String> fetchedEmails = await ref

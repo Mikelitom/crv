@@ -61,8 +61,8 @@ class PressPdfProcessor {
     final data = state.data!;
 
     // Extracción segura de datos del reporte (Maneja tanto Map como propiedades directas)
-    final reportMap = data.report is Map ? data.report : {};
-    final pressMap = data.press is Map ? data.press : {};
+    final reportMap = data.report;
+    final pressMap = data.press;
 
     // 1. Fecha de inspección segura
     String fechaStr = DateTime.now().toIso8601String();
