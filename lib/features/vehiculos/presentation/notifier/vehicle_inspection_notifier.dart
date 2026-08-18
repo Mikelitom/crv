@@ -5,6 +5,7 @@ import 'package:crv_reprosisa/core/utils/imege_downloader.dart';
 import 'package:crv_reprosisa/features/assets/presentation/providers/vehicle_report_detail.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/provider/inspection_providers.dart'
     hide getVehicleReportDetailUseCaseProvider;
+import 'package:crv_reprosisa/features/ocr/domain/entities/vehicle_inspection_result.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
@@ -151,24 +152,207 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
 
   Future<void> loadTemplate() async {
     state = state.copyWith(isLoading: true);
+  
     final useCase = ref.read(getVehicleTemplateUseCaseProvider);
     final result = await useCase();
-    result.fold((f) => state = state.copyWith(isLoading: false), (data) {
-      final List<ComponentVehicleModel> components = [];
-      for (var sec in data['sections']) {
-        for (var c in sec['components']) {
-          components.add(
-            ComponentVehicleModel(id: c['id'], description: c['name']),
-          );
+  
+    result.fold(
+      (f) {
+        debugPrint("❌ ERROR AL CARGAR TEMPLATE: $f");
+        state = state.copyWith(isLoading: false);
+      },
+      (data) {
+        debugPrint("========== TEMPLATE VEHICLE RECIBIDO ==========");
+        debugPrint(data.toString());
+        debugPrint("================================================");
+  
+        final List<ComponentVehicleModel> components = [];
+  
+        for (var sec in data['sections']) {
+          for (var c in sec['components']) {
+            components.add(
+              ComponentVehicleModel(
+                id: c['id'],
+                description: c['name'],
+              ),
+            );
+          }
         }
+  
+        state = state.copyWith(
+          templateSections: data['sections'],
+          templateOptions: data['options'],
+          items: components,
+          isLoading: false,
+        );
+      },
+    );
+  }
+
+  void applyOCRResults(
+    List<VehicleInspectionResult>? results,
+  ) {
+    if (results == null || results.isEmpty) {
+      debugPrint('OCR: No se recibieron resultados.');
+      return;
+    }
+  
+    debugPrint('========== APLICANDO RESULTADOS OCR ==========');
+    debugPrint('Resultados recibidos: ${results.length}');
+  
+    // ============================================================
+    // 1. Construir los componentes a partir del template
+    // ============================================================
+  
+    final List<ComponentVehicleModel> items = [];
+  
+    for (final section in state.templateSections) {
+      final components = section['components'] as List;
+  
+      for (final component in components) {
+        items.add(
+          ComponentVehicleModel(
+            id: component['id'] as String,
+            description: component['name'] as String,
+          ),
+        );
       }
-      state = state.copyWith(
-        templateSections: data['sections'],
-        templateOptions: data['options'],
-        items: components,
-        isLoading: false,
+    }
+  
+    debugPrint('Componentes construidos desde template: ${items.length}');
+  
+    // ============================================================
+    // 2. Construir mapa:
+    //
+    //     good       -> UUID
+    //     bad        -> UUID
+    //     reposition -> UUID
+    //     reparation -> UUID
+    //
+    // ============================================================
+  
+    final Map<String, String> optionIds = {};
+  
+    for (final option in state.templateOptions) {
+      final code = option['code'] as String;
+      final id = option['id'] as String;
+  
+      optionIds[code.toLowerCase()] = id;
+    }
+  
+    debugPrint('Opciones del template: $optionIds');
+  
+    // ============================================================
+    // 3. Aplicar cada resultado del OCR
+    // ============================================================
+  
+    for (final result in results) {
+      final int index = result.row.globalIndex;
+      final String ocrOption = result.selectedOption;
+  
+      debugPrint(
+        'OCR -> globalIndex=$index | '
+        'option=$ocrOption | '
+        'confidence=${result.confidence}',
       );
-    });
+  
+      // ----------------------------------------------------------
+      // Verificar índice
+      // ----------------------------------------------------------
+  
+      if (index < 0 || index >= items.length) {
+        debugPrint(
+          'OCR WARNING: índice fuera de rango: $index '
+          '(items=${items.length})',
+        );
+        continue;
+      }
+  
+      // ----------------------------------------------------------
+      // Convertir opción del OCR al code del template
+      // ----------------------------------------------------------
+  
+      final String? templateCode = switch (ocrOption.toUpperCase()) {
+        'GOOD' => 'good',
+        'BAD' => 'bad',
+        'REPOSITION' => 'reposition',
+        'REPAIR' => 'reparation',
+        _ => null,
+      };
+  
+      if (templateCode == null) {
+        debugPrint(
+          'OCR WARNING: opción desconocida: $ocrOption',
+        );
+        continue;
+      }
+  
+      // ----------------------------------------------------------
+      // Obtener UUID de la opción
+      // ----------------------------------------------------------
+  
+      final String? optionId = optionIds[templateCode];
+  
+      if (optionId == null) {
+        debugPrint(
+          'OCR WARNING: no existe opción "$templateCode" '
+          'en el template.',
+        );
+        continue;
+      }
+  
+      // ----------------------------------------------------------
+      // Asignar resultado al componente
+      // ----------------------------------------------------------
+  
+      final currentItem = items[index];
+  
+      items[index] = currentItem.copyWith(
+        selectedOptionId: optionId,
+      );
+  
+      debugPrint(
+        'OCR OK -> '
+        '[${index}] ${currentItem.description} '
+        '=> $templateCode '
+        '($optionId)',
+      );
+    }
+  
+    // ============================================================
+    // 4. Actualizar state
+    // ============================================================
+  
+    state = state.copyWith(
+      items: items,
+    );
+  
+    debugPrint(
+      'OCR: ${items.where((item) => item.selectedOptionId != null).length}'
+      '/${items.length} componentes rellenados.',
+    );
+  
+    debugPrint('==============================================');
+  }
+
+  String? _getOptionId(String ocrOption) {
+    final normalizedOCR = ocrOption.trim().toLowerCase();
+  
+    final option = state.templateOptions.firstWhereOrNull(
+      (option) {
+        final name = option['name']?.toString().trim().toLowerCase();
+  
+        return switch (normalizedOCR) {
+          'good' => name == 'buena',
+          'bad' => name == 'mala',
+          'reposition' => name == 'reposicion' || name == 'reposición',
+          'repair' => name == 'reparacion' || name == 'reparación',
+          _ => false,
+        };
+      },
+    );
+  
+    return option?['id']?.toString();
   }
 
   Future<String?> finalizarInspeccion() async {
@@ -288,3 +472,4 @@ class VehicleInspectionNotifier extends Notifier<VehicleInspectionState> {
     );
   }
 }
+

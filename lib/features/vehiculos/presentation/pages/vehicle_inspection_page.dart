@@ -1,7 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:crv_reprosisa/features/inspections/presentation/models/inspector_row_ui.dart';
 import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
-import 'package:crv_reprosisa/features/ocr/presentation/pages/ocr_debug_page.dart';
 import 'package:crv_reprosisa/features/ocr/presentation/providers/image_processor_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -168,33 +167,7 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                     onActionTap: () => Navigator.pop(context),
                   ),
                   const SizedBox(height: 24),
-                  CaptureMethodSelector(
-                    onManualFill: () => notifier.setScanning(false),
-                    onImageCaptured: (XFile? image) async {
-                      if (image == null) return;
-
-                      final notifier = ref.read(
-                        imageProcessingProvider.notifier,
-                      );
-
-                      await notifier.processImage(image.path, ReportType.vehicle);
-
-                      if (!mounted) return;
-
-                      final state = ref.read(imageProcessingProvider);
-
-                      if (state.errorMessage != null) {
-                        _showSnack(state.errorMessage!, Colors.red);
-                        return;
-                      }
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const OCRDebugPage()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
+                  
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
                     child: state.isScanning
@@ -213,7 +186,38 @@ class _VehicleInspectionPageState extends ConsumerState<VehicleInspectionPage> {
                             children: [
                               const GeneralVehicleInfo(),
                               const SizedBox(height: 24),
-
+                            
+                              CaptureMethodSelector(
+                                onManualFill: () => notifier.setScanning(false),
+                                onImageCaptured: (XFile? image) async {
+                                  if (image == null) return;
+                            
+                                  final ocrNotifier = ref.read(
+                                    imageProcessingProvider.notifier,
+                                  );
+                            
+                                  await ocrNotifier.processImage(
+                                    image.path,
+                                    ReportType.vehicle,
+                                  );
+                            
+                                  if (!mounted) return;
+                            
+                                  final ocrState = ref.read(imageProcessingProvider);
+                            
+                                  if (ocrState.errorMessage != null) {
+                                    _showSnack(ocrState.errorMessage!, Colors.red);
+                                    return;
+                                  }
+                            
+                                  notifier.applyOCRResults(
+                                    ocrState.vehicleInspection,
+                                  );
+                                },
+                              ),
+                            
+                              const SizedBox(height: 24),
+                            
                               ...state.templateSections.map((section) {
                                 final List<ComponentVehicleModel> sectionItems =
                                     (section['components'] as List).map((c) {

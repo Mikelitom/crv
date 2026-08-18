@@ -23,6 +23,10 @@ class OCRDebugPage extends ConsumerWidget {
       image.layoutPath,
       image.pressRowsPath,
       image.pressCheckboxesPath,
+      image.pressCheckboxRoisPath,
+      image.vehicleTablesPath,
+      image.vehicleRowsPath,
+      image.vehicleCheckboxesPath,
     ];
 
     // Sacamos las imágenes actuales del cache de Flutter
@@ -151,6 +155,24 @@ class OCRDebugPage extends ConsumerWidget {
                   _ImageCard(
                     title: "ROI de checkboxes - Prensa",
                     imagePath: image.pressCheckboxRoisPath!,
+                  ),
+
+                if (image.vehicleTablesPath != null)
+                  _ImageCard(
+                    title: "Tablas de inspección - Vehículo",
+                    imagePath: image.vehicleTablesPath!,
+                  ),
+
+                if (image.vehicleRowsPath != null)
+                  _ImageCard(
+                    title: "Filas de inspección - Vehículo",
+                    imagePath: image.vehicleRowsPath!,
+                  ),
+
+                if (image.vehicleCheckboxesPath != null)
+                  _ImageCard(
+                    title: "Casillas - Vehículo",
+                    imagePath: image.vehicleCheckboxesPath!,
                   ),
               ],
             ),

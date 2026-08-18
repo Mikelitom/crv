@@ -34,6 +34,7 @@ class ImageProcessingNotifier extends StateNotifier<ImageProcessingState> {
         isProcessing: false,
         processedImage: result.processedImage,
         pressInspection: result.pressInspection,
+        vehicleInspection: result.vehicleInspection
       );
     } catch (e) {
       state = state.copyWith(

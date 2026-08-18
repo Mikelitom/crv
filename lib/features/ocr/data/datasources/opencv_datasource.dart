@@ -1,10 +1,15 @@
 import 'package:crv_reprosisa/features/ocr/data/debug/press_checkbox_debug_renderer.dart';
+import 'package:crv_reprosisa/features/ocr/data/debug/vehicle/vehicle_checkbox_debug_renderer.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/perspective_transformer.dart';
 import 'package:crv_reprosisa/features/ocr/data/detectors/report_region_detector.dart';
 import 'package:crv_reprosisa/features/ocr/data/extractors/press_checkbox_extractor.dart';
 import 'package:crv_reprosisa/features/ocr/data/extractors/press_inspection_extractor.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/vehicle/vehicle_checkbox_extractor.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/vehicle/vehicle_row_extractor.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/vehicle_inspection_table_extractor.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/conveyor_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/inspections/press_inspection_layout.dart';
+import 'package:crv_reprosisa/features/ocr/data/layouts/inspections/vehicle_inspection_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/press_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/report_layout.dart';
 import 'package:crv_reprosisa/features/ocr/data/layouts/vehicle_layout.dart';
@@ -16,6 +21,9 @@ import 'package:crv_reprosisa/features/ocr/domain/entities/report_type.dart';
 import 'package:crv_reprosisa/features/ocr/data/extractors/press_row_extractor.dart';
 import 'package:crv_reprosisa/features/ocr/data/debug/press_row_debug_renderer.dart';
 import 'package:crv_reprosisa/features/ocr/data/extractors/report_section_extractor.dart';
+import 'package:crv_reprosisa/features/ocr/data/extractors/vehicle/vehicle_inspection_extractor.dart';
+import 'package:crv_reprosisa/features/ocr/domain/entities/vehicle_inspection_result.dart';
+import 'package:flutter/material.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 class OpenCVDataSource {
@@ -44,6 +52,18 @@ class OpenCVDataSource {
         layout: const PressInspectionLayout(),
         checkboxExtractor: const PressCheckboxExtractor(),
       );
+
+  final VehicleInspectionExtractor _vehicleInspectionExtractor =
+      VehicleInspectionExtractor(
+        tableExtractor: const VehicleInspectionTableExtractor(),
+        rowExtractor: const VehicleInspectionRowExtractor(),
+        checkboxExtractor: VehicleCheckboxExtractor(
+          layout: const VehicleInspectionLayout(),
+        ),
+      );
+
+  final VehicleCheckboxDebugRenderer _vehicleCheckboxDebugRenderer =
+      VehicleCheckboxDebugRenderer(layout: const VehicleInspectionLayout());
 
   Future<OcrProcessingResult> processImage(
     String imagePath, {
@@ -92,37 +112,81 @@ class OpenCVDataSource {
 
     String? pressRowsPath;
     String? pressCheckboxesPath;
+    String? vehicleTablesPath;
+    String? vehicleRowsPath;
+    String? vehicleCheckboxesPath;
     PressInspectionResult? pressInspectionResult;
+    List<VehicleInspectionResult> vehicleInspectionResults = [];
 
     if (reportType == ReportType.press) {
       final inspection = extractedReport.sections[ReportSectionType.inspection];
-    
+
       if (inspection != null) {
         final inspectionResult = _pressInspectionExtractor.extract(inspection);
-    
+
         pressInspectionResult = inspectionResult;
-    
+
         final rowsDebug = _pressRowDebugRenderer.drawRows(
           inspection,
           inspectionResult.rows.map((row) => row.rowRect).toList(),
         );
-    
+
         pressRowsPath = _generatePath(imagePath, "press_rows");
-    
+
         cv.imwrite(pressRowsPath, rowsDebug);
-    
+
         rowsDebug.dispose();
-    
+
         final checkboxDebug = _pressCheckboxDebugRenderer.drawCheckboxes(
           inspection,
           inspectionResult,
         );
-    
+
         pressCheckboxesPath = _generatePath(imagePath, "press_checkboxes");
-    
+
         cv.imwrite(pressCheckboxesPath, checkboxDebug);
+
+        checkboxDebug.dispose();
+      }
+    }
+
+    if (reportType == ReportType.vehicle) {
+      final inspection = extractedReport.sections[ReportSectionType.inspection];
+    
+      if (inspection != null) {
+        final results = _vehicleInspectionExtractor.extract(inspection);
+    
+        vehicleInspectionResults = results;
+    
+        final rows = results.map((result) => result.row).toList();
+    
+        final checkboxDebug = _vehicleCheckboxDebugRenderer.drawCheckboxes(
+          inspection,
+          rows,
+        );
+    
+        vehicleCheckboxesPath = _generatePath(
+          imagePath,
+          'vehicle_checkboxes',
+        );
+    
+        cv.imwrite(vehicleCheckboxesPath, checkboxDebug);
     
         checkboxDebug.dispose();
+    
+        for (final result in results) {
+          final analysis = result.analysis;
+    
+          debugPrint(
+            'Vehicle Row ${result.row.globalIndex} | '
+            'GOOD: ${analysis.good.darkPixelRatio.toStringAsFixed(4)} | '
+            'BAD: ${analysis.bad.darkPixelRatio.toStringAsFixed(4)} | '
+            'REPOSITION: ${analysis.reposition.darkPixelRatio.toStringAsFixed(4)} | '
+            'REPAIR: ${analysis.repair.darkPixelRatio.toStringAsFixed(4)} | '
+            'MAX: ${result.selectedOption} '
+            '(${result.confidence.toStringAsFixed(4)})',
+          );
+        }
       }
     }
 
@@ -138,11 +202,15 @@ class OpenCVDataSource {
       layout: layout,
       pressRowsPath: pressRowsPath,
       pressCheckboxesPath: pressCheckboxesPath,
+      vehicleTablesPath: vehicleTablesPath,
+      vehicleRowsPath: vehicleRowsPath,
+      vehicleCheckboxesPath: vehicleCheckboxesPath,
     );
-    
+
     return OcrProcessingResult(
       processedImage: processedImage,
       pressInspection: pressInspectionResult,
+      vehicleInspection: vehicleInspectionResults,
     );
   }
 
@@ -194,6 +262,9 @@ class OpenCVDataSource {
     required cv.Mat layout,
     String? pressRowsPath,
     String? pressCheckboxesPath,
+    String? vehicleTablesPath,
+    String? vehicleRowsPath,
+    String? vehicleCheckboxesPath,
   }) {
     final grayPath = _generatePath(imagePath, "gray");
 
@@ -224,6 +295,9 @@ class OpenCVDataSource {
       layoutPath: layoutPath,
       pressRowsPath: pressRowsPath,
       pressCheckboxesPath: pressCheckboxesPath,
+      vehicleTablesPath: vehicleTablesPath,
+      vehicleRowsPath: vehicleRowsPath,
+      vehicleCheckboxesPath: vehicleCheckboxesPath,
     );
   }
 
