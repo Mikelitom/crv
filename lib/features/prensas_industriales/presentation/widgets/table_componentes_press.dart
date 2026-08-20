@@ -5,8 +5,8 @@ import '../../domain/entities/component_item.dart';
 
 // Paleta de colores institucional Reprosisa
 const Color kRedReprosisa = Color(0xFFC62828);
-const Color kHeaderGray = Color(0xFFF1F5F9); 
-const Color kBorderSuave = Color(0xFFD1D9E0); 
+const Color kHeaderGray = Color(0xFFF8FAFC); 
+const Color kBorderSuave = Color(0xFFE2E8F0); 
 const Color kTextDark = Color(0xFF0F172A);
 
 class PrensaInspectionTable extends StatefulWidget {
@@ -48,7 +48,7 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       if (constraints.maxWidth < 1100) {
-        return _buildHighDesignMobileList(); 
+        return _buildResponsiveMobileTabletList(); 
       }
       return _buildDesktopTable();
     });
@@ -95,110 +95,174 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     );
   }
 
-  Widget _buildHighDesignMobileList() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: kBorderSuave, width: 1.2),
-      ),
-      child: Column(
-        children: widget.items.asMap().entries.map((entry) {
-          final item = entry.value;
-          bool isLast = entry.key == widget.items.length - 1;
+  // --- DISEÑO ADAPTADO PARA MÓVIL Y TABLET SIN DESBORDAMIENTOS ---
+  Widget _buildResponsiveMobileTabletList() {
+    return Column(
+      children: widget.items.asMap().entries.map((entry) {
+        final item = entry.value;
+        bool hasNote = item.observation.isNotEmpty;
+        bool isGood = item.status == "GOOD";
+        bool isBad = item.status == "BAD";
 
-          return Container(
-            decoration: BoxDecoration(
-              border: isLast ? null : const Border(bottom: BorderSide(color: kBorderSuave, width: 1.5)),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isGood ? Colors.green.withOpacity(0.4) : (isBad ? kRedReprosisa.withOpacity(0.4) : kBorderSuave),
+              width: 1.5,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: kHeaderGray,
-                    borderRadius: entry.key == 0 ? const BorderRadius.vertical(top: Radius.circular(18)) : null,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("DESCRIPCIÓN DEL COMPONENTE", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.blueGrey)),
-                      const SizedBox(height: 4),
-                      Text(item.name.toUpperCase(), 
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: kTextDark, letterSpacing: 0.5)),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          _infoColumn("CANTIDAD", _qtyField(item)),
-                          const SizedBox(width: 12),
-                          _infoColumn("UNIDAD", _unitLabel(item.measureUnit)),
-                        ],
+                // 1. TÍTULO DEL COMPONENTE
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: isGood ? Colors.green : (isBad ? kRedReprosisa : Colors.blueGrey.shade400),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(height: 16),
-                      Column(
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        item.name.toUpperCase(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          color: kTextDark,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // 2. FILA DE CANTIDAD Y UNIDAD
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("CONDICIÓN", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.blueGrey)),
-                          const SizedBox(height: 8),
-                          _modernConditionSelector(item),
+                          const Text("CANTIDAD", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.blueGrey)),
+                          const SizedBox(height: 6),
+                          _qtyField(item),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 6,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("UNIDAD", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.blueGrey)),
+                          const SizedBox(height: 6),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: kBorderSuave, width: 1.2),
+                            ),
+                            child: Center(
+                              child: Text(
+                                item.measureUnit,
+                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kTextDark),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: kHeaderGray.withOpacity(0.3),
-                    borderRadius: isLast ? const BorderRadius.vertical(bottom: Radius.circular(18)) : null,
-                    border: const Border(top: BorderSide(color: kHeaderGray, width: 1.5)),
-                  ),
-                  child: Row(
-                    children: [
-                      _noteActionBtn(item), 
-                      const Spacer(),
-                      const Text("FOTOS (A / D)", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.blueGrey)),
-                      const SizedBox(width: 12),
-                      _evidenceDual(item, 35, false),
-                    ],
-                  ),
+                const SizedBox(height: 16),
+
+                // 3. CONDICIÓN (BUENO / MALO)
+                const Text("CONDICIÓN", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.blueGrey)),
+                const SizedBox(height: 6),
+                _modernConditionSelector(item),
+                
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: Color(0xFFEDF2F7)),
+                const SizedBox(height: 14),
+
+                // 4. PIE DE TARJETA CON WRAP PARA EVITAR OVERFLOW EN TABLETS/MÓVILES PEQUEÑOS
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () => _showNote(item),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: hasNote ? kRedReprosisa.withOpacity(0.06) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: hasNote ? kRedReprosisa : kBorderSuave,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              hasNote ? Icons.speaker_notes_rounded : Icons.edit_note_rounded,
+                              size: 15,
+                              color: hasNote ? kRedReprosisa : kTextDark,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              hasNote ? "VER NOTA" : "AGREGAR NOTA",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: hasNote ? kRedReprosisa : kTextDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text("EVIDENCIA", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.blueGrey)),
+                        const SizedBox(width: 6),
+                        _evidenceDual(item, 34, false),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),
-          );
-        }).toList(),
-      ),
+          ),
+        );
+      }).toList(),
     );
   }
-
-  Widget _infoColumn(String title, Widget content) => Expanded(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.blueGrey)),
-        const SizedBox(height: 6),
-        content,
-      ],
-    ),
-  );
-
-  Widget _unitLabel(String unit) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    decoration: BoxDecoration(
-      color: kHeaderGray.withOpacity(0.5), 
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: kBorderSuave.withOpacity(0.5))
-    ),
-    child: Center(child: Text(unit, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13))),
-  );
 
   Widget _desktopNoteField(ComponentItem item) {
     return SizedBox(
@@ -229,38 +293,11 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
     );
   }
 
-  Widget _noteActionBtn(ComponentItem item) {
-    bool hasNote = item.observation.isNotEmpty;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => _showNote(item),
-        borderRadius: BorderRadius.circular(12),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: hasNote ? kRedReprosisa : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: hasNote ? kRedReprosisa : kBorderSuave, width: 1.5),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.edit_note_rounded, color: hasNote ? Colors.white : kTextDark, size: 18),
-              const SizedBox(width: 8),
-              Text("NOTAS", style: TextStyle(color: hasNote ? Colors.white : kTextDark, fontSize: 10, fontWeight: FontWeight.w900)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _modernConditionSelector(ComponentItem item) {
     return Row(
       children: [
         _condBtn(item, "GOOD", "BUENO", Colors.green),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         _condBtn(item, "BAD", "MALO", kRedReprosisa),
       ],
     );
@@ -273,20 +310,32 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
         onTap: () => setState(() => item.status = val),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
-            color: isSel ? color : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: isSel ? color : kBorderSuave, width: 1.2),
+            color: isSel ? color : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSel ? color : kBorderSuave, 
+              width: 1.2,
+            ),
           ),
-          child: Center(child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isSel ? Colors.white : Colors.black54))),
+          child: Center(
+            child: Text(
+              label, 
+              style: TextStyle(
+                fontSize: 10, 
+                fontWeight: FontWeight.w900, 
+                color: isSel ? Colors.white : Colors.black54,
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _qtyField(ComponentItem item) => SizedBox(
-    width: 60,
+    width: double.infinity,
     child: TextField(
       onChanged: (v) {
         final parsed = int.tryParse(v);
@@ -301,119 +350,153 @@ class _PrensaInspectionTableState extends State<PrensaInspectionTable> {
         ),
       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
       decoration: InputDecoration(
-        hintText: "", 
+        hintText: "0", 
         filled: true, 
-        fillColor: Colors.white, 
+        fillColor: const Color(0xFFF8FAFC), 
         isDense: true, 
-        contentPadding: const EdgeInsets.symmetric(vertical: 10),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: kBorderSuave, width: 1.5)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: kRedReprosisa, width: 2.0)),
+        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: kBorderSuave, width: 1.2)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: kRedReprosisa, width: 1.5)),
       ),
     ),
   );
 
   Widget _evidenceDual(ComponentItem item, double size, bool showLabel) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildVerticalSection("A", item.evidenceBefore, true, size, item),
-          const SizedBox(height: 6),
-          _buildVerticalSection("D", item.evidenceAfter, false, size, item),
+          _buildHorizontalSection("A", item.evidenceBefore, true, size, item),
+          const SizedBox(width: 6),
+          _buildHorizontalSection("D", item.evidenceAfter, false, size, item),
         ],
       ),
     );
   }
 
-  Widget _buildVerticalSection(String label, List<EvidenceFile> files, bool isBefore, double size, ComponentItem item) {
-    return Column(
+  Widget _buildHorizontalSection(String label, List<EvidenceFile> files, bool isBefore, double size, ComponentItem item) {
+    return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           label,
           style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
             color: Colors.blueGrey,
           ),
         ),
-        const SizedBox(height: 2),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ...files.asMap().entries.map((entry) {
-              final index = entry.key;
-              final file = entry.value;
-              return Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    GestureDetector(
-                      onTap: () => _showFullImage(file.bytes),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.memory(file.bytes, fit: BoxFit.cover, width: size, height: size),
-                      ),
-                    ),
-                    Positioned(
-                      top: -5,
-                      right: -5,
-                      child: GestureDetector(
-                        onTap: () => setState(() {
-                          if (isBefore) {
-                            item.evidenceBefore.removeAt(index);
-                          } else {
-                            item.evidenceAfter.removeAt(index);
-                          }
-                        }),
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                          child: const Icon(Icons.close, size: 8, color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
+        const SizedBox(width: 3),
+        ...files.asMap().entries.map((entry) {
+          final index = entry.key;
+          final file = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(right: 3),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                GestureDetector(
+                  onTap: () => _showFullImage(file.bytes),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.memory(file.bytes, fit: BoxFit.cover, width: size, height: size),
+                  ),
                 ),
-              );
-            }),
-            GestureDetector(
-              onTap: () => _pick(item, isBefore),
-              child: Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  color: kHeaderGray,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: kBorderSuave, width: 1.2),
+                Positioned(
+                  top: -4,
+                  right: -4,
+                  child: GestureDetector(
+                    onTap: () => setState(() {
+                      if (isBefore) {
+                        item.evidenceBefore.removeAt(index);
+                      } else {
+                        item.evidenceAfter.removeAt(index);
+                      }
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                      child: const Icon(Icons.close, size: 7, color: Colors.white),
+                    ),
+                  ),
                 ),
-                child: Icon(Icons.add_a_photo_rounded, size: 16, color: kRedReprosisa.withOpacity(0.8)),
-              ),
+              ],
             ),
-          ],
+          );
+        }),
+        GestureDetector(
+          onTap: () => _pick(item, isBefore),
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: kHeaderGray,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: kBorderSuave, width: 1.2),
+            ),
+            child: Icon(Icons.add_a_photo_rounded, size: 14, color: kRedReprosisa.withOpacity(0.9)),
+          ),
         ),
       ],
     );
   }
 
+  // --- POPUP DE NOTAS CON FONDO COMPLETAMENTE BLANCO ---
   void _showNote(ComponentItem item) {
     final ctrl = TextEditingController(text: item.observation);
-    showDialog(context: context, builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text("Notas del Componente", style: TextStyle(fontWeight: FontWeight.w900)),
-      content: TextField(controller: ctrl, maxLines: 4, decoration: const InputDecoration(hintText: "Escriba las observaciones aquí...", border: OutlineInputBorder())),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCELAR")),
-        ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: kRedReprosisa), 
-          onPressed: () { setState(() => item.observation = ctrl.text); Navigator.pop(context); }, 
-          child: const Text("GUARDAR", style: TextStyle(color: Colors.white)))
-      ]
-    ));
+    showDialog(
+      context: context, 
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          "Notas del Componente", 
+          style: TextStyle(fontWeight: FontWeight.w900, color: kTextDark, fontSize: 16),
+        ),
+        content: TextField(
+          controller: ctrl, 
+          maxLines: 4, 
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            hintText: "Escriba las observaciones aquí...",
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: kBorderSuave),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: kBorderSuave),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: kRedReprosisa, width: 1.5),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: const Text("CANCELAR", style: TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kRedReprosisa,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ), 
+            onPressed: () { 
+              setState(() => item.observation = ctrl.text); 
+              Navigator.pop(context); 
+            }, 
+            child: const Text("GUARDAR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _pick(ComponentItem item, bool isBefore) async {
